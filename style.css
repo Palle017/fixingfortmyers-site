@@ -292,10 +292,16 @@ section {
 .hero__bg {
   position: absolute;
   inset: 0;
-  background-image: url('./assets/banger.jpg');
+  background-image: url('./assets/banger.webp');
   background-size: cover;
   background-position: center center;
   z-index: 0;
+}
+
+@media (max-width: 640px) {
+  .hero__bg {
+    background-image: url('./assets/banger-mobile.webp');
+  }
 }
 
 /* Shelby left, Cammy right — overlaid on the hero bg */
@@ -994,7 +1000,7 @@ section {
 .bang-section__backdrop {
   position: absolute;
   inset: 0;
-  background-image: url('./assets/bangin-hell.jpg');
+  background-image: url('./assets/bangin-hell.webp');
   background-size: cover;
   background-position: center;
   opacity: 0.12;
@@ -1686,3 +1692,6 @@ section {
 }
 .footer__nap a { color: var(--color-accent); text-decoration: none; }
 .footer__copy, .footer__bang { color: #8a8d96; }
+
+a.area-tag { text-decoration: none; color: inherit; }
+a.area-tag:hover { border-color: var(--color-accent); color: var(--color-accent); }

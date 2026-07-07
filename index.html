@@ -30,8 +30,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;700;800&family=Russo+One&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./base.css" />
-  <link rel="stylesheet" href="./style.css?v=20260707d" />
+  <link rel="stylesheet" href="./style.css?v=20260707e" />
   <link rel="stylesheet" href="./service-pages.css" />
+  <link rel="preload" as="image" href="./assets/banger.webp" fetchpriority="high" media="(min-width: 641px)" />
+  <link rel="preload" as="image" href="./assets/banger-mobile.webp" fetchpriority="high" media="(max-width: 640px)" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -219,7 +221,7 @@
         <h1 class="hero__eyebrow">Fort Myers Mechanic — Auto Repair By Appointment Only</h1>
         <p class="hero__slogan">For Your Vehicle, Timing Is Everything.</p>
         <div class="hero__logo-img">
-          <img src="./assets/pt-logo-new.webp" srcset="./assets/pt-logo-new.webp 1x, ./assets/pt-logo-new@2x.webp 2x" alt="Perfect Timing Auto Repair - Fort Myers" />
+          <img src="./assets/pt-logo-new.webp" srcset="./assets/pt-logo-new.webp 1x, ./assets/pt-logo-new@2x.webp 2x" width="400" height="600" alt="Perfect Timing Auto Repair - Fort Myers" />
         </div>
         <p class="hero__desc">
           Your Fort Myers mechanic, by appointment only. One certified mechanic — dealership-level diagnostics, AC repair, diesel service, engine work and more, without the dealership bill.
@@ -249,7 +251,7 @@
         <div class="announce__media reveal">
           <picture>
             <source type="image/webp" srcset="./assets/new-shop-poster.webp" />
-            <img src="./assets/new-shop-poster.jpg" loading="lazy" alt="Perfect Timing Auto Repair is moving to a bigger Fort Myers shop - same team, faster turnaround" />
+            <img src="./assets/new-shop-poster.jpg" width="900" height="1200" loading="lazy" alt="Perfect Timing Auto Repair is moving to a bigger Fort Myers shop - same team, faster turnaround" />
           </picture>
         </div>
         <div class="announce__content">
@@ -302,7 +304,7 @@
     <div class="container">
       <div class="about__grid">
         <div class="about__image-wrap reveal">
-          <img src="./assets/pt-logo-new.webp" srcset="./assets/pt-logo-new.webp 1x, ./assets/pt-logo-new@2x.webp 2x" alt="Perfect Timing Auto Repair - Fort Myers" loading="lazy" style="object-fit: contain;" />
+          <img src="./assets/pt-logo-new.webp" srcset="./assets/pt-logo-new.webp 1x, ./assets/pt-logo-new@2x.webp 2x" width="400" height="600" alt="Perfect Timing Auto Repair - Fort Myers" loading="lazy" style="object-fit: contain;" />
           <div class="about__border-accent"></div>
         </div>
         <div class="about__content">
@@ -313,6 +315,9 @@
           </p>
           <p class="section-sub reveal reveal-delay-2" style="margin-top: 1rem;">
             Founded by Tony — a certified mechanic who actually loves fixing cars — we deliver dealership-level diagnostics and repairs at our shop. No mystery invoices. No upsells. No waiting rooms.
+          </p>
+          <p class="section-sub reveal reveal-delay-2" style="margin-top: 1rem;">
+            <a href="/fort-myers-mechanic" style="color: var(--color-accent); font-weight: 700; text-decoration: none;">Meet your Fort Myers mechanic &rarr;</a>
           </p>
 
           <div class="about__stats reveal reveal-delay-3">
@@ -561,7 +566,7 @@
           </div>
         </div>
         <div class="mobile-section__image reveal reveal-delay-2">
-          <img src="./assets/pt-logo-new.webp" srcset="./assets/pt-logo-new.webp 1x, ./assets/pt-logo-new@2x.webp 2x" alt="Perfect Timing Auto Repair - Fort Myers" loading="lazy" style="object-fit: contain; background: transparent;" />
+          <img src="./assets/pt-logo-new.webp" srcset="./assets/pt-logo-new.webp 1x, ./assets/pt-logo-new@2x.webp 2x" width="400" height="600" alt="Perfect Timing Auto Repair - Fort Myers" loading="lazy" style="object-fit: contain; background: transparent;" />
         </div>
       </div>
     </div>
@@ -581,9 +586,9 @@
         <span class="area-tag">Fort Myers</span>
         <span class="area-tag">Tice</span>
         <span class="area-tag">Buckingham</span>
-        <span class="area-tag">North Fort Myers</span>
-        <span class="area-tag">Cape Coral</span>
-        <span class="area-tag">Lehigh Acres</span>
+        <a class="area-tag" href="/auto-repair-north-fort-myers">North Fort Myers</a>
+        <a class="area-tag" href="/auto-repair-cape-coral">Cape Coral</a>
+        <a class="area-tag" href="/auto-repair-lehigh-acres">Lehigh Acres</a>
         <span class="area-tag">Alva</span>
         <span class="area-tag">San Carlos Park</span>
         <span class="area-tag">Gateway</span>
@@ -685,6 +690,14 @@
           <span class="home-seo-link__eyebrow">Pre-Purchase Inspection</span>
           <span class="home-seo-link__title">Pre-Purchase Inspection</span>
           <span class="home-seo-link__copy">Pre-purchase inspections in Fort Myers to help you avoid buying someone else&#x27;s expensive surpri...</span>
+        </a><a class="home-seo-link reveal" href="/oil-change-fort-myers">
+          <span class="home-seo-link__eyebrow">Maintenance</span>
+          <span class="home-seo-link__title">Oil Change</span>
+          <span class="home-seo-link__copy">Full synthetic or conventional oil service with a real inspection -- by appointment, no waiting line.</span>
+        </a><a class="home-seo-link reveal" href="/exhaust-emissions-repair-fort-myers">
+          <span class="home-seo-link__eyebrow">Exhaust</span>
+          <span class="home-seo-link__title">Exhaust &amp; Emissions</span>
+          <span class="home-seo-link__copy">Exhaust leaks, catalytic converters, O2 sensors and emissions codes -- diagnosed before parts get thrown at it.</span>
         </a>
       </div>
     </div>
@@ -727,12 +740,12 @@
         <div class="bang-section__image reveal">
           <div class="bang-duo-grid">
             <div class="bang-duo-item">
-              <img src="./assets/shelby.jpg" alt="Shelby project car by Perfect Timing Auto Repair, Fort Myers" loading="lazy" />
+              <img src="./assets/shelby.webp" width="720" height="921" alt="Shelby project car by Perfect Timing Auto Repair, Fort Myers" />
               <div class="bang-stamp">BANG<br>INDUSTRIES</div>
               <p class="bang-girl-name">Shelby</p>
             </div>
             <div class="bang-duo-item">
-              <img src="./assets/cammy.jpg" alt="Camaro build by Perfect Timing Auto Repair, Fort Myers" loading="lazy" />
+              <img src="./assets/cammy.webp" width="720" height="1131" alt="Camaro build by Perfect Timing Auto Repair, Fort Myers" />
               <div class="bang-stamp">BANG<br>INDUSTRIES</div>
               <p class="bang-girl-name">Cammy</p>
             </div>
@@ -949,7 +962,7 @@
       <div class="footer__grid">
         <div>
           <div class="footer__brand-head">
-            <img class="footer__brand-mono" src="./assets/pt-monogram.jpg" srcset="./assets/pt-monogram.jpg 1x, ./assets/pt-monogram@2x.jpg 2x" width="120" alt="PT - Precision. Power. Perfection." loading="lazy" />
+            <img class="footer__brand-mono" src="./assets/pt-monogram.jpg" srcset="./assets/pt-monogram.jpg 1x, ./assets/pt-monogram@2x.jpg 2x" width="120" height="120" alt="PT - Precision. Power. Perfection." loading="lazy" />
             <div>
               <div class="footer__brand-name">Perfect Timing</div>
               <div class="footer__brand-sub">Auto Repair LLC</div>

@@ -18,7 +18,7 @@
   inset: 0;
   background-image:
     linear-gradient(rgba(10,10,11,0.45), rgba(10,10,11,0.88)),
-    url('./assets/banger.jpg');
+    url('./assets/banger.webp');
   background-size: cover;
   background-position: center center;
   z-index: 0;
@@ -404,5 +404,13 @@
 
   .service-hero__stats {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .service-hero__bg {
+    background-image:
+      linear-gradient(rgba(10,10,11,0.45), rgba(10,10,11,0.88)),
+      url('./assets/banger-mobile.webp');
   }
 }
