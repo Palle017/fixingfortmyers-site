@@ -140,6 +140,61 @@
     <div class="hero__overlay"></div>
     <div class="hero__lightning"></div>
 
+    <!-- top-corner quick actions: booking form (left) + voice note (right) -->
+    <div class="hero-cta hero-cta--left" id="hbCard">
+      <button type="button" class="hero-cta__head" id="hbToggle" aria-expanded="false" aria-controls="hbBody">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+        <span class="hero-cta__label">Book a Repair</span>
+        <span class="hero-cta__hint">tap to open</span>
+      </button>
+      <div class="hero-cta__body" id="hbBody">
+        <form id="hbForm" autocomplete="on">
+          <input type="text" name="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true" />
+          <input type="text" name="name" placeholder="Your Name" required />
+          <input type="tel" name="phone" placeholder="Phone (239) 555-0000" required />
+          <input type="text" name="vehicle" placeholder="Vehicle — 2019 Dodge Charger" required />
+          <select name="service">
+            <option value="">Select a Service</option>
+            <option>Diagnostics / Check Engine Light</option>
+            <option>A/C Repair</option>
+            <option>Brakes</option>
+            <option>Engine Repair</option>
+            <option>Transmission</option>
+            <option>Module Programming</option>
+            <option>Cooling System</option>
+            <option>Suspension / Steering</option>
+            <option>Battery / Electrical</option>
+            <option>Oil Change / Maintenance</option>
+            <option>Exhaust / Emissions</option>
+            <option>No-Start Diagnosis</option>
+            <option>Other</option>
+          </select>
+          <textarea name="message" rows="3" placeholder="What's going on? Symptoms, sounds, warning lights..."></textarea>
+          <button type="submit" class="btn btn--primary" style="width:100%;justify-content:center">Send Request</button>
+        </form>
+        <p id="hbMsg" style="display:none;margin-top:.6rem;color:var(--color-accent);font-weight:600;text-align:center"></p>
+      </div>
+    </div>
+
+    <div class="hero-cta hero-cta--right" id="hvCard">
+      <button type="button" class="hero-cta__head" id="hvToggle" aria-expanded="false" aria-controls="hvBody">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+        <span class="hero-cta__label">Record for Tony</span>
+        <span class="hero-cta__hint">tap to talk</span>
+      </button>
+      <div class="hero-cta__body" id="hvBody">
+        <p style="font-size:var(--text-xs);color:#9a9aa4;margin:0 0 .5rem">Skip the typing — record what your ride is doing and Tony hears it directly. Under 60 seconds.</p>
+        <input type="tel" id="hvPhone" placeholder="Phone (required)" />
+        <input type="text" id="hvName" placeholder="Your name (optional)" />
+        <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;flex-wrap:wrap">
+          <button type="button" id="hvRec" class="btn btn--outline" style="flex:1;justify-content:center">&#127908; Record</button>
+          <button type="button" id="hvSend" class="btn btn--primary" style="flex:1;justify-content:center;display:none">Send to Tony</button>
+        </div>
+        <span id="hvTimer" style="font-weight:700;color:var(--color-accent);font-size:var(--text-xs)"></span>
+        <audio id="hvPlay" controls style="display:none;width:100%;margin-top:.5rem;height:36px"></audio>
+        <p id="hvStat" style="display:none;margin-top:.5rem;color:var(--color-accent);font-weight:600;font-size:var(--text-xs);text-align:center"></p>
+      </div>
+    </div>
 
     <div class="hero__content container">
       <div class="reveal">
@@ -1095,6 +1150,107 @@
       window.parent.postMessage({type:'INLINE_EDIT_SCREENSHOT_RESULT',dataUrl:null,scrollX:scrollX,scrollY:scrollY},'*');
     }
   });
+})();
+</script>
+<script>
+/* hero top-corner quick actions: expand/collapse + submit + voice note */
+(function () {
+  function $(id) { return document.getElementById(id); }
+  var hb = $('hbCard'), hv = $('hvCard');
+  if (!hb || !hv) return;
+
+  function setOpen(card, toggleId, open) {
+    card.classList.toggle('open', open);
+    $(toggleId).setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  $('hbToggle').onclick = function () {
+    var open = !hb.classList.contains('open');
+    setOpen(hb, 'hbToggle', open);
+    if (open) setOpen(hv, 'hvToggle', false);
+  };
+  $('hvToggle').onclick = function () {
+    var open = !hv.classList.contains('open');
+    setOpen(hv, 'hvToggle', open);
+    if (open) setOpen(hb, 'hbToggle', false);
+  };
+
+  /* ----- booking form (same endpoint as the big form) ----- */
+  $('hbForm').onsubmit = function (e) {
+    e.preventDefault();
+    var form = e.target, btn = form.querySelector('button[type="submit"]'), msg = $('hbMsg');
+    btn.textContent = 'Sending...'; btn.disabled = true; msg.style.display = 'none';
+    var payload = {
+      name: form.name.value, phone: form.phone.value, vehicle: form.vehicle.value,
+      service: form.service.value, message: form.message.value, website: form.website.value
+    };
+    fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/webform', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (res.ok && res.j.ok === true) {
+          form.outerHTML = '<p style="text-align:center;padding:1rem 0;font-weight:700;color:var(--color-accent)">Thanks! Tony will text or call you shortly.</p>';
+        } else {
+          btn.textContent = 'Send Request'; btn.disabled = false;
+          msg.textContent = 'Hiccup sending - try again or call (239) 271-4854.'; msg.style.display = 'block';
+        }
+      })
+      .catch(function () {
+        btn.textContent = 'Send Request'; btn.disabled = false;
+        msg.textContent = 'Hiccup sending - try again or call (239) 271-4854.'; msg.style.display = 'block';
+      });
+  };
+
+  /* ----- voice note (same endpoint as the contact-section recorder) ----- */
+  var rec = null, chunks = [], blob = null, timerIv = null, secs = 0;
+  function stat(t) { var s = $('hvStat'); s.textContent = t; s.style.display = t ? 'block' : 'none'; }
+  function stopTimer() { clearInterval(timerIv); timerIv = null; }
+  $('hvRec').onclick = function () {
+    if (rec && rec.state === 'recording') { rec.stop(); return; }
+    var phone = ($('hvPhone').value || '').replace(/\D/g, '');
+    if (phone.length < 7) { stat('Put your phone number in first so Tony can call you back.'); return; }
+    stat('');
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      chunks = []; blob = null; secs = 0;
+      rec = new MediaRecorder(stream);
+      rec.ondataavailable = function (ev) { if (ev.data.size) chunks.push(ev.data); };
+      rec.onstop = function () {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        stopTimer();
+        blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+        var p = $('hvPlay'); p.src = URL.createObjectURL(blob); p.style.display = 'block';
+        $('hvSend').style.display = 'inline-flex';
+        $('hvRec').innerHTML = '&#127908; Re-record';
+        $('hvTimer').textContent = '';
+      };
+      rec.start();
+      $('hvRec').textContent = 'Stop'; $('hvPlay').style.display = 'none'; $('hvSend').style.display = 'none';
+      timerIv = setInterval(function () {
+        secs++; $('hvTimer').textContent = secs + 's / 60s';
+        if (secs >= 60 && rec && rec.state === 'recording') rec.stop();
+      }, 1000);
+    }).catch(function () { stat('Mic blocked - allow microphone access and try again.'); });
+  };
+  $('hvSend').onclick = function () {
+    if (!blob) return;
+    var phone = ($('hvPhone').value || '').replace(/\D/g, '');
+    if (phone.length < 7) { stat('Put your phone number in first so Tony can call you back.'); return; }
+    $('hvSend').disabled = true; stat('Sending...');
+    fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/voicenote', {
+      method: 'POST',
+      headers: { 'Content-Type': blob.type || 'audio/webm', 'X-Phone': phone, 'X-Name': ($('hvName').value || '').slice(0, 60) },
+      body: blob
+    }).then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (j) {
+        if (j && j.ok) {
+          $('hvRec').style.display = 'none'; $('hvSend').style.display = 'none'; $('hvPlay').style.display = 'none';
+          stat('Got it! Tony will hear this and call you back.');
+        } else {
+          $('hvSend').disabled = false;
+          stat(j && j.error === 'recording too long' ? 'That one was too long - keep it under a minute.' : 'Hiccup sending - try again or call (239) 271-4854.');
+        }
+      })
+      .catch(function () { $('hvSend').disabled = false; stat('Hiccup sending - try again or call (239) 271-4854.'); });
+  };
 })();
 </script>
 <script src="https://tonystool.tail68bd87.ts.net/chat/widget.js" defer></script>
