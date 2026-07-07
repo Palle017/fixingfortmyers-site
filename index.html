@@ -30,7 +30,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;700;800&family=Russo+One&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./base.css" />
-  <link rel="stylesheet" href="./style.css?v=20260707e" />
+  <link rel="stylesheet" href="./style.css?v=20260707f" />
   <link rel="stylesheet" href="./service-pages.css" />
   <link rel="preload" as="image" href="./assets/banger.webp" fetchpriority="high" media="(min-width: 641px)" />
   <link rel="preload" as="image" href="./assets/banger-mobile.webp" fetchpriority="high" media="(max-width: 640px)" />
@@ -738,18 +738,22 @@
     <div class="container">
       <div class="bang-section__content">
         <div class="bang-section__image reveal">
-          <div class="bang-duo-grid">
-            <div class="bang-duo-item">
-              <img src="./assets/shelby.webp" width="720" height="921" alt="Shelby project car by Perfect Timing Auto Repair, Fort Myers" />
-              <div class="bang-stamp">BANG<br>INDUSTRIES</div>
-              <p class="bang-girl-name">Shelby</p>
-            </div>
-            <div class="bang-duo-item">
-              <img src="./assets/cammy.webp" width="720" height="1131" alt="Camaro build by Perfect Timing Auto Repair, Fort Myers" />
-              <div class="bang-stamp">BANG<br>INDUSTRIES</div>
-              <p class="bang-girl-name">Cammy</p>
-            </div>
+          <div class="bang-video-wrap">
+            <video muted loop playsinline preload="none" poster="./assets/bang-store-poster.webp" width="1280" height="720" aria-label="Shelby and Cammy in the BANG Industries gear store">
+              <source src="./assets/bang-store.mp4" type="video/mp4" />
+            </video>
+            <div class="bang-stamp">BANG<br>INDUSTRIES</div>
           </div>
+          <script>
+          (function () {
+            var v = document.querySelector('.bang-video-wrap video');
+            if (!v) return;
+            if (!('IntersectionObserver' in window)) { v.play && v.play().catch(function(){}); return; }
+            new IntersectionObserver(function (es) {
+              es.forEach(function (e) { e.isIntersecting ? v.play().catch(function(){}) : v.pause(); });
+            }, { threshold: 0.25 }).observe(v);
+          })();
+          </script>
         </div>
         <div class="reveal reveal-delay-2">
           <p class="bang-acronym">B · A · N · G — Bust A Nut Garage</p>

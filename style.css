@@ -1695,3 +1695,13 @@ section {
 
 a.area-tag { text-decoration: none; color: inherit; }
 a.area-tag:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+.bang-video-wrap { position: relative; }
+.bang-video-wrap video {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 106, 26, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
