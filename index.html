@@ -680,10 +680,10 @@
           <p class="bang-desc">
             Born from grease, built from attitude. BANG Gear is the lifestyle brand of BANG Industries — apparel, gear, and culture for people who live fast and wrench hard. Cammy and Shelby rep the brand. No limits.
           </p>
-          <div class="bang-coming-soon">
+          <a class="bang-coming-soon" href="https://bustnutsnotknuckles.com" target="_blank" rel="noopener">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            Apparel Dropping Soon
-          </div>
+            Enter Here
+          </a>
           <br />
           <a href="#contact" class="btn btn--fire">
             Get Notified First
@@ -768,6 +768,66 @@
         </div>
 
         <div class="contact__form reveal reveal-delay-2">
+          <div id="voiceBook" style="margin-bottom:1.5rem;padding:1rem 1.25rem;border:1px solid rgba(58,190,255,.35);border-radius:12px;background:rgba(58,190,255,.06)">
+            <h3 style="margin:0 0 .35rem">Hate forms? Just say it.</h3>
+            <p style="margin:0 0 .75rem;opacity:.8;font-size:.92rem">Tap record, tell Tony what your ride is doing, and he'll call or text you back.</p>
+            <div class="form-group"><input type="tel" id="vbPhone" placeholder="Your phone number (required)" /></div>
+            <div class="form-group"><input type="text" id="vbName" placeholder="Your name (optional)" /></div>
+            <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+              <button type="button" id="vbRec" class="btn btn--outline">&#127908; Record</button>
+              <span id="vbTimer" style="font-variant-numeric:tabular-nums;opacity:.85"></span>
+              <audio id="vbPlay" controls style="display:none;height:36px;max-width:220px"></audio>
+              <button type="button" id="vbSend" class="btn btn--primary" style="display:none">Send to Tony</button>
+            </div>
+            <p id="vbStatus" style="margin:.6rem 0 0;font-size:.9rem;opacity:.85"></p>
+          </div>
+          <script>
+          (function(){
+            var rec=null,chunks=[],blob=null,t0=0,tick=null,MAX=60;
+            var $=function(id){return document.getElementById(id)};
+            function stat(m){$('vbStatus').textContent=m}
+            function stopRec(){ if(rec&&rec.state!=='inactive')rec.stop(); clearInterval(tick); }
+            $('vbRec').onclick=function(){
+              if(rec&&rec.state==='recording'){ stopRec(); return; }
+              if(!navigator.mediaDevices){ stat('Recording not supported on this browser - use the form below.'); return; }
+              navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
+                chunks=[]; blob=null;
+                rec=new MediaRecorder(st,{mimeType:MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'audio/webm'});
+                rec.ondataavailable=function(e){chunks.push(e.data)};
+                rec.onstop=function(){
+                  st.getTracks().forEach(function(tr){tr.stop()});
+                  blob=new Blob(chunks,{type:'audio/webm'});
+                  var u=URL.createObjectURL(blob); $('vbPlay').src=u; $('vbPlay').style.display='inline-block';
+                  $('vbSend').style.display='inline-block'; $('vbRec').innerHTML='&#127908; Re-record';
+                  stat('Listen back, then hit Send.');
+                };
+                rec.start(); t0=Date.now();
+                $('vbRec').textContent='Stop'; $('vbPlay').style.display='none'; $('vbSend').style.display='none';
+                tick=setInterval(function(){
+                  var s=Math.floor((Date.now()-t0)/1000);
+                  $('vbTimer').textContent=s+'s / '+MAX+'s';
+                  if(s>=MAX)stopRec();
+                },250);
+                stat('Recording... tell Tony the year, make, model and what it is doing.');
+              }).catch(function(){stat('Mic blocked - allow microphone access or use the form below.')});
+            };
+            $('vbSend').onclick=function(){
+              var ph=$('vbPhone').value.trim();
+              if((ph.match(/\d/g)||[]).length<7){ stat('Drop your phone number first so Tony can call you back.'); $('vbPhone').focus(); return; }
+              if(!blob){ stat('Record something first!'); return; }
+              $('vbSend').disabled=true; stat('Sending...');
+              fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/voicenote',{
+                method:'POST',
+                headers:{'Content-Type':'audio/webm','X-Phone':encodeURIComponent(ph),'X-Name':encodeURIComponent($('vbName').value.trim())},
+                body:blob
+              }).then(function(r){return r.json()}).then(function(j){
+                if(j&&j.ok){ $('vbRec').style.display='none'; $('vbSend').style.display='none'; $('vbPlay').style.display='none'; $('vbTimer').textContent='';
+                  stat('Got it! Tony has your message and will call or text you back shortly.'); }
+                else { $('vbSend').disabled=false; stat((j&&j.error==='recording too long')?'That one was too long - keep it under a minute.':'Hiccup sending - try again or call (239) 271-4854.'); }
+              }).catch(function(){ $('vbSend').disabled=false; stat('Hiccup sending - try again or call (239) 271-4854.'); });
+            };
+          })();
+          </script>
           <h3>Request a Repair</h3>
           <form id="bookingForm" name="repair-request" method="POST" onsubmit="handleSubmit(event)">
             <input type="text" name="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true" />
