@@ -1667,6 +1667,7 @@ section {
 .hero-cta:not(.open) { animation: heroCtaPulse 3s ease-in-out infinite; }
 
 @media (max-width: 640px) {
+  .hero { padding-top: 120px; }   /* keep hero copy clear of the corner pills */
   .hero-cta { top: 68px; }
   .hero-cta--left  { left: 8px; }
   .hero-cta--right { right: 8px; }
