@@ -284,7 +284,8 @@ section {
   position: relative;
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;   /* pin content to the top, right under the nav */
+  padding-top: 92px;
   overflow: hidden;
 }
 
@@ -421,8 +422,8 @@ section {
 }
 
 .hero__logo-img {
-  width: clamp(280px, 40vw, 560px);
-  margin: 0 auto var(--space-6);
+  width: clamp(180px, 24vw, 310px);   /* whole badge visible in the first viewport */
+  margin: 0 auto var(--space-4);
 }
 
 .hero__logo-img img {
