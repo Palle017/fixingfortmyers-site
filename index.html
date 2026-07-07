@@ -1163,15 +1163,20 @@
     card.classList.toggle('open', open);
     $(toggleId).setAttribute('aria-expanded', open ? 'true' : 'false');
   }
+  function closeBayOne() {
+    /* give the card room: dismiss Bay One via her own close button (stops her TTS too) */
+    var bc = $('bayone-close'), bp = $('bayone-panel');
+    if (bc && bp && bp.style.display === 'flex') bc.click();
+  }
   $('hbToggle').onclick = function () {
     var open = !hb.classList.contains('open');
     setOpen(hb, 'hbToggle', open);
-    if (open) setOpen(hv, 'hvToggle', false);
+    if (open) { setOpen(hv, 'hvToggle', false); closeBayOne(); }
   };
   $('hvToggle').onclick = function () {
     var open = !hv.classList.contains('open');
     setOpen(hv, 'hvToggle', open);
-    if (open) setOpen(hb, 'hbToggle', false);
+    if (open) { setOpen(hb, 'hbToggle', false); closeBayOne(); }
   };
 
   /* ----- booking form (same endpoint as the big form) ----- */
