@@ -1676,3 +1676,13 @@ section {
   .hero-cta__head svg { width: 14px; height: 14px; }
   .hero-cta.open { z-index: 7; }
 }
+
+/* Footer NAP line + WCAG AA contrast for small footer text */
+.footer__nap {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: #9aa0ab;
+  text-align: center;
+}
+.footer__nap a { color: var(--color-accent); text-decoration: none; }
+.footer__copy, .footer__bang { color: #8a8d96; }
