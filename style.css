@@ -541,6 +541,57 @@ section {
 }
 
 /* ============================================
+   NEW SHOP ANNOUNCEMENT
+   ============================================ */
+
+.announce {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.announce__grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: var(--space-12);
+  align-items: center;
+}
+
+.announce__media {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+}
+
+.announce__media img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.announce__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.announce__actions {
+  margin-top: var(--space-8);
+}
+
+@media (max-width: 860px) {
+  .announce__grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+  .announce__media {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}
+
+/* ============================================
    TRUST BAR
    ============================================ */
 
@@ -1272,6 +1323,19 @@ section {
   grid-template-columns: 2fr 1fr 1fr;
   gap: var(--space-12);
   margin-bottom: var(--space-12);
+}
+
+.footer__brand-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.footer__brand-mono {
+  width: 120px;
+  height: auto;
+  flex-shrink: 0;
 }
 
 .footer__brand-name {
