@@ -843,7 +843,8 @@ section {
 }
 
 /* ============================================
-   MOBILE — "We Come To You"
+   HOW IT WORKS — "By Appointment Only" (shop)
+   (legacy .mobile-section class name kept; markup references it)
    ============================================ */
 
 .mobile-section {
