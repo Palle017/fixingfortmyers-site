@@ -166,6 +166,13 @@
           <input type="text" name="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true" />
           <input type="text" name="name" placeholder="Your Name" required />
           <input type="tel" name="phone" placeholder="Phone (239) 555-0000" required />
+          <div class="sms-consent sms-consent--compact">
+            <label class="sms-consent__label" for="hbSmsConsent">
+              <input type="checkbox" id="hbSmsConsent" name="smsConsent" value="yes" aria-describedby="hbSmsConsentDetails" />
+              <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
+            </label>
+            <p class="sms-consent__details" id="hbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+          </div>
           <input type="text" name="vehicle" placeholder="Vehicle — 2019 Dodge Charger" required />
           <select name="service">
             <option value="">Select a Service</option>
@@ -199,6 +206,13 @@
       <div class="hero-cta__body" id="hvBody">
         <p style="font-size:var(--text-xs);color:#9a9aa4;margin:0 0 .5rem">Skip the typing — record what your ride is doing and Tony hears it directly. Under 60 seconds.</p>
         <input type="tel" id="hvPhone" placeholder="Phone (required)" />
+        <div class="sms-consent sms-consent--compact">
+          <label class="sms-consent__label" for="hvSmsConsent">
+            <input type="checkbox" id="hvSmsConsent" value="yes" aria-describedby="hvSmsConsentDetails" />
+            <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
+          </label>
+          <p class="sms-consent__details" id="hvSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+        </div>
         <input type="text" id="hvName" placeholder="Your name (optional)" />
         <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;flex-wrap:wrap">
           <button type="button" id="hvRec" class="btn btn--outline" style="flex:1;justify-content:center">&#127908; Record</button>
@@ -854,8 +868,15 @@
         <div class="contact__form reveal reveal-delay-2">
           <div id="voiceBook" style="margin-bottom:1.5rem;padding:1rem 1.25rem;border:1px solid rgba(58,190,255,.35);border-radius:12px;background:rgba(58,190,255,.06)">
             <h3 style="margin:0 0 .35rem">Hate forms? Just say it.</h3>
-            <p style="margin:0 0 .75rem;opacity:.8;font-size:.92rem">Tap record, tell Tony what your ride is doing, and he'll call or text you back.</p>
+            <p style="margin:0 0 .75rem;opacity:.8;font-size:.92rem">Tap record, tell Tony what your ride is doing, and he'll call you back. Text follow-up is optional below.</p>
             <div class="form-group"><input type="tel" id="vbPhone" placeholder="Your phone number (required)" /></div>
+            <div class="sms-consent">
+              <label class="sms-consent__label" for="vbSmsConsent">
+                <input type="checkbox" id="vbSmsConsent" value="yes" aria-describedby="vbSmsConsentDetails" />
+                <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
+              </label>
+              <p class="sms-consent__details" id="vbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+            </div>
             <div class="form-group"><input type="text" id="vbName" placeholder="Your name (optional)" /></div>
             <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
               <button type="button" id="vbRec" class="btn btn--outline">&#127908; Record</button>
@@ -900,13 +921,14 @@
               if((ph.match(/\d/g)||[]).length<7){ stat('Drop your phone number first so Tony can call you back.'); $('vbPhone').focus(); return; }
               if(!blob){ stat('Record something first!'); return; }
               $('vbSend').disabled=true; stat('Sending...');
+              var smsMeta=window.ptSmsConsentMeta('vbSmsConsent','homepage-contact-voice');
               fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/voicenote',{
                 method:'POST',
-                headers:{'Content-Type':'audio/webm','X-Phone':encodeURIComponent(ph),'X-Name':encodeURIComponent($('vbName').value.trim())},
+                headers:Object.assign({'Content-Type':'audio/webm','X-Phone':encodeURIComponent(ph),'X-Name':encodeURIComponent($('vbName').value.trim())},window.ptSmsConsentHeaders(smsMeta)),
                 body:blob
               }).then(function(r){return r.json()}).then(function(j){
                 if(j&&j.ok){ $('vbRec').style.display='none'; $('vbSend').style.display='none'; $('vbPlay').style.display='none'; $('vbTimer').textContent='';
-                  stat('Got it! Tony has your message and will call or text you back shortly.'); }
+                  stat(smsMeta.smsConsent ? 'Got it! Tony has your message and will call or text you back shortly.' : 'Got it! Tony has your message and will call you back shortly. No text follow-up was requested.'); }
                 else { $('vbSend').disabled=false; stat((j&&j.error==='recording too long')?'That one was too long - keep it under a minute.':'Hiccup sending - try again or call (239) 271-4854.'); }
               }).catch(function(){ $('vbSend').disabled=false; stat('Hiccup sending - try again or call (239) 271-4854.'); });
             };
@@ -922,6 +944,13 @@
             <div class="form-group">
               <label for="phone">Phone Number</label>
               <input type="tel" id="phone" name="phone" placeholder="(239) 555-0000" required />
+            </div>
+            <div class="sms-consent">
+              <label class="sms-consent__label" for="bookingSmsConsent">
+                <input type="checkbox" id="bookingSmsConsent" name="smsConsent" value="yes" aria-describedby="bookingSmsConsentDetails" />
+                <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
+              </label>
+              <p class="sms-consent__details" id="bookingSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
             </div>
             <div class="form-group">
               <label for="vehicle">Vehicle (Year / Make / Model)</label>
@@ -1012,6 +1041,7 @@
       <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · 13037 Second St, Fort Myers, FL 33905 · <a href="tel:+12392714854">(239) 271-4854</a> · Mon–Sat 7AM–7PM, By Appointment</p>
       <div class="footer__bottom">
         <p class="footer__copy">&copy; 2026 Perfect Timing Auto Repair LLC. All rights reserved.</p>
+        <div class="footer__legal"><a href="/privacy-policy">Privacy Policy</a><a href="/sms-terms">SMS Terms &amp; Conditions</a></div>
         <div class="footer__bang">
           A <span>BANG</span> Industries Company
         </div>
@@ -1021,6 +1051,32 @@
 
   <!-- ============ JAVASCRIPT ============ -->
   <script>
+    const SMS_CONSENT_VERSION = '2026-07-10-v1';
+    const SMS_CONSENT_DISCLOSURE = 'Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.';
+
+    window.ptSmsConsentMeta = function (checkboxId, source) {
+      const checkbox = document.getElementById(checkboxId);
+      const smsConsent = Boolean(checkbox && checkbox.checked);
+      return {
+        smsConsent,
+        smsConsentTimestamp: smsConsent ? new Date().toISOString() : '',
+        smsConsentVersion: SMS_CONSENT_VERSION,
+        smsConsentSource: source,
+        smsConsentPage: window.location.href.split('#')[0],
+        smsConsentDisclosure: SMS_CONSENT_DISCLOSURE
+      };
+    };
+
+    window.ptSmsConsentHeaders = function (meta) {
+      return {
+        'X-SMS-Consent': meta.smsConsent ? 'true' : 'false',
+        'X-SMS-Consent-Timestamp': meta.smsConsentTimestamp,
+        'X-SMS-Consent-Version': meta.smsConsentVersion,
+        'X-SMS-Consent-Source': meta.smsConsentSource,
+        'X-SMS-Consent-Page': meta.smsConsentPage
+      };
+    };
+
     // Mobile nav toggle
     const toggle = document.getElementById('mobileToggle');
     const menu = document.getElementById('mobileMenu');
@@ -1071,13 +1127,15 @@
       btn.disabled = true;
       if (msg) { msg.style.display = 'none'; }
 
+      const smsMeta = window.ptSmsConsentMeta('bookingSmsConsent', 'homepage-contact-form');
       const payload = {
         name: form.name.value,
         phone: form.phone.value,
         vehicle: form.vehicle.value,
         service: form.service.value,
         message: form.message.value,
-        website: form.website.value
+        website: form.website.value,
+        ...smsMeta
       };
 
       try {
@@ -1090,7 +1148,7 @@
         if (response.ok && result.ok === true) {
           form.outerHTML = '<div class="form-thankyou" style="text-align:center; padding:2rem 1rem;">' +
             '<h3 style="color: var(--color-accent); margin-bottom: 0.5rem;">Thanks!</h3>' +
-            '<p style="font-weight:600;">Tony will text or call you shortly.</p>' +
+            '<p style="font-weight:600;">' + (smsMeta.smsConsent ? 'Tony will call or text you shortly.' : 'Tony will call you shortly. No text follow-up was requested.') + '</p>' +
             '</div>';
         } else {
           throw new Error('bad response');
@@ -1152,16 +1210,20 @@
     e.preventDefault();
     var form = e.target, btn = form.querySelector('button[type="submit"]'), msg = $('hbMsg');
     btn.textContent = 'Sending...'; btn.disabled = true; msg.style.display = 'none';
+    var smsMeta = window.ptSmsConsentMeta('hbSmsConsent', 'homepage-hero-booking');
     var payload = {
       name: form.name.value, phone: form.phone.value, vehicle: form.vehicle.value,
-      service: form.service.value, message: form.message.value, website: form.website.value
+      service: form.service.value, message: form.message.value, website: form.website.value,
+      smsConsent: smsMeta.smsConsent, smsConsentTimestamp: smsMeta.smsConsentTimestamp,
+      smsConsentVersion: smsMeta.smsConsentVersion, smsConsentSource: smsMeta.smsConsentSource,
+      smsConsentPage: smsMeta.smsConsentPage, smsConsentDisclosure: smsMeta.smsConsentDisclosure
     };
     fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/webform', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
     }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         if (res.ok && res.j.ok === true) {
-          form.outerHTML = '<p style="text-align:center;padding:1rem 0;font-weight:700;color:var(--color-accent)">Thanks! Tony will text or call you shortly.</p>';
+          form.outerHTML = '<p style="text-align:center;padding:1rem 0;font-weight:700;color:var(--color-accent)">Thanks! ' + (smsMeta.smsConsent ? 'Tony will call or text you shortly.' : 'Tony will call you shortly. No text follow-up was requested.') + '</p>';
         } else {
           btn.textContent = 'Send Request'; btn.disabled = false;
           msg.textContent = 'Hiccup sending - try again or call (239) 271-4854.'; msg.style.display = 'block';
@@ -1208,15 +1270,16 @@
     var phone = ($('hvPhone').value || '').replace(/\D/g, '');
     if (phone.length < 7) { stat('Put your phone number in first so Tony can call you back.'); return; }
     $('hvSend').disabled = true; stat('Sending...');
+    var smsMeta = window.ptSmsConsentMeta('hvSmsConsent', 'homepage-hero-voice');
     fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/voicenote', {
       method: 'POST',
-      headers: { 'Content-Type': blob.type || 'audio/webm', 'X-Phone': phone, 'X-Name': ($('hvName').value || '').slice(0, 60) },
+      headers: Object.assign({ 'Content-Type': blob.type || 'audio/webm', 'X-Phone': phone, 'X-Name': ($('hvName').value || '').slice(0, 60) }, window.ptSmsConsentHeaders(smsMeta)),
       body: blob
     }).then(function (r) { return r.json().catch(function () { return {}; }); })
       .then(function (j) {
         if (j && j.ok) {
           $('hvRec').style.display = 'none'; $('hvSend').style.display = 'none'; $('hvPlay').style.display = 'none';
-          stat('Got it! Tony will hear this and call you back.');
+          stat(smsMeta.smsConsent ? 'Got it! Tony will hear this and call or text you back.' : 'Got it! Tony will hear this and call you back. No text follow-up was requested.');
         } else {
           $('hvSend').disabled = false;
           stat(j && j.error === 'recording too long' ? 'That one was too long - keep it under a minute.' : 'Hiccup sending - try again or call (239) 271-4854.');
