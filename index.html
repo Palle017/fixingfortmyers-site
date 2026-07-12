@@ -922,7 +922,7 @@
               if(!blob){ stat('Record something first!'); return; }
               $('vbSend').disabled=true; stat('Sending...');
               var smsMeta=window.ptSmsConsentMeta('vbSmsConsent','homepage-contact-voice');
-              fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/voicenote',{
+              fetch('https://tonystool.taild5f39d.ts.net/hooks/lead/voicenote',{
                 method:'POST',
                 headers:Object.assign({'Content-Type':'audio/webm','X-Phone':encodeURIComponent(ph),'X-Name':encodeURIComponent($('vbName').value.trim())},window.ptSmsConsentHeaders(smsMeta)),
                 body:blob
@@ -1139,7 +1139,7 @@
       };
 
       try {
-        const response = await fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/webform', {
+        const response = await fetch('https://tonystool.taild5f39d.ts.net/hooks/lead/webform', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -1218,7 +1218,7 @@
       smsConsentVersion: smsMeta.smsConsentVersion, smsConsentSource: smsMeta.smsConsentSource,
       smsConsentPage: smsMeta.smsConsentPage, smsConsentDisclosure: smsMeta.smsConsentDisclosure
     };
-    fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/webform', {
+    fetch('https://tonystool.taild5f39d.ts.net/hooks/lead/webform', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
     }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
@@ -1271,7 +1271,7 @@
     if (phone.length < 7) { stat('Put your phone number in first so Tony can call you back.'); return; }
     $('hvSend').disabled = true; stat('Sending...');
     var smsMeta = window.ptSmsConsentMeta('hvSmsConsent', 'homepage-hero-voice');
-    fetch('https://tonystool.tail68bd87.ts.net/hooks/lead/voicenote', {
+    fetch('https://tonystool.taild5f39d.ts.net/hooks/lead/voicenote', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': blob.type || 'audio/webm', 'X-Phone': phone, 'X-Name': ($('hvName').value || '').slice(0, 60) }, window.ptSmsConsentHeaders(smsMeta)),
       body: blob
@@ -1289,6 +1289,6 @@
   };
 })();
 </script>
-<script src="https://tonystool.tail68bd87.ts.net/chat/widget.js" defer></script>
+<script src="https://tonystool.taild5f39d.ts.net/chat/widget.js" defer></script>
 </body>
 </html>
