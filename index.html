@@ -1126,6 +1126,17 @@
       heroScroll.style.transform = 'translateX(-50%)';
     }
 
+    // Lead-POST fallback: if the tailnet endpoint doesn't respond, queue the lead locally
+    // and offer a manual path so it's never lost. Shared by both submit paths below.
+    window.ptQueuePendingLead = function (payload) {
+      try {
+        const q = JSON.parse(localStorage.getItem('pt_pending_leads') || '[]');
+        q.push(payload);
+        localStorage.setItem('pt_pending_leads', JSON.stringify(q));
+      } catch (e) {}
+    };
+    window.ptFallbackLine = 'Your request was saved — <a href="mailto:fixingfortmyers@gmail.com?subject=Repair request" style="color:inherit;text-decoration:underline">email Tony</a> or text <a href="sms:+12392714854" style="color:inherit;text-decoration:underline">(239) 271-4854</a>.';
+
     // Form submission via self-hosted lead webhook
     async function handleSubmit(e) {
       e.preventDefault();
@@ -1150,11 +1161,15 @@
       };
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
         const response = await fetch('https://tonystool.taild5f39d.ts.net/hooks/lead/webform', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
         const result = await response.json().catch(() => ({}));
         if (response.ok && result.ok === true) {
           form.outerHTML = '<div class="form-thankyou" style="text-align:center; padding:2rem 1rem;">' +
@@ -1165,12 +1180,13 @@
           throw new Error('bad response');
         }
       } catch(err) {
+        window.ptQueuePendingLead(payload);
         btn.textContent = 'Send Request';
         btn.disabled = false;
         if (msg) {
           msg.style.display = 'block';
           msg.style.color = 'var(--color-accent)';
-          msg.textContent = 'Something hiccupped - call or text Tony at (239) 271-4854';
+          msg.innerHTML = 'Something hiccupped - call or text Tony at (239) 271-4854. ' + window.ptFallbackLine;
         }
       }
     }
@@ -1229,20 +1245,25 @@
       smsConsentVersion: smsMeta.smsConsentVersion, smsConsentSource: smsMeta.smsConsentSource,
       smsConsentPage: smsMeta.smsConsentPage, smsConsentDisclosure: smsMeta.smsConsentDisclosure
     };
+    var hbController = new AbortController();
+    var hbTimeout = setTimeout(function () { hbController.abort(); }, 6000);
     fetch('https://tonystool.taild5f39d.ts.net/hooks/lead/webform', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: hbController.signal
+    }).then(function (r) { clearTimeout(hbTimeout); return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         if (res.ok && res.j.ok === true) {
           form.outerHTML = '<p style="text-align:center;padding:1rem 0;font-weight:700;color:var(--color-accent)">Thanks! ' + (smsMeta.smsConsent ? 'Tony will call or text you shortly.' : 'Tony will call you shortly. No text follow-up was requested.') + '</p>';
         } else {
+          window.ptQueuePendingLead(payload);
           btn.textContent = 'Send Request'; btn.disabled = false;
-          msg.textContent = 'Hiccup sending - try again or call (239) 271-4854.'; msg.style.display = 'block';
+          msg.innerHTML = 'Hiccup sending - try again or call (239) 271-4854. ' + window.ptFallbackLine; msg.style.display = 'block';
         }
       })
       .catch(function () {
+        clearTimeout(hbTimeout);
+        window.ptQueuePendingLead(payload);
         btn.textContent = 'Send Request'; btn.disabled = false;
-        msg.textContent = 'Hiccup sending - try again or call (239) 271-4854.'; msg.style.display = 'block';
+        msg.innerHTML = 'Hiccup sending - try again or call (239) 271-4854. ' + window.ptFallbackLine; msg.style.display = 'block';
       });
   };
 
