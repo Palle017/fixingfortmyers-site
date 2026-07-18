@@ -2,6 +2,20 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <!-- A/B instrumentation: invisible sticky 50/50 assignment, GA4 dataLayer events only — no visual test badge -->
+  <script>
+  (function(){
+    var v; try{v=localStorage.getItem('pt_ab_variant')}catch(e){}
+    if(v!=='A'&&v!=='B'){v=Math.random()<0.5?'A':'B';try{localStorage.setItem('pt_ab_variant',v)}catch(e){}}
+    window.dataLayer=window.dataLayer||[];
+    window.PT_AB={variant:v,track:function(ev,d){window.dataLayer.push(Object.assign({event:ev,variant:v,ts:Date.now()},d||{}))}};
+    window.PT_AB.track('pt_ab_assign');
+    var started=false;
+    document.addEventListener('focusin',function(e){
+      if(!started && e.target.closest('form')){started=true;window.PT_AB.track('pt_lead_start');}
+    });
+  })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="/favicon.ico" sizes="32x32" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -46,16 +60,15 @@
     "email": "fixingfortmyers@gmail.com",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "13037 Second St",
+      "streetAddress": "Bayshore Ranch",
       "addressLocality": "Fort Myers",
       "addressRegion": "FL",
-      "postalCode": "33905",
       "addressCountry": "US"
     },
     "geo": {
       "@type": "GeoCoordinates",
-      "latitude": 26.6406,
-      "longitude": -81.8723
+      "latitude": 26.7204,
+      "longitude": -81.7948
     },
     "openingHours": "Mo-Sa 07:00-19:00",
     "openingHoursSpecification": [
@@ -100,7 +113,7 @@
       ]
     },
     "sameAs": [
-      "https://www.facebook.com/PerfectTimingAutoRepair"
+      "https://www.facebook.com/profile.php?id=100084118269910"
     ]
   }
   </script>
@@ -111,7 +124,7 @@
   <nav class="nav" id="nav">
     <div class="container">
       <div class="nav__inner">
-        <a href="#" class="nav__logo">
+        <a href="/" class="nav__logo">
           <!-- SVG Lightning Bolt Logo Mark -->
           <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-label="Perfect Timing logo mark">
             <rect width="36" height="36" rx="6" fill="rgba(58,190,255,0.1)" stroke="rgba(58,190,255,0.3)" stroke-width="1"/>
@@ -153,76 +166,6 @@
     <div class="hero__bg"></div>
     <div class="hero__overlay"></div>
     <div class="hero__lightning"></div>
-
-    <!-- top-corner quick actions: booking form (left) + voice note (right) -->
-    <div class="hero-cta hero-cta--left" id="hbCard">
-      <button type="button" class="hero-cta__head" id="hbToggle" aria-expanded="false" aria-controls="hbBody">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
-        <span class="hero-cta__label">Book a Repair</span>
-        <span class="hero-cta__hint">tap to open</span>
-      </button>
-      <div class="hero-cta__body" id="hbBody">
-        <form id="hbForm" autocomplete="on">
-          <input type="text" name="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true" />
-          <input type="text" name="name" placeholder="Your Name" required />
-          <input type="tel" name="phone" placeholder="Phone (239) 555-0000" required />
-          <div class="sms-consent sms-consent--compact">
-            <label class="sms-consent__label" for="hbSmsConsent">
-              <input type="checkbox" id="hbSmsConsent" name="smsConsent" value="yes" aria-describedby="hbSmsConsentDetails" />
-              <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
-            </label>
-            <p class="sms-consent__details" id="hbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
-          </div>
-          <input type="text" name="vehicle" placeholder="Vehicle — 2019 Dodge Charger" required />
-          <select name="service">
-            <option value="">Select a Service</option>
-            <option>Diagnostics / Check Engine Light</option>
-            <option>A/C Repair</option>
-            <option>Brakes</option>
-            <option>Engine Repair</option>
-            <option>Transmission</option>
-            <option>Module Programming</option>
-            <option>Cooling System</option>
-            <option>Suspension / Steering</option>
-            <option>Battery / Electrical</option>
-            <option>Oil Change / Maintenance</option>
-            <option>Exhaust / Emissions</option>
-            <option>No-Start Diagnosis</option>
-            <option>Other</option>
-          </select>
-          <textarea name="message" rows="3" placeholder="What's going on? Symptoms, sounds, warning lights..."></textarea>
-          <button type="submit" class="btn btn--primary" style="width:100%;justify-content:center">Send Request</button>
-        </form>
-        <p id="hbMsg" style="display:none;margin-top:.6rem;color:var(--color-accent);font-weight:600;text-align:center"></p>
-      </div>
-    </div>
-
-    <div class="hero-cta hero-cta--right" id="hvCard">
-      <button type="button" class="hero-cta__head" id="hvToggle" aria-expanded="false" aria-controls="hvBody">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
-        <span class="hero-cta__label">Record for Tony</span>
-        <span class="hero-cta__hint">tap to talk</span>
-      </button>
-      <div class="hero-cta__body" id="hvBody">
-        <p style="font-size:var(--text-xs);color:#9a9aa4;margin:0 0 .5rem">Skip the typing — record what your ride is doing and Tony hears it directly. Under 60 seconds.</p>
-        <input type="tel" id="hvPhone" placeholder="Phone (required)" />
-        <div class="sms-consent sms-consent--compact">
-          <label class="sms-consent__label" for="hvSmsConsent">
-            <input type="checkbox" id="hvSmsConsent" value="yes" aria-describedby="hvSmsConsentDetails" />
-            <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
-          </label>
-          <p class="sms-consent__details" id="hvSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
-        </div>
-        <input type="text" id="hvName" placeholder="Your name (optional)" />
-        <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;flex-wrap:wrap">
-          <button type="button" id="hvRec" class="btn btn--outline" style="flex:1;justify-content:center">&#127908; Record</button>
-          <button type="button" id="hvSend" class="btn btn--primary" style="flex:1;justify-content:center;display:none">Send to Tony</button>
-        </div>
-        <span id="hvTimer" style="font-weight:700;color:var(--color-accent);font-size:var(--text-xs)"></span>
-        <audio id="hvPlay" controls style="display:none;width:100%;margin-top:.5rem;height:36px"></audio>
-        <p id="hvStat" style="display:none;margin-top:.5rem;color:var(--color-accent);font-weight:600;font-size:var(--text-xs);text-align:center"></p>
-      </div>
-    </div>
 
     <div class="hero__content container">
       <div class="reveal">
@@ -274,12 +217,6 @@
           <p class="section-sub reveal reveal-delay-2">
             A bigger shop, more equipment, and faster turnaround — with the same certified, honest, dealership-level service you already trust. Same team. Same commitment. More room to get you back on the road, quicker.
           </p>
-          <div class="announce__actions reveal reveal-delay-3">
-            <a href="#contact" class="btn btn--primary">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42a2 2 0 0 1 1.99-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.06-.78a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              Book a Repair
-            </a>
-          </div>
         </div>
       </div>
     </div>
@@ -594,7 +531,7 @@
       <div class="areas__header">
         <p class="section-label reveal">Where We Roll</p>
         <h2 class="section-title reveal reveal-delay-1">Service Area</h2>
-        <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto;">Our shop sits at 13037 Second St in the Tice area of east Fort Myers — minutes from North Fort Myers, Buckingham and Alva. Serving all of Southwest Florida, from Cape Coral to Naples, with shop-based, appointment-only auto repair.</p>
+        <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto;">Our shop sits at Bayshore Ranch in the Tice area of east Fort Myers — minutes from North Fort Myers, Buckingham and Alva. Serving all of Southwest Florida, from Cape Coral to Naples, with shop-based, appointment-only auto repair.</p>
       </div>
       <div class="areas__tags reveal reveal-delay-3">
         <span class="area-tag">Fort Myers</span>
@@ -816,6 +753,83 @@
 
   <!-- ============ CONTACT ============ -->
   <section class="contact" id="contact">
+    <!-- top-corner quick actions: booking form (left) + voice note (right) — relocated from hero, secondary to the chat bubble -->
+    <div class="hero-cta hero-cta--left" id="hbCard">
+      <button type="button" class="hero-cta__head" id="hbToggle" aria-expanded="false" aria-controls="hbBody">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+        <span class="hero-cta__label">Book a Repair</span>
+        <span class="hero-cta__hint">tap to open</span>
+      </button>
+      <div class="hero-cta__body" id="hbBody">
+        <form id="hbForm" autocomplete="on">
+          <input type="text" name="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true" />
+          <input type="text" name="name" placeholder="Your Name" required />
+          <input type="tel" name="phone" placeholder="Phone (239) 555-0000" required />
+          <input type="email" name="email" placeholder="Email (for your written estimate)" />
+          <div class="sms-consent sms-consent--compact">
+            <label class="sms-consent__label" for="hbSmsConsent">
+              <input type="checkbox" id="hbSmsConsent" name="smsConsent" value="yes" aria-describedby="hbSmsConsentDetails" />
+              <span>OK to text me about this repair (estimates, scheduling, updates) — <a href="#hbSmsConsentDetails" onclick="document.getElementById('hbSmsConsentDetails').open=true;return false">SMS terms</a>. Leave unchecked for call-only.</span>
+            </label>
+            <details class="sms-consent__details" id="hbSmsConsentDetails">
+              <summary>SMS Terms &amp; Conditions</summary>
+              Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.
+            </details>
+          </div>
+          <input type="text" name="vehicle" placeholder="Vehicle — 2019 Dodge Charger" required />
+          <select name="service">
+            <option value="">Select a Service</option>
+            <option>Diagnostics / Check Engine Light</option>
+            <option>A/C Repair</option>
+            <option>Brakes</option>
+            <option>Engine Repair</option>
+            <option>Transmission</option>
+            <option>Module Programming</option>
+            <option>Cooling System</option>
+            <option>Suspension / Steering</option>
+            <option>Battery / Electrical</option>
+            <option>Oil Change / Maintenance</option>
+            <option>Exhaust / Emissions</option>
+            <option>No-Start Diagnosis</option>
+            <option>Other</option>
+          </select>
+          <textarea name="message" rows="3" placeholder="What's going on? Symptoms, sounds, warning lights..."></textarea>
+          <button type="submit" class="btn btn--primary" style="width:100%;justify-content:center">Send Request</button>
+        </form>
+        <p id="hbMsg" style="display:none;margin-top:.6rem;color:var(--color-accent);font-weight:600;text-align:center"></p>
+      </div>
+    </div>
+
+    <div class="hero-cta hero-cta--right" id="hvCard">
+      <button type="button" class="hero-cta__head" id="hvToggle" aria-expanded="false" aria-controls="hvBody">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+        <span class="hero-cta__label">Record for Tony</span>
+        <span class="hero-cta__hint">tap to talk</span>
+      </button>
+      <div class="hero-cta__body" id="hvBody">
+        <p style="font-size:var(--text-xs);color:#9a9aa4;margin:0 0 .5rem">Skip the typing — record what your ride is doing and Tony hears it directly. Under 60 seconds.</p>
+        <input type="tel" id="hvPhone" placeholder="Phone (required)" />
+        <div class="sms-consent sms-consent--compact">
+          <label class="sms-consent__label" for="hvSmsConsent">
+            <input type="checkbox" id="hvSmsConsent" value="yes" aria-describedby="hvSmsConsentDetails" />
+            <span>OK to text me about this repair (estimates, scheduling, updates) — <a href="#hvSmsConsentDetails" onclick="document.getElementById('hvSmsConsentDetails').open=true;return false">SMS terms</a>. Leave unchecked for call-only.</span>
+          </label>
+          <details class="sms-consent__details" id="hvSmsConsentDetails">
+            <summary>SMS Terms &amp; Conditions</summary>
+            Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.
+          </details>
+        </div>
+        <input type="text" id="hvName" placeholder="Your name (optional)" />
+        <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;flex-wrap:wrap">
+          <button type="button" id="hvRec" class="btn btn--outline" style="flex:1;justify-content:center">&#127908; Record</button>
+          <button type="button" id="hvSend" class="btn btn--primary" style="flex:1;justify-content:center;display:none">Send to Tony</button>
+        </div>
+        <span id="hvTimer" style="font-weight:700;color:var(--color-accent);font-size:var(--text-xs)"></span>
+        <audio id="hvPlay" controls style="display:none;width:100%;margin-top:.5rem;height:36px"></audio>
+        <p id="hvStat" style="display:none;margin-top:.5rem;color:var(--color-accent);font-weight:600;font-size:var(--text-xs);text-align:center"></p>
+      </div>
+    </div>
+
     <div class="container">
       <div class="contact__grid">
         <div class="contact__info">
@@ -850,7 +864,7 @@
               </div>
               <div>
                 <div class="contact-detail__label">Location</div>
-                <div class="contact-detail__value"><a href="https://www.google.com/maps/search/?api=1&amp;query=Perfect+Timing+Auto+Repair+LLC+13037+Second+St+Fort+Myers+FL+33905" target="_blank" rel="noopener">13037 Second St, Fort Myers, FL 33905</a></div>
+                <div class="contact-detail__value"><a href="https://www.google.com/maps/search/?api=1&amp;query=Perfect+Timing+Auto+Repair+LLC+Bayshore+Ranch+Fort+Myers+FL" target="_blank" rel="noopener">Bayshore Ranch, Fort Myers, FL</a></div>
               </div>
             </div>
             <div class="contact-detail">
@@ -873,9 +887,12 @@
             <div class="sms-consent">
               <label class="sms-consent__label" for="vbSmsConsent">
                 <input type="checkbox" id="vbSmsConsent" value="yes" aria-describedby="vbSmsConsentDetails" />
-                <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
+                <span>OK to text me about this repair (estimates, scheduling, updates) — <a href="#vbSmsConsentDetails" onclick="document.getElementById('vbSmsConsentDetails').open=true;return false">SMS terms</a>. Leave unchecked for call-only.</span>
               </label>
-              <p class="sms-consent__details" id="vbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+              <details class="sms-consent__details" id="vbSmsConsentDetails">
+                <summary>SMS Terms &amp; Conditions</summary>
+                Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.
+              </details>
             </div>
             <div class="form-group"><input type="text" id="vbName" placeholder="Your name (optional)" /></div>
             <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
@@ -945,12 +962,19 @@
               <label for="phone">Phone Number</label>
               <input type="tel" id="phone" name="phone" placeholder="(239) 555-0000" required />
             </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" placeholder="Email (for your written estimate)" />
+            </div>
             <div class="sms-consent">
               <label class="sms-consent__label" for="bookingSmsConsent">
                 <input type="checkbox" id="bookingSmsConsent" name="smsConsent" value="yes" aria-describedby="bookingSmsConsentDetails" />
-                <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
+                <span>OK to text me about this repair (estimates, scheduling, updates) — <a href="#bookingSmsConsentDetails" onclick="document.getElementById('bookingSmsConsentDetails').open=true;return false">SMS terms</a>. Leave unchecked for call-only.</span>
               </label>
-              <p class="sms-consent__details" id="bookingSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+              <details class="sms-consent__details" id="bookingSmsConsentDetails">
+                <summary>SMS Terms &amp; Conditions</summary>
+                Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.
+              </details>
             </div>
             <div class="form-group">
               <label for="vehicle">Vehicle (Year / Make / Model)</label>
@@ -1005,10 +1029,10 @@
             Fort Myers' auto repair built on honesty, skill, and the belief that your time matters. Dealership quality. Personal service. Because timing is everything.
           </p>
           <div class="footer__social">
-            <a href="#" aria-label="Facebook">
+            <a href="https://www.facebook.com/profile.php?id=100084118269910" target="_blank" rel="noopener" aria-label="Facebook">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
             </a>
-            <a href="#" aria-label="Instagram">
+            <a href="https://bustnutsnotknuckles.com" target="_blank" rel="noopener" aria-label="Instagram">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
             </a>
           </div>
@@ -1038,7 +1062,7 @@
         </div>
       </div>
 
-      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · 13037 Second St, Fort Myers, FL 33905 · <a href="tel:+12392714854">(239) 271-4854</a> · Mon–Sat 7AM–7PM, By Appointment</p>
+      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · Bayshore Ranch, Fort Myers, FL · <a href="tel:+12392714854">(239) 271-4854</a> · Mon–Sat 7AM–7PM, By Appointment</p>
       <div class="footer__bottom">
         <p class="footer__copy">&copy; 2026 Perfect Timing Auto Repair LLC. All rights reserved.</p>
         <div class="footer__legal"><a href="/privacy-policy">Privacy Policy</a><a href="/sms-terms">SMS Terms &amp; Conditions</a></div>
@@ -1116,6 +1140,17 @@
       heroScroll.style.transform = 'translateX(-50%)';
     }
 
+    // Lead-POST fallback: if the tailnet endpoint doesn't respond, queue the lead locally
+    // and offer a manual path so it's never lost. Shared by both submit paths below.
+    window.ptQueuePendingLead = function (payload) {
+      try {
+        const q = JSON.parse(localStorage.getItem('pt_pending_leads') || '[]');
+        q.push(payload);
+        localStorage.setItem('pt_pending_leads', JSON.stringify(q));
+      } catch (e) {}
+    };
+    window.ptFallbackLine = 'Your request was saved — <a href="mailto:fixingfortmyers@gmail.com?subject=Repair request" style="color:inherit;text-decoration:underline">email Tony</a> or text <a href="sms:+12392714854" style="color:inherit;text-decoration:underline">(239) 271-4854</a>.';
+
     // Form submission via self-hosted lead webhook
     async function handleSubmit(e) {
       e.preventDefault();
@@ -1131,6 +1166,7 @@
       const payload = {
         name: form.name.value,
         phone: form.phone.value,
+        email: form.email.value,
         vehicle: form.vehicle.value,
         service: form.service.value,
         message: form.message.value,
@@ -1139,13 +1175,18 @@
       };
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
         const response = await fetch('https://tonystool.taild5f39d.ts.net/hooks/lead/webform', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
         const result = await response.json().catch(() => ({}));
         if (response.ok && result.ok === true) {
+          window.PT_AB && window.PT_AB.track('pt_lead_submit', { source: 'homepage-contact-form', service: payload.service });
           form.outerHTML = '<div class="form-thankyou" style="text-align:center; padding:2rem 1rem;">' +
             '<h3 style="color: var(--color-accent); margin-bottom: 0.5rem;">Thanks!</h3>' +
             '<p style="font-weight:600;">' + (smsMeta.smsConsent ? 'Tony will call or text you shortly.' : 'Tony will call you shortly. No text follow-up was requested.') + '</p>' +
@@ -1154,12 +1195,13 @@
           throw new Error('bad response');
         }
       } catch(err) {
+        window.ptQueuePendingLead(payload);
         btn.textContent = 'Send Request';
         btn.disabled = false;
         if (msg) {
           msg.style.display = 'block';
           msg.style.color = 'var(--color-accent)';
-          msg.textContent = 'Something hiccupped - call or text Tony at (239) 271-4854';
+          msg.innerHTML = 'Something hiccupped - call or text Tony at (239) 271-4854. ' + window.ptFallbackLine;
         }
       }
     }
@@ -1212,26 +1254,32 @@
     btn.textContent = 'Sending...'; btn.disabled = true; msg.style.display = 'none';
     var smsMeta = window.ptSmsConsentMeta('hbSmsConsent', 'homepage-hero-booking');
     var payload = {
-      name: form.name.value, phone: form.phone.value, vehicle: form.vehicle.value,
+      name: form.name.value, phone: form.phone.value, email: form.email.value, vehicle: form.vehicle.value,
       service: form.service.value, message: form.message.value, website: form.website.value,
       smsConsent: smsMeta.smsConsent, smsConsentTimestamp: smsMeta.smsConsentTimestamp,
       smsConsentVersion: smsMeta.smsConsentVersion, smsConsentSource: smsMeta.smsConsentSource,
       smsConsentPage: smsMeta.smsConsentPage, smsConsentDisclosure: smsMeta.smsConsentDisclosure
     };
+    var hbController = new AbortController();
+    var hbTimeout = setTimeout(function () { hbController.abort(); }, 6000);
     fetch('https://tonystool.taild5f39d.ts.net/hooks/lead/webform', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: hbController.signal
+    }).then(function (r) { clearTimeout(hbTimeout); return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         if (res.ok && res.j.ok === true) {
+          window.PT_AB && window.PT_AB.track('pt_lead_submit', { source: 'homepage-hero-booking', service: payload.service });
           form.outerHTML = '<p style="text-align:center;padding:1rem 0;font-weight:700;color:var(--color-accent)">Thanks! ' + (smsMeta.smsConsent ? 'Tony will call or text you shortly.' : 'Tony will call you shortly. No text follow-up was requested.') + '</p>';
         } else {
+          window.ptQueuePendingLead(payload);
           btn.textContent = 'Send Request'; btn.disabled = false;
-          msg.textContent = 'Hiccup sending - try again or call (239) 271-4854.'; msg.style.display = 'block';
+          msg.innerHTML = 'Hiccup sending - try again or call (239) 271-4854. ' + window.ptFallbackLine; msg.style.display = 'block';
         }
       })
       .catch(function () {
+        clearTimeout(hbTimeout);
+        window.ptQueuePendingLead(payload);
         btn.textContent = 'Send Request'; btn.disabled = false;
-        msg.textContent = 'Hiccup sending - try again or call (239) 271-4854.'; msg.style.display = 'block';
+        msg.innerHTML = 'Hiccup sending - try again or call (239) 271-4854. ' + window.ptFallbackLine; msg.style.display = 'block';
       });
   };
 
