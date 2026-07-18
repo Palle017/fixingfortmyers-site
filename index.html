@@ -758,6 +758,7 @@
           <input type="text" name="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true" />
           <input type="text" name="name" placeholder="Your Name" required />
           <input type="tel" name="phone" placeholder="Phone (239) 555-0000" required />
+          <input type="email" name="email" placeholder="Email (for your written estimate)" />
           <div class="sms-consent sms-consent--compact">
             <label class="sms-consent__label" for="hbSmsConsent">
               <input type="checkbox" id="hbSmsConsent" name="smsConsent" value="yes" aria-describedby="hbSmsConsentDetails" />
@@ -954,6 +955,10 @@
               <label for="phone">Phone Number</label>
               <input type="tel" id="phone" name="phone" placeholder="(239) 555-0000" required />
             </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" placeholder="Email (for your written estimate)" />
+            </div>
             <div class="sms-consent">
               <label class="sms-consent__label" for="bookingSmsConsent">
                 <input type="checkbox" id="bookingSmsConsent" name="smsConsent" value="yes" aria-describedby="bookingSmsConsentDetails" />
@@ -1143,6 +1148,7 @@
       const payload = {
         name: form.name.value,
         phone: form.phone.value,
+        email: form.email.value,
         vehicle: form.vehicle.value,
         service: form.service.value,
         message: form.message.value,
@@ -1224,7 +1230,7 @@
     btn.textContent = 'Sending...'; btn.disabled = true; msg.style.display = 'none';
     var smsMeta = window.ptSmsConsentMeta('hbSmsConsent', 'homepage-hero-booking');
     var payload = {
-      name: form.name.value, phone: form.phone.value, vehicle: form.vehicle.value,
+      name: form.name.value, phone: form.phone.value, email: form.email.value, vehicle: form.vehicle.value,
       service: form.service.value, message: form.message.value, website: form.website.value,
       smsConsent: smsMeta.smsConsent, smsConsentTimestamp: smsMeta.smsConsentTimestamp,
       smsConsentVersion: smsMeta.smsConsentVersion, smsConsentSource: smsMeta.smsConsentSource,
