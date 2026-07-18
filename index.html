@@ -2,6 +2,20 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <!-- A/B instrumentation: invisible sticky 50/50 assignment, GA4 dataLayer events only — no visual test badge -->
+  <script>
+  (function(){
+    var v; try{v=localStorage.getItem('pt_ab_variant')}catch(e){}
+    if(v!=='A'&&v!=='B'){v=Math.random()<0.5?'A':'B';try{localStorage.setItem('pt_ab_variant',v)}catch(e){}}
+    window.dataLayer=window.dataLayer||[];
+    window.PT_AB={variant:v,track:function(ev,d){window.dataLayer.push(Object.assign({event:ev,variant:v,ts:Date.now()},d||{}))}};
+    window.PT_AB.track('pt_ab_assign');
+    var started=false;
+    document.addEventListener('focusin',function(e){
+      if(!started && e.target.closest('form')){started=true;window.PT_AB.track('pt_lead_start');}
+    });
+  })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="/favicon.ico" sizes="32x32" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -1172,6 +1186,7 @@
         clearTimeout(timeoutId);
         const result = await response.json().catch(() => ({}));
         if (response.ok && result.ok === true) {
+          window.PT_AB && window.PT_AB.track('pt_lead_submit', { source: 'homepage-contact-form', service: payload.service });
           form.outerHTML = '<div class="form-thankyou" style="text-align:center; padding:2rem 1rem;">' +
             '<h3 style="color: var(--color-accent); margin-bottom: 0.5rem;">Thanks!</h3>' +
             '<p style="font-weight:600;">' + (smsMeta.smsConsent ? 'Tony will call or text you shortly.' : 'Tony will call you shortly. No text follow-up was requested.') + '</p>' +
@@ -1252,6 +1267,7 @@
     }).then(function (r) { clearTimeout(hbTimeout); return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         if (res.ok && res.j.ok === true) {
+          window.PT_AB && window.PT_AB.track('pt_lead_submit', { source: 'homepage-hero-booking', service: payload.service });
           form.outerHTML = '<p style="text-align:center;padding:1rem 0;font-weight:700;color:var(--color-accent)">Thanks! ' + (smsMeta.smsConsent ? 'Tony will call or text you shortly.' : 'Tony will call you shortly. No text follow-up was requested.') + '</p>';
         } else {
           window.ptQueuePendingLead(payload);
