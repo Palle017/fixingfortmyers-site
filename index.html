@@ -154,76 +154,6 @@
     <div class="hero__overlay"></div>
     <div class="hero__lightning"></div>
 
-    <!-- top-corner quick actions: booking form (left) + voice note (right) -->
-    <div class="hero-cta hero-cta--left" id="hbCard">
-      <button type="button" class="hero-cta__head" id="hbToggle" aria-expanded="false" aria-controls="hbBody">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
-        <span class="hero-cta__label">Book a Repair</span>
-        <span class="hero-cta__hint">tap to open</span>
-      </button>
-      <div class="hero-cta__body" id="hbBody">
-        <form id="hbForm" autocomplete="on">
-          <input type="text" name="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true" />
-          <input type="text" name="name" placeholder="Your Name" required />
-          <input type="tel" name="phone" placeholder="Phone (239) 555-0000" required />
-          <div class="sms-consent sms-consent--compact">
-            <label class="sms-consent__label" for="hbSmsConsent">
-              <input type="checkbox" id="hbSmsConsent" name="smsConsent" value="yes" aria-describedby="hbSmsConsentDetails" />
-              <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
-            </label>
-            <p class="sms-consent__details" id="hbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
-          </div>
-          <input type="text" name="vehicle" placeholder="Vehicle — 2019 Dodge Charger" required />
-          <select name="service">
-            <option value="">Select a Service</option>
-            <option>Diagnostics / Check Engine Light</option>
-            <option>A/C Repair</option>
-            <option>Brakes</option>
-            <option>Engine Repair</option>
-            <option>Transmission</option>
-            <option>Module Programming</option>
-            <option>Cooling System</option>
-            <option>Suspension / Steering</option>
-            <option>Battery / Electrical</option>
-            <option>Oil Change / Maintenance</option>
-            <option>Exhaust / Emissions</option>
-            <option>No-Start Diagnosis</option>
-            <option>Other</option>
-          </select>
-          <textarea name="message" rows="3" placeholder="What's going on? Symptoms, sounds, warning lights..."></textarea>
-          <button type="submit" class="btn btn--primary" style="width:100%;justify-content:center">Send Request</button>
-        </form>
-        <p id="hbMsg" style="display:none;margin-top:.6rem;color:var(--color-accent);font-weight:600;text-align:center"></p>
-      </div>
-    </div>
-
-    <div class="hero-cta hero-cta--right" id="hvCard">
-      <button type="button" class="hero-cta__head" id="hvToggle" aria-expanded="false" aria-controls="hvBody">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
-        <span class="hero-cta__label">Record for Tony</span>
-        <span class="hero-cta__hint">tap to talk</span>
-      </button>
-      <div class="hero-cta__body" id="hvBody">
-        <p style="font-size:var(--text-xs);color:#9a9aa4;margin:0 0 .5rem">Skip the typing — record what your ride is doing and Tony hears it directly. Under 60 seconds.</p>
-        <input type="tel" id="hvPhone" placeholder="Phone (required)" />
-        <div class="sms-consent sms-consent--compact">
-          <label class="sms-consent__label" for="hvSmsConsent">
-            <input type="checkbox" id="hvSmsConsent" value="yes" aria-describedby="hvSmsConsentDetails" />
-            <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
-          </label>
-          <p class="sms-consent__details" id="hvSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
-        </div>
-        <input type="text" id="hvName" placeholder="Your name (optional)" />
-        <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;flex-wrap:wrap">
-          <button type="button" id="hvRec" class="btn btn--outline" style="flex:1;justify-content:center">&#127908; Record</button>
-          <button type="button" id="hvSend" class="btn btn--primary" style="flex:1;justify-content:center;display:none">Send to Tony</button>
-        </div>
-        <span id="hvTimer" style="font-weight:700;color:var(--color-accent);font-size:var(--text-xs)"></span>
-        <audio id="hvPlay" controls style="display:none;width:100%;margin-top:.5rem;height:36px"></audio>
-        <p id="hvStat" style="display:none;margin-top:.5rem;color:var(--color-accent);font-weight:600;font-size:var(--text-xs);text-align:center"></p>
-      </div>
-    </div>
-
     <div class="hero__content container">
       <div class="reveal">
         <div class="hero__powered">
@@ -816,6 +746,76 @@
 
   <!-- ============ CONTACT ============ -->
   <section class="contact" id="contact">
+    <!-- top-corner quick actions: booking form (left) + voice note (right) — relocated from hero, secondary to the chat bubble -->
+    <div class="hero-cta hero-cta--left" id="hbCard">
+      <button type="button" class="hero-cta__head" id="hbToggle" aria-expanded="false" aria-controls="hbBody">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+        <span class="hero-cta__label">Book a Repair</span>
+        <span class="hero-cta__hint">tap to open</span>
+      </button>
+      <div class="hero-cta__body" id="hbBody">
+        <form id="hbForm" autocomplete="on">
+          <input type="text" name="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true" />
+          <input type="text" name="name" placeholder="Your Name" required />
+          <input type="tel" name="phone" placeholder="Phone (239) 555-0000" required />
+          <div class="sms-consent sms-consent--compact">
+            <label class="sms-consent__label" for="hbSmsConsent">
+              <input type="checkbox" id="hbSmsConsent" name="smsConsent" value="yes" aria-describedby="hbSmsConsentDetails" />
+              <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
+            </label>
+            <p class="sms-consent__details" id="hbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+          </div>
+          <input type="text" name="vehicle" placeholder="Vehicle — 2019 Dodge Charger" required />
+          <select name="service">
+            <option value="">Select a Service</option>
+            <option>Diagnostics / Check Engine Light</option>
+            <option>A/C Repair</option>
+            <option>Brakes</option>
+            <option>Engine Repair</option>
+            <option>Transmission</option>
+            <option>Module Programming</option>
+            <option>Cooling System</option>
+            <option>Suspension / Steering</option>
+            <option>Battery / Electrical</option>
+            <option>Oil Change / Maintenance</option>
+            <option>Exhaust / Emissions</option>
+            <option>No-Start Diagnosis</option>
+            <option>Other</option>
+          </select>
+          <textarea name="message" rows="3" placeholder="What's going on? Symptoms, sounds, warning lights..."></textarea>
+          <button type="submit" class="btn btn--primary" style="width:100%;justify-content:center">Send Request</button>
+        </form>
+        <p id="hbMsg" style="display:none;margin-top:.6rem;color:var(--color-accent);font-weight:600;text-align:center"></p>
+      </div>
+    </div>
+
+    <div class="hero-cta hero-cta--right" id="hvCard">
+      <button type="button" class="hero-cta__head" id="hvToggle" aria-expanded="false" aria-controls="hvBody">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+        <span class="hero-cta__label">Record for Tony</span>
+        <span class="hero-cta__hint">tap to talk</span>
+      </button>
+      <div class="hero-cta__body" id="hvBody">
+        <p style="font-size:var(--text-xs);color:#9a9aa4;margin:0 0 .5rem">Skip the typing — record what your ride is doing and Tony hears it directly. Under 60 seconds.</p>
+        <input type="tel" id="hvPhone" placeholder="Phone (required)" />
+        <div class="sms-consent sms-consent--compact">
+          <label class="sms-consent__label" for="hvSmsConsent">
+            <input type="checkbox" id="hvSmsConsent" value="yes" aria-describedby="hvSmsConsentDetails" />
+            <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
+          </label>
+          <p class="sms-consent__details" id="hvSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+        </div>
+        <input type="text" id="hvName" placeholder="Your name (optional)" />
+        <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;flex-wrap:wrap">
+          <button type="button" id="hvRec" class="btn btn--outline" style="flex:1;justify-content:center">&#127908; Record</button>
+          <button type="button" id="hvSend" class="btn btn--primary" style="flex:1;justify-content:center;display:none">Send to Tony</button>
+        </div>
+        <span id="hvTimer" style="font-weight:700;color:var(--color-accent);font-size:var(--text-xs)"></span>
+        <audio id="hvPlay" controls style="display:none;width:100%;margin-top:.5rem;height:36px"></audio>
+        <p id="hvStat" style="display:none;margin-top:.5rem;color:var(--color-accent);font-weight:600;font-size:var(--text-xs);text-align:center"></p>
+      </div>
+    </div>
+
     <div class="container">
       <div class="contact__grid">
         <div class="contact__info">
