@@ -31,63 +31,96 @@
     <link rel="preload" as="image" href="./assets/banger.webp" fetchpriority="high" media="(min-width: 641px)" />
   <link rel="preload" as="image" href="./assets/banger-mobile.webp" fetchpriority="high" media="(max-width: 640px)" />
   <link rel="stylesheet" href="./base.css" />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css?v=20260727a" />
   <link rel="stylesheet" href="./service-pages.css" />
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@type": "AutoRepair",
-  "@id": "https://fixingfortmyers.com/#business",
-  "name": "Perfect Timing Auto Repair LLC",
-  "url": "https://fixingfortmyers.com/auto-repair-lehigh-acres",
-  "telephone": "+12392714854",
-  "email": "fixingfortmyers@gmail.com",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "13037 Second St",
-    "addressLocality": "Fort Myers",
-    "addressRegion": "FL",
-    "postalCode": "33905",
-    "addressCountry": "US"
-  },
-  "areaServed": [
-    "Fort Myers",
-    "Cape Coral",
-    "Lehigh Acres",
-    "Bonita Springs",
-    "Estero",
-    "Naples",
-    "Fort Myers Beach"
-  ],
-  "priceRange": "$$",
-  "description": "Auto repair for Lehigh Acres drivers — about 15 minutes west on SR 82. Diesel, no-starts, brakes, AC. Concierge pickup and return available.",
-  "geo": {"@type": "GeoCoordinates", "latitude": 26.6406, "longitude": -81.8723},
-    "openingHoursSpecification": {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], "opens": "07:00", "closes": "19:00"},
-    "sameAs": ["https://www.facebook.com/PerfectTimingAutoRepair"],
-    "hasOfferCatalog": {
-    "@type": "OfferCatalog",
-    "name": "Auto Repair for Lehigh Acres, FL",
-    "itemListElement": [
+    "@context": "https://schema.org",
+    "@graph": [
       {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "Auto Repair for Lehigh Acres Drivers"
+        "@type": "AutoRepair",
+        "@id": "https://fixingfortmyers.com/#business",
+        "name": "Perfect Timing Auto Repair LLC",
+        "url": "https://fixingfortmyers.com/",
+        "telephone": "+12392714854",
+        "email": "fixingfortmyers@gmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "13037 Second St",
+          "addressLocality": "Fort Myers",
+          "addressRegion": "FL",
+          "postalCode": "33905",
+          "addressCountry": "US"
+        },
+        "sameAs": [
+          "https://www.facebook.com/PerfectTimingAutoRepair",
+          "https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b",
+          "https://www.yelp.com/biz/perfect-timing-auto-repair-fort-myers",
+          "https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208",
+          "https://nextdoor.com/pages/perfect-timing-auto-repair-llc/",
+          "https://www.mapquest.com/us/florida/perfect-timing-auto-repair-654909882",
+          "https://maps.roadtrippers.com/us/fort-myers-fl/services/perfect-timing-auto-repair-fort-myers"
+        ]
+      },
+      {
+        "@type": "Service",
+        "@id": "https://fixingfortmyers.com/auto-repair-lehigh-acres#service",
+        "name": "Auto Repair for Lehigh Acres Drivers",
+        "serviceType": "Auto Repair for Lehigh Acres Drivers",
+        "description": "Auto repair for Lehigh Acres drivers — about 15 minutes west on SR 82. Diesel, no-starts, brakes, AC. Concierge pickup and return available.",
+        "url": "https://fixingfortmyers.com/auto-repair-lehigh-acres",
+        "provider": {
+          "@id": "https://fixingfortmyers.com/#business"
+        },
+        "areaServed": [
+          {
+            "@type": "City",
+            "name": "Fort Myers"
+          },
+          {
+            "@type": "City",
+            "name": "Cape Coral"
+          },
+          {
+            "@type": "City",
+            "name": "Lehigh Acres"
+          },
+          {
+            "@type": "City",
+            "name": "North Fort Myers"
+          }
+        ],
+        "mainEntityOfPage": {
+          "@id": "https://fixingfortmyers.com/auto-repair-lehigh-acres#webpage"
         }
       },
       {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "Concierge Vehicle Pickup and Return — Lehigh Acres"
+        "@type": "WebPage",
+        "@id": "https://fixingfortmyers.com/auto-repair-lehigh-acres#webpage",
+        "url": "https://fixingfortmyers.com/auto-repair-lehigh-acres",
+        "name": "Auto Repair for Lehigh Acres Drivers",
+        "description": "Auto repair for Lehigh Acres drivers — about 15 minutes west on SR 82. Diesel, no-starts, brakes, AC. Concierge pickup and return available.",
+        "isPartOf": {
+          "@id": "https://fixingfortmyers.com/#website"
+        },
+        "about": {
+          "@id": "https://fixingfortmyers.com/auto-repair-lehigh-acres#service"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://fixingfortmyers.com/#website",
+        "url": "https://fixingfortmyers.com/",
+        "name": "Perfect Timing Auto Repair",
+        "publisher": {
+          "@id": "https://fixingfortmyers.com/#business"
         }
       }
     ]
   }
-}
   </script>
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How far is Perfect Timing from Lehigh Acres?","acceptedAnswer":{"@type":"Answer","text":"About 15 minutes for most of Lehigh — a straight run west on the SR 82 corridor into the Tice area of east Fort Myers. The shop is at 13037 Second St, just off Palm Beach Blvd, closer to Lehigh than the dealer rows on US-41."}},{"@type":"Question","name":"Do you offer pickup and delivery in Lehigh Acres?","acceptedAnswer":{"@type":"Answer","text":"Yes. Concierge pickup and return is available as a paid add-on. Tony collects your vehicle in Lehigh Acres, does the work at the shop, and brings it back when it is done."}},{"@type":"Question","name":"Can you handle diesel trucks from Lehigh Acres?","acceptedAnswer":{"@type":"Answer","text":"Yes. Diesel diagnostics, hard-starts, and no-starts are core work here. Book an appointment and bring the truck in — or have it picked up."}},{"@type":"Question","name":"Is it worth driving from Lehigh Acres to Fort Myers for repairs?","acceptedAnswer":{"@type":"Answer","text":"The shop sits on Lehigh's side of Fort Myers, so the drive is short — and you deal directly with the certified mechanic doing the work, not a service advisor reading from a screen."}}]}
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How far is Perfect Timing from Lehigh Acres?","acceptedAnswer":{"@type":"Answer","text":"About 15 minutes for most of Lehigh — a straight run west on the SR 82 corridor into the Tice area of east Fort Myers. The shop is at 13037 Second St, just off Palm Beach Blvd, closer to Lehigh than the dealer rows on US-41."}},{"@type":"Question","name":"Do you offer pickup and delivery in Lehigh Acres?","acceptedAnswer":{"@type":"Answer","text":"Yes. Concierge pickup and return is available as a paid add-on. Our team coordinates pickup in Lehigh Acres, repairs the vehicle at the shop, and brings it back when it is done."}},{"@type":"Question","name":"Can you handle diesel trucks from Lehigh Acres?","acceptedAnswer":{"@type":"Answer","text":"Yes. Diesel diagnostics, hard-starts, and no-starts are core work here. Book an appointment and bring the truck in — or have it picked up."}},{"@type":"Question","name":"Is it worth driving from Lehigh Acres to Fort Myers for repairs?","acceptedAnswer":{"@type":"Answer","text":"The shop sits on Lehigh's side of Fort Myers, so the drive is short — and you communicate directly with our repair team, not a service advisor reading from a screen."}}]}
   </script>
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://fixingfortmyers.com/"},{"@type":"ListItem","position":2,"name":"Lehigh Acres Auto Repair","item":"https://fixingfortmyers.com/auto-repair-lehigh-acres"}]}
@@ -100,14 +133,13 @@
     <div class="container">
       <div class="nav__inner">
         <a href="/" class="nav__logo">
-          <!-- SVG Lightning Bolt Logo Mark -->
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-label="Perfect Timing logo mark">
-            <rect width="36" height="36" rx="6" fill="rgba(58,190,255,0.1)" stroke="rgba(58,190,255,0.3)" stroke-width="1"/>
-            <polygon points="20,4 10,20 17,20 16,32 26,16 19,16" fill="#3ABEFF"/>
-          </svg>
+          <img class="nav__logo-mark" src="./assets/nav-pt-logo.webp" width="58" height="58" alt="Perfect Timing Auto Repair logo" />
           <div class="nav__logo-text">
-            <span class="nav__logo-main">Perfect Timing</span>
-            <span class="nav__logo-sub">BANG Industries</span>
+            <span class="nav__logo-main">
+              <span class="nav__logo-perfect">Perfect</span>
+              <span class="nav__logo-timing">Timing</span>
+            </span>
+            <span class="nav__logo-sub">Auto Repair <b>•</b> Fort Myers</span>
           </div>
         </a>
 
@@ -145,16 +177,16 @@
       <div class="reveal">
         <p class="service-hero__eyebrow">Practically Neighbors</p>
         <h1 class="service-hero__title">Auto Repair &amp; Mechanic for Lehigh Acres</h1>
-        <p class="service-hero__desc">Perfect Timing Auto Repair sits in the Tice area of east Fort Myers — a straight run west from Lehigh Acres along the SR 82 corridor, about 15 minutes for most of you. That's closer than the dealer rows on US-41, and here you talk to the certified mechanic who actually turns the wrenches.</p>
+        <p class="service-hero__desc">Perfect Timing Auto Repair sits in the Tice area of east Fort Myers — a straight run west from Lehigh Acres along the SR 82 corridor, about 15 minutes for most of you. That's closer than the dealer rows on US-41, and here you talk directly with the repair team turning the wrenches.</p>
         <div class="service-hero__actions">
           <a href="/#contact" class="btn btn--primary">Book An Appointment</a>
-          <a href="tel:+12392714854" class="btn btn--outline">Call Tony</a>
+          <a href="tel:+12392714854" class="btn btn--outline">Call Our Team</a>
         </div>
       </div>
       <div class="service-hero__aside reveal reveal-delay-1">
         <div class="service-hero__card-label">Lehigh Acres</div>
         <p class="section-sub" style="margin:0; max-width: none;">
-          By appointment only, Mon–Sat 7am–7pm. One certified mechanic. Straight answers before any parts go on.
+          By appointment only, Mon–Sat 7am–7pm. An owner-led repair team. Straight answers before any parts go on.
         </p>
         <div class="service-hero__stats">
           <div class="service-hero__stat">
@@ -171,7 +203,7 @@
           </div>
           <div class="service-hero__stat">
             <strong>Direct</strong>
-            <span>You work with Tony</span>
+            <span>You work with our repair team</span>
           </div>
         </div>
       </div>
@@ -183,7 +215,7 @@
       <div class="trust-bar__inner">
         <div class="trust-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Certified Mechanic
+          Tony&#39;s Final Review
         </div>
         <div class="trust-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -216,7 +248,7 @@
           <div class="service-panel reveal reveal-delay-2">
             <h3>What You Get For The Drive</h3>
             <ul class="service-list">
-              <li>The certified mechanic on the phone, not a service advisor</li>
+              <li>Direct access to our repair team, not a service advisor</li>
               <li>Appointment-based scheduling — your slot is your slot</li>
               <li>Diagnosis and testing before anything gets replaced</li>
               <li>Plain-English explanations and upfront pricing</li>
@@ -261,13 +293,13 @@
             <p class="section-label">The Distance Killer</p>
             <h2 class="section-title" style="font-size: var(--text-2xl);">Can't Spare The Trip? Concierge Pickup &amp; Return</h2>
             <p class="section-sub" style="max-width:none; margin:0 0 1rem;">
-              Working a full day, one vehicle in the household, or just no time to sit around a shop? Concierge pickup and return is a paid add-on that solves the distance question completely: Tony picks your vehicle up in Lehigh Acres, does the work at the shop with real equipment, and brings it back when it's done. This is not mobile mechanic work in your driveway — the repair happens in the bay where it should — but the driving gets handled for you.
+              Working a full day, one vehicle in the household, or just no time to sit around a shop? Concierge pickup and return is a paid add-on that solves the distance question completely: Our team coordinates pickup in Lehigh Acres, repairs the vehicle at the shop with real equipment, and brings it back when it's done. This is not mobile mechanic work in your driveway — the repair happens in the bay where it should — but the driving gets handled for you.
             </p>
             <div class="service-quote">You keep your day. The truck gets fixed. The only thing you skip is the drive.</div>
           </div>
           <div class="service-panel reveal reveal-delay-1">
             <p class="section-label">Book It</p>
-            <h2 class="section-title" style="font-size: var(--text-2xl);">Schedule With Tony</h2>
+            <h2 class="section-title" style="font-size: var(--text-2xl);">Schedule With Our Team</h2>
             <div class="service-cta-box">
               <div class="contact-detail">
                 <div class="contact-detail__icon">
@@ -314,7 +346,7 @@
           </div>
 <div class="faq-item reveal">
             <h3>Do you offer pickup and delivery in Lehigh Acres?</h3>
-            <p>Yes. Concierge pickup and return is available as a paid add-on. Tony collects your vehicle in Lehigh Acres, does the work at the shop, and brings it back when it is done.</p>
+            <p>Yes. Concierge pickup and return is available as a paid add-on. Our team coordinates pickup in Lehigh Acres, repairs the vehicle at the shop, and brings it back when it is done.</p>
           </div>
 <div class="faq-item reveal">
             <h3>Can you handle diesel trucks from Lehigh Acres?</h3>
@@ -322,7 +354,7 @@
           </div>
 <div class="faq-item reveal">
             <h3>Is it worth driving from Lehigh Acres to Fort Myers for repairs?</h3>
-            <p>The shop sits on Lehigh's side of Fort Myers, so the drive is short — and you deal directly with the certified mechanic doing the work, not a service advisor reading from a screen.</p>
+            <p>The shop sits on Lehigh's side of Fort Myers, so the drive is short — and you communicate directly with our repair team, not a service advisor reading from a screen.</p>
           </div>
         </div>
       </div>
@@ -403,7 +435,9 @@
         <div>
           <div class="footer__col-title">Company</div>
           <ul class="footer__links" role="list">
-            <li><a href="/#about">About Tony</a></li>
+            <li><a href="/#about">Meet the Team</a></li>
+            <li><a href="/about-perfect-timing">Verified Shop Facts</a></li>
+            <li><a href="/case-studies">Repair Case Studies</a></li>
             <li><a href="/#areas">Service Area</a></li>
             <li><a href="/#testimonials">Reviews</a></li>
             <li><a href="/#bang">BANG Gear</a></li>

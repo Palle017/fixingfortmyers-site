@@ -32,56 +32,96 @@
     <link rel="preload" as="image" href="./assets/banger.webp" fetchpriority="high" media="(min-width: 641px)" />
   <link rel="preload" as="image" href="./assets/banger-mobile.webp" fetchpriority="high" media="(max-width: 640px)" />
   <link rel="stylesheet" href="./base.css" />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css?v=20260727a" />
   <link rel="stylesheet" href="./service-pages.css" />
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@type": "AutoRepair",
-  "@id": "https://fixingfortmyers.com/#business",
-  "name": "Perfect Timing Auto Repair LLC",
-  "url": "https://fixingfortmyers.com/oil-change-fort-myers",
-  "telephone": "+12392714854",
-  "email": "fixingfortmyers@gmail.com",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "13037 Second St",
-    "addressLocality": "Fort Myers",
-    "addressRegion": "FL",
-    "postalCode": "33905",
-    "addressCountry": "US"
-  },
-  "areaServed": [
-    "Fort Myers",
-    "Cape Coral",
-    "Lehigh Acres",
-    "Bonita Springs",
-    "Estero",
-    "Naples",
-    "Fort Myers Beach"
-  ],
-  "priceRange": "$$",
-  "description": "Oil change in Fort Myers by appointment. Conventional or full synthetic, correct spec for your engine, and a real inspection with every service.",
-  "geo": {"@type": "GeoCoordinates", "latitude": 26.6406, "longitude": -81.8723},
-    "openingHoursSpecification": {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], "opens": "07:00", "closes": "19:00"},
-    "sameAs": ["https://www.facebook.com/PerfectTimingAutoRepair"],
-    "hasOfferCatalog": {
-    "@type": "OfferCatalog",
-    "name": "Oil Change in Fort Myers, FL",
-    "itemListElement": [
+    "@context": "https://schema.org",
+    "@graph": [
       {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "Oil Change in Fort Myers, FL"
+        "@type": "AutoRepair",
+        "@id": "https://fixingfortmyers.com/#business",
+        "name": "Perfect Timing Auto Repair LLC",
+        "url": "https://fixingfortmyers.com/",
+        "telephone": "+12392714854",
+        "email": "fixingfortmyers@gmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "13037 Second St",
+          "addressLocality": "Fort Myers",
+          "addressRegion": "FL",
+          "postalCode": "33905",
+          "addressCountry": "US"
+        },
+        "sameAs": [
+          "https://www.facebook.com/PerfectTimingAutoRepair",
+          "https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b",
+          "https://www.yelp.com/biz/perfect-timing-auto-repair-fort-myers",
+          "https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208",
+          "https://nextdoor.com/pages/perfect-timing-auto-repair-llc/",
+          "https://www.mapquest.com/us/florida/perfect-timing-auto-repair-654909882",
+          "https://maps.roadtrippers.com/us/fort-myers-fl/services/perfect-timing-auto-repair-fort-myers"
+        ]
+      },
+      {
+        "@type": "Service",
+        "@id": "https://fixingfortmyers.com/oil-change-fort-myers#service",
+        "name": "Oil Change in Fort Myers, FL",
+        "serviceType": "Oil Change in Fort Myers, FL",
+        "description": "Oil change in Fort Myers by appointment. Conventional or full synthetic, correct spec for your engine, and a real inspection with every service.",
+        "url": "https://fixingfortmyers.com/oil-change-fort-myers",
+        "provider": {
+          "@id": "https://fixingfortmyers.com/#business"
+        },
+        "areaServed": [
+          {
+            "@type": "City",
+            "name": "Fort Myers"
+          },
+          {
+            "@type": "City",
+            "name": "Cape Coral"
+          },
+          {
+            "@type": "City",
+            "name": "Lehigh Acres"
+          },
+          {
+            "@type": "City",
+            "name": "North Fort Myers"
+          }
+        ],
+        "mainEntityOfPage": {
+          "@id": "https://fixingfortmyers.com/oil-change-fort-myers#webpage"
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://fixingfortmyers.com/oil-change-fort-myers#webpage",
+        "url": "https://fixingfortmyers.com/oil-change-fort-myers",
+        "name": "Oil Change in Fort Myers, FL",
+        "description": "Oil change in Fort Myers by appointment. Conventional or full synthetic, correct spec for your engine, and a real inspection with every service.",
+        "isPartOf": {
+          "@id": "https://fixingfortmyers.com/#website"
+        },
+        "about": {
+          "@id": "https://fixingfortmyers.com/oil-change-fort-myers#service"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://fixingfortmyers.com/#website",
+        "url": "https://fixingfortmyers.com/",
+        "name": "Perfect Timing Auto Repair",
+        "publisher": {
+          "@id": "https://fixingfortmyers.com/#business"
         }
       }
     ]
   }
-}
   </script>
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Should I use conventional or full synthetic oil?","acceptedAnswer":{"@type":"Answer","text":"Your owner's manual decides. Many modern engines, especially turbocharged ones, require full synthetic. If conventional meets your engine's spec and you keep up with shorter intervals, it is a legitimate choice. Tony will tell you which one your engine actually calls for."}},{"@type":"Question","name":"How often should I change my oil in Florida?","acceptedAnswer":{"@type":"Answer","text":"Follow your owner's manual, and lean toward its severe-service interval. Constant heat, short trips, and stop-and-go traffic age oil faster than highway miles do, and that describes most driving around Fort Myers."}},{"@type":"Question","name":"Do you reset the oil life monitor?","acceptedAnswer":{"@type":"Answer","text":"Yes, it gets reset with every service. Keep in mind the monitor estimates oil life from your driving patterns. It does not actually measure the oil, so the dipstick is still worth checking between services."}},{"@type":"Question","name":"What gets inspected during an oil service?","acceptedAnswer":{"@type":"Answer","text":"While the vehicle is up, Tony looks over belts, hoses, fluid levels, battery terminals, and tire condition, and checks underneath for leaks. It is a real look-over by a certified mechanic, not a checkbox."}},{"@type":"Question","name":"I'm not close to the shop. Do I have to drive over?","acceptedAnswer":{"@type":"Answer","text":"The shop is in the Tice area of east Fort Myers, minutes from North Fort Myers, Buckingham, and Alva. If the drive does not work for you, concierge vehicle pickup and return is available as a paid add-on."}}]}
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Should I use conventional or full synthetic oil?","acceptedAnswer":{"@type":"Answer","text":"Your owner's manual decides. Many modern engines, especially turbocharged ones, require full synthetic. If conventional meets your engine's spec and you keep up with shorter intervals, it is a legitimate choice. Our team will confirm which one your engine actually calls for."}},{"@type":"Question","name":"How often should I change my oil in Florida?","acceptedAnswer":{"@type":"Answer","text":"Follow your owner's manual, and lean toward its severe-service interval. Constant heat, short trips, and stop-and-go traffic age oil faster than highway miles do, and that describes most driving around Fort Myers."}},{"@type":"Question","name":"Do you reset the oil life monitor?","acceptedAnswer":{"@type":"Answer","text":"Yes, it gets reset with every service. Keep in mind the monitor estimates oil life from your driving patterns. It does not actually measure the oil, so the dipstick is still worth checking between services."}},{"@type":"Question","name":"What gets inspected during an oil service?","acceptedAnswer":{"@type":"Answer","text":"While the vehicle is up, our mechanics inspect belts, hoses, fluid levels, battery terminals, tire condition, and the underside for leaks. Tony includes the vehicle in his final review before it leaves."}},{"@type":"Question","name":"I'm not close to the shop. Do I have to drive over?","acceptedAnswer":{"@type":"Answer","text":"The shop is in the Tice area of east Fort Myers, minutes from North Fort Myers, Buckingham, and Alva. If the drive does not work for you, concierge vehicle pickup and return is available as a paid add-on."}}]}
   </script>
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://fixingfortmyers.com/"},{"@type":"ListItem","position":2,"name":"Oil Change in Fort Myers, FL","item":"https://fixingfortmyers.com/oil-change-fort-myers"}]}
@@ -94,14 +134,13 @@
     <div class="container">
       <div class="nav__inner">
         <a href="/" class="nav__logo">
-          <!-- SVG Lightning Bolt Logo Mark -->
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-label="Perfect Timing logo mark">
-            <rect width="36" height="36" rx="6" fill="rgba(58,190,255,0.1)" stroke="rgba(58,190,255,0.3)" stroke-width="1"/>
-            <polygon points="20,4 10,20 17,20 16,32 26,16 19,16" fill="#3ABEFF"/>
-          </svg>
+          <img class="nav__logo-mark" src="./assets/nav-pt-logo.webp" width="58" height="58" alt="Perfect Timing Auto Repair logo" />
           <div class="nav__logo-text">
-            <span class="nav__logo-main">Perfect Timing</span>
-            <span class="nav__logo-sub">BANG Industries</span>
+            <span class="nav__logo-main">
+              <span class="nav__logo-perfect">Perfect</span>
+              <span class="nav__logo-timing">Timing</span>
+            </span>
+            <span class="nav__logo-sub">Auto Repair <b>•</b> Fort Myers</span>
           </div>
         </a>
 
@@ -142,18 +181,18 @@
         <p class="service-hero__desc">Fresh oil is the cheapest engine protection there is — skipping it is the most expensive mistake. Perfect Timing Auto Repair LLC handles Fort Myers oil changes by appointment: correct spec oil, a real inspection, and no waiting-room lottery.</p>
         <div class="service-hero__actions">
           <a href="/#contact" class="btn btn--primary">Book This Service</a>
-          <a href="tel:+12392714854" class="btn btn--outline">Call Tony</a>
+          <a href="tel:+12392714854" class="btn btn--outline">Call Our Team</a>
         </div>
       </div>
       <div class="service-hero__aside reveal reveal-delay-1">
         <div class="service-hero__card-label">Oil Service</div>
         <p class="section-sub" style="margin:0; max-width: none;">
-          By appointment only. One mechanic. Honest diagnostics and direct communication from start to finish.
+          By appointment only. A professional repair team. Honest diagnostics and direct communication from start to finish.
         </p>
         <div class="service-hero__stats">
           <div class="service-hero__stat">
             <strong>Direct</strong>
-            <span>You work with Tony</span>
+            <span>You work with our repair team</span>
           </div>
           <div class="service-hero__stat">
             <strong>Correct</strong>
@@ -177,7 +216,7 @@
       <div class="trust-bar__inner">
         <div class="trust-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Certified Mechanic
+          Tony&#39;s Final Review
         </div>
         <div class="trust-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -240,7 +279,7 @@
             <h3>Why Customers Skip the Quick Lube</h3>
             <ul class="service-list">
               <li>An appointment means your slot — no queue behind nine other cars</li>
-<li>The person draining your oil is a certified mechanic, not a lube tech chasing a timer</li>
+<li>Your vehicle is serviced by our repair team, not a lube tech chasing a timer</li>
 <li>Correct spec oil for your engine, not whatever is in the bulk drum</li>
 <li>Real problems get flagged honestly — and non-problems don't get invented</li>
             </ul>
@@ -263,7 +302,7 @@
           <div class="service-panel reveal reveal-delay-2">
             <h3>Full Synthetic Oil</h3>
             <p class="section-sub" style="max-width:none; margin:0;">
-              Engineered base stocks hold their viscosity in Florida heat, resist breakdown during short-trip and stop-and-go driving, and typically support longer service intervals. Many modern engines — turbocharged, direct-injected, or built to tight tolerances — require it outright. The owner's manual is the referee, and Tony matches the oil to the spec, not to a sales pitch.
+              Engineered base stocks hold their viscosity in Florida heat, resist breakdown during short-trip and stop-and-go driving, and typically support longer service intervals. Many modern engines — turbocharged, direct-injected, or built to tight tolerances — require it outright. The owner's manual is the referee, and our team matches the oil to the spec, not to a sales pitch.
             </p>
           </div>
         </div>
@@ -276,11 +315,11 @@
           <div class="service-panel reveal">
             <p class="section-label">Real-World Example</p>
             <h2 class="section-title" style="font-size: var(--text-2xl);">What This Usually Looks Like</h2>
-            <div class="service-quote">Quick-lube lanes run on a stopwatch — bulk oil, air guns, and no time to actually look at anything. An oil change is the one scheduled chance a mechanic gets to see the underside of your car. Here, that chance doesn't get wasted.</div>
+            <div class="service-quote">Quick-lube lanes run on a stopwatch — bulk oil, air guns, and no time to actually look at anything. An oil change is a scheduled chance for our repair team to see the underside of your car. Here, that chance doesn't get wasted.</div>
           </div>
           <div class="service-panel reveal reveal-delay-1">
             <p class="section-label">Book It</p>
-            <h2 class="section-title" style="font-size: var(--text-2xl);">Schedule With Tony</h2>
+            <h2 class="section-title" style="font-size: var(--text-2xl);">Schedule With Our Team</h2>
             <div class="service-cta-box">
               <div class="contact-detail">
                 <div class="contact-detail__icon">
@@ -323,7 +362,7 @@
         <div class="faq-grid" style="margin-top: 2rem;">
           <div class="faq-item reveal">
             <h3>Should I use conventional or full synthetic oil?</h3>
-            <p>Your owner's manual decides. Many modern engines, especially turbocharged ones, require full synthetic. If conventional meets your engine's spec and you keep up with shorter intervals, it is a legitimate choice. Tony will tell you which one your engine actually calls for.</p>
+            <p>Your owner's manual decides. Many modern engines, especially turbocharged ones, require full synthetic. If conventional meets your engine's spec and you keep up with shorter intervals, it is a legitimate choice. Our team will confirm which one your engine actually calls for.</p>
           </div>
 <div class="faq-item reveal">
             <h3>How often should I change my oil in Florida?</h3>
@@ -335,7 +374,7 @@
           </div>
 <div class="faq-item reveal">
             <h3>What gets inspected during an oil service?</h3>
-            <p>While the vehicle is up, Tony looks over belts, hoses, fluid levels, battery terminals, and tire condition, and checks underneath for leaks. It is a real look-over by a certified mechanic, not a checkbox.</p>
+            <p>While the vehicle is up, our mechanics inspect belts, hoses, fluid levels, battery terminals, tire condition, and the underside for leaks. Tony includes the vehicle in his final review before it leaves.</p>
           </div>
 <div class="faq-item reveal">
             <h3>I'm not close to the shop. Do I have to drive over?</h3>
@@ -420,7 +459,9 @@
         <div>
           <div class="footer__col-title">Company</div>
           <ul class="footer__links" role="list">
-            <li><a href="/#about">About Tony</a></li>
+            <li><a href="/#about">Meet the Team</a></li>
+            <li><a href="/about-perfect-timing">Verified Shop Facts</a></li>
+            <li><a href="/case-studies">Repair Case Studies</a></li>
             <li><a href="/#areas">Service Area</a></li>
             <li><a href="/#testimonials">Reviews</a></li>
             <li><a href="/#bang">BANG Gear</a></li>
@@ -497,7 +538,7 @@
           form.style.display = 'none';
           const msg = document.getElementById('formMsg');
           msg.style.display = 'block';
-          msg.textContent = "Request sent! Tony will call or text you back shortly. Fast Service. Perfect Timing.";
+          msg.textContent = "Request sent! Our team will call or text you back shortly. Fast Service. Perfect Timing.";
         }, 900);
         return;
       }
@@ -516,16 +557,16 @@
           form.style.display = 'none';
           const msg = document.getElementById('formMsg');
           msg.style.display = 'block';
-          msg.textContent = "Request sent! Tony will call or text you back shortly. Fast Service. Perfect Timing.";
+          msg.textContent = "Request sent! Our team will call or text you back shortly. Fast Service. Perfect Timing.";
         } else {
           btn.textContent = 'Send Request';
           btn.disabled = false;
-          alert('Something went wrong. Call or text Tony directly at (239) 271-4854.');
+          alert('Something went wrong. Call or text our team directly at (239) 271-4854.');
         }
       } catch(err) {
         btn.textContent = 'Send Request';
         btn.disabled = false;
-        alert('Something went wrong. Call or text Tony directly at (239) 271-4854.');
+        alert('Something went wrong. Call or text our team directly at (239) 271-4854.');
       }
     }
 

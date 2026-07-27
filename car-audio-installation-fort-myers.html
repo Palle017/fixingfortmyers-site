@@ -31,53 +31,93 @@
     <link rel="preload" as="image" href="./assets/banger.webp" fetchpriority="high" media="(min-width: 641px)" />
   <link rel="preload" as="image" href="./assets/banger-mobile.webp" fetchpriority="high" media="(max-width: 640px)" />
   <link rel="stylesheet" href="./base.css" />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css?v=20260727a" />
   <link rel="stylesheet" href="./service-pages.css" />
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@type": "AutoRepair",
-  "@id": "https://fixingfortmyers.com/#business",
-  "name": "Perfect Timing Auto Repair LLC",
-  "url": "https://fixingfortmyers.com/car-audio-installation-fort-myers",
-  "telephone": "+12392714854",
-  "email": "fixingfortmyers@gmail.com",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "13037 Second St",
-    "addressLocality": "Fort Myers",
-    "addressRegion": "FL",
-    "postalCode": "33905",
-    "addressCountry": "US"
-  },
-  "areaServed": [
-    "Fort Myers",
-    "Cape Coral",
-    "Lehigh Acres",
-    "Bonita Springs",
-    "Estero",
-    "Naples",
-    "Fort Myers Beach"
-  ],
-  "priceRange": "$$",
-  "description": "Car audio installation in Fort Myers for speakers, head units, amps, and clean installs at Perfect Timing Auto Repair LLC.",
-  "geo": {"@type": "GeoCoordinates", "latitude": 26.6406, "longitude": -81.8723},
-    "openingHoursSpecification": {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], "opens": "07:00", "closes": "19:00"},
-    "sameAs": ["https://www.facebook.com/PerfectTimingAutoRepair"],
-    "hasOfferCatalog": {
-    "@type": "OfferCatalog",
-    "name": "Car Audio Installation in Fort Myers, FL",
-    "itemListElement": [
+    "@context": "https://schema.org",
+    "@graph": [
       {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": "Car Audio Installation in Fort Myers, FL"
+        "@type": "AutoRepair",
+        "@id": "https://fixingfortmyers.com/#business",
+        "name": "Perfect Timing Auto Repair LLC",
+        "url": "https://fixingfortmyers.com/",
+        "telephone": "+12392714854",
+        "email": "fixingfortmyers@gmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "13037 Second St",
+          "addressLocality": "Fort Myers",
+          "addressRegion": "FL",
+          "postalCode": "33905",
+          "addressCountry": "US"
+        },
+        "sameAs": [
+          "https://www.facebook.com/PerfectTimingAutoRepair",
+          "https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b",
+          "https://www.yelp.com/biz/perfect-timing-auto-repair-fort-myers",
+          "https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208",
+          "https://nextdoor.com/pages/perfect-timing-auto-repair-llc/",
+          "https://www.mapquest.com/us/florida/perfect-timing-auto-repair-654909882",
+          "https://maps.roadtrippers.com/us/fort-myers-fl/services/perfect-timing-auto-repair-fort-myers"
+        ]
+      },
+      {
+        "@type": "Service",
+        "@id": "https://fixingfortmyers.com/car-audio-installation-fort-myers#service",
+        "name": "Car Audio Installation in Fort Myers, FL",
+        "serviceType": "Car Audio Installation in Fort Myers, FL",
+        "description": "Car audio installation in Fort Myers for speakers, head units, amps, and clean installs at Perfect Timing Auto Repair LLC.",
+        "url": "https://fixingfortmyers.com/car-audio-installation-fort-myers",
+        "provider": {
+          "@id": "https://fixingfortmyers.com/#business"
+        },
+        "areaServed": [
+          {
+            "@type": "City",
+            "name": "Fort Myers"
+          },
+          {
+            "@type": "City",
+            "name": "Cape Coral"
+          },
+          {
+            "@type": "City",
+            "name": "Lehigh Acres"
+          },
+          {
+            "@type": "City",
+            "name": "North Fort Myers"
+          }
+        ],
+        "mainEntityOfPage": {
+          "@id": "https://fixingfortmyers.com/car-audio-installation-fort-myers#webpage"
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://fixingfortmyers.com/car-audio-installation-fort-myers#webpage",
+        "url": "https://fixingfortmyers.com/car-audio-installation-fort-myers",
+        "name": "Car Audio Installation in Fort Myers, FL",
+        "description": "Car audio installation in Fort Myers for speakers, head units, amps, and clean installs at Perfect Timing Auto Repair LLC.",
+        "isPartOf": {
+          "@id": "https://fixingfortmyers.com/#website"
+        },
+        "about": {
+          "@id": "https://fixingfortmyers.com/car-audio-installation-fort-myers#service"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://fixingfortmyers.com/#website",
+        "url": "https://fixingfortmyers.com/",
+        "name": "Perfect Timing Auto Repair",
+        "publisher": {
+          "@id": "https://fixingfortmyers.com/#business"
         }
       }
     ]
   }
-}
   </script>
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Do you install aftermarket audio components?","acceptedAnswer":{"@type":"Answer","text":"Yes. Audio upgrades are part of the services offered."}},{"@type":"Question","name":"Can bad wiring cause audio issues?","acceptedAnswer":{"@type":"Answer","text":"Absolutely. Clean power, signal routing, and grounding matter."}},{"@type":"Question","name":"Can you look at an existing install?","acceptedAnswer":{"@type":"Answer","text":"Yes, especially if the current setup is noisy, unreliable, or poorly done."}}]}
@@ -93,14 +133,13 @@
     <div class="container">
       <div class="nav__inner">
         <a href="/" class="nav__logo">
-          <!-- SVG Lightning Bolt Logo Mark -->
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-label="Perfect Timing logo mark">
-            <rect width="36" height="36" rx="6" fill="rgba(58,190,255,0.1)" stroke="rgba(58,190,255,0.3)" stroke-width="1"/>
-            <polygon points="20,4 10,20 17,20 16,32 26,16 19,16" fill="#3ABEFF"/>
-          </svg>
+          <img class="nav__logo-mark" src="./assets/nav-pt-logo.webp" width="58" height="58" alt="Perfect Timing Auto Repair logo" />
           <div class="nav__logo-text">
-            <span class="nav__logo-main">Perfect Timing</span>
-            <span class="nav__logo-sub">BANG Industries</span>
+            <span class="nav__logo-main">
+              <span class="nav__logo-perfect">Perfect</span>
+              <span class="nav__logo-timing">Timing</span>
+            </span>
+            <span class="nav__logo-sub">Auto Repair <b>•</b> Fort Myers</span>
           </div>
         </a>
 
@@ -141,18 +180,18 @@
         <p class="service-hero__desc">A clean audio install should sound good and look like it belongs there. Perfect Timing Auto Repair LLC offers car audio installation in Fort Myers for drivers who want better sound without hack wiring, rattles, or ugly surprises.</p>
         <div class="service-hero__actions">
           <a href="/#contact" class="btn btn--primary">Book This Service</a>
-          <a href="tel:+12392714854" class="btn btn--outline">Call Tony</a>
+          <a href="tel:+12392714854" class="btn btn--outline">Call Our Team</a>
         </div>
       </div>
       <div class="service-hero__aside reveal reveal-delay-1">
         <div class="service-hero__card-label">Car Audio</div>
         <p class="section-sub" style="margin:0; max-width: none;">
-          By appointment only. One mechanic. Honest diagnostics and direct communication from start to finish.
+          By appointment only. A professional repair team. Honest diagnostics and direct communication from start to finish.
         </p>
         <div class="service-hero__stats">
           <div class="service-hero__stat">
             <strong>Direct</strong>
-            <span>You work with Tony</span>
+            <span>You work with our repair team</span>
           </div>
           <div class="service-hero__stat">
             <strong>Honest</strong>
@@ -176,7 +215,7 @@
       <div class="trust-bar__inner">
         <div class="trust-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Certified Mechanic
+          Tony&#39;s Final Review
         </div>
         <div class="trust-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -258,7 +297,7 @@
           </div>
           <div class="service-panel reveal reveal-delay-1">
             <p class="section-label">Book It</p>
-            <h2 class="section-title" style="font-size: var(--text-2xl);">Schedule With Tony</h2>
+            <h2 class="section-title" style="font-size: var(--text-2xl);">Schedule With Our Team</h2>
             <div class="service-cta-box">
               <div class="contact-detail">
                 <div class="contact-detail__icon">
@@ -340,7 +379,7 @@
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg>
             </div>
             <h3 class="service-card__title">Auto Repair</h3>
-            <p class="service-card__desc">Full mechanical repair from the same mechanic who wired your system — brakes, engine, suspension, and more.</p>
+            <p class="service-card__desc">Full mechanical repair from the same coordinated team that wired your system — brakes, engine, suspension, and more.</p>
           </a>
         </div>
         <div class="service-mini-links reveal reveal-delay-2">
@@ -390,7 +429,9 @@
         <div>
           <div class="footer__col-title">Company</div>
           <ul class="footer__links" role="list">
-            <li><a href="/#about">About Tony</a></li>
+            <li><a href="/#about">Meet the Team</a></li>
+            <li><a href="/about-perfect-timing">Verified Shop Facts</a></li>
+            <li><a href="/case-studies">Repair Case Studies</a></li>
             <li><a href="/#areas">Service Area</a></li>
             <li><a href="/#testimonials">Reviews</a></li>
             <li><a href="/#bang">BANG Gear</a></li>
@@ -467,7 +508,7 @@
           form.style.display = 'none';
           const msg = document.getElementById('formMsg');
           msg.style.display = 'block';
-          msg.textContent = "Request sent! Tony will call or text you back shortly. Fast Service. Perfect Timing.";
+          msg.textContent = "Request sent! Our team will call or text you back shortly. Fast Service. Perfect Timing.";
         }, 900);
         return;
       }
@@ -486,16 +527,16 @@
           form.style.display = 'none';
           const msg = document.getElementById('formMsg');
           msg.style.display = 'block';
-          msg.textContent = "Request sent! Tony will call or text you back shortly. Fast Service. Perfect Timing.";
+          msg.textContent = "Request sent! Our team will call or text you back shortly. Fast Service. Perfect Timing.";
         } else {
           btn.textContent = 'Send Request';
           btn.disabled = false;
-          alert('Something went wrong. Call or text Tony directly at (239) 271-4854.');
+          alert('Something went wrong. Call or text our team directly at (239) 271-4854.');
         }
       } catch(err) {
         btn.textContent = 'Send Request';
         btn.disabled = false;
-        alert('Something went wrong. Call or text Tony directly at (239) 271-4854.');
+        alert('Something went wrong. Call or text our team directly at (239) 271-4854.');
       }
     }
 
