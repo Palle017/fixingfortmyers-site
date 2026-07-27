@@ -7,11 +7,11 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <meta name="theme-color" content="#0a0a0b" />
-  <title>Fort Myers Mechanic & Auto Repair Shop | Perfect Timing Auto Repair</title>
-  <meta name="description" content="Fort Myers mechanic you can actually talk to. Auto repair by appointment at our Tice-area shop — diagnostics, A/C, brakes, diesel, engine work. (239) 271-4854." />
+  <title>Fort Myers Mechanics & Auto Repair Shop | Perfect Timing Auto Repair</title>
+  <meta name="description" content="Fort Myers mechanics you can actually talk to. Owner-led auto repair team at our Tice-area shop — diagnostics, A/C, brakes, diesel, engine work. (239) 271-4854." />
   <meta name="keywords" content="auto repair Fort Myers, mechanic Fort Myers, diesel mechanic Fort Myers, AC repair Fort Myers, car audio Fort Myers, hot rod restoration Fort Myers, race mods Fort Myers, engine repair Fort Myers, brake repair Fort Myers, check engine light Fort Myers, Cape Coral mechanic, Lehigh Acres auto repair, Southwest Florida mechanic, Perfect Timing Auto Repair, BANG Industries" />
-  <meta property="og:title" content="Fort Myers Mechanic & Auto Repair Shop | Perfect Timing Auto Repair" />
-  <meta property="og:description" content="Fort Myers mechanic you can actually talk to. Auto repair by appointment — diagnostics, A/C, brakes, diesel, engine work. (239) 271-4854." />
+  <meta property="og:title" content="Fort Myers Mechanics & Auto Repair Shop | Perfect Timing Auto Repair" />
+  <meta property="og:description" content="Owner-led Fort Myers repair team with Tony's personal final review on every vehicle before it leaves." />
   <meta property="og:image" content="https://fixingfortmyers.com/assets/og-card.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -30,77 +30,91 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;700;800&family=Russo+One&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./base.css" />
-  <link rel="stylesheet" href="./style.css?v=20260707f" />
+  <link rel="stylesheet" href="./style.css?v=20260727a" />
   <link rel="stylesheet" href="./service-pages.css" />
+  <link rel="stylesheet" href="./proof.css?v=20260727a" />
   <link rel="preload" as="image" href="./assets/banger.webp" fetchpriority="high" media="(min-width: 641px)" />
   <link rel="preload" as="image" href="./assets/banger-mobile.webp" fetchpriority="high" media="(max-width: 640px)" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "AutoRepair",
-    "@id": "https://fixingfortmyers.com/#business",
-    "name": "Perfect Timing Auto Repair LLC",
-    "description": "Fort Myers auto repair shop specializing in diagnostics, AC repair, diesel service, engine repair, brakes, car audio, race mods and hot rod builds.",
-    "url": "https://fixingfortmyers.com",
-    "telephone": "+12392714854",
-    "email": "fixingfortmyers@gmail.com",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "13037 Second St",
-      "addressLocality": "Fort Myers",
-      "addressRegion": "FL",
-      "postalCode": "33905",
-      "addressCountry": "US"
-    },
-    "geo": {
-      "@type": "GeoCoordinates",
-      "latitude": 26.6406,
-      "longitude": -81.8723
-    },
-    "openingHours": "Mo-Sa 07:00-19:00",
-    "openingHoursSpecification": [
+    "@graph": [
       {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        "opens": "07:00",
-        "closes": "19:00"
+        "@type": "AutoRepair",
+        "@id": "https://fixingfortmyers.com/#business",
+        "name": "Perfect Timing Auto Repair LLC",
+        "legalName": "Perfect Timing Auto Repair LLC",
+        "description": "Fort Myers auto repair shop specializing in diagnostics, AC repair, diesel service, engine repair, brakes, electrical repair, no-start diagnosis, and module programming.",
+        "url": "https://fixingfortmyers.com/",
+        "logo": "https://fixingfortmyers.com/assets/pt-logo-new.webp",
+        "image": "https://fixingfortmyers.com/assets/og-card.jpg",
+        "telephone": "+12392714854",
+        "email": "fixingfortmyers@gmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "13037 Second St",
+          "addressLocality": "Fort Myers",
+          "addressRegion": "FL",
+          "postalCode": "33905",
+          "addressCountry": "US"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 26.6406,
+          "longitude": -81.8723
+        },
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          "opens": "07:00",
+          "closes": "19:00",
+          "description": "By appointment only"
+        },
+        "priceRange": "$$",
+        "areaServed": [
+          {"@type": "City", "name": "Fort Myers"},
+          {"@type": "City", "name": "Cape Coral"},
+          {"@type": "City", "name": "Lehigh Acres"},
+          {"@type": "City", "name": "North Fort Myers"},
+          {"@type": "Place", "name": "Tice"}
+        ],
+        "hasMap": "https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b",
+        "hasOfferCatalog": {
+          "@type": "OfferCatalog",
+          "name": "Auto Repair Services",
+          "itemListElement": [
+            {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Auto Diagnostics", "provider": {"@id": "https://fixingfortmyers.com/#business"}}},
+            {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Automotive AC Repair", "provider": {"@id": "https://fixingfortmyers.com/#business"}}},
+            {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Auto Electrical Repair", "provider": {"@id": "https://fixingfortmyers.com/#business"}}},
+            {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "No-Start Diagnosis", "provider": {"@id": "https://fixingfortmyers.com/#business"}}},
+            {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Vehicle Module Programming", "provider": {"@id": "https://fixingfortmyers.com/#business"}}}
+          ]
+        },
+        "sameAs": [
+          "https://www.facebook.com/PerfectTimingAutoRepair",
+          "https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b",
+          "https://www.yelp.com/biz/perfect-timing-auto-repair-fort-myers",
+          "https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208",
+          "https://nextdoor.com/pages/perfect-timing-auto-repair-llc/",
+          "https://www.mapquest.com/us/florida/perfect-timing-auto-repair-654909882",
+          "https://maps.roadtrippers.com/us/fort-myers-fl/services/perfect-timing-auto-repair-fort-myers"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://fixingfortmyers.com/#website",
+        "url": "https://fixingfortmyers.com/",
+        "name": "Perfect Timing Auto Repair",
+        "publisher": {"@id": "https://fixingfortmyers.com/#business"}
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://fixingfortmyers.com/#webpage",
+        "url": "https://fixingfortmyers.com/",
+        "name": "Fort Myers Mechanic & Auto Repair Shop",
+        "isPartOf": {"@id": "https://fixingfortmyers.com/#website"},
+        "about": {"@id": "https://fixingfortmyers.com/#business"}
       }
-    ],
-    "priceRange": "$$",
-    "areaServed": [
-      {"@type": "City", "name": "Fort Myers"},
-      {"@type": "City", "name": "Cape Coral"},
-      {"@type": "City", "name": "Lehigh Acres"},
-      {"@type": "City", "name": "Bonita Springs"},
-      {"@type": "City", "name": "Estero"},
-      {"@type": "City", "name": "Naples"},
-      {"@type": "City", "name": "Marco Island"},
-      {"@type": "City", "name": "Fort Myers Beach"},
-      {"@type": "City", "name": "Sanibel"},
-      {"@type": "City", "name": "Pine Island"},
-      {"@type": "City", "name": "North Fort Myers"},
-      {"@type": "City", "name": "Gateway"},
-      {"@type": "Place", "name": "Tice"},
-      {"@type": "Place", "name": "Buckingham"},
-      {"@type": "Place", "name": "Alva"},
-      {"@type": "Place", "name": "San Carlos Park"}
-    ],
-    "hasOfferCatalog": {
-      "@type": "OfferCatalog",
-      "name": "Auto Repair Services",
-      "itemListElement": [
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Diagnostics"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "AC Repair"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Diesel Service"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Engine Repair"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Brake Repair"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Car Audio"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Race Modifications"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Hot Rod Restoration"}}
-      ]
-    },
-    "sameAs": [
-      "https://www.facebook.com/PerfectTimingAutoRepair"
     ]
   }
   </script>
@@ -112,22 +126,21 @@
     <div class="container">
       <div class="nav__inner">
         <a href="#" class="nav__logo">
-          <!-- SVG Lightning Bolt Logo Mark -->
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-label="Perfect Timing logo mark">
-            <rect width="36" height="36" rx="6" fill="rgba(58,190,255,0.1)" stroke="rgba(58,190,255,0.3)" stroke-width="1"/>
-            <polygon points="20,4 10,20 17,20 16,32 26,16 19,16" fill="#3ABEFF"/>
-          </svg>
+          <img class="nav__logo-mark" src="./assets/nav-pt-logo.webp" width="58" height="58" alt="Perfect Timing Auto Repair logo" />
           <div class="nav__logo-text">
-            <span class="nav__logo-main">Perfect Timing</span>
-            <span class="nav__logo-sub">BANG Industries</span>
+            <span class="nav__logo-main">
+              <span class="nav__logo-perfect">Perfect</span>
+              <span class="nav__logo-timing">Timing</span>
+            </span>
+            <span class="nav__logo-sub">Auto Repair <b>•</b> Fort Myers</span>
           </div>
         </a>
 
         <ul class="nav__links" role="list">
           <li><a href="#services">Services</a></li>
-          <li><a href="#about">About</a></li>
+          <li><a href="/case-studies">Repair Proof</a></li>
+          <li><a href="/about-perfect-timing">Shop Facts</a></li>
           <li><a href="#areas">Service Area</a></li>
-          <li><a href="#bang">BANG Gear</a></li>
           <li><a href="#contact" class="nav__cta">Book Now</a></li>
         </ul>
 
@@ -140,9 +153,9 @@
 
       <div class="nav__mobile-menu" id="mobileMenu">
         <a href="#services">Services</a>
-        <a href="#about">About</a>
+        <a href="/case-studies">Repair Proof</a>
+        <a href="/about-perfect-timing">Shop Facts</a>
         <a href="#areas">Service Area</a>
-        <a href="#bang">BANG Gear</a>
         <a href="#contact" class="nav__cta">Book Now</a>
       </div>
     </div>
@@ -200,11 +213,11 @@
     <div class="hero-cta hero-cta--right" id="hvCard">
       <button type="button" class="hero-cta__head" id="hvToggle" aria-expanded="false" aria-controls="hvBody">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
-        <span class="hero-cta__label">Record for Tony</span>
+        <span class="hero-cta__label">Record for the Shop</span>
         <span class="hero-cta__hint">tap to talk</span>
       </button>
       <div class="hero-cta__body" id="hvBody">
-        <p style="font-size:var(--text-xs);color:#9a9aa4;margin:0 0 .5rem">Skip the typing — record what your ride is doing and Tony hears it directly. Under 60 seconds.</p>
+        <p style="font-size:var(--text-xs);color:#9a9aa4;margin:0 0 .5rem">Skip the typing — record what your ride is doing and our team receives it directly. Under 60 seconds.</p>
         <input type="tel" id="hvPhone" placeholder="Phone (required)" />
         <div class="sms-consent sms-consent--compact">
           <label class="sms-consent__label" for="hvSmsConsent">
@@ -216,7 +229,7 @@
         <input type="text" id="hvName" placeholder="Your name (optional)" />
         <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;flex-wrap:wrap">
           <button type="button" id="hvRec" class="btn btn--outline" style="flex:1;justify-content:center">&#127908; Record</button>
-          <button type="button" id="hvSend" class="btn btn--primary" style="flex:1;justify-content:center;display:none">Send to Tony</button>
+          <button type="button" id="hvSend" class="btn btn--primary" style="flex:1;justify-content:center;display:none">Send to the Team</button>
         </div>
         <span id="hvTimer" style="font-weight:700;color:var(--color-accent);font-size:var(--text-xs)"></span>
         <audio id="hvPlay" controls style="display:none;width:100%;margin-top:.5rem;height:36px"></audio>
@@ -232,13 +245,13 @@
         </div>
       </div>
       <div class="reveal reveal-delay-1">
-        <h1 class="hero__eyebrow">Fort Myers Mechanic — Auto Repair By Appointment Only</h1>
+        <h1 class="hero__eyebrow">Fort Myers Mechanics — Auto Repair By Appointment Only</h1>
         <p class="hero__slogan">For Your Vehicle, Timing Is Everything.</p>
         <div class="hero__logo-img">
           <img src="./assets/pt-logo-new.webp" srcset="./assets/pt-logo-new.webp 1x, ./assets/pt-logo-new@2x.webp 2x" width="400" height="600" alt="Perfect Timing Auto Repair - Fort Myers" />
         </div>
         <p class="hero__desc">
-          Your Fort Myers mechanic, by appointment only. One certified mechanic — dealership-level diagnostics, AC repair, diesel service, engine work and more, without the dealership bill.
+          Your owner-led Fort Myers repair team, by appointment only. Our mechanics handle dealership-level diagnostics, A/C repair, diesel service, engine work and more — and Tony personally reviews every vehicle before it leaves.
         </p>
       </div>
       <div class="hero__actions reveal reveal-delay-2">
@@ -291,7 +304,7 @@
       <div class="trust-bar__inner">
         <div class="trust-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Certified Mechanic
+          Tony&#39;s Final Review
         </div>
         <div class="trust-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -307,7 +320,7 @@
         </div>
         <div class="trust-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          5-Star Rated
+          4.8★ on Google
         </div>
       </div>
     </div>
@@ -318,7 +331,7 @@
     <div class="container">
       <div class="about__grid">
         <div class="about__image-wrap reveal">
-          <img src="./assets/pt-logo-new.webp" srcset="./assets/pt-logo-new.webp 1x, ./assets/pt-logo-new@2x.webp 2x" width="400" height="600" alt="Perfect Timing Auto Repair - Fort Myers" loading="lazy" style="object-fit: contain;" />
+          <img src="./assets/perfect-timing-team-engine.webp" width="1254" height="1254" alt="Shelby and Cammy working together on a performance engine in the Perfect Timing shop" loading="lazy" decoding="async" />
           <div class="about__border-accent"></div>
         </div>
         <div class="about__content">
@@ -328,20 +341,20 @@
             Perfect Timing Auto Repair LLC is Fort Myers' go-to auto repair shop — serving Fort Myers, Cape Coral, Lehigh Acres, Bonita Springs and all of Southwest Florida. Built on honesty, skill, and the belief that your time matters just as much as your vehicle.
           </p>
           <p class="section-sub reveal reveal-delay-2" style="margin-top: 1rem;">
-            Founded by Tony — a certified mechanic who actually loves fixing cars — we deliver dealership-level diagnostics and repairs at our shop. No mystery invoices. No upsells. No waiting rooms.
+            Founded by Tony, Perfect Timing has grown into an owner-led team of mechanics. Our crew handles the diagnostics and repairs together, while Tony personally looks over every single vehicle before it leaves the shop.
           </p>
           <p class="section-sub reveal reveal-delay-2" style="margin-top: 1rem;">
-            <a href="/fort-myers-mechanic" style="color: var(--color-accent); font-weight: 700; text-decoration: none;">Meet your Fort Myers mechanic &rarr;</a>
+            <a href="/fort-myers-mechanic" style="color: var(--color-accent); font-weight: 700; text-decoration: none;">Meet the Perfect Timing repair team &rarr;</a>
           </p>
 
           <div class="about__stats reveal reveal-delay-3">
             <div class="stat-card">
-              <div class="stat-card__number">500+</div>
+              <div class="stat-card__number stat-card__number--word">Thousands</div>
               <div class="stat-card__label">Vehicles Repaired</div>
             </div>
             <div class="stat-card">
-              <div class="stat-card__number">5★</div>
-              <div class="stat-card__label">Avg. Customer Rating</div>
+              <div class="stat-card__number">4.8★</div>
+              <div class="stat-card__label">71 Google Reviews</div>
             </div>
             <div class="stat-card">
               <div class="stat-card__number">Same</div>
@@ -354,7 +367,7 @@
           </div>
 
           <div class="reveal reveal-delay-4">
-            <a href="#contact" class="btn btn--primary">Book Tony Today</a>
+            <a href="#contact" class="btn btn--primary">Book Our Team Today</a>
           </div>
         </div>
       </div>
@@ -445,7 +458,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="22" height="12" rx="3" ry="3"/><line x1="17" y1="10" x2="17" y2="14"/><line x1="7" y1="10" x2="7" y2="14"/><line x1="12" y1="10" x2="12" y2="14"/></svg>
           </div>
           <h3 class="service-card__title">Battery & Electrical</h3>
-          <p class="service-card__desc">Battery replacement, alternator, starter, wiring diagnostics. Dead battery, bad alternator, starter issues — call Tony and we'll get you sorted fast.</p>
+          <p class="service-card__desc">Battery replacement, alternator, starter, wiring diagnostics. Dead battery, bad alternator, starter issues — call our team and we'll get you sorted fast.</p>
         </div>
 
         <div class="service-card reveal reveal-delay-1">
@@ -477,7 +490,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
           </div>
           <h3 class="service-card__title">Diesel Service</h3>
-          <p class="service-card__desc">Diesel diagnostics, fuel systems, injectors, turbos, DEF/DPF service, and repairs. Gas or diesel — Tony works on it all.</p>
+          <p class="service-card__desc">Diesel diagnostics, fuel systems, injectors, turbos, DEF/DPF service, and repairs. Gas or diesel — our mechanics work on it all.</p>
         </div>
 
         <div class="service-card reveal reveal-delay-1">
@@ -518,7 +531,7 @@
           </div>
           <div class="service-card__badge">Premium Add-On</div>
           <h3 class="service-card__title" style="color: var(--color-fire);">Concierge Service</h3>
-          <p class="service-card__desc">We pick up your vehicle, bring it to our shop, fix it right, and return it to your door. Additional fee applies. Just call Tony to arrange.</p>
+          <p class="service-card__desc">We pick up your vehicle, bring it to our shop, fix it right, and return it to your door. Additional fee applies. Just call our team to arrange.</p>
         </div>
 
       </div>
@@ -527,6 +540,33 @@
         <p style="color: var(--color-text-muted); font-size: var(--text-sm); margin-bottom: var(--space-5);">Don't see your issue? If it's got an engine, we can fix it.</p>
         <a href="#contact" class="btn btn--primary">Get a Free Quote</a>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ SIGNATURE SERVICE VISUALS ============ -->
+  <section class="service-showcases" aria-label="Featured automotive services">
+    <div class="container">
+      <article class="service-showcase reveal">
+        <img src="./assets/diagnostics-engine.webp" width="1823" height="863" loading="lazy" decoding="async" alt="Exploded high-performance engine and vehicle control modules connected by an electric-blue diagnostic signal" />
+        <div class="service-showcase__shade"></div>
+        <div class="service-showcase__content">
+          <p class="section-label">Dealer-Level Diagnostics</p>
+          <h2>Find the fault.<br>Fix the cause.</h2>
+          <p>We trace the signal through the whole system before parts get thrown at the problem. Better answers. Smarter repairs. Less wasted money.</p>
+          <a class="btn btn--primary" href="/auto-diagnostics-fort-myers">Explore Diagnostics</a>
+        </div>
+      </article>
+
+      <article class="service-showcase service-showcase--ac reveal">
+        <img src="./assets/ac-penguin-florida.webp" width="1919" height="820" loading="lazy" decoding="async" alt="Penguin in sunglasses beside professional automotive AC equipment, a black car, snowy ground and Fort Myers palm trees" />
+        <div class="service-showcase__shade"></div>
+        <div class="service-showcase__content">
+          <p class="section-label">Fort Myers A/C Repair</p>
+          <h2>Cooler than a penguin<br>in sunglasses.</h2>
+          <p>Florida outside. Arctic inside. We diagnose leaks, weak airflow, compressor faults, R-134a and R-1234yf systems—then fix what is actually wrong.</p>
+          <a class="btn btn--primary" href="/ac-repair-fort-myers">Get Ice-Cold A/C</a>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -546,7 +586,7 @@
           <p class="section-label reveal">How It Works</p>
           <h2 class="section-title reveal reveal-delay-1">By Appointment<br>Only</h2>
           <p class="section-sub reveal reveal-delay-2">
-            Fort Myers' best kept secret in auto repair. No waiting rooms. No randoms touching your car. You book with Tony, you get Tony — one mechanic, fully focused on your vehicle start to finish.
+            Fort Myers' owner-led auto repair team. Your vehicle gets a coordinated crew, professional equipment, and clear communication from intake to handoff. Tony personally reviews every vehicle before it leaves.
           </p>
 
           <div class="mobile-section__features">
@@ -555,7 +595,7 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42a2 2 0 0 1 1.99-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.06-.78a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>
               <div>
-                <div class="feature-item__title">Call or Text Tony</div>
+                <div class="feature-item__title">Call or Text Our Team</div>
                 <div class="feature-item__desc">Describe the problem. Get an honest answer and upfront price — no surprises, no runaround.</div>
               </div>
             </div>
@@ -573,8 +613,8 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               </div>
               <div>
-                <div class="feature-item__title">Fixed Right, First Time</div>
-                <div class="feature-item__desc">Professional tools. Real parts. Tony handles it personally — dealership quality without the dealership bill.</div>
+                <div class="feature-item__title">Team Repair. Tony's Final Review.</div>
+                <div class="feature-item__desc">Our mechanics perform the work with professional tools and real parts. Tony personally looks over every vehicle before it leaves.</div>
               </div>
             </div>
           </div>
@@ -621,7 +661,7 @@
       <p class="section-label reveal">What We Fix</p>
       <h2 class="section-title reveal reveal-delay-1">Auto Repair Services in Fort Myers</h2>
       <p class="section-sub reveal reveal-delay-2" style="max-width: 70ch;">
-        Pick the problem your vehicle is having and see exactly how Tony diagnoses and fixes it — what it involves, what to expect, and how to book it.
+        Pick the problem your vehicle is having and see how our mechanics diagnose and repair it — what the work involves, what to expect, and how to book it.
       </p>
       <div class="home-seo-links__grid" style="margin-top: 2rem;">
         <a class="home-seo-link reveal" href="/auto-repair-fort-myers">
@@ -718,29 +758,112 @@
   </section>
 
   <div class="accent-divider"></div>
+
+  <!-- ============ TRUST CAMPAIGN ============ -->
+  <section class="choice-banner" aria-labelledby="choice-banner-title">
+    <div class="container">
+      <div class="choice-banner__panel reveal">
+        <img src="./assets/cammy-shelby-trust.webp" width="1814" height="867" loading="lazy" decoding="async" alt="Shelby and Cammy in professional mechanic coveralls servicing a vehicle in a clean Fort Myers repair shop" />
+        <div class="choice-banner__shade"></div>
+        <div class="choice-banner__content">
+          <p class="section-label">The BANG Standard</p>
+          <h2 id="choice-banner-title">A shop you can feel<br>good about choosing.</h2>
+          <p>Clear answers. Upfront pricing. Real accountability. Your vehicle gets focused attention and the repair plan stays about what it actually needs.</p>
+          <ul class="choice-banner__proof" role="list">
+            <li>Honest diagnostics</li>
+            <li>Professional equipment</li>
+            <li>Work approved before repair</li>
+          </ul>
+          <a class="btn btn--primary" href="#contact">Choose Perfect Timing</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ REPAIR PROOF ============ -->
+  <section class="home-proof" id="repair-proof" aria-labelledby="repair-proof-title">
+    <div class="container">
+      <div class="home-proof__heading">
+        <div>
+          <p class="proof-kicker">Real Repair Proof</p>
+          <h2 id="repair-proof-title">Receipts Beat Promises.</h2>
+        </div>
+        <p>Real vehicles, real customer outcomes, and zero made-up technical details. Full testing notes and customer-safe photo sets will be added as each repair file is documented.</p>
+      </div>
+      <div class="home-proof__cases">
+        <article class="home-proof__case" data-stamp="Public review verified">
+          <p class="proof-card__eyebrow">BMW &bull; Oil Pan Leak</p>
+          <h3>Clear Answers. No Unneeded Work.</h3>
+          <p>The customer says Anthony explained the issue, showed photos, provided updates, and did not push unnecessary work.</p>
+        </article>
+        <article class="home-proof__case" data-stamp="Public review verified">
+          <p class="proof-card__eyebrow">1966 Chevrolet &bull; El Camino</p>
+          <h3>Brought Back To Life.</h3>
+          <p>The customer reports that Tony revived the classic Chevrolet and describes the work as prompt, skilled, and reasonably priced.</p>
+        </article>
+      </div>
+      <div class="home-proof__footer">
+        <p>The public reviews do not include every diagnostic measurement or repair step. The case-study page separates verified facts from details still waiting on shop notes and customer-approved photos.</p>
+        <a class="btn btn--primary" href="/case-studies">Open The Repair Files</a>
+      </div>
+
+      <div class="proof-heading" style="margin-top:var(--space-14);margin-bottom:var(--space-6)">
+        <div>
+          <p class="proof-kicker">Outside Confirmation</p>
+          <h2 style="font-size:clamp(2.2rem,5vw,3.8rem)">Check Us Somewhere Else.</h2>
+        </div>
+        <p>These are matching public profiles for the same Perfect Timing Auto Repair LLC.</p>
+      </div>
+      <div class="profile-grid">
+        <a class="profile-link" href="https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b" target="_blank" rel="noopener">
+          <span><strong>Google</strong><small>Map listing and customer reviews</small></span><span class="profile-link__arrow">&nearr;</span>
+        </a>
+        <a class="profile-link" href="https://www.yelp.com/biz/perfect-timing-auto-repair-fort-myers" target="_blank" rel="noopener">
+          <span><strong>Yelp</strong><small>Business profile and customer reviews</small></span><span class="profile-link__arrow">&nearr;</span>
+        </a>
+        <a class="profile-link" href="https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208" target="_blank" rel="noopener">
+          <span><strong>BBB</strong><small>Business profile; not accredited or rated</small></span><span class="profile-link__arrow">&nearr;</span>
+        </a>
+        <a class="profile-link" href="https://nextdoor.com/pages/perfect-timing-auto-repair-llc/" target="_blank" rel="noopener">
+          <span><strong>Nextdoor</strong><small>Neighborhood business page</small></span><span class="profile-link__arrow">&nearr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ TESTIMONIALS ============ -->
   <section class="testimonials" id="testimonials">
     <div class="container">
       <div class="testimonials__header">
-        <p class="section-label reveal">What People Say</p>
-        <h2 class="section-title reveal reveal-delay-1">Real Reviews</h2>
+        <p class="section-label reveal">Verified on Google</p>
+        <h2 class="section-title reveal reveal-delay-1">Real Customers. Real Reviews.</h2>
+        <a class="testimonials__rating reveal reveal-delay-2" href="https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b" target="_blank" rel="noopener">
+          <span class="testimonials__rating-score">4.8★</span>
+          <span>71 Google reviews</span>
+        </a>
       </div>
       <div class="testimonials__grid">
         <div class="testimonial-card reveal">
           <div class="testimonial-card__stars">★★★★★</div>
-          <p class="testimonial-card__quote">"Fast, reliable, and honest! Tony diagnosed and fixed my car same day. No hassle, no BS. Honest work at a fair price. This is the only mechanic I'll call."</p>
-          <div class="testimonial-card__name">Mark S.</div>
+          <p class="testimonial-card__quote">“Anthony was very honest, patient, and professional.”</p>
+          <div class="testimonial-card__name">Hansen Li</div>
+          <div class="testimonial-card__source">Google review</div>
         </div>
         <div class="testimonial-card reveal reveal-delay-1">
           <div class="testimonial-card__stars">★★★★★</div>
-          <p class="testimonial-card__quote">"Professional and fair pricing. No upsells, no surprises — just quality work done right. My AC was ice cold same day. This is my go-to mechanic forever."</p>
-          <div class="testimonial-card__name">Jessica L.</div>
+          <p class="testimonial-card__quote">“Tony is the best! He’s prompt, an excellent mechanic and very reasonable with the cost of repairs.”</p>
+          <div class="testimonial-card__name">Daniel Calabrese</div>
+          <div class="testimonial-card__source">Google review</div>
         </div>
         <div class="testimonial-card reveal reveal-delay-2">
           <div class="testimonial-card__stars">★★★★★</div>
-          <p class="testimonial-card__quote">"A/C wasn't working in the Florida heat. Tony diagnosed it fast, fixed it right, and charged a fair price. Didn't try to sell me anything I didn't need. Highly recommend."</p>
-          <div class="testimonial-card__name">David R.</div>
+          <p class="testimonial-card__quote">“This is the kind of mechanic everyone hopes to find.”</p>
+          <div class="testimonial-card__name">Jessica VonAllen</div>
+          <div class="testimonial-card__source">Google review</div>
         </div>
+      </div>
+      <div class="testimonials__action reveal">
+        <a class="btn btn--outline" href="https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b" target="_blank" rel="noopener">Read All Google Reviews</a>
       </div>
     </div>
   </section>
@@ -822,7 +945,7 @@
           <p class="section-label reveal">Get In Touch</p>
           <h2 class="reveal reveal-delay-1">Book Your<br>Repair Now</h2>
           <p class="reveal reveal-delay-2">
-            Ready to roll? Fill out the form or call/text Tony directly. We respond fast — most appointments are same-day or next morning.
+            Ready to roll? Fill out the form or call/text our team directly. We respond fast — most appointments are same-day or next morning.
           </p>
 
           <div class="contact__details reveal reveal-delay-3">
@@ -868,7 +991,7 @@
         <div class="contact__form reveal reveal-delay-2">
           <div id="voiceBook" style="margin-bottom:1.5rem;padding:1rem 1.25rem;border:1px solid rgba(58,190,255,.35);border-radius:12px;background:rgba(58,190,255,.06)">
             <h3 style="margin:0 0 .35rem">Hate forms? Just say it.</h3>
-            <p style="margin:0 0 .75rem;opacity:.8;font-size:.92rem">Tap record, tell Tony what your ride is doing, and he'll call you back. Text follow-up is optional below.</p>
+            <p style="margin:0 0 .75rem;opacity:.8;font-size:.92rem">Tap record, tell our team what your ride is doing, and we'll call you back. Text follow-up is optional below.</p>
             <div class="form-group"><input type="tel" id="vbPhone" placeholder="Your phone number (required)" /></div>
             <div class="sms-consent">
               <label class="sms-consent__label" for="vbSmsConsent">
@@ -882,7 +1005,7 @@
               <button type="button" id="vbRec" class="btn btn--outline">&#127908; Record</button>
               <span id="vbTimer" style="font-variant-numeric:tabular-nums;opacity:.85"></span>
               <audio id="vbPlay" controls style="display:none;height:36px;max-width:220px"></audio>
-              <button type="button" id="vbSend" class="btn btn--primary" style="display:none">Send to Tony</button>
+              <button type="button" id="vbSend" class="btn btn--primary" style="display:none">Send to the Team</button>
             </div>
             <p id="vbStatus" style="margin:.6rem 0 0;font-size:.9rem;opacity:.85"></p>
           </div>
@@ -913,12 +1036,12 @@
                   $('vbTimer').textContent=s+'s / '+MAX+'s';
                   if(s>=MAX)stopRec();
                 },250);
-                stat('Recording... tell Tony the year, make, model and what it is doing.');
+                stat('Recording... tell our team the year, make, model and what it is doing.');
               }).catch(function(){stat('Mic blocked - allow microphone access or use the form below.')});
             };
             $('vbSend').onclick=function(){
               var ph=$('vbPhone').value.trim();
-              if((ph.match(/\d/g)||[]).length<7){ stat('Drop your phone number first so Tony can call you back.'); $('vbPhone').focus(); return; }
+              if((ph.match(/\d/g)||[]).length<7){ stat('Drop your phone number first so our team can call you back.'); $('vbPhone').focus(); return; }
               if(!blob){ stat('Record something first!'); return; }
               $('vbSend').disabled=true; stat('Sending...');
               var smsMeta=window.ptSmsConsentMeta('vbSmsConsent','homepage-contact-voice');
@@ -928,7 +1051,7 @@
                 body:blob
               }).then(function(r){return r.json()}).then(function(j){
                 if(j&&j.ok){ $('vbRec').style.display='none'; $('vbSend').style.display='none'; $('vbPlay').style.display='none'; $('vbTimer').textContent='';
-                  stat(smsMeta.smsConsent ? 'Got it! Tony has your message and will call or text you back shortly.' : 'Got it! Tony has your message and will call you back shortly. No text follow-up was requested.'); }
+                  stat(smsMeta.smsConsent ? 'Got it! Our team has your message and will call or text you back shortly.' : 'Got it! Our team has your message and will call you back shortly. No text follow-up was requested.'); }
                 else { $('vbSend').disabled=false; stat((j&&j.error==='recording too long')?'That one was too long - keep it under a minute.':'Hiccup sending - try again or call (239) 271-4854.'); }
               }).catch(function(){ $('vbSend').disabled=false; stat('Hiccup sending - try again or call (239) 271-4854.'); });
             };
@@ -977,7 +1100,7 @@
             </div>
             <div class="form-group">
               <label for="message">Describe the Problem</label>
-              <textarea id="message" name="message" placeholder="Tell Tony what's going on — any symptoms, sounds, warning lights..."></textarea>
+              <textarea id="message" name="message" placeholder="Tell our team what's going on — any symptoms, sounds, warning lights..."></textarea>
             </div>
             <button type="submit" class="btn btn--primary" style="width: 100%; justify-content: center;">
               Send Request
@@ -1005,11 +1128,8 @@
             Fort Myers' auto repair built on honesty, skill, and the belief that your time matters. Dealership quality. Personal service. Because timing is everything.
           </p>
           <div class="footer__social">
-            <a href="#" aria-label="Facebook">
+            <a href="https://www.facebook.com/PerfectTimingAutoRepair" target="_blank" rel="noopener" aria-label="Perfect Timing Auto Repair on Facebook">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-            </a>
-            <a href="#" aria-label="Instagram">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
             </a>
           </div>
         </div>
@@ -1029,7 +1149,9 @@
         <div>
           <div class="footer__col-title">Company</div>
           <ul class="footer__links" role="list">
-            <li><a href="#about">About Tony</a></li>
+            <li><a href="#about">Meet the Team</a></li>
+            <li><a href="/about-perfect-timing">Verified Shop Facts</a></li>
+            <li><a href="/case-studies">Repair Case Studies</a></li>
             <li><a href="#areas">Service Area</a></li>
             <li><a href="#testimonials">Reviews</a></li>
             <li><a href="#bang">BANG Gear</a></li>
@@ -1148,7 +1270,7 @@
         if (response.ok && result.ok === true) {
           form.outerHTML = '<div class="form-thankyou" style="text-align:center; padding:2rem 1rem;">' +
             '<h3 style="color: var(--color-accent); margin-bottom: 0.5rem;">Thanks!</h3>' +
-            '<p style="font-weight:600;">' + (smsMeta.smsConsent ? 'Tony will call or text you shortly.' : 'Tony will call you shortly. No text follow-up was requested.') + '</p>' +
+            '<p style="font-weight:600;">' + (smsMeta.smsConsent ? 'Our team will call or text you shortly.' : 'Our team will call you shortly. No text follow-up was requested.') + '</p>' +
             '</div>';
         } else {
           throw new Error('bad response');
@@ -1159,7 +1281,7 @@
         if (msg) {
           msg.style.display = 'block';
           msg.style.color = 'var(--color-accent)';
-          msg.textContent = 'Something hiccupped - call or text Tony at (239) 271-4854';
+          msg.textContent = 'Something hiccupped - call or text our team at (239) 271-4854';
         }
       }
     }
@@ -1223,7 +1345,7 @@
     }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         if (res.ok && res.j.ok === true) {
-          form.outerHTML = '<p style="text-align:center;padding:1rem 0;font-weight:700;color:var(--color-accent)">Thanks! ' + (smsMeta.smsConsent ? 'Tony will call or text you shortly.' : 'Tony will call you shortly. No text follow-up was requested.') + '</p>';
+          form.outerHTML = '<p style="text-align:center;padding:1rem 0;font-weight:700;color:var(--color-accent)">Thanks! ' + (smsMeta.smsConsent ? 'Our team will call or text you shortly.' : 'Our team will call you shortly. No text follow-up was requested.') + '</p>';
         } else {
           btn.textContent = 'Send Request'; btn.disabled = false;
           msg.textContent = 'Hiccup sending - try again or call (239) 271-4854.'; msg.style.display = 'block';
@@ -1242,7 +1364,7 @@
   $('hvRec').onclick = function () {
     if (rec && rec.state === 'recording') { rec.stop(); return; }
     var phone = ($('hvPhone').value || '').replace(/\D/g, '');
-    if (phone.length < 7) { stat('Put your phone number in first so Tony can call you back.'); return; }
+    if (phone.length < 7) { stat('Put your phone number in first so our team can call you back.'); return; }
     stat('');
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
       chunks = []; blob = null; secs = 0;
@@ -1268,7 +1390,7 @@
   $('hvSend').onclick = function () {
     if (!blob) return;
     var phone = ($('hvPhone').value || '').replace(/\D/g, '');
-    if (phone.length < 7) { stat('Put your phone number in first so Tony can call you back.'); return; }
+    if (phone.length < 7) { stat('Put your phone number in first so our team can call you back.'); return; }
     $('hvSend').disabled = true; stat('Sending...');
     var smsMeta = window.ptSmsConsentMeta('hvSmsConsent', 'homepage-hero-voice');
     fetch('https://tonystool.taild5f39d.ts.net/hooks/lead/voicenote', {
@@ -1279,7 +1401,7 @@
       .then(function (j) {
         if (j && j.ok) {
           $('hvRec').style.display = 'none'; $('hvSend').style.display = 'none'; $('hvPlay').style.display = 'none';
-          stat(smsMeta.smsConsent ? 'Got it! Tony will hear this and call or text you back.' : 'Got it! Tony will hear this and call you back. No text follow-up was requested.');
+          stat(smsMeta.smsConsent ? 'Got it! Our team will hear this and call or text you back.' : 'Got it! Our team will hear this and call you back. No text follow-up was requested.');
         } else {
           $('hvSend').disabled = false;
           stat(j && j.error === 'recording too long' ? 'That one was too long - keep it under a minute.' : 'Hiccup sending - try again or call (239) 271-4854.');
