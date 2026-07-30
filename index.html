@@ -138,9 +138,8 @@
 
         <ul class="nav__links" role="list">
           <li><a href="#services">Services</a></li>
-          <li><a href="/case-studies">Repair Proof</a></li>
-          <li><a href="/about-perfect-timing">Shop Facts</a></li>
-          <li><a href="#areas">Service Area</a></li>
+          <li><a href="/case-studies.html">Repair Proof</a></li>
+          <li><a href="/about-perfect-timing.html">Shop Facts</a></li>
           <li><a href="#contact" class="nav__cta">Book Now</a></li>
         </ul>
 
@@ -153,9 +152,8 @@
 
       <div class="nav__mobile-menu" id="mobileMenu">
         <a href="#services">Services</a>
-        <a href="/case-studies">Repair Proof</a>
-        <a href="/about-perfect-timing">Shop Facts</a>
-        <a href="#areas">Service Area</a>
+        <a href="/case-studies.html">Repair Proof</a>
+        <a href="/about-perfect-timing.html">Shop Facts</a>
         <a href="#contact" class="nav__cta">Book Now</a>
       </div>
     </div>
@@ -164,8 +162,16 @@
   <!-- ============ HERO ============ -->
   <section class="hero" id="home">
     <div class="hero__bg"></div>
+    <div class="hero-intro" aria-hidden="true">
+      <video class="hero-intro__video" autoplay muted playsinline preload="auto"
+        onended="this.closest('.hero').classList.add('hero--video-ended')"
+        onerror="this.closest('.hero').classList.add('hero--video-ended')">
+        <source src="./assets/mustang-burnout-intro.mp4" type="video/mp4" />
+      </video>
+    </div>
     <div class="hero__overlay"></div>
     <div class="hero__lightning"></div>
+    <button class="hero-intro__skip" type="button" onclick="this.closest('.hero').classList.add('hero--video-ended','hero--skip-intro')">Skip intro</button>
 
     <!-- top-corner quick actions: booking form (left) + voice note (right) -->
     <div class="hero-cta hero-cta--left" id="hbCard">
@@ -184,7 +190,7 @@
               <input type="checkbox" id="hbSmsConsent" name="smsConsent" value="yes" aria-describedby="hbSmsConsentDetails" />
               <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
             </label>
-            <p class="sms-consent__details" id="hbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+            <p class="sms-consent__details" id="hbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms.html" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
           </div>
           <input type="text" name="vehicle" placeholder="Vehicle — 2019 Dodge Charger" required />
           <select name="service">
@@ -224,7 +230,7 @@
             <input type="checkbox" id="hvSmsConsent" value="yes" aria-describedby="hvSmsConsentDetails" />
             <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
           </label>
-          <p class="sms-consent__details" id="hvSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+          <p class="sms-consent__details" id="hvSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms.html" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
         </div>
         <input type="text" id="hvName" placeholder="Your name (optional)" />
         <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;flex-wrap:wrap">
@@ -238,30 +244,19 @@
     </div>
 
     <div class="hero__content container">
-      <div class="reveal">
-        <div class="hero__powered">
-          <span class="hero__powered-dot"></span>
-          A BANG Industries Company
-        </div>
-      </div>
-      <div class="reveal reveal-delay-1">
-        <h1 class="hero__eyebrow">Fort Myers Mechanics — Auto Repair By Appointment Only</h1>
-        <p class="hero__slogan">For Your Vehicle, Timing Is Everything.</p>
         <div class="hero__logo-img">
           <img src="./assets/pt-logo-new.webp" srcset="./assets/pt-logo-new.webp 1x, ./assets/pt-logo-new@2x.webp 2x" width="400" height="600" alt="Perfect Timing Auto Repair - Fort Myers" />
         </div>
-        <p class="hero__desc">
-          Your owner-led Fort Myers repair team, by appointment only. Our mechanics handle dealership-level diagnostics, A/C repair, diesel service, engine work and more — and Tony personally reviews every vehicle before it leaves.
-        </p>
-      </div>
-      <div class="hero__actions reveal reveal-delay-2">
-        <a href="#contact" class="btn btn--primary">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42a2 2 0 0 1 1.99-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.06-.78a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          Book a Repair
-        </a>
-        <a href="#services" class="btn btn--outline">
-          View All Services
-        </a>
+      <div class="hero__top-copy">
+        <div class="hero__topline">
+          <div class="hero__powered">
+          <span class="hero__powered-dot"></span>
+            A BANG Industries Company
+          </div>
+          <span class="hero__topline-separator" aria-hidden="true">&bull;</span>
+          <h1 class="hero__eyebrow">Fort Myers Mechanics — Auto Repair By Appointment Only</h1>
+        </div>
+        <p class="hero__slogan">For Your Vehicle, Timing Is Everything.</p>
       </div>
     </div>
 
@@ -344,7 +339,7 @@
             Founded by Tony, Perfect Timing has grown into an owner-led team of mechanics. Our crew handles the diagnostics and repairs together, while Tony personally looks over every single vehicle before it leaves the shop.
           </p>
           <p class="section-sub reveal reveal-delay-2" style="margin-top: 1rem;">
-            <a href="/fort-myers-mechanic" style="color: var(--color-accent); font-weight: 700; text-decoration: none;">Meet the Perfect Timing repair team &rarr;</a>
+            <a href="/fort-myers-mechanic.html" style="color: var(--color-accent); font-weight: 700; text-decoration: none;">Meet the Perfect Timing repair team &rarr;</a>
           </p>
 
           <div class="about__stats reveal reveal-delay-3">
@@ -394,6 +389,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
           </div>
           <h3 class="service-card__title">Diagnostics</h3>
+          <a class="service-card__action" href="/auto-diagnostics-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">State-of-the-art diagnostic tools and equipment. Check engine, ABS, airbag, transmission codes — we have the technology to find it fast and fix it right.</p>
         </div>
 
@@ -402,6 +398,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></svg>
           </div>
           <h3 class="service-card__title">A/C Service</h3>
+          <a class="service-card__action" href="/ac-repair-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Certified A/C Repair. We keep you cooler than a penguin in sunglasses. Recharge, leak repair, compressor replacement, evaporator service, R-134a and R-1234yf systems.</p>
         </div>
 
@@ -410,6 +407,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
           <h3 class="service-card__title">Brakes</h3>
+          <a class="service-card__action" href="/brake-repair-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Pads, rotors, calipers, brake lines, master cylinder, ABS module repairs. We stop problems before they stop you.</p>
         </div>
 
@@ -418,6 +416,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 6v6l4 2"/></svg>
           </div>
           <h3 class="service-card__title">Engine Repair</h3>
+          <a class="service-card__action" href="/engine-repair-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Timing chains, head gaskets, mounts, seals, valve cover gaskets, full engine swaps. Built different, built to last.</p>
         </div>
 
@@ -426,6 +425,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
           </div>
           <h3 class="service-card__title">Transmission</h3>
+          <a class="service-card__action" href="/transmission-repair-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Service, fluid flush, solenoids, valve body, full rebuilds, and swaps including junkyard units with proper programming and adaptive resets.</p>
         </div>
 
@@ -434,6 +434,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </div>
           <h3 class="service-card__title">Module Programming</h3>
+          <a class="service-card__action" href="/module-programming-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">OEM-level ECM, TCM, BCM, and TPMS programming. VIN writes, software flashes, and key programming. We do what most shops can't.</p>
         </div>
 
@@ -442,6 +443,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
           </div>
           <h3 class="service-card__title">Cooling System</h3>
+          <a class="service-card__action" href="/cooling-system-repair-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Radiator, thermostat, water pump, hoses, coolant flush. Florida heat is no joke — keep your engine cool all year.</p>
         </div>
 
@@ -450,6 +452,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12H2l10-10 10 10h-3"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
           </div>
           <h3 class="service-card__title">Suspension & Steering</h3>
+          <a class="service-card__action" href="/suspension-steering-repair-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Control arms, ball joints, tie rods, struts, shocks, power steering. If it's handling wrong, we straighten it out.</p>
         </div>
 
@@ -458,6 +461,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="22" height="12" rx="3" ry="3"/><line x1="17" y1="10" x2="17" y2="14"/><line x1="7" y1="10" x2="7" y2="14"/><line x1="12" y1="10" x2="12" y2="14"/></svg>
           </div>
           <h3 class="service-card__title">Battery & Electrical</h3>
+          <a class="service-card__action" href="/auto-electrical-repair-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Battery replacement, alternator, starter, wiring diagnostics. Dead battery, bad alternator, starter issues — call our team and we'll get you sorted fast.</p>
         </div>
 
@@ -466,6 +470,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
           </div>
           <h3 class="service-card__title">Oil Change & Maintenance</h3>
+          <a class="service-card__action" href="/oil-change-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Conventional, synthetic, high-mileage. Filter, fluid top-offs, inspection. Book your appointment and bring it in.</p>
         </div>
 
@@ -474,6 +479,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
           </div>
           <h3 class="service-card__title">Exhaust & Emissions</h3>
+          <a class="service-card__action" href="/exhaust-emissions-repair-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Catalytic converter, O2 sensors, muffler, flex pipe, DPF cleaning. Keep it clean, keep it legal.</p>
         </div>
 
@@ -482,6 +488,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
           <h3 class="service-card__title">No-Start Diagnosis</h3>
+          <a class="service-card__action" href="/no-start-diagnosis-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">No-crank, crank-no-start, intermittent starting, parasitic draw, weak batteries, starter faults, relay issues, and charging-system problems. We diagnose the cause instead of guessing.</p>
         </div>
 
@@ -490,6 +497,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
           </div>
           <h3 class="service-card__title">Diesel Service</h3>
+          <a class="service-card__action" href="/diesel-repair-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Diesel diagnostics, fuel systems, injectors, turbos, DEF/DPF service, and repairs. Gas or diesel — our mechanics work on it all.</p>
         </div>
 
@@ -498,6 +506,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
           </div>
           <h3 class="service-card__title">Car Audio & Stereo</h3>
+          <a class="service-card__action" href="/car-audio-installation-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Full car audio blueprint and build. Head units, amps, subs, speakers, custom wiring — we design the system and install it right.</p>
         </div>
 
@@ -506,6 +515,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           </div>
           <h3 class="service-card__title">Race Mods & Performance</h3>
+          <a class="service-card__action" href="/race-car-modifications-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Forced induction, engine builds, suspension tuning, exhaust upgrades. Built to go fast. Built to last. No limits.</p>
         </div>
 
@@ -514,6 +524,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
           </div>
           <h3 class="service-card__title">Old School Hot Rods</h3>
+          <a class="service-card__action" href="/hot-rod-restoration-fort-myers.html">View service <span aria-hidden="true">&rarr;</span></a>
           <p class="service-card__desc">Classic builds, restorations, and custom fabrication. Old school iron with new school performance. This is the stuff Tony lives for.</p>
         </div>
 
@@ -553,7 +564,7 @@
           <p class="section-label">Dealer-Level Diagnostics</p>
           <h2>Find the fault.<br>Fix the cause.</h2>
           <p>We trace the signal through the whole system before parts get thrown at the problem. Better answers. Smarter repairs. Less wasted money.</p>
-          <a class="btn btn--primary" href="/auto-diagnostics-fort-myers">Explore Diagnostics</a>
+          <a class="btn btn--primary" href="/auto-diagnostics-fort-myers.html">Explore Diagnostics</a>
         </div>
       </article>
 
@@ -564,7 +575,7 @@
           <p class="section-label">Fort Myers A/C Repair</p>
           <h2>Cooler than a penguin<br>in sunglasses.</h2>
           <p>Florida outside. Arctic inside. We diagnose leaks, weak airflow, compressor faults, R-134a and R-1234yf systems—then fix what is actually wrong.</p>
-          <a class="btn btn--primary" href="/ac-repair-fort-myers">Get Ice-Cold A/C</a>
+          <a class="btn btn--primary" href="/ac-repair-fort-myers.html">Get Ice-Cold A/C</a>
         </div>
       </article>
     </div>
@@ -640,9 +651,9 @@
         <span class="area-tag">Fort Myers</span>
         <span class="area-tag">Tice</span>
         <span class="area-tag">Buckingham</span>
-        <a class="area-tag" href="/auto-repair-north-fort-myers">North Fort Myers</a>
-        <a class="area-tag" href="/auto-repair-cape-coral">Cape Coral</a>
-        <a class="area-tag" href="/auto-repair-lehigh-acres">Lehigh Acres</a>
+        <a class="area-tag" href="/auto-repair-north-fort-myers.html">North Fort Myers</a>
+        <a class="area-tag" href="/auto-repair-cape-coral.html">Cape Coral</a>
+        <a class="area-tag" href="/auto-repair-lehigh-acres.html">Lehigh Acres</a>
         <span class="area-tag">Alva</span>
         <span class="area-tag">San Carlos Park</span>
         <span class="area-tag">Gateway</span>
@@ -664,91 +675,91 @@
         Pick the problem your vehicle is having and see how our mechanics diagnose and repair it — what the work involves, what to expect, and how to book it.
       </p>
       <div class="home-seo-links__grid" style="margin-top: 2rem;">
-        <a class="home-seo-link reveal" href="/auto-repair-fort-myers">
+        <a class="home-seo-link reveal" href="/auto-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">General Repair</span>
           <span class="home-seo-link__title">Auto Repair</span>
           <span class="home-seo-link__copy">Fort Myers auto repair by appointment. Honest diagnostics, AC, brakes, electrical, engine work,...</span>
-        </a><a class="home-seo-link reveal" href="/auto-diagnostics-fort-myers">
+        </a><a class="home-seo-link reveal" href="/auto-diagnostics-fort-myers.html">
           <span class="home-seo-link__eyebrow">Diagnostics</span>
           <span class="home-seo-link__title">Auto Diagnostics</span>
           <span class="home-seo-link__copy">Accurate auto diagnostics in Fort Myers. Check engine, ABS, drivability, electrical, and hard-t...</span>
-        </a><a class="home-seo-link reveal" href="/check-engine-light-diagnosis-fort-myers">
+        </a><a class="home-seo-link reveal" href="/check-engine-light-diagnosis-fort-myers.html">
           <span class="home-seo-link__eyebrow">Check Engine Light</span>
           <span class="home-seo-link__title">Check Engine Light Diagnosis</span>
           <span class="home-seo-link__copy">Check engine light diagnosis in Fort Myers with live data testing and root-cause diagnostics. N...</span>
-        </a><a class="home-seo-link reveal" href="/ac-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/ac-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">A/C Repair</span>
           <span class="home-seo-link__title">AC Repair</span>
           <span class="home-seo-link__copy">Fort Myers AC repair by appointment. Honest A/C diagnostics, leak checks, compressor testing, a...</span>
-        </a><a class="home-seo-link reveal" href="/brake-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/brake-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Brakes</span>
           <span class="home-seo-link__title">Brake Repair</span>
           <span class="home-seo-link__copy">Brake repair in Fort Myers by appointment. Pads, rotors, calipers, brake diagnostics, and hones...</span>
-        </a><a class="home-seo-link reveal" href="/engine-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/engine-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Engine Repair</span>
           <span class="home-seo-link__title">Engine Repair</span>
           <span class="home-seo-link__copy">Engine repair in Fort Myers for drivability issues, overheating, leaks, noise, and performance ...</span>
-        </a><a class="home-seo-link reveal" href="/diesel-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/diesel-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Diesel Repair</span>
           <span class="home-seo-link__title">Diesel Repair</span>
           <span class="home-seo-link__copy">Diesel repair in Fort Myers for diagnostics, drivability issues, hard starts, performance conce...</span>
-        </a><a class="home-seo-link reveal" href="/auto-electrical-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/auto-electrical-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Electrical Repair</span>
           <span class="home-seo-link__title">Auto Electrical Repair</span>
           <span class="home-seo-link__copy">Auto electrical repair in Fort Myers for wiring faults, intermittent problems, charging issues,...</span>
-        </a><a class="home-seo-link reveal" href="/module-programming-fort-myers">
+        </a><a class="home-seo-link reveal" href="/module-programming-fort-myers.html">
           <span class="home-seo-link__eyebrow">Module Programming</span>
           <span class="home-seo-link__title">Module Programming</span>
           <span class="home-seo-link__copy">Module programming in Fort Myers for replacement modules, coding, setup, and related diagnostic...</span>
-        </a><a class="home-seo-link reveal" href="/transmission-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/transmission-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Transmission Repair</span>
           <span class="home-seo-link__title">Transmission Repair</span>
           <span class="home-seo-link__copy">Transmission repair and transmission diagnostics in Fort Myers for shifting issues, warning lig...</span>
-        </a><a class="home-seo-link reveal" href="/suspension-steering-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/suspension-steering-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Suspension &amp; Steering</span>
           <span class="home-seo-link__title">Suspension and Steering Repair</span>
           <span class="home-seo-link__copy">Suspension and steering repair in Fort Myers for clunks, looseness, uneven tire wear, and poor ...</span>
-        </a><a class="home-seo-link reveal" href="/cooling-system-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/cooling-system-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Cooling Repair</span>
           <span class="home-seo-link__title">Cooling System Repair</span>
           <span class="home-seo-link__copy">Cooling system repair in Fort Myers for overheating, leaks, fans, thermostats, pumps, and tempe...</span>
-        </a><a class="home-seo-link reveal" href="/alternator-starter-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/alternator-starter-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Alternator &amp; Starter</span>
           <span class="home-seo-link__title">Alternator and Starter Repair</span>
           <span class="home-seo-link__copy">Alternator and starter repair in Fort Myers for no-starts, charging warnings, weak cranking, an...</span>
-        </a><a class="home-seo-link reveal" href="/battery-replacement-fort-myers">
+        </a><a class="home-seo-link reveal" href="/battery-replacement-fort-myers.html">
           <span class="home-seo-link__eyebrow">Battery Replacement</span>
           <span class="home-seo-link__title">Battery Replacement</span>
           <span class="home-seo-link__copy">Battery replacement in Fort Myers with charging-system checks and no-start testing so you do no...</span>
-        </a><a class="home-seo-link reveal" href="/no-start-diagnosis-fort-myers">
+        </a><a class="home-seo-link reveal" href="/no-start-diagnosis-fort-myers.html">
           <span class="home-seo-link__eyebrow">No-Start Diagnosis</span>
           <span class="home-seo-link__title">No-Start Diagnosis</span>
           <span class="home-seo-link__copy">No-start diagnosis in Fort Myers for crank-no-start, no-crank, intermittent starting, battery, ...</span>
-        </a><a class="home-seo-link reveal" href="/fuel-system-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/fuel-system-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Fuel System Repair</span>
           <span class="home-seo-link__title">Fuel System Repair</span>
           <span class="home-seo-link__copy">Fuel system repair in Fort Myers for hard starts, poor performance, fuel delivery issues, and r...</span>
-        </a><a class="home-seo-link reveal" href="/car-audio-installation-fort-myers">
+        </a><a class="home-seo-link reveal" href="/car-audio-installation-fort-myers.html">
           <span class="home-seo-link__eyebrow">Car Audio</span>
           <span class="home-seo-link__title">Car Audio Installation</span>
           <span class="home-seo-link__copy">Car audio installation in Fort Myers for speakers, head units, amps, and clean installs at Perf...</span>
-        </a><a class="home-seo-link reveal" href="/hot-rod-restoration-fort-myers">
+        </a><a class="home-seo-link reveal" href="/hot-rod-restoration-fort-myers.html">
           <span class="home-seo-link__eyebrow">Hot Rod Restoration</span>
           <span class="home-seo-link__title">Hot Rod Restoration</span>
           <span class="home-seo-link__copy">Hot rod restoration in Fort Myers for drivers who want skill, mechanical understanding, and ser...</span>
-        </a><a class="home-seo-link reveal" href="/race-car-modifications-fort-myers">
+        </a><a class="home-seo-link reveal" href="/race-car-modifications-fort-myers.html">
           <span class="home-seo-link__eyebrow">Race Mods</span>
           <span class="home-seo-link__title">Race Car Modifications</span>
           <span class="home-seo-link__copy">Race car modifications in Fort Myers for performance-minded builds, setup changes, and serious ...</span>
-        </a><a class="home-seo-link reveal" href="/pre-purchase-inspection-fort-myers">
+        </a><a class="home-seo-link reveal" href="/pre-purchase-inspection-fort-myers.html">
           <span class="home-seo-link__eyebrow">Pre-Purchase Inspection</span>
           <span class="home-seo-link__title">Pre-Purchase Inspection</span>
           <span class="home-seo-link__copy">Pre-purchase inspections in Fort Myers to help you avoid buying someone else&#x27;s expensive surpri...</span>
-        </a><a class="home-seo-link reveal" href="/oil-change-fort-myers">
+        </a><a class="home-seo-link reveal" href="/oil-change-fort-myers.html">
           <span class="home-seo-link__eyebrow">Maintenance</span>
           <span class="home-seo-link__title">Oil Change</span>
           <span class="home-seo-link__copy">Full synthetic or conventional oil service with a real inspection -- by appointment, no waiting line.</span>
-        </a><a class="home-seo-link reveal" href="/exhaust-emissions-repair-fort-myers">
+        </a><a class="home-seo-link reveal" href="/exhaust-emissions-repair-fort-myers.html">
           <span class="home-seo-link__eyebrow">Exhaust</span>
           <span class="home-seo-link__title">Exhaust &amp; Emissions</span>
           <span class="home-seo-link__copy">Exhaust leaks, catalytic converters, O2 sensors and emissions codes -- diagnosed before parts get thrown at it.</span>
@@ -804,7 +815,7 @@
       </div>
       <div class="home-proof__footer">
         <p>The public reviews do not include every diagnostic measurement or repair step. The case-study page separates verified facts from details still waiting on shop notes and customer-approved photos.</p>
-        <a class="btn btn--primary" href="/case-studies">Open The Repair Files</a>
+        <a class="btn btn--primary" href="/case-studies.html">Open The Repair Files</a>
       </div>
 
       <div class="proof-heading" style="margin-top:var(--space-14);margin-bottom:var(--space-6)">
@@ -924,12 +935,12 @@
           Looking for a specific repair? Skip the wandering and land right on the service page that matches the problem. These are the jobs people search when they are ready to book.
         </p>
         <div class="home-intent-strip__links">
-          <a href="/ac-repair-fort-myers">A/C Repair</a>
-          <a href="/check-engine-light-diagnosis-fort-myers">Check Engine Light</a>
-          <a href="/brake-repair-fort-myers">Brake Repair</a>
-          <a href="/diesel-repair-fort-myers">Diesel Repair</a>
-          <a href="/module-programming-fort-myers">Module Programming</a>
-          <a href="/no-start-diagnosis-fort-myers">No-Start Diagnosis</a>
+          <a href="/ac-repair-fort-myers.html">A/C Repair</a>
+          <a href="/check-engine-light-diagnosis-fort-myers.html">Check Engine Light</a>
+          <a href="/brake-repair-fort-myers.html">Brake Repair</a>
+          <a href="/diesel-repair-fort-myers.html">Diesel Repair</a>
+          <a href="/module-programming-fort-myers.html">Module Programming</a>
+          <a href="/no-start-diagnosis-fort-myers.html">No-Start Diagnosis</a>
         </div>
       </div>
     </div>
@@ -998,7 +1009,7 @@
                 <input type="checkbox" id="vbSmsConsent" value="yes" aria-describedby="vbSmsConsentDetails" />
                 <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
               </label>
-              <p class="sms-consent__details" id="vbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+              <p class="sms-consent__details" id="vbSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms.html" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
             </div>
             <div class="form-group"><input type="text" id="vbName" placeholder="Your name (optional)" /></div>
             <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
@@ -1073,7 +1084,7 @@
                 <input type="checkbox" id="bookingSmsConsent" name="smsConsent" value="yes" aria-describedby="bookingSmsConsentDetails" />
                 <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the mobile number provided about my repair inquiry, estimates, scheduling, and service updates.</span>
               </label>
-              <p class="sms-consent__details" id="bookingSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
+              <p class="sms-consent__details" id="bookingSmsConsentDetails">Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchase. See <a href="/sms-terms.html" target="_blank" rel="noopener">SMS Terms &amp; Conditions</a> and <a href="/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Leave unchecked for call-only follow-up.</p>
             </div>
             <div class="form-group">
               <label for="vehicle">Vehicle (Year / Make / Model)</label>
@@ -1150,8 +1161,8 @@
           <div class="footer__col-title">Company</div>
           <ul class="footer__links" role="list">
             <li><a href="#about">Meet the Team</a></li>
-            <li><a href="/about-perfect-timing">Verified Shop Facts</a></li>
-            <li><a href="/case-studies">Repair Case Studies</a></li>
+            <li><a href="/about-perfect-timing.html">Verified Shop Facts</a></li>
+            <li><a href="/case-studies.html">Repair Case Studies</a></li>
             <li><a href="#areas">Service Area</a></li>
             <li><a href="#testimonials">Reviews</a></li>
             <li><a href="#bang">BANG Gear</a></li>
@@ -1163,7 +1174,7 @@
       <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · 13037 Second St, Fort Myers, FL 33905 · <a href="tel:+12392714854">(239) 271-4854</a> · Mon–Sat 7AM–7PM, By Appointment</p>
       <div class="footer__bottom">
         <p class="footer__copy">&copy; 2026 Perfect Timing Auto Repair LLC. All rights reserved.</p>
-        <div class="footer__legal"><a href="/privacy-policy">Privacy Policy</a><a href="/sms-terms">SMS Terms &amp; Conditions</a></div>
+        <div class="footer__legal"><a href="/privacy-policy.html">Privacy Policy</a><a href="/sms-terms.html">SMS Terms &amp; Conditions</a></div>
         <div class="footer__bang">
           A <span>BANG</span> Industries Company
         </div>
@@ -1414,3 +1425,4 @@
 <script src="https://tonystool.taild5f39d.ts.net/chat/widget.js" defer></script>
 </body>
 </html>
+
