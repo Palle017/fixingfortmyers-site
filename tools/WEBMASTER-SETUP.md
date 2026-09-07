@@ -61,8 +61,8 @@ These actions need the verified business owner's login, phone, email, or mailed 
 Use this exact identity everywhere:
 
 - **Name:** Perfect Timing Auto Repair LLC
-- **Address:** 13037 Second St, Fort Myers, FL 33905
-- **Phone:** (239) 271-4854
+- **Location:** Fort Myers and Southwest Florida. No public street address; call to arrange service.
+- **Phone:** (239) 397-2048
 - **Website:** https://fixingfortmyers.com/
 - **Hours:** Monday-Saturday, 7AM-7PM, by appointment
 

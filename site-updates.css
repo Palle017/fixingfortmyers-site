@@ -1,0 +1,73 @@
+/* Contact and local-service update. Keep the existing Perfect Timing brand. */
+[hidden]{display:none!important}
+.skip-link{position:fixed;top:-80px;left:16px;z-index:2000;padding:12px 18px;background:#fff;color:#101319}
+.skip-link:focus{top:12px}
+.reveal{opacity:1;transform:none}
+.home-hero{position:relative;padding:155px 0 58px;isolation:isolate;background:#0b1119 url('/assets/banger.webp') center/cover no-repeat}
+.home-hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(5,10,17,.98),rgba(5,10,17,.87) 48%,rgba(5,10,17,.6))}
+.home-hero__grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(230px,.65fr);gap:45px;align-items:center}
+.home-hero__eyebrow{color:#9fc4e2;font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
+.home-hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,7.5vw,112px);line-height:.98;letter-spacing:.015em;margin:0 0 24px;color:#fff}
+.home-hero h1 span{color:#55c4ff}
+.home-hero__lead{font-size:19px;line-height:1.6;max-width:580px;color:#e0e7f0;margin-bottom:28px}
+.home-hero__actions,.request-actions{display:flex;gap:12px;flex-wrap:wrap}
+.home-hero__actions .btn{min-height:52px;font-size:16px}
+.home-hero__note{font-size:15px;color:#b8c7d7;line-height:1.7;margin-top:20px}
+.home-hero a:not(.btn),.contact-direct a:not(.contact-direct__phone),.request-panel p a,.request-consent a{color:#79d0ff;text-decoration:underline;text-underline-offset:4px}
+.home-hero__services{display:flex;gap:18px;flex-wrap:wrap;margin-top:30px;font-size:14px}
+.home-hero__art img{max-height:410px;width:auto;margin:auto;object-fit:contain}
+.home-hero__art p{font-family:'Bebas Neue',sans-serif;text-align:center;letter-spacing:.08em;font-size:21px;color:#dde9f6;margin-top:12px}
+.service-hero__bg{background-image:linear-gradient(rgba(5,10,17,.83),rgba(5,10,17,.95)),url('/assets/banger.webp')}
+.service-hero__desc{color:#d5e0eb}
+.shop-notice{background:#142230;border-top:1px solid #2b536b;border-bottom:1px solid #2b536b;padding:22px 0}
+.shop-notice .container{display:flex;align-items:center;gap:26px;justify-content:space-between}
+.shop-notice h2{font:700 19px 'Barlow',sans-serif;color:#fff;margin-bottom:6px}
+.shop-notice p{color:#c8d8e5;font-size:15px;max-width:850px}
+.shop-notice a{color:#8dd6ff;text-decoration:underline;white-space:nowrap}
+.contact-direct{display:grid;gap:18px;margin:26px 0;color:#c9d6e3;overflow-wrap:anywhere}
+.contact-direct__phone{font-size:clamp(26px,3vw,38px);font-weight:800;color:#66caff;text-decoration:none}
+.request-panel{padding:30px;border:1px solid #315069;border-radius:16px;background:#111a25;color:#d8e3ef;min-width:0}
+.request-panel h3{font:700 25px 'Barlow',sans-serif;color:#fff;margin-bottom:12px}
+.request-panel p{font-size:15px;line-height:1.6;margin-bottom:18px}
+.request-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:22px 0}
+.request-full{grid-column:1/-1}
+.request-panel label{font-weight:600;font-size:15px;display:block}
+.request-panel input:not([type=checkbox]),.request-panel textarea,.request-panel select{width:100%;min-width:0;border:1px solid #47617a;background:#080f18;color:#f4f8fc;border-radius:7px;padding:12px;margin-top:7px;font-size:16px;line-height:1.5}
+.request-panel textarea{resize:vertical}
+.request-panel input::placeholder,.request-panel textarea::placeholder{color:#9facbf}
+.request-panel .request-consent{display:flex;gap:12px;align-items:flex-start;font-size:13px;line-height:1.6;font-weight:400;margin-bottom:22px}
+.request-consent input{margin-top:4px;width:19px;height:19px;flex-shrink:0;accent-color:#55c4ff}
+.request-status{margin:16px 0 0;overflow-wrap:anywhere}
+.request-backup,.request-voice{border-top:1px solid #354b60;padding-top:22px;margin-top:24px}
+.request-backup .request-actions{margin-top:16px}
+.request-voice summary,.repair-video summary{cursor:pointer;color:#8dd6ff;font-weight:600;padding:10px 0;min-height:44px}
+.request-voice p:first-of-type{margin-top:14px}
+.request-voice audio{width:100%;margin:16px 0}
+.request-panel .request-fineprint{font-size:13px;color:#b3c3d4;margin:15px 0 0}
+.request-honeypot{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+.repair-video{margin-top:24px;max-width:480px}
+.repair-video video{margin-top:12px;width:100%;border-radius:8px}
+.mobile-contact-bar{display:none}
+#pt-website-request-widget{bottom:24px!important;background:#45bfff!important;color:#07111b!important}
+.footer__nap{line-height:1.8}
+.btn:disabled{opacity:.55;cursor:wait}
+:focus-visible{outline:3px solid #92dcff;outline-offset:4px}
+@media(max-width:800px){
+ #pt-website-request-widget{display:none!important}
+ .home-hero{padding:120px 0 40px;background-image:url('/assets/banger-mobile.webp')}
+ .home-hero__grid{grid-template-columns:1fr;gap:0}
+ .home-hero__art{display:none}
+ .home-hero h1{font-size:clamp(60px,12vw,84px)}
+ .home-hero__lead{font-size:17px}
+ .home-hero__eyebrow{font-size:12px;letter-spacing:.06em}
+ .home-hero__services{gap:13px}
+ .shop-notice .container{align-items:flex-start;flex-direction:column;gap:12px}
+ .contact__grid{grid-template-columns:1fr!important;gap:32px!important}
+ .request-panel{padding:22px 18px}
+ .mobile-contact-bar{display:grid;grid-template-columns:1fr 1fr;position:fixed;bottom:0;left:0;right:0;z-index:150;padding:10px 16px calc(10px + env(safe-area-inset-bottom));gap:10px;background:#0b131df5;border-top:1px solid #35536c;backdrop-filter:blur(10px)}
+ .mobile-contact-bar a{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:6px;font-size:14px;font-weight:800;text-decoration:none;background:#45bfff;color:#07111b}
+ .mobile-contact-bar a+a{background:#172c40;color:#e5f6ff;border:1px solid #51718d}
+ body{padding-bottom:calc(75px + env(safe-area-inset-bottom))}
+}
+@media(max-width:420px){.request-fields{grid-template-columns:1fr}.home-hero__actions{flex-direction:column}.home-hero__actions .btn{width:100%;justify-content:center}.home-hero__note{font-size:14px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.bang-video-wrap video{display:none}}

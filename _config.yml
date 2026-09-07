@@ -1,0 +1,3 @@
+# Server source belongs in GitHub for recovery, not in the static site output.
+exclude:
+  - _website-intake
