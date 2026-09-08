@@ -8,7 +8,7 @@
   const customAvatar = config.avatar || script?.dataset.avatar;
   const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
   const css = document.createElement('link');
-  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260908-site-2', script?.src || location.href).href;
+  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260908-site-3', script?.src || location.href).href;
   document.head.append(css);
   const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
   widget.setAttribute('aria-label', 'Bay One repair assistant');
@@ -31,9 +31,14 @@
       <footer class="b1-footer"><span>AI guidance and approximate ranges. The shop confirms final pricing. <a href="/privacy-policy.html">Chat privacy</a></span><a class="b1-contact" href="/#contact">Contact the shop ↗</a></footer>
     </section>
     <dialog class="b1-egg" aria-labelledby="b1-egg-title" aria-describedby="b1-egg-description">
-      <img class="b1-egg-logo" src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">
-      <h2 id="b1-egg-title">You found an Easter egg.</h2>
-      <p id="b1-egg-description">Are you 18 or older and want to continue to our naughty half’s site?</p>
+      <div class="b1-egg-stage">
+        <div class="b1-egg-portrait"><img src="/assets/bay-one-app-speaking.png" alt="Bay One speaking in her original black and red outfit with B1 logos" width="384" height="512"></div>
+        <div class="b1-egg-bubble">
+          <span class="b1-egg-speaker"><img src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">Bay One</span>
+          <h2 id="b1-egg-title">oh my, you busted a nut!</h2>
+          <p id="b1-egg-description">Are you 18 or older and want to continue to our naughty half’s site?</p>
+        </div>
+      </div>
       <div class="b1-egg-actions">
         <button class="b1-egg-continue" type="button">Yes, I’m 18 or older — Continue</button>
         <button class="b1-egg-back" type="button" autofocus>No, take me back</button>
