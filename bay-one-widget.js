@@ -8,7 +8,7 @@
   const customAvatar = config.avatar || script?.dataset.avatar;
   const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
   const css = document.createElement('link');
-  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260908-artwork-1', script?.src || location.href).href;
+  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260908-site-2', script?.src || location.href).href;
   document.head.append(css);
   const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
   widget.setAttribute('aria-label', 'Bay One repair assistant');
@@ -29,12 +29,25 @@
         <div class="b1-status" role="status" aria-live="polite"></div>
       </form>
       <footer class="b1-footer"><span>AI guidance and approximate ranges. The shop confirms final pricing. <a href="/privacy-policy.html">Chat privacy</a></span><a class="b1-contact" href="/#contact">Contact the shop ↗</a></footer>
-    </section>`;
+    </section>
+    <dialog class="b1-egg" aria-labelledby="b1-egg-title" aria-describedby="b1-egg-description">
+      <img class="b1-egg-logo" src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">
+      <h2 id="b1-egg-title">You found an Easter egg.</h2>
+      <p id="b1-egg-description">Are you 18 or older and want to continue to our naughty half’s site?</p>
+      <div class="b1-egg-actions">
+        <button class="b1-egg-continue" type="button">Yes, I’m 18 or older — Continue</button>
+        <button class="b1-egg-back" type="button" autofocus>No, take me back</button>
+      </div>
+    </dialog>`;
   document.body.append(widget);
   const $ = selector => widget.querySelector(selector);
   const launcher = $('.b1-launcher'), panel = $('.b1-panel'), input = $('#b1-message');
   const messages = $('.b1-messages'), status = $('.b1-status'), allowance = $('.b1-allowance');
   const sendButton = $('.b1-send'), estimateButton = $('[data-b1-mode="estimate"]');
+  const egg = $('.b1-egg');
+  $('.b1-egg-continue').addEventListener('click', () => { window.location.assign('https://bustnutsnotknuckles.com/'); });
+  $('.b1-egg-back').addEventListener('click', () => egg.close());
+  egg.addEventListener('close', () => input.focus({preventScroll:true}));
   const storageKey = 'pt-bayone-visitor-v1';
   const state = { token: '', sessionReady: false, sessionPromise: null, busy: false, mode: 'chat', usage: null, failed: null, resetTimer: null };
   try { state.token = localStorage.getItem(storageKey) || ''; } catch (_) { /* The server also enforces the allowance by network. */ }
@@ -172,7 +185,7 @@
   function close() { panel.hidden = true; launcher.hidden = false; launcher.setAttribute('aria-expanded','false'); launcher.focus({preventScroll:true}); viewport(); }
   launcher.addEventListener('click', open); $('.b1-close').addEventListener('click', close);
   $('.b1-contact').addEventListener('click', () => { close(); });
-  widget.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); close(); } });
+  widget.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden && !egg.open) { event.preventDefault(); close(); } });
   input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('.b1-composer').requestSubmit(); } });
   widget.querySelectorAll('[data-b1-mode]').forEach(button => button.addEventListener('click', () => { mode(button.dataset.b1Mode); input.focus(); }));
   widget.querySelectorAll('[data-b1-suggestion]').forEach(button => button.addEventListener('click', () => { mode(button.dataset.b1Suggestion === 'estimate' ? 'estimate' : 'chat'); input.focus(); }));
@@ -180,6 +193,12 @@
   $('.b1-composer').addEventListener('submit', async event => {
     event.preventDefault(); if (state.busy) return;
     const text = input.value.trim(); if (!text) return;
+    const phrase = text.normalize('NFKC').toLowerCase().replace(/[.!?]+$/u, '').trim().replace(/\s+/gu, ' ');
+    if (phrase === 'nut buster') {
+      input.value = '';
+      egg.showModal();
+      return;
+    }
     if (state.mode === 'estimate' && state.usage?.remaining === 0) { mode('chat'); status.textContent = 'Your 2 rough estimates are used today. You can keep asking general questions.'; return; }
     const retry = state.failed && state.failed.message === text && state.failed.mode === state.mode;
     const pending = retry ? state.failed : { request_id:uuid(), message:text, mode:state.mode };

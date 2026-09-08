@@ -89,3 +89,16 @@
 @media(max-height:620px){.b1-header .b1-avatar{display:none}.b1-header{padding:10px 13px}.b1-panel{height:calc(var(--b1-viewport-height,100dvh) - 28px)}.b1-mode{margin-bottom:6px}.b1-input-row textarea{height:52px;min-height:52px}.b1-footer span{display:none}.b1-suggestions{display:none}}
 @media(max-width:800px) and (max-height:620px){.b1-panel{height:calc(var(--b1-viewport-height,100dvh) - 106px)}}
 @media(prefers-reduced-motion:reduce){.b1-launcher{transition:none}.b1-launcher:hover{transform:none}}
+
+/* The hidden invitation appears only after the visitor submits the phrase. */
+.b1-egg{position:fixed;inset:0;width:420px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);margin:auto;padding:28px;border:1px solid #94454c;border-radius:22px;background:radial-gradient(ellipse at top,#27141c,#090c12 70%);color:#edf6fc;box-shadow:0 24px 90px #000b;overflow:auto;text-align:center}
+.b1-egg::backdrop{background:#03060cdb;backdrop-filter:blur(5px)}
+.b1-egg-logo{display:block;width:88px;height:66px;margin:0 auto 18px;object-fit:contain}
+.b1-widget .b1-egg h2{margin:0 0 14px;font:800 clamp(23px,5vw,29px)/1.2 'Barlow',system-ui,sans-serif!important;letter-spacing:0;text-transform:none;color:#fff}
+.b1-widget .b1-egg p{margin:0;font:400 16px/1.6 'Barlow',system-ui,sans-serif!important;color:#cbdbe8;text-transform:none}
+.b1-egg-actions{display:grid;gap:10px;margin-top:24px}
+.b1-egg-actions button{min-height:48px;padding:12px 14px;border-radius:11px;font-size:14px;font-weight:700;line-height:1.4;white-space:normal}
+.b1-egg-continue{border:1px solid #a6f3ef;background:#78e2e8;color:#08202a}
+.b1-egg-continue:hover{background:#a5f2ee}
+.b1-egg-back{border:1px solid #546979;background:#111c27;color:#d7e6f0}
+.b1-egg-back:hover{background:#1d3040}
