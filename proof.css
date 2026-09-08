@@ -289,8 +289,9 @@
 
 .profile-link {
   display: flex;
-  min-height: 104px;
-  align-items: center;
+  min-height: 180px;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
   padding: var(--space-5);
@@ -301,7 +302,8 @@
   text-decoration: none;
 }
 
-.profile-link:hover {
+.profile-link:hover,
+.profile-link:focus-visible {
   border-color: rgba(58, 190, 255, 0.48);
   box-shadow: var(--shadow-accent);
   transform: translateY(-2px);
@@ -323,10 +325,31 @@
   line-height: 1.4;
 }
 
-.profile-link__arrow {
+.profile-link__action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid #55c4ff;
+  border-radius: var(--radius-sm);
+  color: #07111b;
+  background: #55c4ff;
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.profile-link__action svg {
   flex: 0 0 auto;
-  color: var(--color-accent);
-  font-size: 1.4rem;
+}
+
+.profile-link:hover .profile-link__action,
+.profile-link:focus-visible .profile-link__action {
+  background: #92dcff;
+  border-color: #92dcff;
 }
 
 .profile-disclosure {
