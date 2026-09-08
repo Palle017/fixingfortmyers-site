@@ -5,19 +5,20 @@
   const script = document.currentScript;
   const config = window.PT_BAYONE_CONFIG || {};
   const apiBase = String(config.endpoint || window.PT_CONTACT_CONFIG?.endpoint || 'https://redline.taild5f39d.ts.net:10000').replace(/\/$/, '');
-  const avatarUrl = config.avatar || script?.dataset.avatar || '/assets/bay-one-original.png';
+  const customAvatar = config.avatar || script?.dataset.avatar;
+  const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
   const css = document.createElement('link');
-  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260908', script?.src || location.href).href;
+  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260908-artwork-1', script?.src || location.href).href;
   document.head.append(css);
   const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
   widget.setAttribute('aria-label', 'Bay One repair assistant');
-  const portrait = '<span class="b1-avatar" aria-hidden="true"><span class="b1-monogram">B1</span></span>';
+  const portrait = `<span class="b1-avatar${customAvatar ? '' : ' b1-avatar-sheet'}" aria-hidden="true"><span class="b1-monogram">B1</span></span>`;
   widget.innerHTML = `
     <button class="b1-launcher" type="button" aria-label="Ask Bay One, the AI repair assistant" aria-expanded="false" aria-controls="b1-panel">
-      ${portrait}<span class="b1-launcher-copy"><small><i class="b1-dot"></i> Here to help</small><strong>Ask Bay One</strong><span>Questions & rough estimates</span></span>
+      ${portrait}<span class="b1-launcher-copy"><small><i class="b1-dot"></i> Here to help</small><strong><img class="b1-logo" src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">Ask Bay One</strong><span>Questions & rough estimates</span></span>
     </button>
     <section class="b1-panel" id="b1-panel" role="dialog" aria-label="Chat with Bay One" hidden>
-      <header class="b1-header">${portrait}<div><h2 class="b1-title">Bay One</h2><p class="b1-subtitle">Perfect Timing’s AI assistant</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
+      <header class="b1-header">${portrait}<div class="b1-brand"><h2 class="b1-title"><img class="b1-wordmark" src="/assets/bay-one-wordmark-20260908.jpg" alt="Bay One AI — Analyze, Estimate, Assist" width="1280" height="960"></h2><p class="b1-subtitle">Perfect Timing’s AI assistant</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
       <div class="b1-allowance" aria-live="polite">2 rough estimates per day · General questions welcome</div>
       <div class="b1-messages" role="log" aria-label="Conversation with Bay One" aria-live="polite" aria-relevant="additions text"></div>
       <div class="b1-suggestions"><button type="button" data-b1-suggestion="question">Ask about a symptom</button><button type="button" data-b1-suggestion="estimate">Get a rough estimate</button></div>
@@ -157,6 +158,7 @@
 
   function busy(value) {
     state.busy = value; input.disabled = value; sendButton.disabled = value;
+    widget.dataset.avatarState = value ? 'thinking' : 'idle';
     widget.querySelectorAll('[data-b1-mode]').forEach(button => button.disabled = value || (button.dataset.b1Mode === 'estimate' && state.usage?.remaining === 0));
     sendButton.setAttribute('aria-label', value ? 'Waiting for Bay One' : 'Send message to Bay One');
   }
