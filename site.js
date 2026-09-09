@@ -1,5 +1,21 @@
 (() => {
   'use strict';
+  // Anonymous browser counts; never include form values or URL query strings.
+  const metricsEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || 'https://redline.taild5f39d.ts.net:10000').replace(/\/$/, '');
+  if (/^(www\.)?fixingfortmyers\.com$/.test(location.hostname)) {
+    const makeId = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
+    let visitor = makeId();
+    try {
+      const saved = localStorage.getItem('pt-website-visitor-v1');
+      if (saved && /^[A-Za-z0-9_-]{16,80}$/.test(saved)) visitor = saved;
+      else localStorage.setItem('pt-website-visitor-v1', visitor);
+    } catch (_) { /* A blocked storage browser can still record this visit. */ }
+    const event = JSON.stringify({visitor_id:visitor,event_id:makeId(),page:location.pathname.slice(0,500)});
+    const reportVisit = () => fetch(metricsEndpoint + '/hooks/analytics/visit', {
+      method:'POST',headers:{'Content-Type':'application/json'},body:event,credentials:'omit',keepalive:true
+    }).then(response => { if (response.status >= 500) throw new Error('retry'); });
+    reportVisit().catch(() => setTimeout(() => reportVisit().catch(() => {}), 3000));
+  }
   const byId = id => document.getElementById(id);
   const toggle = byId('mobileToggle');
   const menu = byId('mobileMenu');

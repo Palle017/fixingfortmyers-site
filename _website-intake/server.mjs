@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {createPublicChat,routePublicChat} from './public-chat.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
@@ -9,10 +10,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MAX_JSON = 48 * 1024;
 const MAX_AUDIO = 8 * 1024 * 1024;
+const MAX_METRICS_JSON = 16 * 1024;
 const AUDIO_TYPES = new Map([['audio/webm', 'webm'], ['audio/ogg', 'ogg'], ['audio/wav', 'wav'], ['audio/x-wav', 'wav'], ['audio/mp4', 'm4a'], ['audio/mpeg', 'mp3']]);
 const CORS_HEADERS = 'Content-Type, Idempotency-Key, X-Idempotency-Key, X-Phone, X-Name, X-SMS-Consent, X-SMS-Consent-Timestamp, X-SMS-Consent-Version, X-SMS-Consent-Source, X-SMS-Consent-Page, X-SMS-Consent-Disclosure';
 const sha = value => createHash('sha256').update(value).digest('hex');
 const error = (status, message) => Object.assign(new Error(message), { status });
+const utcDay = value => new Intl.DateTimeFormat('en-CA', {timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value));
 const clean = (value, max, required = false) => {
   if (value === undefined || value === null) value = '';
   if (typeof value !== 'string') throw error(400, 'Use text for the request fields.');
@@ -20,6 +23,18 @@ const clean = (value, max, required = false) => {
   if (text.length > max) throw error(400, 'One of the request fields is too long.');
   if (required && !text) throw error(400, 'Please enter your name and phone number.');
   return text;
+};
+const cleanText = (value, max) => {
+  if (value === undefined || value === null) return '';
+  if (typeof value !== 'string') throw error(400, 'Invalid analytics payload.');
+  const text = value.replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  if (text.length > max) throw error(400, 'Analytics payload is too long.');
+  return text;
+};
+
+const normalizeVisitorKey = (ip, agent, seed = '') => {
+  const combined = String(seed || `${ip}|${agent || ''}`).trim().toLowerCase();
+  return sha(`pt-web-metric|${combined}`);
 };
 
 function normalize(input, kind) {
@@ -81,11 +96,47 @@ export function createLeadServers(options = {}) {
     idempotency_key TEXT NOT NULL UNIQUE, payload_hash TEXT NOT NULL,
     payload_json TEXT NOT NULL, audio_type TEXT, audio BLOB,
     status TEXT NOT NULL DEFAULT 'new', updated_at TEXT NOT NULL
-  ); CREATE INDEX IF NOT EXISTS leads_received ON leads(received_at DESC);`);
+  ); CREATE INDEX IF NOT EXISTS leads_received ON leads(received_at DESC);
+  CREATE TABLE IF NOT EXISTS website_visitors (
+    visitor_key TEXT PRIMARY KEY, total_visits INTEGER NOT NULL DEFAULT 1,
+    first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, first_day TEXT NOT NULL, last_day TEXT NOT NULL
+  ); CREATE INDEX IF NOT EXISTS website_visitors_last_seen ON website_visitors(last_seen);
+  CREATE TABLE IF NOT EXISTS website_visitor_daily (
+    day TEXT NOT NULL, visitor_key TEXT NOT NULL,
+    PRIMARY KEY(day, visitor_key)
+  ); CREATE INDEX IF NOT EXISTS website_visitor_daily_day ON website_visitor_daily(day);
+  CREATE TABLE IF NOT EXISTS website_visit_events (
+    id INTEGER PRIMARY KEY, visitor_key TEXT NOT NULL, day TEXT NOT NULL,
+    page TEXT NOT NULL, created_at TEXT NOT NULL, created_ms INTEGER NOT NULL
+  ); CREATE INDEX IF NOT EXISTS website_visit_events_day ON website_visit_events(day);
+  CREATE TABLE IF NOT EXISTS ai_usage (
+    id INTEGER PRIMARY KEY, visitor_key TEXT NOT NULL, request_id TEXT NOT NULL,
+    mode TEXT NOT NULL, day TEXT NOT NULL, created_at TEXT NOT NULL, created_ms INTEGER NOT NULL
+  ); CREATE INDEX IF NOT EXISTS ai_usage_day ON ai_usage(day);
+  CREATE INDEX IF NOT EXISTS ai_usage_mode_day ON ai_usage(day,mode);`);
+  if (!db.prepare('PRAGMA table_info(website_visit_events)').all().some(c=>c.name==='event_id')) db.exec('ALTER TABLE website_visit_events ADD COLUMN event_id TEXT');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS website_visit_event_id ON website_visit_events(event_id)');
   const origins = new Set(options.origins ?? ['https://fixingfortmyers.com', 'https://www.fixingfortmyers.com', ...(process.env.LEAD_DEV_ORIGINS ?? '').split(',').map(x => x.trim()).filter(Boolean)]);
+  let publicChat = null;
+  try { publicChat = createPublicChat({dataDir:path.join(dataDir,'public-chat'),...(options.chat||{})}); }
+  catch { console.error(JSON.stringify({event:'public_chat_unavailable'})); }
   const windowMs = options.rateWindowMs ?? 60000;
   const maxPerIp = options.maxPerIp ?? 12;
   const maxGlobal = options.maxGlobal ?? 120;
+  const maxRecordingPerIp = options.maxRecordingPerIp ?? 4;
+  const maxRecordingGlobal = options.maxRecordingGlobal ?? 24;
+  const recordingDiskFreeBytes = options.recordingDiskFreeBytes ?? (() => {
+    const space = fs.statfsSync(dataDir, { bigint: true });
+    return space.bavail * space.bsize;
+  });
+  const ensureRecordingSpace = audio => {
+    let available;
+    try { available = BigInt(recordingDiskFreeBytes()); }
+    catch { throw Object.assign(error(503, 'Recording storage is temporarily unavailable. Your recording was not saved. Please retry in a minute or call (239) 397-2048.'), { retryAfter: 60 }); }
+    // Leave 1 GiB free, plus room for the recording, database, and WAL writes.
+    const required = 1024n * 1024n * 1024n + 3n * BigInt(audio.length);
+    if (available < required) throw Object.assign(error(503, 'Recording storage is temporarily full. Your recording was not saved. Please retry later or call (239) 397-2048.'), { retryAfter: 60 });
+  };
   const rates = new Map();
   const rate = key => {
     const now = Date.now();
@@ -94,6 +145,61 @@ export function createLeadServers(options = {}) {
     if (!entry) { entry = { count: 0, until: now + windowMs }; rates.set(key, entry); }
     entry.count++;
     return entry.count;
+  };
+  const recordVisitor = (req, body, ip) => {
+    if (rate('analytics:visitor:global') > 300 || rate('analytics:visitor:ip:' + ip) > 80) {
+      const err = error(429, 'Analytics is temporarily rate limited.');
+      err.retryAfter = Math.ceil(windowMs / 1000);
+      throw err;
+    }
+    if (!body || typeof body!=='object' || Array.isArray(body)) throw error(400,'Invalid analytics payload.');
+    const visitorId=cleanText(body.visitor_id,80),eventId=cleanText(body.event_id,80);
+    if (![visitorId,eventId].every(v=>/^[A-Za-z0-9_-]{16,80}$/.test(v))) throw error(400,'Invalid analytics identifier.');
+    const visitorKey = normalizeVisitorKey(ip, req.headers['user-agent'] || '', visitorId);
+    const now = new Date().toISOString(),day=utcDay(Date.now());
+    const page=cleanText(body.page,500).split(/[?#]/)[0];
+    if (!page.startsWith('/') || page.startsWith('//')) throw error(400,'Invalid page path.');
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      const added=db.prepare('INSERT OR IGNORE INTO website_visit_events(visitor_key,day,page,created_at,created_ms,event_id) VALUES(?,?,?,?,?,?)').run(visitorKey,day,page,now,Date.now(),eventId);
+      if (added.changes) {
+        db.prepare('INSERT INTO website_visitors(visitor_key,first_seen,last_seen,first_day,last_day) VALUES(?,?,?,?,?) ON CONFLICT(visitor_key) DO UPDATE SET last_seen=excluded.last_seen,last_day=excluded.last_day,total_visits=total_visits+1').run(visitorKey,now,now,day,day);
+        db.prepare('INSERT OR IGNORE INTO website_visitor_daily(day,visitor_key) VALUES(?,?)').run(day,visitorKey);
+      }
+      db.exec('COMMIT');
+    } catch(err) { db.exec('ROLLBACK');throw err; }
+  };
+  const readMetrics = (chatDb) => {
+    const day = utcDay(Date.now());
+    const totals = db.prepare('SELECT COUNT(*) AS total, COALESCE(SUM(total_visits),0) AS events FROM website_visitors').get() || {};
+    const todayVisitsUnique = db.prepare('SELECT COUNT(*) AS total FROM website_visitor_daily WHERE day = ?').get(day) || {};
+    const todayVisits = db.prepare('SELECT COUNT(*) AS total FROM website_visit_events WHERE day = ?').get(day) || {};
+    const appointments = db.prepare('SELECT status, COUNT(*) AS total FROM leads GROUP BY status').all();
+    const status = {};
+    for (const row of appointments) status[row.status || 'unknown'] = row.total;
+    const totalLeads = db.prepare('SELECT COUNT(*) AS total FROM leads').get() || {};
+    let ai = { total_messages: 0, today_messages: 0, chat_messages: 0, estimate_messages: 0, today_chat_messages: 0, today_estimate_messages: 0 };
+      if (chatDb) {
+        const total = chatDb.prepare("SELECT SUM(messages) AS total, SUM(estimates) AS estimates FROM chat_metric_days").get() || {};
+        const today = chatDb.prepare("SELECT SUM(messages) AS total, SUM(estimates) AS estimates FROM chat_metric_days WHERE day = ?").get(day) || {};
+      ai = {
+        total_messages: Number(total.total || 0),
+        today_messages: Number(today.total || 0),
+        chat_messages: Math.max(0, Number(total.total || 0) - Number(total.estimates || 0)),
+        estimate_messages: Number(total.estimates || 0),
+        today_chat_messages: Math.max(0, Number(today.total || 0) - Number(today.estimates || 0)),
+        today_estimate_messages: Number(today.estimates || 0),
+      };
+    }
+    return {
+      ok: true,
+      metrics: {
+        timezone: 'America/New_York',
+        visitors: { total_unique: Number(totals.total || 0), total_events: Number(totals.events || 0), today_unique: Number(todayVisitsUnique.total || 0), today_events: Number(todayVisits.total || 0), updated_at: new Date().toISOString() },
+        appointments: { total: Number(totalLeads.total || 0), new: Number(status.new || 0), contacted: Number(status.contacted || 0), closed: Number(status.closed || 0), pending: Number(status.pending || 0) },
+        ai: chatDb ? ai : null,
+      },
+    };
   };
   const writeLead = (payload, audio, type, suppliedKey) => {
     if (payload.requestId) {
@@ -110,6 +216,7 @@ export function createLeadServers(options = {}) {
       if (existing.payload_hash !== hash) throw error(409, 'This request changed. Please try sending it again.');
       return { ok: true, received: true, id: existing.id, receivedAt: existing.received_at, duplicate: true };
     }
+    if (audio) ensureRecordingSpace(audio);
     const id = randomUUID();
     const now = new Date().toISOString();
     // SQLite FULL synchronous commit completes before acknowledgement. The audio
@@ -123,27 +230,55 @@ export function createLeadServers(options = {}) {
     try {
       const url = new URL(req.url, 'http://localhost');
       if (req.method === 'GET' && url.pathname === '/healthz') return json(res, 200, { ok: true, service: 'Perfect Timing website requests' });
+      if (['/chat/session','/chat/message'].includes(url.pathname)) {
+        const forwarded = String(req.headers['x-forwarded-for'] ?? '').split(',').at(-1).trim();
+        const ip = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && isIP(forwarded) ? forwarded : req.socket.remoteAddress;
+        await routePublicChat(publicChat,req,res,{origins,ip,readBody,json});
+        return;
+      }
       if (req.method === 'GET' && url.pathname === '/chat/widget.js') {
         res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=300', 'X-Content-Type-Options': 'nosniff' });
         return res.end(fs.readFileSync(path.join(HERE, 'widget.js')));
       }
-      if (!['/hooks/lead/webform', '/hooks/lead/voicenote'].includes(url.pathname)) return json(res, 404, { ok: false, error: 'Not found.' });
+      if (!['/hooks/lead/webform', '/hooks/lead/voicenote', '/hooks/analytics/visit'].includes(url.pathname)) return json(res, 404, { ok: false, error: 'Not found.' });
       const origin = req.headers.origin;
       if (!origins.has(origin)) return json(res, 403, { ok: false, error: 'This request must come from the shop website.' });
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', CORS_HEADERS);
+      res.setHeader('Access-Control-Allow-Headers', url.pathname.startsWith('/hooks/analytics/') ? 'Content-Type' : CORS_HEADERS);
       if (req.method === 'OPTIONS') { res.writeHead(204, { 'Access-Control-Max-Age': '600' }); return res.end(); }
-      if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'POST only.' });
-      // Trust only the final proxy-appended address on loopback. A separate global
-      // cap protects the receiver even if an upstream proxy changes its headers.
       const forwarded = String(req.headers['x-forwarded-for'] ?? '').split(',').at(-1).trim();
       const ip = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && isIP(forwarded) ? forwarded : req.socket.remoteAddress;
-      if (rate('global') > maxGlobal || rate('ip:' + ip) > maxPerIp) { res.setHeader('Retry-After', String(Math.ceil(windowMs / 1000))); return json(res, 429, { ok: false, error: 'Please wait a minute before sending another request, or call (239) 397-2048.' }); }
+      if (url.pathname === '/hooks/analytics/visit') {
+        if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'POST only.' });
+        try {
+          const body = await readBody(req, MAX_METRICS_JSON).then(buffer => {
+            if (!buffer.length) return {};
+            try { return JSON.parse(buffer.toString('utf8')); } catch { throw error(400, 'Invalid analytics payload.'); }
+          });
+          recordVisitor(req, body, ip);
+          return json(res, 200, { ok: true });
+        } catch (err) {
+          if (!res.headersSent) {
+            if (err.retryAfter) res.setHeader('Retry-After', String(err.retryAfter));
+            return json(res, err.status ?? 503, { ok: false, error: err.status ? err.message : 'Visitor tracking is temporarily unavailable.' });
+          }
+          return res.end();
+        }
+      }
+      if (!['/hooks/lead/webform', '/hooks/lead/voicenote'].includes(url.pathname)) return json(res, 404, { ok: false, error: 'Not found.' });
+      if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'POST only.' });
+      const kind = url.pathname.endsWith('/voicenote') ? 'voicenote' : 'webform';
+      const isRecording = kind === 'voicenote';
+      const globalLimit = isRecording ? maxRecordingGlobal : maxGlobal;
+      const ipLimit = isRecording ? maxRecordingPerIp : maxPerIp;
+      if (rate(kind + ':global') > globalLimit || rate(kind + ':ip:' + ip) > ipLimit) {
+        res.setHeader('Retry-After', String(Math.ceil(windowMs / 1000)));
+        return json(res, 429, { ok: false, error: isRecording ? 'Too many recordings were sent recently. Your recording was not saved. Please retry in a minute or call (239) 397-2048.' : 'Please wait a minute before sending another request, or call (239) 397-2048.' });
+      }
       const contentType = String(req.headers['content-type'] ?? '');
       let input, audio = null, audioType = '';
-      const kind = url.pathname.endsWith('/voicenote') ? 'voicenote' : 'webform';
       if (kind === 'webform') {
         if (contentType.split(';')[0] !== 'application/json') throw error(415, 'Use JSON for repair requests.');
         const body = await readBody(req, MAX_JSON);
@@ -171,8 +306,10 @@ export function createLeadServers(options = {}) {
       const result = writeLead(payload, audio, audioType, req.headers['idempotency-key'] ?? req.headers['x-idempotency-key'] ?? input.idempotencyKey);
       json(res, result.duplicate ? 200 : 201, result);
     } catch (err) {
-      if (!res.headersSent) json(res, err.status ?? 503, { ok: false, error: err.status ? err.message : 'The shop could not save your request. Please call (239) 397-2048.' });
-      else res.end();
+      if (!res.headersSent) {
+        if (err.retryAfter) res.setHeader('Retry-After', String(err.retryAfter));
+        json(res, err.status ?? 503, { ok: false, error: err.status ? err.message : 'The shop could not save your request. Please call (239) 397-2048.' });
+      } else res.end();
       if (!err.status) console.error(JSON.stringify({ event: 'receiver_error', code: err.code ?? 'internal' }));
     }
   });
@@ -190,8 +327,31 @@ export function createLeadServers(options = {}) {
       res.setHeader('Referrer-Policy', 'no-referrer');
       const url = new URL(req.url, 'http://localhost');
       if (req.method === 'GET' && url.pathname === '/api/leads') {
-        const rows = db.prepare('SELECT id, received_at, kind, payload_json, status, updated_at, length(audio) AS audio_bytes, audio_type FROM leads ORDER BY received_at DESC LIMIT 200').all();
-        return json(res, 200, { ok: true, leads: rows.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json) })) });
+        const rawLimit = url.searchParams.get('limit') ?? '200';
+        if (!/^[1-9]\d{0,2}$/.test(rawLimit) || Number(rawLimit) > 200) throw error(400, 'Inbox page limit must be between 1 and 200.');
+        const limit = Number(rawLimit);
+        const rawCursor = url.searchParams.get('cursor');
+        let cursor = null;
+        if (rawCursor !== null) {
+          try {
+            if (!rawCursor || rawCursor.length > 256 || !/^[A-Za-z0-9_-]+$/.test(rawCursor)) throw new Error();
+            cursor = JSON.parse(Buffer.from(rawCursor, 'base64url').toString('utf8'));
+            if (!cursor || cursor.v !== 1 || typeof cursor.received_at !== 'string'
+                || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(cursor.received_at)
+                || !Number.isFinite(Date.parse(cursor.received_at))
+                || new Date(cursor.received_at).toISOString() !== cursor.received_at
+                || typeof cursor.id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(cursor.id)) throw new Error();
+          } catch { throw error(400, 'Invalid inbox cursor. Refresh the request list.'); }
+        }
+        const fields = 'SELECT id, received_at, kind, payload_json, status, updated_at, length(audio) AS audio_bytes, audio_type FROM leads';
+        const rows = cursor
+          ? db.prepare(fields + ' WHERE received_at < ? OR (received_at = ? AND id < ?) ORDER BY received_at DESC, id DESC LIMIT ?').all(cursor.received_at, cursor.received_at, cursor.id, limit + 1)
+          : db.prepare(fields + ' ORDER BY received_at DESC, id DESC LIMIT ?').all(limit + 1);
+        const hasMore = rows.length > limit;
+        const page = rows.slice(0, limit);
+        const last = page.at(-1);
+        const nextCursor = hasMore && last ? Buffer.from(JSON.stringify({ v: 1, received_at: last.received_at, id: last.id })).toString('base64url') : null;
+        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
       }
       const audioMatch = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/audio$/);
       if (req.method === 'GET' && audioMatch) {
@@ -217,6 +377,9 @@ export function createLeadServers(options = {}) {
         const result = db.prepare('UPDATE leads SET status = ?, updated_at = ? WHERE id = ?').run(input.status, new Date().toISOString(), statusMatch[1]);
         return json(res, result.changes ? 200 : 404, { ok: Boolean(result.changes) });
       }
+      if (req.method === 'GET' && url.pathname === '/api/metrics') {
+        return json(res, 200, readMetrics(publicChat?.db));
+      }
       const assets = { '/': ['inbox.html', 'text/html'], '/inbox.js': ['inbox.js', 'application/javascript'], '/inbox.css': ['inbox.css', 'text/css'] };
       if (req.method === 'GET' && assets[url.pathname]) {
         const [file, type] = assets[url.pathname];
@@ -237,6 +400,7 @@ export function createLeadServers(options = {}) {
     },
     async close() {
       await Promise.all([publicServer, adminServer].map(server => new Promise(resolve => { server.close(resolve); server.closeIdleConnections(); })));
+      publicChat?.close();
       db.close();
     },
   };
