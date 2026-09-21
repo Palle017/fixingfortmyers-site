@@ -86,9 +86,12 @@
       const result = await send('/hooks/lead/webform', data, submittedKey);
       if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
       sentRequestId = result.id;
-      status.textContent = `Repair request received. Reference: ${result.id}. Our team will follow up; your appointment is not confirmed yet.`;
+      status.textContent = `Repair request received. Reference: ${result.id}. Opening your confirmation…`;
       backup.hidden = true;
       submit.textContent = 'Request received';
+      // Hand the receipt to the confirmation page. Nothing sensitive is stored: the reference id and vehicle only.
+      try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id: result.id, receivedAt: result.receivedAt || new Date().toISOString(), name: String(data.name || '').slice(0, 100), vehicle: String(data.vehicle || '').slice(0, 160) })); } catch (_) { /* The confirmation page still works without stored details. */ }
+      location.assign('/request-received.html');
     } catch (_) {
       status.textContent = 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the email draft and send it from your email app.';
       submit.textContent = 'Retry repair request';
