@@ -1,0 +1,67 @@
+{
+  "at": "2026-09-24T19:21:33.774Z",
+  "site": "https://fixingfortmyers.com",
+  "commit": "5f4f9e5015f02b3d3932ba0270d75678c0831f48",
+  "pagesStatus": "built",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "bytes": 70405
+    },
+    {
+      "path": "/no-start-diagnosis-fort-myers",
+      "status": 200,
+      "bytes": 26072
+    },
+    {
+      "path": "/repair-guides",
+      "status": 200,
+      "bytes": 10666
+    },
+    {
+      "path": "/repair-guide-car-wont-start",
+      "status": 200,
+      "bytes": 12726
+    },
+    {
+      "path": "/repair-guide-ac-warm-at-idle",
+      "status": 200,
+      "bytes": 12468
+    },
+    {
+      "path": "/repair-guide-battery-keeps-dying",
+      "status": 200,
+      "bytes": 12929
+    },
+    {
+      "path": "/bay-one-config.js",
+      "status": 200,
+      "bytes": 210
+    },
+    {
+      "path": "/contact-config.js",
+      "status": 200,
+      "bytes": 206
+    },
+    {
+      "path": "/sitemap.xml",
+      "status": 200,
+      "bytes": 6300
+    },
+    {
+      "path": "/_website-intake/server.mjs",
+      "status": 404,
+      "bytes": 3132
+    },
+    {
+      "path": "/docs/COMPANY-UPDATE.md",
+      "status": 404,
+      "bytes": 3132
+    }
+  ],
+  "bayOne": "disabled",
+  "contact": "customer-sent native SMS draft",
+  "realMessagesSent": false,
+  "backendActivated": false
+}
