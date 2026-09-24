@@ -3,7 +3,7 @@
 .skip-link{position:fixed;top:-80px;left:16px;z-index:2000;padding:12px 18px;background:#fff;color:#101319}
 .skip-link:focus{top:12px}
 .reveal{opacity:1;transform:none}
-.home-hero{position:relative;padding:155px 0 58px;isolation:isolate;background:#0b1119 url('/assets/banger.webp') center/cover no-repeat}
+.home-hero{position:relative;padding:155px 0 58px;isolation:isolate;background:#0b1119 url('/assets/tony-mobile-diagnostics.webp') center/cover no-repeat}
 .home-hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(5,10,17,.98),rgba(5,10,17,.87) 48%,rgba(5,10,17,.6))}
 .home-hero__grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(230px,.65fr);gap:45px;align-items:center}
 .home-hero__eyebrow{color:#9fc4e2;font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
@@ -17,7 +17,7 @@
 .home-hero__services{display:flex;gap:18px;flex-wrap:wrap;margin-top:30px;font-size:14px}
 .home-hero__art img{max-height:410px;width:auto;margin:auto;object-fit:contain}
 .home-hero__art p{font-family:'Bebas Neue',sans-serif;text-align:center;letter-spacing:.08em;font-size:21px;color:#dde9f6;margin-top:12px}
-.service-hero__bg{background-image:linear-gradient(rgba(5,10,17,.83),rgba(5,10,17,.95)),url('/assets/banger.webp')}
+.service-hero__bg{background-image:linear-gradient(rgba(5,10,17,.83),rgba(5,10,17,.95)),url('/assets/tony-mobile-diagnostics.webp')}
 .service-hero__desc{color:#d5e0eb}
 .shop-notice{background:#142230;border-top:1px solid #2b536b;border-bottom:1px solid #2b536b;padding:22px 0}
 .shop-notice .container{display:flex;align-items:center;gap:26px;justify-content:space-between}
@@ -54,7 +54,7 @@
 :focus-visible{outline:3px solid #92dcff;outline-offset:4px}
 @media(max-width:800px){
  #pt-website-request-widget{display:none!important}
- .home-hero{padding:120px 0 40px;background-image:url('/assets/banger-mobile.webp')}
+ .home-hero{padding:120px 0 40px;background-image:url('/assets/tony-mobile-diagnostics-small.webp')}
  .home-hero__grid{grid-template-columns:1fr;gap:0}
  .home-hero__art{display:none}
  .home-hero h1{font-size:clamp(60px,12vw,84px)}
@@ -82,3 +82,14 @@
   .nav__mobile-toggle { display: flex; }
   .nav__mobile-menu.open { display: flex; }
 }
+
+/* Mobile service imagery keeps Tony visible and reserves space while images load. */
+.home-hero__grid{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:36px}
+.home-hero h1{font-size:clamp(58px,6.2vw,94px)}
+.home-hero__art img{width:100%;height:auto;max-height:none;aspect-ratio:3/2;object-fit:cover;border-radius:14px;border:1px solid #315069}
+.mobile-section__image img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:14px}
+.mobile-image-caption{font-size:13px;line-height:1.5;color:#b8c7d7;margin-top:12px}
+.mobile-faq{padding:65px 0;background:#0d141e}
+.mobile-faq .faq-grid{margin-top:28px}
+@media(max-width:800px){.home-hero__grid{grid-template-columns:1fr;gap:28px}.home-hero__art{display:block;max-width:620px}.home-hero__art img{max-height:360px}.home-hero h1{font-size:clamp(49px,10vw,76px)}.mobile-faq{padding:45px 0}}
+@media(max-width:360px){.nav__logo{gap:8px}.nav__logo-main{font-size:.94rem}.nav__logo-sub{font-size:.48rem;letter-spacing:.04em}.testimonials__grid{grid-template-columns:minmax(0,1fr)}}

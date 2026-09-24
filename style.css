@@ -343,7 +343,7 @@ section {
 .hero__bg {
   position: absolute;
   inset: 0;
-  background-image: url('./assets/banger.webp');
+  background-image: url('./assets/tony-mobile-diagnostics.webp');
   background-size: cover;
   background-position: center center;
   z-index: 0;
@@ -354,7 +354,7 @@ section {
 
 @media (max-width: 640px) {
   .hero__bg {
-    background-image: url('./assets/banger-mobile.webp');
+    background-image: url('./assets/tony-mobile-diagnostics-small.webp');
   }
 }
 
@@ -440,7 +440,7 @@ section {
   inset: 0;
   z-index: 7;
   pointer-events: none;
-  background-image: url('./assets/banger.webp');
+  background-image: url('./assets/tony-mobile-diagnostics.webp');
   background-size: cover;
   background-position: center center;
   opacity: 0;
