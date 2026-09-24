@@ -1,7 +1,9 @@
 import http from 'node:http';
 import {createPublicChat,routePublicChat} from './public-chat.mjs';
+import {createRuleEvaluator,loadRules} from './lead-routing.mjs';
+import {createUrgentAlerts} from './urgent-alerts.mjs';
 import { DatabaseSync } from 'node:sqlite';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -47,6 +49,14 @@ function normalize(input, kind) {
   const timestamp = clean(input.smsConsentTimestamp, 40);
   if (consent && (!timestamp || !Number.isFinite(Date.parse(timestamp)) || Date.parse(timestamp) > Date.now() + 300000)) throw error(400, 'Please confirm your text message preference again.');
   if (consent && !['smsConsentVersion', 'smsConsentSource', 'smsConsentPage', 'smsConsentDisclosure'].every(key => typeof input[key] === 'string' && input[key].trim())) throw error(400, 'Please confirm your text message preference again.');
+  const routing={};
+  // Keep legacy payload hashes stable. New confirmed fields are additive.
+  if(['starts','stranded','city','drivable','source','callbackTime'].some(key=>Object.hasOwn(input,key))){
+    for(const key of ['starts','stranded','drivable']){const value=input[key]||'unknown';if(!['yes','no','unknown'].includes(value))throw error(400,'Select yes, no, or unknown for vehicle status.');routing[key]=value;}
+    routing.city=clean(input.city,100);routing.callbackTime=clean(input.callbackTime,160);
+    routing.source=input.source||(kind==='voicenote'?'voice':'form');
+    if(!['form','ai','voice','unknown'].includes(routing.source))throw error(400,'Invalid inquiry source.');
+  }
   return {
     kind, name: clean(input.name, 100, true), phone,
     requestId: kind === 'voicenote' ? clean(input.requestId, 36) : '',
@@ -57,6 +67,7 @@ function normalize(input, kind) {
     smsConsentSource: clean(input.smsConsentSource, 100),
     smsConsentPage: clean(input.smsConsentPage, 500),
     smsConsentDisclosure: clean(input.smsConsentDisclosure, 3000),
+    ...routing,
   };
 }
 
@@ -87,6 +98,7 @@ function json(res, status, body) {
 }
 
 export function createLeadServers(options = {}) {
+  const evaluateRoute=createRuleEvaluator(options.routingRules||loadRules(options.routingRulesFile));
   const dataDir = path.resolve(options.dataDir ?? process.env.LEAD_DATA_DIR ?? path.join(HERE, 'data'));
   fs.mkdirSync(dataDir, { recursive: true });
   const db = new DatabaseSync(path.join(dataDir, 'website-leads.sqlite3'));
@@ -116,6 +128,8 @@ export function createLeadServers(options = {}) {
   CREATE INDEX IF NOT EXISTS ai_usage_mode_day ON ai_usage(day,mode);`);
   if (!db.prepare('PRAGMA table_info(website_visit_events)').all().some(c=>c.name==='event_id')) db.exec('ALTER TABLE website_visit_events ADD COLUMN event_id TEXT');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS website_visit_event_id ON website_visit_events(event_id)');
+  // Factory callers (tests/previews) never inherit live-alert activation.
+  const alerts=createUrgentAlerts(db,options.alerts||{enabled:false});
   const origins = new Set(options.origins ?? ['https://fixingfortmyers.com', 'https://www.fixingfortmyers.com', ...(process.env.LEAD_DEV_ORIGINS ?? '').split(',').map(x => x.trim()).filter(Boolean)]);
   let publicChat = null;
   try { publicChat = createPublicChat({dataDir:path.join(dataDir,'public-chat'),...(options.chat||{})}); }
@@ -214,16 +228,22 @@ export function createLeadServers(options = {}) {
     const existing = db.prepare('SELECT id, received_at, payload_hash FROM leads WHERE idempotency_key = ?').get(key);
     if (existing) {
       if (existing.payload_hash !== hash) throw error(409, 'This request changed. Please try sending it again.');
-      return { ok: true, received: true, id: existing.id, receivedAt: existing.received_at, duplicate: true };
+      return { ok: true, received: true, id: existing.id, receivedAt: existing.received_at, duplicate: true,...alerts.inspect(existing.id) };
     }
     if (audio) ensureRecordingSpace(audio);
     const id = randomUUID();
     const now = new Date().toISOString();
     // SQLite FULL synchronous commit completes before acknowledgement. The audio
     // and consent evidence live in the same transaction as the lead record.
-    db.prepare('INSERT INTO leads (id, received_at, kind, idempotency_key, payload_hash, payload_json, audio_type, audio, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(id, now, payload.kind, key, hash, JSON.stringify(payload), type || null, audio || null, now);
+    const decision=evaluateRoute({...payload,source:payload.source||(payload.kind==='voicenote'?'voice':'form'),now:Date.parse(now)});
+    db.exec('BEGIN IMMEDIATE');
+    try{
+      db.prepare('INSERT INTO leads (id, received_at, kind, idempotency_key, payload_hash, payload_json, audio_type, audio, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(id, now, payload.kind, key, hash, JSON.stringify(payload), type || null, audio || null, now);
+      alerts.enqueue(payload,id,decision);
+      db.exec('COMMIT');
+    }catch(err){db.exec('ROLLBACK');throw err;}
     console.log(JSON.stringify({ event: 'lead_received', id, kind: payload.kind, receivedAt: now }));
-    return { ok: true, received: true, id, receivedAt: now };
+    return { ok: true, received: true, id, receivedAt: now,...alerts.inspect(id) };
   };
 
   const publicServer = http.createServer(async (req, res) => {
@@ -326,6 +346,14 @@ export function createLeadServers(options = {}) {
       res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'");
       res.setHeader('Referrer-Policy', 'no-referrer');
       const url = new URL(req.url, 'http://localhost');
+      const alertRetry=url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/alerts\/retry$/);
+      if(req.method==='POST'&&(alertRetry||url.pathname==='/api/alerts/check')){
+        if(req.headers['content-type']?.split(';')[0]!=='application/json'||!req.headers.origin)throw error(403,'Use the local inbox.');
+        const configured=options.operatorToken??process.env.LEAD_OPERATOR_TOKEN,provided=String(req.headers.authorization||'').replace(/^Bearer /,'');
+        if(typeof configured!=='string'||configured.length<32||!timingSafeEqual(Buffer.from(sha(configured)),Buffer.from(sha(provided))))throw error(401,'An approved operator token is required.');
+        if(alertRetry){let input;try{input=JSON.parse((await readBody(req,1024)).toString());}catch{throw error(400,'Invalid retry.');}if(!['notify_sms','notify_call'].includes(input?.channel))throw error(400,'Invalid alert channel.');return json(res,200,alerts.retry(alertRetry[1],input.channel));}
+        await alerts.tick();return json(res,200,{ok:true});
+      }
       if (req.method === 'GET' && url.pathname === '/api/leads') {
         const rawLimit = url.searchParams.get('limit') ?? '200';
         if (!/^[1-9]\d{0,2}$/.test(rawLimit) || Number(rawLimit) > 200) throw error(400, 'Inbox page limit must be between 1 and 200.');
@@ -351,7 +379,7 @@ export function createLeadServers(options = {}) {
         const page = rows.slice(0, limit);
         const last = page.at(-1);
         const nextCursor = hasMore && last ? Buffer.from(JSON.stringify({ v: 1, received_at: last.received_at, id: last.id })).toString('base64url') : null;
-        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
+        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
       }
       const audioMatch = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/audio$/);
       if (req.method === 'GET' && audioMatch) {
@@ -392,13 +420,15 @@ export function createLeadServers(options = {}) {
   adminServer.requestTimeout = 10000;
   adminServer.headersTimeout = 5000;
   return {
-    publicServer, adminServer, db, dataDir,
+    publicServer, adminServer, db, dataDir, alerts,
     async start(publicPort = Number(process.env.LEAD_PUBLIC_PORT || 18795), adminPort = Number(process.env.LEAD_INBOX_PORT || 18798)) {
       await new Promise((resolve, reject) => { publicServer.once('error', reject); publicServer.listen(publicPort, '127.0.0.1', resolve); });
       try { await new Promise((resolve, reject) => { adminServer.once('error', reject); adminServer.listen(adminPort, '127.0.0.1', resolve); }); } catch (err) { await new Promise(resolve => publicServer.close(resolve)); throw err; }
+      if(options.alertWorker!==false)alerts.start();
       return { publicPort: publicServer.address().port, adminPort: adminServer.address().port };
     },
     async close() {
+      await alerts.close();
       await Promise.all([publicServer, adminServer].map(server => new Promise(resolve => { server.close(resolve); server.closeIdleConnections(); })));
       publicChat?.close();
       db.close();
@@ -407,7 +437,7 @@ export function createLeadServers(options = {}) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  const service = createLeadServers();
+  const service = createLeadServers({routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
   service.start().then(ports => console.log(JSON.stringify({ event: 'listening', public: `127.0.0.1:${ports.publicPort}`, inbox: `http://127.0.0.1:${ports.adminPort}/` }))).catch(err => { console.error(JSON.stringify({ event: 'startup_failed', code: err.code ?? 'internal' })); process.exit(1); });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => service.close().then(() => process.exit(0)));
 }

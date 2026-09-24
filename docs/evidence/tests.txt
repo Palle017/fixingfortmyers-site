@@ -1,0 +1,48 @@
+Synthetic test run 2026-09-24T19:17:39.499Z
+Node v24.18.1
+✔ visitor events deduplicate, distinguish unique browsers, enforce origin, and persist (736.259ms)
+✔ completed AI counts survive retries, midnight, restart, and seven-day cleanup (371.0531ms)
+✔ ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions (25.4107ms)
+{"event":"lead_received","id":"5228e4c9-736c-49cb-9a3c-56c3092bffd1","kind":"webform","receivedAt":"2026-09-24T19:17:36.874Z"}
+{"event":"lead_received","id":"1b1b85d0-919e-44e1-a413-d3fdd39bafcd","kind":"webform","receivedAt":"2026-09-24T19:17:36.928Z"}
+{"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
+✔ lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts (674.5129ms)
+{"event":"lead_received","id":"5b0dedb7-8c74-4206-b086-ecc04878703d","kind":"webform","receivedAt":"2026-09-24T19:17:37.589Z"}
+{"event":"lead_received","id":"94ebaafd-911d-4467-b715-045f0124fc2f","kind":"webform","receivedAt":"2026-09-24T19:17:37.606Z"}
+{"event":"lead_received","id":"59fd2a38-8f0b-4778-9e9e-bc0a8c121ac5","kind":"webform","receivedAt":"2026-09-24T19:17:37.630Z"}
+✔ persistent callback/global caps suppress repeated alert pairs without losing saved leads (643.8306ms)
+{"event":"lead_received","id":"026a71da-130d-4b7c-bc40-29e0b7649fc8","kind":"webform","receivedAt":"2026-09-24T19:17:38.163Z"}
+✔ definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token (579.5958ms)
+✔ Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered (3.5045ms)
+✔ Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider (273.3274ms)
+{"event":"lead_received","id":"46c6421a-44c9-49b7-8497-78239b2d60f2","kind":"webform","receivedAt":"2026-09-24T19:17:36.872Z"}
+✔ receives a real HTTP request, commits it, shows it privately, and deduplicates retries (733.6553ms)
+✔ public API has strict origin checks, preflight, and no unauthenticated owner inbox (583.7393ms)
+{"event":"lead_received","id":"3e141488-c1a0-411b-a0f2-888ad8d600dc","kind":"webform","receivedAt":"2026-09-24T19:17:38.172Z"}
+✔ validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON (546.6313ms)
+{"event":"lead_received","id":"3936097a-a7aa-449c-b8da-4afc2eb8c114","kind":"webform","receivedAt":"2026-09-24T19:17:38.651Z"}
+{"event":"lead_received","id":"28d58107-04c6-4bff-84af-d179daf26268","kind":"webform","receivedAt":"2026-09-24T19:17:38.662Z"}
+✔ rate limits apply before accepting more uploads (449.8237ms)
+{"event":"lead_received","id":"7c85ae0b-dc41-4730-be58-925c83414544","kind":"webform","receivedAt":"2026-09-24T19:17:39.021Z"}
+{"event":"lead_received","id":"3e47ae97-949e-4b13-b552-ea32d24c19a3","kind":"voicenote","receivedAt":"2026-09-24T19:17:39.041Z"}
+✔ multipart recording is durable, privately playable with byte ranges, and requires name (401.537ms)
+{"event":"lead_received","id":"a18deb39-7b95-480d-a22d-6b10e6a5c051","kind":"voicenote","receivedAt":"2026-09-24T19:17:39.423Z"}
+✔ legacy raw recording works and MIME-spoofed uploads fail (354.9151ms)
+✔ every intake reply carries customer words to editable form without a lead submit or forced vehicle repetition (379.5497ms)
+✔ initial AI connection failure stays truthful and unsent notes still hand off to the normal form (101.5241ms)
+✔ service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable (172.6597ms)
+✔ after-hours wording uses Eastern time and untrusted text is displayed as text (82.4466ms)
+✔ long conversation preserves all customer words and blocks sending until the customer shortens it (74.1861ms)
+✔ receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity (134.5556ms)
+✔ mobile bar retains call and request actions, adds Bay One, and restores focus to the actual entry (77.8431ms)
+✔ public Bay One is disabled before UI/assets/network while normal contact remains available (52.4738ms)
+✔ public form prepares an editable native text intent with no HTTP delivery or receipt claim (76.7281ms)
+✔ iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient (42.0866ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3237.7967

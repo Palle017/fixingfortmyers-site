@@ -1,3 +1,10 @@
 # Server source belongs in GitHub for recovery, not in the static site output.
 exclude:
   - _website-intake
+  - tools
+  - docs
+  - tests
+  - node_modules
+  - package.json
+  - package-lock.json
+  - README.md

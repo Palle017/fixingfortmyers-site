@@ -1,8 +1,8 @@
 (() => {
   'use strict';
   // Anonymous browser counts; never include form values or URL query strings.
-  const metricsEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || 'https://redline.taild5f39d.ts.net:10000').replace(/\/$/, '');
-  if (/^(www\.)?fixingfortmyers\.com$/.test(location.hostname)) {
+  const metricsEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
+  if (metricsEndpoint && /^(www\.)?fixingfortmyers\.com$/.test(location.hostname)) {
     const makeId = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
     let visitor = makeId();
     try {
@@ -17,6 +17,14 @@
     reportVisit().catch(() => setTimeout(() => reportVisit().catch(() => {}), 3000));
   }
   const byId = id => document.getElementById(id);
+  // Service attribution is a fixed category, never arbitrary query text.
+  const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',engine:'Engine / transmission',programming:'Module programming',diesel:'Diesel service',maintenance:'Maintenance / other repair'});
+  const servicePages = {'auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'engine','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
+  const validService = key => typeof key === 'string' && Object.hasOwn(services,key);
+  const requestedService = new URLSearchParams(location.search).get('service');
+  const pageService = servicePages[location.pathname.replace(/^\//,'').replace(/\.html$/,'')];
+  const serviceKey = validService(requestedService) ? requestedService : validService(pageService) ? pageService : '';
+  window.PT_REPAIR_CONTEXT = {service:serviceKey,applyService(key){const field=byId('request-service');if(field&&validService(key)&&field.selectedIndex===0)field.value=services[key];}};
   const toggle = byId('mobileToggle');
   const menu = byId('mobileMenu');
   if (toggle && menu) {
@@ -36,11 +44,33 @@
   }
   const form = byId('bookingForm');
   if (!form) return;
+  window.PT_REPAIR_CONTEXT.applyService(serviceKey);
+  const problemField = byId('request-details');
+  if (problemField) problemField.addEventListener('input',()=>problemField.setCustomValidity(problemField.maxLength>0&&problemField.value.length>problemField.maxLength?'Your notes are preserved. Please shorten them to fit the form before sending.':''));
+  for (const id of ['request-vehicle','request-city','request-starts','request-stranded']) {
+    const field = byId(id);
+    if (field) field.addEventListener('input',()=>{field.dataset.userEdited='true';});
+  }
   const endpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
   const status = byId('request-status');
   const submit = byId('request-submit');
   const backup = byId('request-backup');
   const preview = byId('request-preview');
+  const textDraft = byId('request-text');
+  const phoneField = byId('request-phone');
+  phoneField.required = Boolean(endpoint);
+  byId('request-phone-label').textContent = endpoint ? 'Phone number' : 'Callback number, if different (optional)';
+  byId('request-sms-consent').closest('.request-consent').hidden = !endpoint;
+  byId('request-direct-consent').hidden = Boolean(endpoint);
+  // Messages uses a different body separator on Apple mobile devices. Keep copy/email
+  // available because support still depends on the device's registered texting app.
+  const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const smsBodySeparator = appleMobile ? '&' : '?';
+  const refreshDraftLinks = () => {
+    if (textDraft) textDraft.href = `sms:+12393972048${smsBodySeparator}body=${encodeURIComponent(preview.value)}`;
+    byId('request-email').href = `mailto:fixingfortmyers@gmail.com?subject=${encodeURIComponent('Repair inquiry for Perfect Timing Auto Repair')}&body=${encodeURIComponent(preview.value)}`;
+  };
+  preview.addEventListener('input',refreshDraftLinks);
   const uid = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   let requestKey = uid();
   let sentRequestId = '';
@@ -49,12 +79,20 @@
   const readRequest = () => {
     const data = new FormData(form);
     const consent = byId('request-sms-consent').checked;
-    return { name: String(data.get('name')).trim(), phone: String(data.get('phone')).trim(), vehicle: String(data.get('vehicle')).trim(), service: String(data.get('service')), details: String(data.get('details')).trim(), website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    const city = String(data.get('city') || '').trim();
+    const starts = ['yes','no'].includes(data.get('starts')) ? data.get('starts') : 'unknown';
+    const stranded = ['yes','no'].includes(data.get('stranded')) ? data.get('stranded') : 'unknown';
+    const symptoms = String(data.get('details') || '').trim();
+    // Keep these details useful to the existing receiver during a staged rollout.
+    const context = [city ? `City / ZIP: ${city}` : '',`Vehicle starts: ${starts}`,`Stranded: ${stranded}`].filter(Boolean).join('\n');
+    return { name: String(data.get('name')).trim(), phone: String(data.get('phone')).trim(), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service')), details: symptoms ? `${symptoms}\n\n${context}` : '', city, starts, stranded, website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
-    const message = `Repair inquiry for Perfect Timing Auto Repair\n\nName: ${data.name}\nPhone: ${data.phone}\nVehicle: ${data.vehicle}\nService: ${data.service}\n\n${data.details}\n\nText-message consent: ${data.smsConsent ? 'Yes' : 'No; please call'}\n${data.smsConsent ? consentDisclosure : ''}`;
+    const callback = data.phone || 'Please reply to this text';
+    const consent = !endpoint ? 'Please reply about this repair inquiry.' : data.smsConsent ? `Text-message consent: Yes\n${consentDisclosure}` : 'Text-message consent: No; please call';
+    const message = `Repair inquiry for Perfect Timing Auto Repair\n\nName: ${data.name}\nCallback: ${callback}\nVehicle: ${data.vehicle}\nService: ${data.service}\n\n${data.details}\n\n${consent}`;
     preview.value = message;
-    byId('request-email').href = `mailto:fixingfortmyers@gmail.com?subject=${encodeURIComponent('Repair inquiry: ' + data.vehicle)}&body=${encodeURIComponent(message)}`;
+    refreshDraftLinks();
     backup.hidden = false;
   };
   const send = async (path, body, key, json = true) => {
@@ -64,22 +102,29 @@
     try {
       const response = await fetch(endpoint + path, { method: 'POST', body: json ? JSON.stringify(body) : body, headers: { ...(json ? { 'Content-Type': 'application/json' } : {}), 'Idempotency-Key': key }, signal: controller.signal, credentials: 'omit' });
       const result = await response.json();
-      if (!response.ok || result.ok !== true || typeof result.id !== 'string') throw new Error('unconfirmed');
+      if (!response.ok || result.ok !== true || result.received !== true || typeof result.id !== 'string') throw new Error('unconfirmed');
       return result;
     } finally { clearTimeout(timer); }
   };
-  if (!endpoint) { submit.textContent = 'Prepare repair request'; byId('request-instructions').textContent = 'Prepare your details, then send them using your email app. You can also call or text the shop directly. An appointment is confirmed only after our team replies.'; }
+  if (!endpoint) {
+    submit.textContent = 'Prepare text to Tony';
+    byId('request-instructions').textContent = 'Fill in what you know, then review a text draft for Tony. Open it in your texting app and tap Send yourself. Preparing a draft does not send an inquiry or book an appointment.';
+    const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = true;
+  } else {
+    submit.textContent = 'Send repair request';
+    byId('request-instructions').textContent = 'Send your repair details or contact Tony directly. Your request is received only after the inquiry system confirms it has saved your details. An appointment is confirmed after Tony replies.';
+  }
   form.addEventListener('input', () => { requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = ''; });
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (!form.reportValidity()) return;
     const data = requestPayload || readRequest();
     if (data.website) return;
-    if (data.phone.replace(/\D/g, '').length < 10) { status.textContent = 'Please include your area code and phone number.'; byId('request-phone').focus(); return; }
-    if (!data.name || !data.vehicle || !data.details) { status.textContent = 'Please enter your name, vehicle, and a description of the problem.'; return; }
+    if ((endpoint || data.phone) && data.phone.replace(/\D/g, '').length < 10) { status.textContent = endpoint ? 'Please include your area code and phone number.' : 'Please include your area code and phone number, or leave the optional callback field blank when texting.'; phoneField.focus(); return; }
+    if (!data.name || !data.details) { status.textContent = 'Please enter your name and a description of the problem. Incomplete vehicle details are okay.'; return; }
     makeBackup(data);
     requestPayload = data;
-    if (!endpoint) { status.textContent = 'Your email draft is ready below. Open it and send it from your email app; nothing has been sent yet.'; return; }
+    if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app and tap Send. Nothing has been sent yet. You can also copy the text, email it or call Tony.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
     const submittedKey = requestKey;
     submit.disabled = true; submit.textContent = 'Sending…'; status.textContent = 'Sending your repair request…';
     try {
@@ -89,11 +134,11 @@
       status.textContent = `Repair request received. Reference: ${result.id}. Opening your confirmation…`;
       backup.hidden = true;
       submit.textContent = 'Request received';
-      // Hand the receipt to the confirmation page. Nothing sensitive is stored: the reference id and vehicle only.
-      try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id: result.id, receivedAt: result.receivedAt || new Date().toISOString(), name: String(data.name || '').slice(0, 100), vehicle: String(data.vehicle || '').slice(0, 160) })); } catch (_) { /* The confirmation page still works without stored details. */ }
+      // Receipt evidence contains no name, phone number, vehicle or message contents.
+      try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id: result.id, receivedAt: result.receivedAt || new Date().toISOString(), confirmed:true,smsConsent:data.smsConsent })); } catch (_) { status.textContent = `Repair request received and saved. Reference: ${result.id}. Keep this reference; no appointment is confirmed yet.`; return; }
       location.assign('/request-received.html');
     } catch (_) {
-      status.textContent = 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the email draft and send it from your email app.';
+      status.textContent = 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the text/email draft and send it yourself.';
       submit.textContent = 'Retry repair request';
     } finally { submit.disabled = false; }
   });

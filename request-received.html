@@ -7,16 +7,16 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta name="theme-color" content="#0a0a0b">
-  <title>Request Received | Perfect Timing Auto Repair LLC</title>
-  <meta name="description" content="Confirmation that your repair request reached Perfect Timing Auto Repair LLC in Fort Myers, Florida.">
+  <title>Repair Request Status | Perfect Timing Auto Repair LLC</title>
+  <meta name="description" content="View a saved inquiry receipt for Perfect Timing Auto Repair LLC in Fort Myers, Florida.">
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://fixingfortmyers.com/request-received">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Barlow:wght@400;600;700;800&amp;family=Russo+One&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./base.css">
-  <link rel="stylesheet" href="./style.css?v=20260923-mobile">
-  <link rel="stylesheet" href="/site-updates.css?v=20260923-mobile">
+  <link rel="stylesheet" href="./base.css?v=20260924-company-v1">
+  <link rel="stylesheet" href="./style.css?v=20260924-company-v1">
+  <link rel="stylesheet" href="/site-updates.css?v=20260924-company-v1">
   <style>
     .receipt-wrap { padding: 3.5rem 0 4.5rem; }
     .receipt-hero__eyebrow { letter-spacing: .18em; text-transform: uppercase; font-weight: 700; font-size: .78rem; color: #e8442f; margin: 0 0 .6rem; }
@@ -56,11 +56,11 @@
             <span class="nav__logo-sub">Auto Repair &middot; Fort Myers</span>
           </div>
         </a>
-        <ul class="nav__links" role="list"><li><a href="/#services">Services</a></li><li><a href="/#about">About</a></li><li><a href="/careers">Careers</a></li>
+        <ul class="nav__links" role="list"><li><a href="/#services">Services</a></li><li><a href="/repair-guides">Repair Guides</a></li><li><a href="/#about">About</a></li><li><a href="/careers">Careers</a></li>
           <li><a href="/#contact" class="nav__cta">Request a Repair</a></li></ul>
         <button class="nav__mobile-toggle" id="mobileToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu" type="button"><span></span><span></span><span></span></button>
       </div>
-      <div class="nav__mobile-menu" id="mobileMenu"><a href="/#services">Services</a><a href="/#about">About</a><a href="/careers">Careers</a>
+      <div class="nav__mobile-menu" id="mobileMenu"><a href="/#services">Services</a><a href="/repair-guides">Repair Guides</a><a href="/#about">About</a><a href="/careers">Careers</a>
         <a href="/#contact" class="nav__cta">Request a Repair</a></div>
     </div>
   </nav>
@@ -70,8 +70,8 @@
       <div class="container">
         <header class="receipt-hero">
           <p class="receipt-hero__eyebrow">Perfect Timing customer care</p>
-          <h1>Request received</h1>
-          <p>Your repair request reached our team and is saved on the shop system. You do not need to send it again.</p>
+          <h1 id="receipt-title">Your request status</h1>
+          <p id="receipt-message">A confirmed receipt appears here after the inquiry system saves your request.</p>
         </header>
 
         <div class="receipt-card" id="receipt-detail" hidden>
@@ -81,7 +81,6 @@
           </div>
           <dl class="receipt-meta">
             <div><dt>Reference number</dt><dd id="receipt-ref">&mdash;</dd></div>
-            <div><dt>Vehicle</dt><dd id="receipt-vehicle">&mdash;</dd></div>
             <div><dt>Received</dt><dd id="receipt-time">&mdash;</dd></div>
           </dl>
           <p class="receipt-note">Keep or screenshot the reference number. Quoting it makes it faster for our team to pull up your request. <strong>An appointment is not confirmed yet</strong> &mdash; our team confirms availability and price with you before your mobile appointment.</p>
@@ -89,17 +88,16 @@
 
         <div class="receipt-card" id="receipt-empty">
           <div class="receipt-card__head">
-            <span class="receipt-card__check" aria-hidden="true">&#10003;</span>
-            <h2>This browser has no request details stored</h2>
+            <h2>No confirmed receipt in this browser</h2>
           </div>
-          <p class="receipt-note">If you submitted a repair request in a different browser or tab, it was still received and saved. Call or text <a href="tel:+12393972048">(239) 397-2048</a> and our team will pull it up for you.</p>
+          <p class="receipt-note">This page alone cannot confirm a submission. Check the original tab for your receipt, or call <a href="tel:+12393972048">(239) 397-2048</a>. You can also <a href="/#contact">open the repair form</a>.</p>
         </div>
 
-        <section class="receipt-next">
+        <section class="receipt-next" id="receipt-next" hidden>
           <h2>What happens next</h2>
           <ol>
-            <li><strong>Our team reviews your request.</strong> We look at the symptoms, the vehicle, and the service you selected.</li>
-            <li><strong>We contact you.</strong> We reply to the phone number (or email) you gave us to confirm the repair plan and availability. If you opted in to text messages, we may reply by text.</li>
+            <li><strong>Tony reviews your request.</strong> Your details are saved for review. This receipt confirms storage, not notification delivery.</li>
+            <li id="receipt-contact"><strong>Tony follows up.</strong> He personally texts you if you chose text follow-up, or calls about the inquiry.</li>
             <li><strong>You confirm, then we schedule.</strong> Nothing is booked and no appointment exists until our team replies and you agree on a time.</li>
           </ol>
           <div class="receipt-actions">
@@ -109,7 +107,7 @@
           </div>
         </section>
 
-        <p class="receipt-help">Need to add something? You can <a href="/#contact">send another request</a> or use the voice-note option on the contact section to describe the problem in your own words. Mon&ndash;Sat, 7AM&ndash;7PM, by appointment. See our <a href="/privacy-policy">Privacy Policy</a> for how we handle your information.</p>
+        <p class="receipt-help">Need to add something? You can <a href="/#contact">send another request</a> or use the voice-note option on the contact section to describe the problem in your own words. 24/7 availability · Service by confirmed appointment. See our <a href="/privacy-policy">Privacy Policy</a> for how we handle your information.</p>
       </div>
     </div>
   </main>
@@ -124,10 +122,11 @@
       <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> &middot; Fort Myers &amp; Southwest Florida &middot; <a href="tel:+12393972048">(239) 397-2048</a> &middot; By appointment. Call to confirm mobile availability at your location.</p>
       <div class="footer__bottom"><p class="footer__copy">&copy; 2026 Perfect Timing Auto Repair LLC. All rights reserved.</p><div class="footer__legal"><a href="/privacy-policy">Privacy Policy</a><a href="/sms-terms">SMS Terms &amp; Conditions</a></div><div class="footer__bang">A <span>BANG</span> Industries Company</div></div>
     </div>
-  </footer>
+  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Available 24/7*</strong><br>* After-hours repairs depend on the job, location and availability; Tony confirms all dispatches. Bay One AI intake is currently offline. Call or text Tony directly.</p>
+</footer>
 
-<div class="mobile-contact-bar" aria-label="Quick contact"><a href="tel:+12393972048">Call (239) 397-2048</a><a href="/#contact">Request a repair</a></div>
-<script src="/site.js?v=20260921-request-received" defer></script>
+<div class="mobile-contact-bar" role="navigation" aria-label="Quick contact"><a href="tel:+12393972048">Call (239) 397-2048</a><a href="/#contact">Request a repair</a></div>
+<script src="/site.js?v=20260924-company-v1" defer></script>
 <script>
   (function () {
     'use strict';
@@ -135,15 +134,20 @@
     var empty = document.getElementById('receipt-empty');
     var stored = null;
     try { stored = JSON.parse(sessionStorage.getItem('pt-last-request') || 'null'); } catch (_) { stored = null; }
-    if (!stored || typeof stored.id !== 'string' || !stored.id) return;
+    if (!stored || stored.confirmed !== true || typeof stored.id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(stored.id)) return;
+    var received = Date.parse(stored.receivedAt);
+    if (!Number.isFinite(received) || received > Date.now()+300000 || Date.now()-received > 86400000) return;
     var set = function (id, value) { var el = document.getElementById(id); if (el) el.textContent = value; };
     set('receipt-ref', stored.id);
-    if (stored.vehicle) set('receipt-vehicle', String(stored.vehicle).slice(0, 160));
+    set('receipt-title', 'Request received');
+    set('receipt-message', 'Your repair inquiry was saved. Keep your reference number below. No appointment is confirmed yet.');
+    set('receipt-contact', stored.smsConsent ? 'Tony personally texts you about your inquiry.' : 'Tony calls you about your inquiry.');
     if (stored.receivedAt) {
       var when = new Date(stored.receivedAt);
       if (!isNaN(when.valueOf())) set('receipt-time', when.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York' }) + ' ET');
     }
     detail.hidden = false;
+    document.getElementById('receipt-next').hidden = false;
     if (empty) empty.hidden = true;
   })();
 </script>

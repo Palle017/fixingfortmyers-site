@@ -1,0 +1,47 @@
+/* Repair guide pages only. Reuse Perfect Timing's navigation, footer and Bay One. */
+.guides-page .guide-hero{padding:145px 0 46px;background:linear-gradient(135deg,#111b27,#0a0a0b 75%);border-bottom:1px solid #293b4b}
+.guides-page .guide-hero .container{max-width:1140px}
+.guides-page .guide-breadcrumb{color:#bac8d5;font-size:15px;margin-bottom:24px}
+.guides-page .guide-kicker{color:#86d3fc;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:15px}
+.guides-page .guide-hero h1{max-width:880px;font:400 clamp(46px,6vw,82px)/1.04 var(--font-display);letter-spacing:.015em;color:#f3f6f9;margin-bottom:22px}
+.guides-page .guide-hero h1 span{color:#55c4ff}
+.guides-page .guide-lead{max-width:760px;font-size:20px;line-height:1.65;color:#d8e2ec;margin-bottom:20px}
+.guides-page .guide-meta{font-size:14px;color:#b8c6d5;margin-bottom:24px}
+.guides-page .guide-actions{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}
+.guides-page .guide-actions .btn{min-height:48px;white-space:normal;text-align:center}
+.guides-page .guide-layout{display:grid;grid-template-columns:minmax(0,760px) minmax(200px,280px);gap:54px;padding-top:40px;padding-bottom:65px;align-items:start}
+.guides-page .guide-article{min-width:0;color:#d4dee8;font-size:18px;line-height:1.75}
+.guides-page .guide-article>section{margin-bottom:36px}
+.guides-page .guide-article h2,.guides-page .guide-library>h2,.guides-page .guide-hub-note h2{font:700 clamp(24px,3vw,30px)/1.25 var(--font-body);color:#f1f5f9;margin:0 0 16px}
+.guides-page .guide-article h3{font:700 20px/1.35 var(--font-body);color:#f1f5f9;margin:0 0 8px}
+.guides-page .guide-article p{margin-bottom:16px}
+.guides-page .guide-article ul{padding-left:24px;margin-bottom:20px}
+.guides-page .guide-article li{padding-left:4px;margin-bottom:10px}
+.guides-page .guide-observations{display:grid;gap:14px}
+.guides-page .guide-observations section{border:1px solid #304354;border-radius:10px;background:#101923;padding:22px}
+.guides-page .guide-observations p:last-child{margin-bottom:0}
+.guides-page .guide-caution{border-left:4px solid #eab974;background:#211d16;color:#f1e3ce;border-radius:0 8px 8px 0;padding:20px 22px;margin:0 0 32px;font-size:17px;line-height:1.7}
+.guides-page .guide-caution strong{color:#ffe0b0}
+.guides-page .guide-request{border-top:1px solid #334b60;padding-top:30px}
+.guides-page .guide-sidebar{background:#111923;border:1px solid #2c4255;border-radius:12px;padding:24px;color:#c8d5e2;font-size:16px}
+.guides-page .guide-sidebar h2{font:700 21px/1.3 var(--font-body);color:#fff;margin-bottom:16px}
+.guides-page .guide-sidebar>a:not(.guide-hours-link){display:block;padding:12px 0;border-bottom:1px solid #2c4255}
+.guides-page .guide-sidebar p{margin:20px 0 12px}
+.guides-page .guide-sources{border-top:1px solid #293b4b;padding-top:24px;font-size:15px;color:#becad6}
+.guides-page .guide-sources h2{font-size:18px}
+.guides-page .guide-sources li{margin-bottom:5px}
+.guides-page .guide-library{padding-top:44px;padding-bottom:65px}
+.guides-page .guide-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;margin:25px 0 32px}
+.guides-page .guide-card{display:flex;flex-direction:column;border:1px solid #304354;background:#101923;border-radius:12px;padding:27px;min-width:0}
+.guides-page .guide-card h3{font:700 26px/1.25 var(--font-body);margin:0 0 18px}
+.guides-page .guide-card p:not(.guide-kicker){color:#cbd7e3;font-size:17px;line-height:1.65;margin-bottom:20px}
+.guides-page .guide-card-link{margin-top:auto;display:inline-block;padding:10px 0;font-weight:700;min-height:44px}
+.guides-page .guide-hub-note{max-width:800px;color:#cfdae4;font-size:18px}
+.guides-page .guide-hub-note p{margin-bottom:18px}
+.guides-page .guide-hours{font-size:15px;line-height:1.7;color:#cad8e5;max-width:960px;margin:16px 0 26px;scroll-margin-top:110px}
+.guides-page main a:not(.btn),.guides-page .guide-hours-link{color:#86d3fc;text-decoration:underline;text-underline-offset:4px}
+.guides-page .guide-card h3 a{color:#f3f6f9;text-decoration:none}
+.guides-page .guide-card h3 a:hover{text-decoration:underline}
+.guides-page .guide-actions .btn--outline{color:#d9eeff}
+@media(max-width:900px){.guides-page .guide-layout{grid-template-columns:minmax(0,1fr);gap:24px}.guides-page .guide-sidebar{max-width:760px}.guides-page .guide-cards{grid-template-columns:1fr}.guides-page .guide-card{padding:24px}}
+@media(max-width:600px){.guides-page .guide-hero{padding:112px 0 28px}.guides-page .guide-lead{font-size:18px}.guides-page .guide-actions{flex-direction:column;align-items:stretch}.guides-page .guide-actions .btn{padding:14px 18px;width:100%}.guides-page .guide-layout{padding-top:28px;padding-bottom:40px}.guides-page .guide-article{font-size:17px}.guides-page .guide-observations section{padding:18px}.guides-page .guide-caution{padding:16px 18px}.guides-page .guide-library{padding-top:30px}.guides-page .guide-breadcrumb{font-size:14px}.guides-page .guide-meta{font-size:13px}}

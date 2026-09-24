@@ -1,2 +1,3 @@
-// Public customer intake only. Never point this at an assistant or admin service.
-window.PT_CONTACT_CONFIG = { endpoint: 'https://redline.taild5f39d.ts.net:10000' };
+// Public site prepares a customer-sent text draft. Online intake is not active.
+// An isolated local preview may override this with its test receiver endpoint.
+window.PT_CONTACT_CONFIG = { endpoint: '' };

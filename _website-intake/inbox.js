@@ -4,6 +4,12 @@ let loading = false;
 let fingerprint = '';
 const el = (tag, text, className) => { const item = document.createElement(tag); if (text !== undefined) item.textContent = text; if (className) item.className = className; return item; };
 const date = value => new Date(value).toLocaleString();
+const operatorToken=el('input');operatorToken.type='password';operatorToken.autocomplete='off';operatorToken.placeholder='Operator token for alert recovery';operatorToken.setAttribute('aria-label','Operator token for alert recovery');operatorToken.maxLength=256;
+document.querySelector('.actions').append(operatorToken);
+async function alertAction(route,body={}){
+  const response=await fetch(route,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+operatorToken.value},body:JSON.stringify(body)});
+  const result=await response.json();if(!response.ok)throw Error(result.error||'Alert action failed.');return result;
+}
 function render(lead) {
   const card = el('article', undefined, 'lead ' + lead.status);
   card.id = 'lead-' + lead.id;
@@ -25,6 +31,20 @@ function render(lead) {
   if (lead.vehicle) facts.append(el('span', lead.vehicle));
   if (lead.service) facts.append(el('span', lead.service));
   card.append(facts, el('p', lead.details || 'No written details supplied.', 'details'));
+  if(lead.routing){
+    card.append(el('p',lead.routing.priority==='first'?'FIRST PRIORITY — stranded and no start, any hour':'Normal follow-up','tag'));
+    if(lead.routing.needsReview)card.append(el('p','Urgency needs review: an answer is unknown. The inquiry is saved.','tag'));
+    card.append(el('p','Starts: '+(lead.starts||'unknown')+' · Stranded: '+(lead.stranded||'unknown')+' · City/ZIP: '+(lead.city||'not provided'),'tag'));
+  }
+  for(const alert of lead.alerts||[]){
+    const line=el('div');line.append(el('p',(alert.channel==='notify_call'?'Phone call':'Text alert')+': '+alert.state.replaceAll('_',' ')+(alert.last_error?' · '+alert.last_error.replaceAll('_',' '):''),'tag'));
+    if(['disabled','pending','accepted','failed','suppressed'].includes(alert.state)){
+      const retry=el('button',alert.state==='accepted'?'Check existing alert':'Retry alert');retry.addEventListener('click',async()=>{retry.disabled=true;try{await alertAction('/api/leads/'+lead.id+'/alerts/retry',{channel:alert.channel});await alertAction('/api/alerts/check');fingerprint='';await refresh();}catch(err){document.getElementById('status').textContent=err.message;}finally{retry.disabled=false;}});line.append(retry);
+    }
+    if(alert.state==='needs_review')line.append(el('p','Check the provider record before any new send. A prior attempt may have succeeded.','tag'));
+    if(alert.state==='completed')line.append(el('p','Provider reports a completed phone connection; this does not prove Tony heard it.','tag'));
+    card.append(line);
+  }
   if (lead.requestId) { const related = el('a', 'View related repair request'); related.href = '#lead-' + lead.requestId; card.append(related); }
   if (lead.audio_bytes) { const audio = el('audio'); audio.controls = true; audio.preload = 'none'; audio.src = '/api/leads/' + lead.id + '/audio'; card.append(audio); }
   card.append(el('p', lead.smsConsent ? 'Customer opted in to service-related text follow-up.' : 'Call follow-up requested; no text permission selected.', 'tag'));
@@ -39,7 +59,7 @@ async function refresh() {
     const fresh = data.leads.filter(item => !known.has(item.id));
     if (!initial && fresh.length && 'Notification' in window && Notification.permission === 'granted') new Notification('Perfect Timing: new website request', {body: fresh.length + ' new request(s). Open your website inbox to review them.'});
     known = new Set(data.leads.map(item => item.id)); initial = false;
-    const signature = data.leads.map(item => item.id + ':' + item.updated_at).join('|');
+    const signature = data.leads.map(item => item.id + ':' + item.updated_at+':'+JSON.stringify(item.alerts||[])).join('|');
     if (signature !== fingerprint || !document.getElementById('leads').children.length) { const list = document.getElementById('leads'); list.replaceChildren(...(data.leads.length ? data.leads.map(render) : [el('div','No requests yet. New website messages will appear here automatically.','empty')])); fingerprint = signature; }
     const count = data.leads.filter(item => item.status === 'new').length;
     document.title = (count ? '(' + count + ') ' : '') + 'Website Requests · Perfect Timing';

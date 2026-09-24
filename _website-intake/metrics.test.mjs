@@ -36,7 +36,7 @@ test('visitor events deduplicate, distinguish unique browsers, enforce origin, a
 test('completed AI counts survive retries, midnight, restart, and seven-day cleanup',async()=>{
   const dataDir=fs.mkdtempSync(path.join(os.tmpdir(),'bayone-chat-counters-'));
   let now=Date.parse('2026-09-09T03:59:58Z'),fail=false;
-  const provider=async()=>{if(fail)throw Error('offline');return {kind:'answer',reply:'We can help with brakes and diagnostics.'};};
+  const provider=async()=>{if(fail)throw Error('offline');return {kind:'intake',relevant:false,intake:{}};};
   let app=createPublicChat({dataDir,now:()=>now,provider});
   try {
     const ip='198.51.100.31',token=app.session({},ip).visitor_token;

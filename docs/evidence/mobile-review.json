@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-24",
+  "environment": "Local loopback preview, Chrome, 390 x 844 mobile emulation",
+  "checks": {
+    "guideAndFormHorizontalOverflow": false,
+    "servicePrefill": "Electrical / no-start from guide",
+    "menuOpenAndEscapeClose": "passed",
+    "textDraft": "Synthetic no-start/stranded inquiry produced editable draft to +12393972048",
+    "callbackNumber": "optional in native message mode",
+    "receiptCopy": "Nothing has been sent yet; customer must tap Send in messaging app",
+    "publicBayOneElements": 0,
+    "browserConsoleErrors": 0
+  },
+  "localTiming": {"domContentLoadedMs":285,"loadMs":299},
+  "limitations": [
+    "Local cached timing is not a cellular performance score or field Core Web Vitals.",
+    "Native iPhone/Android messaging app rendering and actual delivery were not tested.",
+    "No real SMS or email was opened or sent; no AI provider was called.",
+    "Durable backend tests are isolated synthetic tests, not the active public contact path."
+  ]
+}

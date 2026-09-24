@@ -1,5 +1,7 @@
 # Perfect Timing website requests
 
+**Owner's current release decision, 2026-09-24:** Bay One is off until the rest of the website is in production. The immediate contact path prepares a text to Tony's regular number for the customer to send; it is not a confirmed backend submission. The existing Beside subscription will be assessed before adding a paid notification provider. See [ROUTING.md](ROUTING.md) for Beside findings and the prepared ordered IF/ELSE rules. Twilio call/text delivery is optional, parked and disabled. The historical deployment notes below are not proof of the current REDLINE endpoint or running data path; REDLINE is currently reported offline from this workstation. No backend production cutover or real alert has been verified.
+
 This service receives repair requests and voice recordings on the shop computer. It saves them before acknowledging receipt. The owner reads them at **http://127.0.0.1:18798/**. It does not invoke Bay One, OpenClaw, Zoho, an LLM, email, or automated texts.
 
 The current Bay One phone service on Tailscale port 8443 returns 404 for the old website endpoints. It provides authenticated employee assistant requests, not customer lead intake. This receiver therefore uses its own loopback port and its own public Tailscale port. The existing private 443 and 8443 mappings remain untouched.

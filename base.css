@@ -62,3 +62,9 @@ a, button, [role="button"] {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
 }
+/* Discreet, readable 24/7 qualification; key context also sits by the claim. */
+.hours-disclaimer{max-width:1120px;margin:22px auto 0;padding:0 24px 20px;color:#bac7d2;font:400 14px/1.6 'Barlow',sans-serif;letter-spacing:normal;text-transform:none}
+.hours-disclaimer strong{font-weight:600;color:#e0e8ee}
+.hours-asterisk{display:inline-block;min-width:20px;padding:0 3px;color:inherit;text-decoration:underline;vertical-align:super;font-size:.8em}
+.service-hours{color:#eef5fa;font-size:16px;margin:16px 0}.service-hours span{display:block;color:#bac7d2;font-size:14px;margin-top:3px}
+.hours-disclaimer:target{outline:2px solid #59c7fb;outline-offset:3px;scroll-margin-top:110px}

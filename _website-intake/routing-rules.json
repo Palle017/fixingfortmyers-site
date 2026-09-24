@@ -1,0 +1,20 @@
+{
+  "version": "2026-09-24-v1",
+  "rules": [
+    {
+      "id": "stranded-no-start-any-hour",
+      "label": "First priority: stranded and vehicle does not start, any hour",
+      "if": [
+        {"field": "stranded", "operator": "eq", "value": "yes"},
+        {"field": "starts", "operator": "eq", "value": "no"}
+      ],
+      "then": ["notify_sms", "notify_call"]
+    },
+    {
+      "id": "normal-follow-up",
+      "label": "Otherwise: save for normal follow-up; keep unknown answers for review",
+      "if": [],
+      "then": ["normal"]
+    }
+  ]
+}
