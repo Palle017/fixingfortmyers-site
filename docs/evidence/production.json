@@ -1,38 +1,58 @@
 {
-  "at": "2026-09-24T19:21:33.774Z",
+  "at": "2026-09-25T00:38:52.774Z",
   "site": "https://fixingfortmyers.com",
-  "commit": "5f4f9e5015f02b3d3932ba0270d75678c0831f48",
+  "commit": "46b1b543883d58eb1f5ed1d7ab258800cb31cefe",
   "pagesStatus": "built",
   "checks": [
     {
       "path": "/",
       "status": 200,
-      "bytes": 70405
+      "bytes": 46821
     },
     {
       "path": "/no-start-diagnosis-fort-myers",
       "status": 200,
-      "bytes": 26072
+      "bytes": 26065
+    },
+    {
+      "path": "/cooling-system-repair-fort-myers",
+      "status": 200,
+      "bytes": 26011
+    },
+    {
+      "path": "/check-engine-light-diagnosis-fort-myers",
+      "status": 200,
+      "bytes": 26185
     },
     {
       "path": "/repair-guides",
       "status": 200,
-      "bytes": 10666
+      "bytes": 12663
     },
     {
       "path": "/repair-guide-car-wont-start",
       "status": 200,
-      "bytes": 12726
+      "bytes": 14543
     },
     {
       "path": "/repair-guide-ac-warm-at-idle",
       "status": 200,
-      "bytes": 12468
+      "bytes": 13903
     },
     {
       "path": "/repair-guide-battery-keeps-dying",
       "status": 200,
-      "bytes": 12929
+      "bytes": 14528
+    },
+    {
+      "path": "/repair-guide-car-overheating",
+      "status": 200,
+      "bytes": 14230
+    },
+    {
+      "path": "/repair-guide-flashing-check-engine-light",
+      "status": 200,
+      "bytes": 14494
     },
     {
       "path": "/bay-one-config.js",
@@ -47,17 +67,22 @@
     {
       "path": "/sitemap.xml",
       "status": 200,
-      "bytes": 6300
+      "bytes": 6532
     },
     {
       "path": "/_website-intake/server.mjs",
       "status": 404,
-      "bytes": 3132
+      "bytes": 3128
     },
     {
       "path": "/docs/COMPANY-UPDATE.md",
       "status": 404,
-      "bytes": 3132
+      "bytes": 3128
+    },
+    {
+      "path": "/source-materials/inventory.json",
+      "status": 404,
+      "bytes": 3128
     }
   ],
   "bayOne": "disabled",

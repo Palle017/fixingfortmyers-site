@@ -1,6 +1,20 @@
 {
   "at": "2026-09-25T00:37:11.967Z",
   "environment": "Chrome loopback preview; synthetic input only",
+  "productionFollowup": {
+    "commit": "46b1b543883d58eb1f5ed1d7ab258800cb31cefe",
+    "viewport": "390x844",
+    "assetVersion": "20260924-growth-v2",
+    "horizontalOverflow": false,
+    "bayOneElements": 0,
+    "callAndTextLinks": true,
+    "overheatingGuideToForm": true,
+    "servicePrefill": "Engine / transmission",
+    "pageContext": "repair-guide-car-overheating; last guide or service viewed",
+    "syntheticDraftRecipient": "+12393972048",
+    "receivedClaim": false,
+    "realMessageSent": false
+  },
   "viewports": [
     {
       "width": 390,

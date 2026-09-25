@@ -1,6 +1,6 @@
 # Symptom pages that lead to a repair inquiry
 
-Prepared September 24, 2026. Five substantial symptom articles and a guide hub are implemented locally for release review. Three existing article URLs are preserved; two articles are new. Deployment and Google indexing must be verified separately.
+Updated September 24, 2026. Five substantial symptom articles and a guide hub are published in website release `46b1b54`; production readback returned 200 for all six pages. Three existing article URLs are preserved; two articles are new. See [release evidence](LEAD-GROWTH-RELEASE.md). Google indexing remains unverified and is separate from deployment.
 
 The objective is **qualified inquiries Tony actually receives**, followed by booked work. A search impression, visit, call-button tap or prepared text is not a received lead. Urgent symptoms can lead to valuable diagnostic work, but urgency does not establish repair value; diagnosis may find a small repair. No revenue, search-volume or ranking forecast is implied below.
 
@@ -32,7 +32,7 @@ The original no-start article referenced `ww1.aaa.com/.../14-reasons-why-your-ca
 ## Discovery and conversion checks
 
 1. Keep the homepage's symptom links crawlable and visible to a mobile customer, alongside its primary contact actions. Link to the hub and useful individual articles with descriptive text.
-2. Add a relevant article link from the matching no-start, electrical, A/C, cooling and check-engine service pages during their next targeted review. Avoid a full site redesign or changing established service URLs solely for keywords.
+2. Relevant article links are now present on the matching no-start, battery, electrical, A/C, cooling and check-engine service pages. Preserve these contextual links when editing. Avoid changing established service URLs solely for keywords.
 3. Verify HTTP 200, canonical URLs, indexable HTML, sitemap entries, readable mobile layout and working fixed-recipient call/text/form links after release. Neither a live URL nor a valid sitemap establishes Google indexing.
 4. In an already authorized Search Console property, check Pages indexing and inspect the hub plus new URLs. Submit the sitemap if not already submitted, and request indexing only for the changed priority URLs where appropriate. Do not claim an indexing request guarantees inclusion. Do not create a second property or change DNS without authorization.
 5. Establish a 28-day baseline by landing page and non-brand symptom query. Compare impressions, clicks and CTR separately from received inquiries, qualified inquiries and booked jobs. Low volume may require a longer window. Use those findings to improve a weak page before adding more.
@@ -52,4 +52,4 @@ Each public article contains its relevant sources. Core new-article references: 
 
 Scoped checks passed for **6 guide pages, 6 JSON-LD blocks and 315 local references**: one main and H1 per page, unique IDs, exact canonical URLs, one sitemap entry per page, direct fixed-recipient call/text links, valid local references and links among all guides. All six sitemap dates are September 24, 2026, the date these files were edited. `git diff --check` passed for the owned content files. Integrated mobile and accessibility checks belong to the release evidence; source validation is not a rendered-browser or indexing test.
 
-**Prepared:** five guides, hub, metadata, structured data, related links and sitemap. **Applied:** local files only at this stage. **Verified:** the scoped source checks above. **Unverified:** new production URLs until release readback, Search Console access/indexing, actual search demand, received-lead lift and booked-job value. Public AI stays off.
+**Prepared and applied:** five guides, hub, metadata, structured data, related links and sitemap are published. **Verified:** the scoped source checks above and production URL readback in the release evidence. **Unverified:** Search Console access/indexing, actual search demand, received-lead lift and booked-job value. Public AI stays off.
