@@ -10,7 +10,7 @@
   const customAvatar = config.avatar || script?.dataset.avatar;
   const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
   const css = document.createElement('link');
-  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260924-company-v1', script?.src || location.href).href;
+  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260924-growth-v2', script?.src || location.href).href;
   document.head.append(css);
   const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
   widget.setAttribute('aria-label', 'Bay One repair assistant');

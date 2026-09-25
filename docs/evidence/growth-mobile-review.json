@@ -1,0 +1,51 @@
+{
+  "at": "2026-09-25T00:37:11.967Z",
+  "environment": "Chrome loopback preview; synthetic input only",
+  "viewports": [
+    {
+      "width": 390,
+      "height": 844
+    },
+    {
+      "width": 320,
+      "height": 740
+    }
+  ],
+  "checks": {
+    "homepageHorizontalOverflow": false,
+    "guideHubHorizontalOverflow": false,
+    "flashingLightGuideHorizontalOverflow": false,
+    "overheatingGuideHorizontalOverflow": false,
+    "guideCards": 5,
+    "heroCallTextVisible": true,
+    "stickyCallTextVisible": true,
+    "syntheticTextDraft": true,
+    "recipient": "+12393972048",
+    "phoneAndVehicleOptional": true,
+    "guideServicePrefill": "Engine / transmission",
+    "sourceContext": "repair-guide-car-overheating; explicitly last guide/service viewed",
+    "receiptClaim": false,
+    "bayOneElements": 0,
+    "menuPointerAndKeyboard": true,
+    "escapeFocus": "mobileToggle",
+    "consoleErrorsOrWarnings": 0
+  },
+  "sourceBytes": {
+    "baselineHomepage": 70405,
+    "candidateHomepage": 47474,
+    "reductionPercent": 33
+  },
+  "localTiming": {
+    "page": "repair-guide-flashing-check-engine-light",
+    "domContentLoadedMs": 45,
+    "loadMs": 47,
+    "resources": 16,
+    "qualification": "Cached loopback observation only, not cellular performance, Lighthouse score, LCP or field Core Web Vitals"
+  },
+  "limits": [
+    "No native SMS application opened or message sent.",
+    "Full contrast audit and field performance not measured.",
+    "Search Console welcome screen showed no usable property; indexing unverified."
+  ],
+  "toolingNote": "Two Playwright pointer calls timed out; browser accessibility click and keyboard interaction succeeded."
+}

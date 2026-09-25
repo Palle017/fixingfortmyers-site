@@ -93,3 +93,17 @@
 .mobile-faq .faq-grid{margin-top:28px}
 @media(max-width:800px){.home-hero__grid{grid-template-columns:1fr;gap:28px}.home-hero__art{display:block;max-width:620px}.home-hero__art img{max-height:360px}.home-hero h1{font-size:clamp(49px,10vw,76px)}.mobile-faq{padding:45px 0}}
 @media(max-width:360px){.nav__logo{gap:8px}.nav__logo-main{font-size:.94rem}.nav__logo-sub{font-size:.48rem;letter-spacing:.04em}.testimonials__grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Lead-first homepage: short contact path and crawlable symptom guides. */
+.home-symptoms{padding:56px 0;background:#0d141e}
+.symptom-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:24px}
+.symptom-links a{display:flex;flex-direction:column;gap:8px;padding:20px;border:1px solid #315069;border-radius:10px;background:#111d2a;color:#e8f4ff;text-decoration:none;min-height:100px}
+.symptom-links a:hover,.service-directory a:hover{border-color:#8dd6ff;background:#172b3c}
+.symptom-links strong{font-size:20px;color:#8dd6ff}
+.symptom-links span{font-size:15px;line-height:1.5}
+.service-directory{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:24px}
+.service-directory a{display:flex;align-items:center;min-height:48px;padding:12px 16px;border:1px solid #315069;border-radius:6px;color:#a5ddff;text-decoration:underline;text-underline-offset:3px}
+.service-more{margin-top:24px}.service-more a{display:inline-block;padding:10px 0;min-height:44px;color:#9ddaff;text-decoration:underline;text-underline-offset:4px}
+.about__stats .stat-card a{color:inherit;text-decoration:underline}
+#contact{scroll-margin-top:100px}.services .service-card__action{margin-top:16px;min-height:44px;display:inline-flex;align-items:center}
+@media(max-width:800px){.home-hero__art{display:none}.home-hero{padding-bottom:30px}.home-hero__services{margin-top:18px}.home-symptoms{padding:40px 0}.contact{padding:44px 0}.symptom-links{grid-template-columns:1fr}.service-directory{grid-template-columns:1fr 1fr;gap:8px}.service-directory a{font-size:14px;padding:10px}.home-hero__lead{margin-bottom:20px}}

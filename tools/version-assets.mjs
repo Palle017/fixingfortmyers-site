@@ -11,7 +11,7 @@ const args=process.argv.slice(2),check=args.includes('--check');
 if(args.some(arg=>arg.startsWith('--')&&arg!=='--check'))throw new Error('Only VERSION and --check are supported.');
 const versions=args.filter(arg=>arg!=='--check');
 if(versions.length>1)throw new Error('Supply at most one version.');
-const version=versions[0]||'20260924-company-v1';
+const version=versions[0]||'20260924-growth-v2';
 if(!/^[A-Za-z0-9._-]{1,80}$/.test(version))throw new Error('Use a short version containing letters, digits, dots, underscores or hyphens.');
 const isLocalAsset=value=>!/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(value)&&/\.(css|js)(?:[?#]|$)/i.test(value);
 function versioned(value){

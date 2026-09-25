@@ -9,7 +9,7 @@ const page=fs.readFileSync(new URL('index.html',root),'utf8');
 const site=fs.readFileSync(new URL('site.js',root),'utf8');
 const widget=fs.readFileSync(new URL('bay-one-widget.js',root),'utf8');
 const settle=async()=>{for(let i=0;i<5;i++)await new Promise(setImmediate);};
-function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00Z',enabled=true,publicContact=false,userAgent}={}){
+function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00Z',enabled=true,publicContact=false,userAgent,savedSource}={}){
   const dom=new JSDOM(page,{url,runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,requests=[];
   t.after(()=>w.close());
   w.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});
@@ -20,6 +20,7 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   if(enabled)w.PT_BAYONE_CONFIG={enabled:true};else w.eval(fs.readFileSync(new URL('bay-one-config.js',root),'utf8'));
   const NativeDate=w.Date;w.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[at]));}static now(){return NativeDate.parse(at);}};
   w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=JSON.parse(options.body||'{}');requests.push({route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
+  if(savedSource)w.sessionStorage.setItem('pt-repair-source',savedSource);
   w.eval(site);w.eval(widget);
   const enter=(id,value)=>{const field=w.document.getElementById(id);field.value=value;field.dispatchEvent(new w.Event('input',{bubbles:true}));};
   const say=async text=>{enter('b1-message',text);w.document.querySelector('.b1-composer').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await settle();};
@@ -99,9 +100,9 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
   const valid=render({id,confirmed:true,receivedAt:new Date().toISOString(),smsConsent:true,name:'Private identity',vehicle:'Private vehicle'});assert.equal(valid.getElementById('receipt-title').textContent,'Request received');assert.equal(valid.getElementById('receipt-detail').hidden,false);assert.equal(valid.getElementById('receipt-ref').textContent,id);assert.doesNotMatch(valid.body.textContent,/Private identity|Private vehicle/);
 });
 
-test('mobile bar retains call and request actions, adds Bay One, and restores focus to the actual entry',async t=>{
+test('mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry',async t=>{
   const x=setup(t),d=x.w.document,bar=d.querySelector('.mobile-contact-bar'),entry=bar.querySelector('.b1-bar-launcher');
-  assert.equal(bar.children.length,3);assert.equal(bar.children[0].getAttribute('href'),'tel:+12393972048');assert.equal(bar.children[1].getAttribute('href'),'/#contact');
+  assert.equal(bar.children.length,3);assert.equal(bar.children[0].getAttribute('href'),'tel:+12393972048');assert.equal(bar.children[1].getAttribute('href'),'sms:+12393972048');
   assert.equal(entry.textContent,'Ask Bay One');assert.ok(d.getElementById('bay-one-widget').classList.contains('b1-has-contact-bar'));
   entry.click();await settle();assert.equal(d.getElementById('b1-panel').hidden,false);assert.equal(entry.getAttribute('aria-expanded'),'true');
   d.querySelector('.b1-close').click();assert.equal(d.getElementById('b1-panel').hidden,true);assert.equal(d.activeElement,entry);assert.equal(entry.getAttribute('aria-expanded'),'false');
@@ -130,7 +131,7 @@ test('public form prepares an editable native text intent with no HTTP delivery 
   assert.match(decodeURIComponent(link.getAttribute('href').split('?body=')[1]),/Synthetic vehicle will not start\./);
   assert.match(d.getElementById('request-preview').value,/Callback: Please reply to this text/);
   assert.doesNotMatch(d.getElementById('request-preview').value,/No; please call/);
-  assert.match(d.getElementById('request-preview').value,/Please reply about this repair inquiry\.$/);
+  assert.match(d.getElementById('request-preview').value,/Please reply about this repair inquiry\.\nWebsite page context: \/$/);
   assert.match(d.getElementById('request-status').textContent,/Nothing has been sent yet/);assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null);
   x.enter('request-preview','Customer edited message for Tony.');assert.equal(decodeURIComponent(link.getAttribute('href').split('?body=')[1]),'Customer edited message for Tony.');
   assert.equal(x.w.location.href,'https://fixingfortmyers.com/');assert.equal(x.requests.length,0);
@@ -144,4 +145,23 @@ test('iPhone text draft uses the Apple body separator and keeps edited customer 
   assert.equal(url,`sms:+12393972048&body=${encodeURIComponent(message)}`);
   assert.ok(d.getElementById('request-email').getAttribute('href').includes(encodeURIComponent(message)));
   assert.equal(x.requests.length,0);
+});
+
+test('draft source carries only known page categories, never URL or session-injected personal data',t=>{
+  const cases=[
+    {url:'https://preview.invalid/repair-guide-car-overheating?name=PrivatePerson&phone=2395550199',source:'repair-guide-car-overheating'},
+    {url:'https://preview.invalid/?service=cooling&name=PrivatePerson',savedSource:'repair-guide-car-overheating',source:'repair-guide-car-overheating'},
+    {url:'https://preview.invalid/',savedSource:'PrivatePerson?phone=2395550199',source:''},
+    {url:'https://preview.invalid/PrivatePerson',source:''}
+  ];
+  for(const input of cases){
+    const x=setup(t,{...input,enabled:false,publicContact:true}),d=x.w.document;
+    x.enter('request-name','Synthetic Customer');x.enter('request-details','Synthetic symptoms');
+    d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));
+    const draft=d.getElementById('request-preview').value;
+    assert.ok(draft.endsWith('Website page context: /'+input.source+(input.source?' (last guide or service viewed)':'')));
+    assert.doesNotMatch(draft,/PrivatePerson|2395550199/);assert.equal(x.requests.length,0);
+    if(input.url.includes('service=cooling'))assert.equal(d.getElementById('request-service').value,'Engine / transmission');
+    assert.ok(d.getElementById('request-text').getAttribute('href').startsWith('sms:+12393972048?body='));
+  }
 });

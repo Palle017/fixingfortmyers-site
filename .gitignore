@@ -7,3 +7,5 @@ _website-intake/test-data/
 .env
 .env.*
 !.env.example
+# Raw business/customer material and private asset annotations must never be published.
+/source-materials/

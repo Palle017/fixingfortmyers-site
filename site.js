@@ -18,12 +18,25 @@
   }
   const byId = id => document.getElementById(id);
   // Service attribution is a fixed category, never arbitrary query text.
-  const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',engine:'Engine / transmission',programming:'Module programming',diesel:'Diesel service',maintenance:'Maintenance / other repair'});
+  const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine / transmission',engine:'Engine / transmission',programming:'Module programming',diesel:'Diesel service',maintenance:'Maintenance / other repair'});
   const servicePages = {'auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'engine','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
+  Object.assign(servicePages,{'cooling-system-repair-fort-myers':'cooling','repair-guide-car-overheating':'cooling','repair-guide-flashing-check-engine-light':'diagnostics'});
   const validService = key => typeof key === 'string' && Object.hasOwn(services,key);
   const requestedService = new URLSearchParams(location.search).get('service');
   const pageService = servicePages[location.pathname.replace(/^\//,'').replace(/\.html$/,'')];
   const serviceKey = validService(requestedService) ? requestedService : validService(pageService) ? pageService : '';
+  // Carry a known guide/service page into the customer's editable text draft.
+  // Never copy arbitrary URLs, search queries, referrers or ad parameters.
+  const sourcePages = new Set(['repair-guides', ...Object.keys(servicePages)]);
+  const currentSource = location.pathname.replace(/^\//,'').replace(/\.html$/,'');
+  let sourcePage = sourcePages.has(currentSource) ? currentSource : '';
+  try {
+    if (sourcePage) sessionStorage.setItem('pt-repair-source',sourcePage);
+    else if (location.pathname === '/' || location.pathname === '/index.html') {
+      const saved = sessionStorage.getItem('pt-repair-source');
+      if (sourcePages.has(saved)) sourcePage = saved;
+    }
+  } catch (_) { /* A blocked session store does not block contacting Tony. */ }
   window.PT_REPAIR_CONTEXT = {service:serviceKey,applyService(key){const field=byId('request-service');if(field&&validService(key)&&field.selectedIndex===0)field.value=services[key];}};
   const toggle = byId('mobileToggle');
   const menu = byId('mobileMenu');
@@ -90,7 +103,7 @@
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
     const consent = !endpoint ? 'Please reply about this repair inquiry.' : data.smsConsent ? `Text-message consent: Yes\n${consentDisclosure}` : 'Text-message consent: No; please call';
-    const message = `Repair inquiry for Perfect Timing Auto Repair\n\nName: ${data.name}\nCallback: ${callback}\nVehicle: ${data.vehicle}\nService: ${data.service}\n\n${data.details}\n\n${consent}`;
+    const message = `Repair inquiry for Perfect Timing Auto Repair\n\nName: ${data.name}\nCallback: ${callback}\nVehicle: ${data.vehicle}\nService: ${data.service}\n\n${data.details}\n\n${consent}\nWebsite page context: /${sourcePage}${sourcePage ? ' (last guide or service viewed)' : ''}`;
     preview.value = message;
     refreshDraftLinks();
     backup.hidden = false;

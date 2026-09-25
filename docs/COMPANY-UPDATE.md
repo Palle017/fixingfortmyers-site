@@ -1,5 +1,7 @@
 # Targeted company update
 
+**Follow-on release:** homepage simplification and five symptom guides are tracked in [LEAD-GROWTH-RELEASE.md](LEAD-GROWTH-RELEASE.md). Counts below describe the original 24/7 release; shared evidence files now record the latest verification run. Backend and Bay One activation boundaries remain unchanged.
+
 Status: **static production release published and verified** at 19:21 UTC September 24, 2026, commit `5f4f9e5015f02b3d3932ba0270d75678c0831f48`. [Production readback](evidence/production.json) confirms the Pages build, current public files and exclusion of private backend/docs paths. Baseline commit: `b23633d02d84e2113d8a54fb6b03287ba5688dcf` (`Present Perfect Timing as mobile auto repair with Tony imagery`). Worktree: `C:\Users\LP15\fixingfortmyers-site\.worktrees\company-update`.
 
 ## Final scope and owner direction

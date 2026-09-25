@@ -1,5 +1,7 @@
 # Repair guides
 
+**Latest revision:** see [SEO-CONTENT.md](SEO-CONTENT.md) for the five-guide symptom strategy and [LEAD-GROWTH-RELEASE.md](LEAD-GROWTH-RELEASE.md) for current release verification. The notes below retain the original guide-stage context.
+
 Prepared September 24, 2026 in the isolated `company-update` worktree. These new static pages reuse Perfect Timing's existing navigation, branding, footer and contact bar. **Public Bay One is disabled in the prepared release at the owner's request.** Its source/assets remain for later review, but the guides must not advertise an available assistant or expose an active chat entry point. No existing service page is replaced.
 
 ## Pages and request attribution
@@ -7,9 +9,11 @@ Prepared September 24, 2026 in the isolated `company-update` worktree. These new
 | Public URL | Source | Fixed request link |
 | --- | --- | --- |
 | `/repair-guides` | `repair-guides.html` | `/?service=diagnostics#contact` |
-| `/repair-guide-car-wont-start` | `repair-guide-car-wont-start.html` | `/?service=electrical#contact` |
+| `/repair-guide-car-wont-start` | `repair-guide-car-wont-start.html` | `/?service=no-start#contact` |
 | `/repair-guide-ac-warm-at-idle` | `repair-guide-ac-warm-at-idle.html` | `/?service=ac#contact` |
-| `/repair-guide-battery-keeps-dying` | `repair-guide-battery-keeps-dying.html` | `/?service=electrical#contact` |
+| `/repair-guide-battery-keeps-dying` | `repair-guide-battery-keeps-dying.html` | `/?service=battery#contact` |
+| `/repair-guide-car-overheating` | `repair-guide-car-overheating.html` | `/?service=cooling#contact` |
+| `/repair-guide-flashing-check-engine-light` | `repair-guide-flashing-check-engine-light.html` | `/?service=diagnostics#contact` |
 
 The request links use the frontend's agreed service whitelist. They contain no customer details. The final conventional path prepares a direct text-message draft for Tony, with email/copy alternatives; the customer must press Send in their messaging app. Draft preparation is not stored-lead or delivery confirmation. The guide hub and articles link to existing related service pages. Shared guide styling is scoped to `.guides-page` in `repair-guides.css`. There is no guide-specific JavaScript or new third-party integration.
 
