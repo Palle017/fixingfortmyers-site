@@ -59,6 +59,8 @@ test('enqueue: one pending row per channel; SMS channel skipped only when urgent
   // Urgent alerts disabled, suppressed or capped: no text is queued there, so this channel still texts Tony.
   n.enqueue(lead({starts:'no',stranded:'yes'}),'urgent-2',URGENT);
   assert.deepEqual(rows(db,'urgent-2').map(r=>r.channel),['email','sms']);
+  n.enqueue(lead(),'urgent-with-disabled-worker',URGENT);
+  assert.deepEqual(rows(db,'urgent-with-disabled-worker').map(r=>r.channel),['email','sms']);
   // Re-enqueueing the same lead is a no-op (INSERT OR IGNORE keeps the first message).
   n.enqueue(lead({name:'Changed Name'}),'normal-1',NORMAL);
   assert.equal(rows(db,'normal-1').length,2);
@@ -284,7 +286,9 @@ test('channelsFromEnv enables only configured channels and reports bad settings'
   const bad=channelsFromEnv({...base,SMTP_USER:'shop@example.test',SMTP_PASS:'p',LEAD_ALERT_EMAILS:'not-an-email',NTFY_TOPIC:'short'});
   assert.deepEqual(bad.channels,[]);
   assert.deepEqual(bad.problems,['email: Invalid email alert configuration.','push: Invalid push alert topic.']);
-  const sms=channelsFromEnv({...base,TWILIO_ACCOUNT_SID:'AC'+'a'.repeat(32),TWILIO_AUTH_TOKEN:'synthetic-token',LEAD_ALERT_FROM:'+12025550100'});
+  const smsConfig={...base,TWILIO_ACCOUNT_SID:'AC'+'a'.repeat(32),TWILIO_AUTH_TOKEN:'synthetic-token',LEAD_ALERT_FROM:'+12025550100'};
+  assert.deepEqual(channelsFromEnv(smsConfig).channels,[],'credentials alone do not activate paid SMS');
+  const sms=channelsFromEnv({...smsConfig,LEAD_ALERTS_ENABLED:'true'});
   assert.deepEqual(sms.channels.map(c=>[c.name,c.skipUrgent]),[['sms',true]]);
   if(process.platform==='win32')assert.deepEqual(channelsFromEnv({}).channels.map(c=>c.name),['desktop'],'desktop is on by default on Windows');
 });
@@ -321,8 +325,7 @@ test('receiver: a web-form lead queues one notification per channel; a same-key 
 test('receiver: urgent lead skips the SMS channel only when urgent alerts queued a text; one failing channel stays pending',async t=>{
   quiet(t);
   const email=fakeChannel('email'),sms=fakeChannel('sms',{skipUrgent:true}),push=fakeChannel('push',{fail:true});
-  const twilio={fromNumber:'+12395550000',async send(){return {id:'SM1'};},async status(){return 'queued';}};
-  const x=await setup(t,{notifyChannels:[email,sms,push],alerts:{enabled:true,adapter:twilio}});
+  const x=await setup(t,{notifyChannels:[email,sms,push],alerts:{adapter:{fromNumber:'+12025550100',async send(){return {id:'synthetic'};},async status(){return 'delivered';}}}});
   const urgent=await(await x.send(lead({starts:'no',stranded:'yes'}))).json();
   assert.equal(urgent.routing.priority,'first');
   assert.deepEqual(rows(x.app.db,urgent.id).map(r=>r.channel),['email','push']);

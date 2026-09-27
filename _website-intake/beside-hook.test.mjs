@@ -22,7 +22,7 @@ async function setup(t,options={}){
     webform:input=>fetch(base+'/hooks/lead/webform',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','Idempotency-Key':randomUUID()},body:JSON.stringify(input)}),
     inbox:async()=>(await(await fetch(admin+'/api/leads')).json()).leads};
 }
-const call={phone:'(239) 555-0142',name:'Synthetic Beside Caller',summary:'Synthetic test only. Brakes grinding on a 2012 F-150.',type:'call'};
+const call={event_id:'synthetic-call-1',direction:'inbound',phone:'(239) 555-0142',name:'Synthetic Beside Caller',summary:'Synthetic test only. Brakes grinding on a 2012 F-150.',type:'call'};
 
 // ---------- Beside webhook through the receiver ----------
 
@@ -48,30 +48,64 @@ test('Beside call creates a manual lead (source beside_call) and queues its noti
   assert.deepEqual(lead.notifications.map(n=>[n.channel,n.state]),[['email','sent']]);
 });
 
-test('same phone within 7 days is a touch on the existing lead, not a new lead; after 7 days it is new',async t=>{
+test('provider event retries deduplicate while distinct jobs from the same phone are retained for review',async t=>{
   const x=await setup(t);
   const first=await(await x.beside(call)).json();
   await x.app.notifier.tick();
-  const again=await(await x.beside({phone:'+1 239-555-0142',summary:'Synthetic follow-up text.',type:'sms'})).json();
-  assert.deepEqual(again,{ok:true,id:first.id,duplicate:true});
+  const again=await(await x.beside(call)).json();
+  assert.equal(again.id,first.id);assert.equal(again.duplicate,true);
   assert.equal(count(x.db,'leads'),1);
   assert.equal(count(x.db,'lead_notifications'),1,'a repeat contact does not alert again');
   await x.app.notifier.tick();
   assert.equal(x.channel.sent.length,1);
-  const touches=x.desk.touches(first.id);
-  assert.deepEqual(touches.map(r=>[r.channel,r.note]),[['beside_text','Synthetic follow-up text.']]);
-  assert.deepEqual((await x.inbox())[0].touches.map(r=>r.channel),['beside_text']);
-  // A website lead from the same number also absorbs the Beside call.
-  const web=await(await x.webform({name:'Synthetic Web Customer',phone:'2395550177',vehicle:'QA sedan',details:'Synthetic test only.',smsConsent:false})).json();
-  const webCall=await(await x.beside({...call,phone:'239.555.0177'})).json();
-  assert.deepEqual([webCall.id,webCall.duplicate],[web.id,true]);
+  const second=await(await x.beside({...call,event_id:'synthetic-call-2',summary:'Different vehicle, different repair.'})).json();
+  assert.notEqual(second.id,first.id);assert.equal(second.duplicate,false);
   assert.equal(count(x.db,'leads'),2);
-  // Older than 7 days: the same number is a new inquiry.
-  x.db.prepare('UPDATE leads SET received_at=? WHERE id=?').run(new Date(Date.now()-8*86400000).toISOString(),first.id);
-  const later=await(await x.beside(call)).json();
-  assert.equal(later.duplicate,false);assert.notEqual(later.id,first.id);
-  assert.equal(count(x.db,'leads'),3);
-  assert.equal(count(x.db,'lead_notifications'),3);
+  const linked=await(await x.beside({event_id:'follow-up-1',phone:call.phone,summary:'Synthetic follow-up text.',type:'sms',direction:'inbound',inquiry_id:first.id})).json();
+  assert.equal(linked.id,first.id);assert.equal(linked.linked,true);
+  assert.equal(count(x.db,'leads'),2);assert.equal(count(x.db,'lead_notifications'),2);
+  assert.deepEqual(x.desk.touches(first.id).map(r=>[r.channel,r.note]),[['beside_text','Synthetic follow-up text.']]);
+  const m=x.desk.metrics();assert.equal(m.totals.leads,0);assert.equal(m.totals.review,2);
+});
+
+test('withheld-number replay is deduplicated by event ID; changed content returns conflict',async t=>{
+  const x=await setup(t),input={...call,phone:'Private caller',event_id:'withheld-1'};
+  const first=await(await x.beside(input)).json(),again=await(await x.beside(input)).json();
+  assert.equal(again.id,first.id);assert.equal(again.duplicate,true);assert.equal(count(x.db,'leads'),1);
+  assert.equal((await x.beside({...input,summary:'Changed provider payload'})).status,409);
+  assert.equal(count(x.db,'beside_events'),1);
+});
+
+test('outbound events stay in the event ledger and provider time is preserved for incoming candidates',async t=>{
+  const x=await setup(t);
+  const outbound=await(await x.beside({...call,event_id:'outbound-1',phone:undefined,from:'2393972048',to:'2395550142',direction:'outbound'})).json();
+  assert.equal(outbound.id,null);assert.equal(count(x.db,'leads'),0);assert.equal(count(x.db,'lead_notifications'),0);
+  assert.equal(x.desk.metrics().totals.unlinkedEvents,1);
+  const at=new Date(Date.now()-30*86400000).toISOString();
+  const incoming=await(await x.beside({...call,event_id:'historic-1',occurred_at:at})).json();
+  const lead=(await x.inbox()).find(row=>row.id===incoming.id);
+  assert.equal(lead.received_at,at);assert.equal(lead.beside.occurred_at,at);assert.equal(lead.beside.direction,'inbound');assert.equal(lead.reviewRequired,true);
+  assert.equal((await x.beside({...call,event_id:'bad-time',occurred_at:'yesterday'})).status,400);
+});
+
+test('missing provider identity stays captured and flagged, with no invented event identity claim',async t=>{
+  const x=await setup(t);
+  const result=await(await x.beside({...call,event_id:undefined})).json();
+  assert.equal(result.identityMissing,true);assert.equal(result.reviewRequired,true);assert.equal(count(x.db,'leads'),1);
+  assert.equal((await x.inbox())[0].beside.event_id,null);
+});
+
+test('manual lead notifications and Beside event records share the lead transaction',async t=>{
+  const x=await setup(t);
+  const manual=input=>fetch(x.admin+'/api/desk/leads',{method:'POST',headers:{'Content-Type':'application/json',Origin:x.admin},body:JSON.stringify(input)});
+  const saved=await(await manual({name:'Synthetic Manual',phone:'2395550123',details:'Manual brake request'})).json();
+  assert.equal(count(x.db,'lead_notifications'),1);
+  await x.app.notifier.tick();assert.equal(x.channel.sent.length,1);
+  x.db.exec("CREATE TRIGGER fail_notify BEFORE INSERT ON lead_notifications BEGIN SELECT RAISE(ABORT,'synthetic queue failure'); END;");
+  assert.equal((await manual({name:'Rejected synthetic manual'})).status,503);
+  assert.equal((await x.beside(call)).status,503);
+  assert.equal(count(x.db,'leads'),1);assert.equal(count(x.db,'beside_events'),0);
+  assert.ok(saved.id);
 });
 
 test('form-encoded Beside events work and message events become beside_text',async t=>{

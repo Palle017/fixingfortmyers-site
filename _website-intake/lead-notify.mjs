@@ -143,7 +143,7 @@ export function channelsFromEnv(env = process.env) {
   if (env.SMTP_USER && env.SMTP_PASS) attempt('email', () => createSmtpAdapter({host: env.SMTP_HOST || 'smtp.gmail.com', port: Number(env.SMTP_PORT || 465), user: env.SMTP_USER, pass: env.SMTP_PASS.replace(/\s+/g, ''), from: env.SMTP_FROM || env.SMTP_USER,
     to: (env.LEAD_ALERT_EMAILS || DEFAULT_ALERT_EMAILS.join(',')).split(',').map(s => s.trim()).filter(Boolean)}));
   if (env.NTFY_TOPIC) attempt('push', () => createNtfyAdapter({topic: env.NTFY_TOPIC, server: env.NTFY_SERVER || undefined}));
-  if (env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.LEAD_ALERT_FROM) attempt('sms', () => createSmsAdapter(createTwilioAlertAdapter({accountSid: env.TWILIO_ACCOUNT_SID, authToken: env.TWILIO_AUTH_TOKEN, fromNumber: env.LEAD_ALERT_FROM})));
+  if (env.LEAD_ALERTS_ENABLED === 'true' && env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.LEAD_ALERT_FROM) attempt('sms', () => createSmsAdapter(createTwilioAlertAdapter({accountSid: env.TWILIO_ACCOUNT_SID, authToken: env.TWILIO_AUTH_TOKEN, fromNumber: env.LEAD_ALERT_FROM})));
   if (env.LEAD_DESKTOP_ALERTS !== 'false' && process.platform === 'win32') attempt('desktop', () => createDesktopAdapter());
   return {channels, problems};
 }

@@ -55,7 +55,7 @@ test('chat collects the problem, then its contact card sends one lead with the w
   assert.match(lead.details,/clicks and will not start\.[\s\S]*stranded in Fort Myers/);assert.equal(lead.recipient,undefined);
   assert.equal(lead.smsConsent,true);assert.match(lead.smsConsentDisclosure,/text messages/);assert.match(sent[0].headers['Idempotency-Key'],/^[A-Za-z0-9-]{16,}$/);
   assert.equal(d.querySelector('.b1-lead'),null);assert.equal(d.querySelector('.b1-composer').hidden,true);
-  assert.match(d.querySelector('.b1-messages').textContent,/Sent\. Tony has your details[\s\S]*marked urgent/);
+  assert.match(d.querySelector('.b1-messages').textContent,/request is saved[\s\S]*marked urgent/);
   assert.ok(d.querySelector('.b1-messages a[href="tel:+12393972048"]'));
   assert.ok(x.requests.filter(r=>r.route==='/chat/message').every(r=>r.body.mode==='chat'));
 });
@@ -67,6 +67,30 @@ test('a failed lead send keeps the card and details, and never claims Tony has t
   assert.ok(d.querySelector('.b1-lead'));assert.match(card.querySelector('.b1-lead-status').textContent,/could not save[\s\S]*397-2048/);
   assert.doesNotMatch(d.querySelector('.b1-messages').textContent,/Tony has your details/);
   assert.equal(x.requests.find(r=>r.route==='/hooks/lead/webform').body.smsConsent,false);
+});
+
+test('a lost contact-card response retries the exact saved payload and key, including consent time',async t=>{
+  let sent=0;
+  const x=setup(t,{handler:async(route,body,w)=>{
+    if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,chat:'ready'})};
+    if(route==='/chat/session')return {ok:true,status:200,json:async()=>({ok:true,visitor_token:'synthetic-token'})};
+    if(route==='/hooks/lead/webform'){
+      if(++sent===1){const FirstDate=w.Date;w.Date=class extends FirstDate{constructor(...args){super(...(args.length?args:['2026-09-24T17:00:00Z']));}};throw new w.TypeError('Response lost after storage');}
+      return {ok:true,status:200,json:async()=>({ok:true,received:true,id:'12345678-1234-4234-8234-123456789012',receivedAt:'2026-09-24T16:00:00.000Z'})};
+    }
+    return {ok:true,status:200,json:async()=>({ok:true,reply:'Your contact details?',ready:true,intake:{}})};
+  }});
+  await settle();await x.say('Synthetic brake inquiry');
+  const card=x.w.document.querySelector('.b1-lead');
+  card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='2395550100';card.querySelector('[name=sms]').checked=true;
+  card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  assert.equal(card.querySelector('[name=phone]').disabled,true);
+  assert.match(card.textContent,/same request/);
+  card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  const requests=x.requests.filter(r=>r.route==='/hooks/lead/webform');
+  assert.equal(requests.length,2);assert.equal(requests[0].headers['Idempotency-Key'],requests[1].headers['Idempotency-Key']);
+  assert.deepEqual(requests[0].body,requests[1].body);
+  assert.match(x.w.document.querySelector('.b1-messages').textContent,/request is saved/);
 });
 test('initial AI connection failure stays truthful and unsent notes still hand off to the normal form',async t=>{
   const x=setup(t,{handler:async(route,body,w)=>{if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,chat:'ready'})};throw new w.TypeError('Synthetic network outage');}}),d=x.w.document;
