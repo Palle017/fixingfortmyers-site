@@ -1,49 +1,188 @@
-Synthetic test run 2026-09-25T02:29:30.392Z
-Node v24.18.1
-✔ visitor events deduplicate, distinguish unique browsers, enforce origin, and persist (237.3613ms)
-✔ completed AI counts survive retries, midnight, restart, and seven-day cleanup (87.5213ms)
-✔ ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions (20.006ms)
-{"event":"lead_received","id":"83f3fef3-7926-453b-9d90-1fc6c1553ec7","kind":"webform","receivedAt":"2026-09-25T02:29:28.937Z"}
-{"event":"lead_received","id":"54d00626-1ad1-4a5b-9620-a7e3a2f0ad18","kind":"webform","receivedAt":"2026-09-25T02:29:28.982Z"}
-{"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
-✔ lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts (207.0014ms)
-{"event":"lead_received","id":"71e7f791-9309-42c8-a59c-0be3485f4fa8","kind":"webform","receivedAt":"2026-09-25T02:29:29.129Z"}
-{"event":"lead_received","id":"45096bff-d821-4f45-91e7-e10c99d05618","kind":"webform","receivedAt":"2026-09-25T02:29:29.134Z"}
-{"event":"lead_received","id":"636ea9af-137b-4c9f-be0a-5ad7f67954eb","kind":"webform","receivedAt":"2026-09-25T02:29:29.149Z"}
-✔ persistent callback/global caps suppress repeated alert pairs without losing saved leads (168.465ms)
-{"event":"lead_received","id":"43ce0dfb-13fe-43cb-b901-f0600df861b1","kind":"webform","receivedAt":"2026-09-25T02:29:29.284Z"}
-✔ definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token (136.1815ms)
-✔ Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered (1.5472ms)
-✔ Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider (64.8858ms)
-{"event":"lead_received","id":"34bd8b5c-5cd8-4288-8786-bcf137478d27","kind":"webform","receivedAt":"2026-09-25T02:29:28.919Z"}
-✔ receives a real HTTP request, commits it, shows it privately, and deduplicates retries (220.4457ms)
-✔ public API has strict origin checks, preflight, and no unauthenticated owner inbox (165.9685ms)
-{"event":"lead_received","id":"0cd22461-5e6c-41e2-95aa-73f8a54b3f03","kind":"webform","receivedAt":"2026-09-25T02:29:29.320Z"}
-✔ validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON (173.4537ms)
-{"event":"lead_received","id":"b01d1025-0804-4874-8135-f976907d7d21","kind":"webform","receivedAt":"2026-09-25T02:29:29.418Z"}
-{"event":"lead_received","id":"844a9ffd-b48f-42f9-8aa0-f13718b3b1aa","kind":"webform","receivedAt":"2026-09-25T02:29:29.422Z"}
-✔ rate limits apply before accepting more uploads (87.2743ms)
-{"event":"lead_received","id":"4830af5e-6157-4e14-b4d9-6e13a4ca39ae","kind":"webform","receivedAt":"2026-09-25T02:29:29.497Z"}
-{"event":"lead_received","id":"02b62d70-8820-45eb-9929-89f92c3e87a6","kind":"voicenote","receivedAt":"2026-09-25T02:29:29.524Z"}
-✔ multipart recording is durable, privately playable with byte ranges, and requires name (141.3238ms)
-{"event":"lead_received","id":"9a8cfe5e-b95d-4253-9eb0-c009f7f351ba","kind":"voicenote","receivedAt":"2026-09-25T02:29:29.639Z"}
-✔ legacy raw recording works and MIME-spoofed uploads fail (70.7934ms)
-✔ every intake reply carries customer words to editable form without a lead submit or forced vehicle repetition (212.4362ms)
-✔ initial AI connection failure stays truthful and unsent notes still hand off to the normal form (50.6442ms)
-✔ service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable (91.5022ms)
-✔ after-hours wording uses Eastern time and untrusted text is displayed as text (47.2987ms)
-✔ long conversation preserves all customer words and blocks sending until the customer shortens it (38.8541ms)
-✔ receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity (100.7106ms)
-✔ mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry (47.1468ms)
-✔ public Bay One is disabled before UI/assets/network while normal contact remains available (32.8991ms)
-✔ public form prepares an editable native text intent with no HTTP delivery or receipt claim (29.4565ms)
-✔ iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient (27.5256ms)
-✔ draft source carries only known page categories, never URL or session-injected personal data (113.7888ms)
-ℹ tests 25
-ℹ suites 0
-ℹ pass 25
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 1683.8379
+Synthetic test run 2026-09-27T07:34:41.596Z
+Node v22.22.2
+TAP version 13
+# (node:1062) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: visitor events deduplicate, distinguish unique browsers, enforce origin, and persist
+ok 1 - visitor events deduplicate, distinguish unique browsers, enforce origin, and persist
+  ---
+  duration_ms: 150.886626
+  type: 'test'
+  ...
+# Subtest: completed AI counts survive retries, midnight, restart, and seven-day cleanup
+ok 2 - completed AI counts survive retries, midnight, restart, and seven-day cleanup
+  ---
+  duration_ms: 121.990661
+  type: 'test'
+  ...
+# (node:1063) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions
+ok 3 - ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions
+  ---
+  duration_ms: 26.209224
+  type: 'test'
+  ...
+# {"event":"lead_received","id":"0a43d497-f740-45ff-87e5-641e97b977f7","kind":"webform","receivedAt":"2026-09-27T07:34:39.348Z"}
+# {"event":"lead_received","id":"1a13da73-7bf2-46ce-bde1-4461b1b351ba","kind":"webform","receivedAt":"2026-09-27T07:34:39.382Z"}
+# {"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
+# Subtest: lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts
+ok 4 - lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts
+  ---
+  duration_ms: 112.24837
+  type: 'test'
+  ...
+# {"event":"lead_received","id":"5d5dc458-0520-4ee5-8d72-4b3f52a45c91","kind":"webform","receivedAt":"2026-09-27T07:34:39.448Z"}
+# {"event":"lead_received","id":"8182534d-e342-446b-8845-8865b7825fb5","kind":"webform","receivedAt":"2026-09-27T07:34:39.455Z"}
+# {"event":"lead_received","id":"d0e38487-de96-48b6-84a5-c39b3411e6a9","kind":"webform","receivedAt":"2026-09-27T07:34:39.464Z"}
+# Subtest: persistent callback/global caps suppress repeated alert pairs without losing saved leads
+ok 5 - persistent callback/global caps suppress repeated alert pairs without losing saved leads
+  ---
+  duration_ms: 85.347231
+  type: 'test'
+  ...
+# {"event":"lead_received","id":"b80e01a1-2e0c-4ff1-b14d-afb8649b9923","kind":"webform","receivedAt":"2026-09-27T07:34:39.536Z"}
+# Subtest: definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token
+ok 6 - definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token
+  ---
+  duration_ms: 79.023063
+  type: 'test'
+  ...
+# Subtest: Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered
+ok 7 - Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered
+  ---
+  duration_ms: 1.653753
+  type: 'test'
+  ...
+# Subtest: Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider
+ok 8 - Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider
+  ---
+  duration_ms: 45.007275
+  type: 'test'
+  ...
+# (node:1069) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# {"event":"lead_received","id":"a8b9dac1-20ca-43bf-b954-78dda2ef3e78","kind":"webform","receivedAt":"2026-09-27T07:34:39.323Z"}
+# Subtest: receives a real HTTP request, commits it, shows it privately, and deduplicates retries
+ok 9 - receives a real HTTP request, commits it, shows it privately, and deduplicates retries
+  ---
+  duration_ms: 120.83716
+  type: 'test'
+  ...
+# Subtest: public API has strict origin checks, preflight, and no unauthenticated owner inbox
+ok 10 - public API has strict origin checks, preflight, and no unauthenticated owner inbox
+  ---
+  duration_ms: 90.740838
+  type: 'test'
+  ...
+# {"event":"lead_received","id":"59cb8bc3-e755-4864-acf4-8b73be246899","kind":"webform","receivedAt":"2026-09-27T07:34:39.551Z"}
+# Subtest: validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON
+ok 11 - validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON
+  ---
+  duration_ms: 99.005119
+  type: 'test'
+  ...
+# {"event":"lead_received","id":"2cf45e3d-01b3-4799-922b-ee8bfaadd661","kind":"webform","receivedAt":"2026-09-27T07:34:39.591Z"}
+# {"event":"lead_received","id":"e81be276-90a2-41dd-9e1f-14d339930afa","kind":"webform","receivedAt":"2026-09-27T07:34:39.595Z"}
+# Subtest: rate limits apply before accepting more uploads
+ok 12 - rate limits apply before accepting more uploads
+  ---
+  duration_ms: 28.944141
+  type: 'test'
+  ...
+# {"event":"lead_received","id":"30cb41d3-b5de-4e5a-bbd5-cd83828015ea","kind":"webform","receivedAt":"2026-09-27T07:34:39.622Z"}
+# {"event":"lead_received","id":"bad650e8-684f-48d9-bfac-e9726ebc4714","kind":"voicenote","receivedAt":"2026-09-27T07:34:39.635Z"}
+# Subtest: multipart recording is durable, privately playable with byte ranges, and requires name
+ok 13 - multipart recording is durable, privately playable with byte ranges, and requires name
+  ---
+  duration_ms: 59.694416
+  type: 'test'
+  ...
+# {"event":"lead_received","id":"c05f2908-2ef3-49fa-84ac-cbb820786ecd","kind":"voicenote","receivedAt":"2026-09-27T07:34:39.687Z"}
+# Subtest: legacy raw recording works and MIME-spoofed uploads fail
+ok 14 - legacy raw recording works and MIME-spoofed uploads fail
+  ---
+  duration_ms: 30.60836
+  type: 'test'
+  ...
+# Subtest: every intake reply carries customer words to editable form without a lead submit or forced vehicle repetition
+ok 15 - every intake reply carries customer words to editable form without a lead submit or forced vehicle repetition
+  ---
+  duration_ms: 337.888146
+  type: 'test'
+  ...
+# Subtest: initial AI connection failure stays truthful and unsent notes still hand off to the normal form
+ok 16 - initial AI connection failure stays truthful and unsent notes still hand off to the normal form
+  ---
+  duration_ms: 97.642041
+  type: 'test'
+  ...
+# Subtest: service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable
+ok 17 - service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable
+  ---
+  duration_ms: 138.771116
+  type: 'test'
+  ...
+# Subtest: after-hours wording uses Eastern time and untrusted text is displayed as text
+ok 18 - after-hours wording uses Eastern time and untrusted text is displayed as text
+  ---
+  duration_ms: 66.276324
+  type: 'test'
+  ...
+# Subtest: long conversation preserves all customer words and blocks sending until the customer shortens it
+ok 19 - long conversation preserves all customer words and blocks sending until the customer shortens it
+  ---
+  duration_ms: 81.182134
+  type: 'test'
+  ...
+# Subtest: receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity
+ok 20 - receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity
+  ---
+  duration_ms: 169.986893
+  type: 'test'
+  ...
+# Subtest: mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry
+ok 21 - mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry
+  ---
+  duration_ms: 62.299018
+  type: 'test'
+  ...
+# Subtest: shipped config enables public Bay One against the p15g2 receiver
+ok 22 - shipped config enables public Bay One against the p15g2 receiver
+  ---
+  duration_ms: 11.229951
+  type: 'test'
+  ...
+# Subtest: public Bay One is disabled before UI/assets/network while normal contact remains available
+ok 23 - public Bay One is disabled before UI/assets/network while normal contact remains available
+  ---
+  duration_ms: 54.170743
+  type: 'test'
+  ...
+# Subtest: public form prepares an editable native text intent with no HTTP delivery or receipt claim
+ok 24 - public form prepares an editable native text intent with no HTTP delivery or receipt claim
+  ---
+  duration_ms: 35.819896
+  type: 'test'
+  ...
+# Subtest: iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient
+ok 25 - iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient
+  ---
+  duration_ms: 37.074373
+  type: 'test'
+  ...
+# Subtest: draft source carries only known page categories, never URL or session-injected personal data
+ok 26 - draft source carries only known page categories, never URL or session-injected personal data
+  ---
+  duration_ms: 168.953263
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 26
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2449.617773

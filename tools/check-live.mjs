@@ -14,13 +14,13 @@ for(const path of paths){
   const privatePath=path.startsWith('/_website-intake/')||path.startsWith('/docs/')||path.startsWith('/source-materials/');
   assert.equal(response.status,privatePath?404:200,path);
   if(path==='/'||path.includes('repair-guide')||path==='/no-start-diagnosis-fort-myers'){
-    assert.match(body,/24\/7/);assert.match(body,/Bay One AI intake is currently offline/);
-    assert.match(body,/20260924-growth-v2/);
+    assert.match(body,/24\/7/);assert.match(body,/Tony is assisted by Bay One AI/);
+    assert.match(body,/20260927-bay-one-v1/);
   }
-  if(path==='/bay-one-config.js')assert.match(body,/enabled:\s*false/);
+  if(path==='/bay-one-config.js'){assert.match(body,/enabled:\s*true/);assert.match(body,/p15g2\.tail68bd87\.ts\.net:10000/);}
   if(path==='/contact-config.js')assert.match(body,/endpoint:\s*''/);
   if(path==='/sitemap.xml'){assert.match(body,/repair-guide-battery-keeps-dying/);assert.match(body,/repair-guide-car-overheating/);assert.match(body,/repair-guide-flashing-check-engine-light/);}
   checks.push({path,status:response.status,bytes:Buffer.byteLength(body)});
 }
-const evidence={at:new Date().toISOString(),site:'https://fixingfortmyers.com',commit:build.commit,pagesStatus:build.status,checks,bayOne:'disabled',contact:'customer-sent native SMS draft',realMessagesSent:false,backendActivated:false};
+const evidence={at:new Date().toISOString(),site:'https://fixingfortmyers.com',commit:build.commit,pagesStatus:build.status,checks,bayOne:'enabled',contact:'customer-sent native SMS draft',realMessagesSent:false,backendActivated:false};
 fs.mkdirSync('docs/evidence',{recursive:true});fs.writeFileSync('docs/evidence/production.json',JSON.stringify(evidence,null,2)+'\n');console.log(evidence);

@@ -6,11 +6,11 @@
   if (config.enabled !== true) return;
   if (document.getElementById('bay-one-widget')) return;
   const script = document.currentScript;
-  const apiBase = String(config.endpoint || window.PT_CONTACT_CONFIG?.endpoint || 'https://redline.taild5f39d.ts.net:10000').replace(/\/$/, '');
+  const apiBase = String(config.endpoint || window.PT_CONTACT_CONFIG?.endpoint || 'https://p15g2.tail68bd87.ts.net:10000').replace(/\/$/, '');
   const customAvatar = config.avatar || script?.dataset.avatar;
   const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
   const css = document.createElement('link');
-  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260924-growth-v2', script?.src || location.href).href;
+  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260927-bay-one-v1', script?.src || location.href).href;
   document.head.append(css);
   const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
   widget.setAttribute('aria-label', 'Bay One repair assistant');

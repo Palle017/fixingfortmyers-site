@@ -16,8 +16,8 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   w.HTMLElement.prototype.scrollIntoView=function(){};
   if(userAgent)Object.defineProperty(w.navigator,'userAgent',{value:userAgent,configurable:true});
   if(publicContact)w.eval(fs.readFileSync(new URL('contact-config.js',root),'utf8'));else w.PT_CONTACT_CONFIG={endpoint:'https://receiver.invalid'};
-  // Parked intake is enabled only inside these fully mocked development tests.
-  if(enabled)w.PT_BAYONE_CONFIG={enabled:true};else w.eval(fs.readFileSync(new URL('bay-one-config.js',root),'utf8'));
+  // Tests set the Bay One flag explicitly; the shipped flag is checked separately below.
+  w.PT_BAYONE_CONFIG={enabled};
   const NativeDate=w.Date;w.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[at]));}static now(){return NativeDate.parse(at);}};
   w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=JSON.parse(options.body||'{}');requests.push({route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
   if(savedSource)w.sessionStorage.setItem('pt-repair-source',savedSource);
@@ -108,6 +108,11 @@ test('mobile bar retains call and text actions, adds Bay One in the mocked previ
   d.querySelector('.b1-close').click();assert.equal(d.getElementById('b1-panel').hidden,true);assert.equal(d.activeElement,entry);assert.equal(entry.getAttribute('aria-expanded'),'false');
   const inline=d.getElementById('request-bay-one');inline.click();await settle();d.querySelector('.b1-close').click();assert.equal(d.activeElement,inline);
   assert.ok(d.querySelector('.b1-launcher'));
+});
+
+test('shipped config enables public Bay One against the p15g2 receiver',()=>{
+  const dom=new JSDOM('',{runScripts:'outside-only'});dom.window.eval(fs.readFileSync(new URL('bay-one-config.js',root),'utf8'));
+  assert.equal(dom.window.PT_BAYONE_CONFIG.enabled,true);assert.equal(dom.window.PT_BAYONE_CONFIG.endpoint,'https://p15g2.tail68bd87.ts.net:10000');dom.window.close();
 });
 
 test('public Bay One is disabled before UI/assets/network while normal contact remains available',async t=>{
