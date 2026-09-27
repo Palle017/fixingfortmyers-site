@@ -1,7 +1,11 @@
 // Mocked Ollama provider contract. No model or network is contacted.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createOllamaProvider,createDefaultProvider,createDeepSeekProvider} from './public-chat.mjs';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {randomUUID} from 'node:crypto';
+import {createOllamaProvider,createDefaultProvider,createDeepSeekProvider,createPublicChat} from './public-chat.mjs';
 
 const reply=(body,ok=true)=>({ok,text:async()=>JSON.stringify(body)});
 
@@ -29,4 +33,15 @@ test('provider selection defaults to DeepSeek and switches to Ollama only when n
   await createDefaultProvider({providerName:'ollama',model:'m',fetchImpl})({messages:[]});assert.match(url,/11434\/api\/chat$/);
   await assert.rejects(createDefaultProvider({providerName:'deepseek',apiKey:'',fetchImpl})({messages:[]}),{code:'chat_unavailable'});
   assert.equal(typeof createDeepSeekProvider,'function');
+});
+
+test('paraphrased free-text fields are dropped and asked again instead of failing the chat',async()=>{
+  const dataDir=fs.mkdtempSync(path.join(os.tmpdir(),'pt-ollama-'));
+  const chat=createPublicChat({dataDir,provider:async()=>({kind:'intake',relevant:true,intake:{vehicle:'Honda Civic 2015',details:'will not start',city:'Fort Myers, FL',starts:'no'}})});
+  try{
+    const token=chat.session({},'198.51.100.7').visitor_token;
+    const out=await chat.message({visitor_token:token,request_id:randomUUID(),message:'My 2015 Honda Civic will not start in Fort Myers',mode:'chat'},'198.51.100.7');
+    assert.equal(out.ok,true);assert.equal(out.intake.details,'will not start');assert.equal(out.intake.starts,'no');
+    assert.equal(out.intake.vehicle,undefined);assert.equal(out.intake.city,undefined);assert.equal(out.nextField,'vehicle');
+  }finally{chat.close();fs.rmSync(dataDir,{recursive:true,force:true});}
 });

@@ -35,7 +35,10 @@ Bay One's chat extraction uses DeepSeek's cloud API by default (`DEEPSEEK_API_KE
 | `BAYONE_PROVIDER=ollama` | Use local Ollama instead of DeepSeek. |
 | `OLLAMA_MODEL` | Required. An installed model tag, e.g. from `ollama list`. |
 | `OLLAMA_HOST` | Optional, default `http://127.0.0.1:11434`. Keep Ollama on loopback; never Funnel it. |
-| `OLLAMA_TIMEOUT_MS` / `CHAT_TIMEOUT_MS` | Optional. Raise both (e.g. 60000) if the first answer after a model load is slow. |
+| `OLLAMA_KEEP_ALIVE` | Optional, default `24h`. How long Ollama keeps the model loaded, so customers rarely hit a cold load. |
+| `OLLAMA_TIMEOUT_MS` / `CHAT_TIMEOUT_MS` | Optional, defaults 24000 / 25000. Keep both under 30000: the browser widget aborts at 35 s, and a server still working past that makes the customer's retry fail as pending. Warm the model after startup instead of raising these. |
+
+Vehicle, symptoms, city and callback time are kept only when they are the customer's exact words. A model that paraphrases them has that field dropped, and Bay One asks for it again; it is never stored.
 
 ## Endpoints
 

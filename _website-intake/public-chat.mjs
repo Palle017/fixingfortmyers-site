@@ -94,14 +94,14 @@ export function createDeepSeekProvider({apiKey=process.env.DEEPSEEK_API_KEY,fetc
 }
 
 // Local Ollama on the same machine. The model never leaves loopback; only this server reaches it.
-export function createOllamaProvider({baseUrl=process.env.OLLAMA_HOST||'http://127.0.0.1:11434',model=process.env.OLLAMA_MODEL,fetchImpl=fetch,timeoutMs=Number(process.env.OLLAMA_TIMEOUT_MS||60000)}={}){
+export function createOllamaProvider({baseUrl=process.env.OLLAMA_HOST||'http://127.0.0.1:11434',model=process.env.OLLAMA_MODEL,fetchImpl=fetch,timeoutMs=Number(process.env.OLLAMA_TIMEOUT_MS||24000),keepAlive=process.env.OLLAMA_KEEP_ALIVE||'24h'}={}){
   return async ({messages,canEstimate})=>{
     if(!model)throw error(503,'chat_unavailable','Bay One is temporarily unavailable. Please call the shop.');
     let response;
     try{
       response=await fetchImpl(String(baseUrl).replace(/\/$/,'')+'/api/chat',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model,stream:false,format:'json',keep_alive:'30m',options:{temperature:0.3,num_predict:MAX_OUTPUT},
+        body:JSON.stringify({model,stream:false,format:'json',keep_alive:keepAlive,options:{temperature:0.3,num_predict:MAX_OUTPUT},
           messages:[{role:'system',content:buildPrompt(canEstimate)},...messages]}),
         signal:AbortSignal.timeout(timeoutMs),
       });
@@ -131,7 +131,8 @@ function safeResult(result,messages=[],collected={}){
     if(value===null||value==='')continue;
     if(typeof value!=='string'||value.length>INTAKE_LIMITS[key]||/[<>\u0000-\u001f]/.test(value))throw error(503,'invalid_answer','Bay One could not finish this intake answer.');
     if(['starts','stranded','drivable'].includes(key)){if(!['yes','no','unknown'].includes(value))throw error(503,'invalid_answer','Please confirm the vehicle status in the form.');}
-    else if(!messages.some(row=>row.role==='user'&&row.content.toLowerCase().includes(value.toLowerCase())))throw error(503,'invalid_answer','Please confirm your details in the form.');
+    // Free-text fields must be the customer's own words; paraphrased or invented values are dropped, not stored.
+    else if(!messages.some(row=>row.role==='user'&&row.content.toLowerCase().includes(value.trim().toLowerCase())))continue;
     intake[key]=value.trim();
   }
   const next=nextField(intake),safety=hazard(messages.at(-1)?.content||'')?'Stop using the vehicle and seek appropriate emergency or roadside help. ':'';
