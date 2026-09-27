@@ -82,7 +82,8 @@ export function createOllamaProvider({baseUrl=process.env.OLLAMA_HOST||'http://1
     try{
       response=await fetchImpl(String(baseUrl).replace(/\/$/,'')+'/api/chat',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model,stream:false,think:false,format,keep_alive:keepAlive,options:{temperature:0.3,num_predict:MAX_OUTPUT},
+        // Ollama rejects a bare number in a string ("-1"); send numbers as numbers.
+        body:JSON.stringify({model,stream:false,think:false,format,keep_alive:/^-?\d+$/.test(String(keepAlive))?Number(keepAlive):keepAlive,options:{temperature:0.3,num_predict:MAX_OUTPUT},
           messages:[{role:'system',content:buildPrompt(canEstimate)},...messages]}),
         signal:AbortSignal.timeout(timeoutMs),
       });
@@ -116,8 +117,17 @@ function safeResult(result,messages=[],collected={}){
     else if(!messages.some(row=>row.role==='user'&&row.content.toLowerCase().includes(value.trim().toLowerCase())))continue;
     intake[key]=value.trim();
   }
+  // Backstop for the two answers that make a lead urgent: clear customer wording wins over a model "unknown".
+  const said=messages.filter(row=>row.role==='user').map(row=>row.content).join('\n');
+  // Negated wording ("not stranded", "starts fine now") never counts, and curly apostrophes from phones match.
+  const noStart=/\b(?:won.?t|will not|wont|doesn.?t|does not|can.?t|cannot) (?:re-?)?(?:start|crank|turn over)\b|\bno[- ]start\b|\bno prende\b|\bjust clicks\b/i;
+  const startsNow=/\b(?:starts|started|runs|cranks) (?:fine|ok|okay|now|again|up fine)\b/i;
+  const stranded=/\b(?:i.?m|i am|we.?re|we are|currently|now|still) (?:stranded|stuck on the side of the road)\b|\bstranded (?:at|on|in)\b|\bbroke(?:n)? down (?:on|at) (?:the )?(?:road|highway|interstate|i-?75|side)\b|\bon the side of the (?:road|highway|interstate)\b/i;
+  const notStranded=/\b(?:not|n.t|no longer|am not) (?:currently )?stranded\b|\b(?:at|from) home\b|\bin my (?:driveway|garage)\b/i;
+  if((!intake.starts||intake.starts==='unknown')&&noStart.test(said)&&!startsNow.test(said))intake.starts='no';
+  if((!intake.stranded||intake.stranded==='unknown')&&stranded.test(said)&&!notStranded.test(said))intake.stranded='yes';
   const next=nextField(intake),safety=hazard(messages.at(-1)?.content||'')?'Stop using the vehicle and seek appropriate emergency or roadside help. ':'';
-  return {kind:'intake',intake,nextField:next,ready:!next,reply:safety+(!result.relevant?'I can only help collect a repair inquiry for Tony. ':'')+(next?QUESTIONS[next]:'Review these details in the repair form, add your callback information and permission, then submit. Nothing has been received or sent to Tony yet.')};
+  return {kind:'intake',intake,nextField:next,ready:!next,reply:safety+(!result.relevant?'I help get your repair details to Tony. ':'')+(next?QUESTIONS[next]:'Thanks, that gives Tony what he needs. Add your name and number below and I will send it straight to him.')};
 }
 
 // Scripted mode: when the model is unavailable, over capacity or returns unusable output, the
@@ -230,6 +240,8 @@ export function createPublicChat(options={}){
       if(generated){try{safe=safeResult(generated.result??generated,messages,collected);}catch(err){if(direct)throw err;fallback=err.code||'invalid_answer';}}
       if(fallback){safe=safeResult(scriptedAnswer(next,messageText),messages,collected);console.error(JSON.stringify({event:'public_chat_scripted',reason:fallback}));}
       const assist=fallback?'scripted':direct?'rules':'model';
+      // Price questions are a buying signal: point them at Tony instead of refusing.
+      if(priceIntent(messageText))safe={...safe,reply:'Tony prices the job himself once he knows the vehicle and the problem, so let us get him the details. '+safe.reply.replace(/^I help get your repair details to Tony\. /,'')};
       const response=tx(()=>{
         const current=db.prepare('SELECT state FROM chat_requests WHERE id=?').get(requestId);if(current?.state!=='pending')throw error(503,'request_failed','This message expired. Send a new message.');
         if(safe.kind==='estimate'&&(!reserved||day!==dayAt(now()))&&usage(ids).remaining===0)throw error(429,'estimate_limit','Your two rough estimates for today are used. General questions are still available.',{usage:usage(ids)});

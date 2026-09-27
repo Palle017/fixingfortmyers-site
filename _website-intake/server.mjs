@@ -2,6 +2,8 @@ import http from 'node:http';
 import {createPublicChat,routePublicChat} from './public-chat.mjs';
 import {createRuleEvaluator,loadRules} from './lead-routing.mjs';
 import {createUrgentAlerts} from './urgent-alerts.mjs';
+import {createLeadNotifier,channelsFromEnv} from './lead-notify.mjs';
+import {createLeadDesk} from './lead-desk.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
@@ -130,6 +132,9 @@ export function createLeadServers(options = {}) {
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS website_visit_event_id ON website_visit_events(event_id)');
   // Factory callers (tests/previews) never inherit live-alert activation.
   const alerts=createUrgentAlerts(db,options.alerts||{enabled:false});
+  // Factory callers get no notification channels unless they pass them in.
+  const notifier=createLeadNotifier(db,{channels:options.notifyChannels||[]});
+  const desk=createLeadDesk(db,{digest:options.deskDigest||null,besideToken:options.besideToken??process.env.BESIDE_WEBHOOK_TOKEN??''});
   const origins = new Set(options.origins ?? ['https://fixingfortmyers.com', 'https://www.fixingfortmyers.com', ...(process.env.LEAD_DEV_ORIGINS ?? '').split(',').map(x => x.trim()).filter(Boolean)]);
   let publicChat = null;
   try { publicChat = createPublicChat({dataDir:path.join(dataDir,'public-chat'),...(options.chat||{})}); }
@@ -240,9 +245,13 @@ export function createLeadServers(options = {}) {
     try{
       db.prepare('INSERT INTO leads (id, received_at, kind, idempotency_key, payload_hash, payload_json, audio_type, audio, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(id, now, payload.kind, key, hash, JSON.stringify(payload), type || null, audio || null, now);
       alerts.enqueue(payload,id,decision);
+      const urgentTextQueued=alerts.inspect(id).alerts.some(row=>row.channel==='notify_sms'&&row.state==='pending');
+      notifier.enqueue(payload,id,decision,{urgentTextQueued});
       db.exec('COMMIT');
     }catch(err){db.exec('ROLLBACK');throw err;}
     console.log(JSON.stringify({ event: 'lead_received', id, kind: payload.kind, receivedAt: now }));
+    desk.sync();
+    notifier.tick().catch(() => {});
     return { ok: true, received: true, id, receivedAt: now,...alerts.inspect(id) };
   };
 
@@ -263,6 +272,26 @@ export function createLeadServers(options = {}) {
       if (req.method === 'GET' && url.pathname === '/chat/widget.js') {
         res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=300', 'X-Content-Type-Options': 'nosniff' });
         return res.end(fs.readFileSync(path.join(HERE, 'widget.js')));
+      }
+      const besideMatch = url.pathname.match(/^\/hooks\/lead\/beside\/([^/]{24,256})$/);
+      if (besideMatch) {
+        if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'POST only.' });
+        let token;
+        try { token = decodeURIComponent(besideMatch[1]); } catch { return json(res, 404, { ok: false, error: 'Not found.' }); }
+        // Wrong tokens are checked first and limited separately, so guessing cannot lock out real Beside events.
+        if (!desk.besideTokenMatches(token)) return json(res, 404, { ok: false, error: 'Not found.' });
+        if (rate('beside:global') > 120) return json(res, 429, { ok: false, error: 'Too many events.' });
+        const raw = (await readBody(req, MAX_JSON)).toString('utf8');
+        let input;
+        try { input = String(req.headers['content-type'] ?? '').startsWith('application/json') ? JSON.parse(raw) : Object.fromEntries(new URLSearchParams(raw)); } catch { throw error(400, 'Invalid event.'); }
+        // The alert rows commit in the same transaction as the Beside lead.
+        const result = desk.besideHook(token, input && typeof input === 'object' ? input : {}, { afterInsert: (lead, id) => {
+          const decision=evaluateRoute({...lead,source:'unknown'});
+          alerts.enqueue(lead,id,decision);
+          notifier.enqueue(lead,id,decision,{urgentTextQueued:alerts.inspect(id).alerts.some(row=>row.channel==='notify_sms'&&row.state==='pending')});
+        } });
+        if (!result.duplicate) notifier.tick().catch(() => {});
+        return json(res, 200, result);
       }
       if (!['/hooks/lead/webform', '/hooks/lead/voicenote', '/hooks/analytics/visit'].includes(url.pathname)) return json(res, 404, { ok: false, error: 'Not found.' });
       const origin = req.headers.origin;
@@ -358,7 +387,24 @@ export function createLeadServers(options = {}) {
         if(alertRetry){let input;try{input=JSON.parse((await readBody(req,1024)).toString());}catch{throw error(400,'Invalid retry.');}if(!['notify_sms','notify_call'].includes(input?.channel))throw error(400,'Invalid alert channel.');return json(res,200,alerts.retry(alertRetry[1],input.channel));}
         await alerts.tick();return json(res,200,{ok:true});
       }
+      if (req.method === 'GET' && url.pathname === '/api/desk/metrics') return json(res, 200, desk.metrics());
+      const stageMatch = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/stage$/);
+      if (req.method === 'POST' && (stageMatch || url.pathname === '/api/desk/leads')) {
+        if (req.headers['content-type']?.split(';')[0] !== 'application/json' || !req.headers.origin) throw error(403, 'Use the local inbox to update a request.');
+        let input;
+        try { input = JSON.parse((await readBody(req, 16384)).toString()); } catch { throw error(400, 'Invalid update.'); }
+        if (!input || typeof input !== 'object' || Array.isArray(input)) throw error(400, 'Invalid update.');
+        const result=stageMatch ? desk.setStage(stageMatch[1], input) : desk.addManual(input,{afterInsert:(lead,id)=>{
+          if(input.stage==='spam')return;
+          const decision=evaluateRoute({...lead,source:'unknown'});
+          alerts.enqueue(lead,id,decision);
+          notifier.enqueue(lead,id,decision,{urgentTextQueued:alerts.inspect(id).alerts.some(row=>row.channel==='notify_sms'&&row.state==='pending')});
+        }});
+        if(!stageMatch)notifier.tick().catch(()=>{});
+        return json(res,200,result);
+      }
       if (req.method === 'GET' && url.pathname === '/api/leads') {
+        desk.sync();
         const rawLimit = url.searchParams.get('limit') ?? '200';
         if (!/^[1-9]\d{0,2}$/.test(rawLimit) || Number(rawLimit) > 200) throw error(400, 'Inbox page limit must be between 1 and 200.');
         const limit = Number(rawLimit);
@@ -383,7 +429,7 @@ export function createLeadServers(options = {}) {
         const page = rows.slice(0, limit);
         const last = page.at(-1);
         const nextCursor = hasMore && last ? Buffer.from(JSON.stringify({ v: 1, received_at: last.received_at, id: last.id })).toString('base64url') : null;
-        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
+        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
       }
       const audioMatch = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/audio$/);
       if (req.method === 'GET' && audioMatch) {
@@ -407,6 +453,8 @@ export function createLeadServers(options = {}) {
         try { input = JSON.parse((await readBody(req, 2048)).toString()); } catch { throw error(400, 'Invalid update.'); }
         if (!['new', 'contacted', 'closed'].includes(input.status)) throw error(400, 'Invalid status.');
         const result = db.prepare('UPDATE leads SET status = ?, updated_at = ? WHERE id = ?').run(input.status, new Date().toISOString(), statusMatch[1]);
+        // Keep the desk pipeline in step with the inbox's status buttons.
+        if (result.changes) desk.syncStatus(statusMatch[1], input.status);
         return json(res, result.changes ? 200 : 404, { ok: Boolean(result.changes) });
       }
       if (req.method === 'GET' && url.pathname === '/api/metrics') {
@@ -424,15 +472,17 @@ export function createLeadServers(options = {}) {
   adminServer.requestTimeout = 10000;
   adminServer.headersTimeout = 5000;
   return {
-    publicServer, adminServer, db, dataDir, alerts,
+    publicServer, adminServer, db, dataDir, alerts, notifier, desk,
     async start(publicPort = Number(process.env.LEAD_PUBLIC_PORT || 18795), adminPort = Number(process.env.LEAD_INBOX_PORT || 18798)) {
       await new Promise((resolve, reject) => { publicServer.once('error', reject); publicServer.listen(publicPort, '127.0.0.1', resolve); });
       try { await new Promise((resolve, reject) => { adminServer.once('error', reject); adminServer.listen(adminPort, '127.0.0.1', resolve); }); } catch (err) { await new Promise(resolve => publicServer.close(resolve)); throw err; }
-      if(options.alertWorker!==false)alerts.start();
+      if(options.alertWorker!==false){alerts.start();notifier.start();desk.start();}
       return { publicPort: publicServer.address().port, adminPort: adminServer.address().port };
     },
     async close() {
       await alerts.close();
+      await notifier.close();
+      desk.close();
       await Promise.all([publicServer, adminServer].map(server => new Promise(resolve => { server.close(resolve); server.closeIdleConnections(); })));
       publicChat?.close();
       db.close();
@@ -441,7 +491,14 @@ export function createLeadServers(options = {}) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  const service = createLeadServers({routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
+  const notify = channelsFromEnv();
+  for (const problem of notify.problems) console.error(JSON.stringify({ event: 'notification_channel_disabled', problem }));
+  console.log(JSON.stringify({ event: 'notification_channels', channels: notify.channels.map(channel => channel.name) }));
+  // Monday weekly lead report goes to the text channels (email, push); a failure retries at the next check.
+  const digestChannels = notify.channels.filter(channel => ['email', 'push'].includes(channel.name));
+  const deskDigest = digestChannels.length ? async message => { const results = await Promise.allSettled(digestChannels.map(channel => channel.send(message))); if (results.every(r => r.status === 'rejected')) throw Error('digest_failed'); } : null;
+  if (!deskDigest) console.error(JSON.stringify({ event: 'weekly_digest_disabled', reason: 'no email or push channel' }));
+  const service = createLeadServers({notifyChannels:notify.channels,deskDigest,routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
   service.start().then(ports => console.log(JSON.stringify({ event: 'listening', public: `127.0.0.1:${ports.publicPort}`, inbox: `http://127.0.0.1:${ports.adminPort}/` }))).catch(err => { console.error(JSON.stringify({ event: 'startup_failed', code: err.code ?? 'internal' })); process.exit(1); });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => service.close().then(() => process.exit(0)));
 }

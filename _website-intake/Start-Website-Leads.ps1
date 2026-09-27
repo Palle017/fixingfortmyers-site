@@ -12,7 +12,8 @@ $env:LEAD_PUBLIC_PORT = if ($taskConfig -and $taskConfig.publicPort) { [string]$
 $env:LEAD_INBOX_PORT = if ($taskConfig -and $taskConfig.inboxPort) { [string]$taskConfig.inboxPort } else { '18798' }
 if ($taskConfig -and $taskConfig.devOrigins) { $env:LEAD_DEV_ORIGINS = [string]::Join(',', $taskConfig.devOrigins) } else { $env:LEAD_DEV_ORIGINS = '' }
 # Optional non-secret chat settings (e.g. BAYONE_PROVIDER, OLLAMA_MODEL). Never put API keys in runtime.json.
-$allowedChatEnv = @('BAYONE_PROVIDER','OLLAMA_MODEL','OLLAMA_HOST','OLLAMA_KEEP_ALIVE','OLLAMA_TIMEOUT_MS','CHAT_TIMEOUT_MS','CHAT_MAX_CONCURRENT','OLLAMA_FORMAT')
+# Alert routing (non-secret). SMTP_PASS, TWILIO_AUTH_TOKEN and BESIDE_WEBHOOK_TOKEN come from user environment variables only.
+$allowedChatEnv = @('BAYONE_PROVIDER','OLLAMA_MODEL','OLLAMA_HOST','OLLAMA_KEEP_ALIVE','OLLAMA_TIMEOUT_MS','CHAT_TIMEOUT_MS','CHAT_MAX_CONCURRENT','OLLAMA_FORMAT','NTFY_TOPIC','NTFY_SERVER','LEAD_ALERT_EMAILS','LEAD_DESKTOP_ALERTS','SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_FROM')
 if ($taskConfig -and $taskConfig.env) { foreach ($p in $taskConfig.env.PSObject.Properties) { if ($allowedChatEnv -contains $p.Name) { Set-Item -Path ("env:" + $p.Name) -Value ([string]$p.Value) } } }
 $taskMutex = [System.Threading.Mutex]::new($false, 'Local\PerfectTimingWebsiteLeads')
 if (-not $taskMutex.WaitOne(0)) { exit 0 }

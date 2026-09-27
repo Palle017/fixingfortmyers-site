@@ -26,7 +26,7 @@ test('a model outage still walks the customer through every question using their
   assert.equal((await send('No idea, my son drove it last')).intake.starts,'unknown');
   assert.equal((await send('nope, I am at home')).intake.stranded,'no');
   const last=await send('Cape Coral 33904');
-  assert.equal(last.intake.city,'Cape Coral 33904');assert.equal(last.ready,true);assert.match(last.reply,/Review these details/);
+  assert.equal(last.intake.city,'Cape Coral 33904');assert.equal(last.ready,true);assert.match(last.reply,/Add your name and number/);
   assert.equal(calls,6,'every non-rule answer tries the model first');
   const charged=chat.db.prepare("SELECT sum(budget) n FROM chat_requests WHERE state='done'").get().n;assert.ok(charged>0,'a failed model call is still charged to the daily budget');
 });
@@ -71,4 +71,20 @@ test('the Ollama schema covers exactly the intake fields and can be switched bac
   let body;
   await createOllamaProvider({model:'m',format:'json',fetchImpl:async(url,options)=>{body=JSON.parse(options.body);return {ok:true,text:async()=>JSON.stringify({done:true,done_reason:'stop',message:{content:'{}'}})};}})({messages:[]});
   assert.equal(body.format,'json');
+});
+
+test('urgency backstop: clear wording fills starts/stranded, negations and look-alikes never do',async t=>{
+  const unknown=async()=>({kind:'intake',relevant:true,intake:{starts:'unknown',stranded:'unknown'}});
+  const cases=[
+    ['My car won’t start and I’m stranded at Publix','no','yes'],
+    ["Check engine light is stuck on and the Civic won't start",'no','unknown'],
+    ['will not start but I am not stranded','no','unknown'],
+    ['AC is stuck on hot','unknown','unknown'],
+    ['Battery died last week, now it starts fine','unknown','unknown'],
+  ];
+  for(const [i,[said,starts,stranded]] of cases.entries()){
+    const {visitor}=open(t,{provider:unknown});
+    const out=await visitor('198.51.100.'+(60+i))(said);
+    assert.equal(out.intake.starts,starts,said);assert.equal(out.intake.stranded,stranded,said);
+  }
 });

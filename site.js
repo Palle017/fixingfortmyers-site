@@ -88,7 +88,8 @@
   let requestKey = uid();
   let sentRequestId = '';
   let requestPayload = null, voicePayload = null;
-  const consentDisclosure = 'Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates.';
+  // Stored as consent evidence, so it must be the exact wording shown beside the checkbox in index.html.
+  const consentDisclosure = 'Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates. Optional; consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help.';
   const readRequest = () => {
     const data = new FormData(form);
     const consent = byId('request-sms-consent').checked;
