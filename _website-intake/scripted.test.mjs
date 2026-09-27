@@ -26,7 +26,7 @@ test('a model outage still walks the customer through every question using their
   assert.equal((await send('No idea, my son drove it last')).intake.starts,'unknown');
   assert.equal((await send('nope, I am at home')).intake.stranded,'no');
   const last=await send('Cape Coral 33904');
-  assert.equal(last.intake.city,'Cape Coral 33904');assert.equal(last.ready,true);assert.match(last.reply,/Review these details/);
+  assert.equal(last.intake.city,'Cape Coral 33904');assert.equal(last.ready,true);assert.match(last.reply,/Add your name and number/);
   assert.equal(calls,6,'every non-rule answer tries the model first');
   const charged=chat.db.prepare("SELECT sum(budget) n FROM chat_requests WHERE state='done'").get().n;assert.ok(charged>0,'a failed model call is still charged to the daily budget');
 });

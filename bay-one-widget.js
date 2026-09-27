@@ -63,15 +63,16 @@
       </button>
       <section class="b1-panel" id="b1-panel" role="dialog" aria-label="Chat with Bay One" hidden>
         <header class="b1-header">${portrait}<div class="b1-brand"><h2 class="b1-title"><img class="b1-wordmark" src="/assets/bay-one-wordmark-20260908.jpg" alt="Bay One AI" width="1280" height="960"></h2><p class="b1-subtitle">Tony’s automated repair intake</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
-        <div class="b1-allowance">Tony reviews your inquiry · Booking is not confirmed</div>
+        <div class="b1-allowance">A few quick questions · Your details go straight to Tony</div>
         <div class="b1-messages" role="log" aria-label="Conversation with Bay One" aria-live="polite" aria-relevant="additions text"></div>
         <div class="b1-suggestions"><button type="button" data-b1-suggestion="question">Describe the problem</button></div>
         <form class="b1-composer">
+          <button class="b1-send-now" type="button" hidden>Ready? Send this to Tony</button>
           <label class="b1-field-label" for="b1-message">What is happening with your vehicle?</label>
           <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Describe the problem. Partial vehicle details are okay." required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           <div class="b1-status" role="status" aria-live="polite"></div>
         </form>
-        <footer class="b1-footer"><span>Review your details before sending. <a href="/privacy-policy.html">Chat privacy</a> · <a href="tel:+12393972048">Call Tony</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
+        <footer class="b1-footer"><span><a href="/privacy-policy.html">Chat privacy</a> · <a href="tel:+12393972048">Call Tony</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
       </section>`;
     document.body.append(widget);
     const $ = selector => widget.querySelector(selector);
@@ -193,7 +194,7 @@
             state.intake[name] = value;
           }
         }
-        addMessage('assistant',result.reply,pending.message); state.failed = null; input.value = ''; status.textContent = '';
+        addMessage('assistant',result.reply); offerSend(result.ready === true); state.failed = null; input.value = ''; status.textContent = '';
       } catch (error) {
         state.failed = !error.code || error.code === 'request_pending' ? pending : null;
         if (error.code === 'invalid_session') {
@@ -205,6 +206,61 @@
       } finally {
         clearTimeout(slow); busy(false); if (!panel.hidden && matchMedia('(pointer:fine)').matches) input.focus({preventScroll:true});
       }
+    });
+
+
+    // Contact card: the customer's name and number go with the chat straight to Tony's lead inbox.
+    const CONSENT = 'Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates.';
+    const sendNow = $('.b1-send-now');
+    const leadForm = document.createElement('form'); leadForm.className = 'b1-lead'; leadForm.noValidate = false;
+    leadForm.innerHTML = `
+      <p class="b1-lead-title">Send this to Tony</p>
+      <label>First name<input name="name" autocomplete="given-name" maxlength="100" required></label>
+      <label>Mobile number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" required></label>
+      <label>Best time to reach you or anything else <small>(optional)</small><input name="callbackTime" maxlength="160"></label>
+      <label class="b1-lead-check"><input type="checkbox" name="sms"> Tony can text me about this repair</label>
+      <button type="submit">Send to Tony</button>
+      <p class="b1-lead-status" role="status" aria-live="polite"></p>`;
+    const leadStatus = leadForm.querySelector('.b1-lead-status');
+    let leadKey = uuid(), leadBusy = false, leadSent = false;
+    leadForm.addEventListener('input', () => { if (!leadBusy) leadKey = uuid(); });
+    function showLead() {
+      if (leadSent) return;
+      sendNow.hidden = true; messages.append(leadForm); messages.scrollTop = messages.scrollHeight;
+      leadForm.querySelector('[name=name]').focus({preventScroll:true});
+    }
+    function offerSend(ready) {
+      if (leadSent || leadForm.isConnected) return;
+      if (ready) showLead(); else if (state.customerMessages.length) sendNow.hidden = false;
+    }
+    sendNow.addEventListener('click', showLead);
+    leadForm.addEventListener('submit', async event => {
+      event.preventDefault(); if (leadBusy || leadSent) return;
+      const data = new FormData(leadForm), sms = data.get('sms') === 'on';
+      const body = {
+        name:String(data.get('name') || '').trim(), phone:String(data.get('phone') || '').trim(),
+        vehicle:String(state.intake.vehicle || '').slice(0,160), service:String(window.PT_REPAIR_CONTEXT?.service || '').slice(0,160),
+        details:('Bay One chat on '+location.pathname+':\n'+state.customerMessages.join('\n')).slice(0,6000),
+        city:String(state.intake.city || '').slice(0,100), starts:state.intake.starts || 'unknown', stranded:state.intake.stranded || 'unknown',
+        callbackTime:String(data.get('callbackTime') || '').trim().slice(0,160), source:'ai', website:'',
+        smsConsent:sms, smsConsentTimestamp:sms ? new Date().toISOString() : '', smsConsentVersion:'2026-09-06-v1',
+        smsConsentSource:'bay-one-chat', smsConsentPage:location.origin+location.pathname, smsConsentDisclosure:sms ? CONSENT : '',
+      };
+      leadBusy = true; leadForm.querySelector('button').disabled = true; leadStatus.textContent = 'Sending to Tony…';
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
+      try {
+        const response = await fetch(apiBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':leadKey}, body:JSON.stringify(body), signal:controller.signal });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.received !== true) throw new Error(result.error || 'Your details did not go through.');
+        leadSent = true; leadForm.remove(); $('.b1-composer').hidden = true;
+        const urgent = body.stranded === 'yes' && body.starts === 'no';
+        const row = addMessage('assistant', `Sent. Tony has your details and will ${sms ? 'text or call' : 'call'} you at ${body.phone} from (239) 397-2048.` + (urgent ? ' You said you are stranded, so your request is marked urgent. If you are somewhere unsafe, call 911.' : ' Tony gives every price himself after he looks at the problem.'));
+        const call = document.createElement('a'); call.className = 'b1-request-service'; call.href = 'tel:+12393972048'; call.textContent = urgent ? 'Call Tony now' : 'Call Tony';
+        row.append(call);
+        try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id:result.id, receivedAt:result.receivedAt, confirmed:true, smsConsent:sms })); } catch (_) { /* Confirmation is already shown in the chat. */ }
+      } catch (error) {
+        leadStatus.textContent = (error.name === 'AbortError' ? 'This took too long.' : error.message) + ' Please try again, or call or text Tony at (239) 397-2048.';
+      } finally { clearTimeout(timer); leadBusy = false; if (!leadSent) leadForm.querySelector('button').disabled = false; }
     });
 
     function viewport() {
@@ -219,8 +275,6 @@
     const contact = document.getElementById('bookingForm');
     if (contact && 'IntersectionObserver' in window) new IntersectionObserver(entries => widget.classList.toggle('b1-near-contact', entries[0].isIntersecting), {threshold:.05}).observe(contact);
     const easternHour = Number(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'numeric',hourCycle:'h23'}).format(new Date()));
-    addMessage('assistant', easternHour >= 20 || easternHour < 8
-      ? 'Hi, I’m Bay One, the AI assistant helping Tony overnight, from 8 PM to 8 AM Eastern. Describe your vehicle problem, then choose Review details for Tony to check your inquiry before sending. Tony confirms availability and booking. What is happening with your vehicle?'
-      : 'Hi, I’m Bay One, Tony’s automated repair intake assistant. I collect the details for Tony to review and text you if you choose text follow-up. You can edit your inquiry before sending. What is happening with your vehicle?');
+    addMessage('assistant', (easternHour >= 20 || easternHour < 8 ? 'Hi, I’m Bay One. Tony is available around the clock and I help him overnight. ' : 'Hi, I’m Bay One, Tony’s repair assistant. ') + 'Tell me what’s going on and I’ll get the details straight to Tony so he can plan the job. What is happening with your vehicle?');
   }
 })();

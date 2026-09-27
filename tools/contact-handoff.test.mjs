@@ -27,23 +27,42 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   const say=async text=>{enter('b1-message',text);w.document.querySelector('.b1-composer').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await settle();};
   return {w,requests,enter,say};
 }
-test('every intake reply carries customer words to editable form without a lead submit or forced vehicle repetition',async t=>{
-  const x=setup(t,{handler:async(route)=>({ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Does it start?',intake:{vehicle:'2015 Honda Civic',city:'Fort Myers',starts:'no',stranded:'yes',recipient:'evil@example.invalid'}}})});
-  await settle();await x.say('My 2015 Honda Civic clicks and will not start.');await x.say('I am stranded in Fort Myers.');
+test('chat collects the problem, then its contact card sends one lead with the whole chat straight to Tony',async t=>{
+  let turn=0;
+  const x=setup(t,{handler:async(route,body)=>{
+    if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,chat:'ready'})};
+    if(route==='/chat/session')return {ok:true,status:200,json:async()=>({ok:true,visitor_token:'synthetic-token'})};
+    if(route==='/hooks/lead/webform')return {ok:true,status:201,json:async()=>({ok:true,received:true,id:'12345678-1234-4234-8234-123456789012',receivedAt:'2026-09-24T16:00:00.000Z'})};
+    turn++;return {ok:true,status:200,json:async()=>(turn===1?{ok:true,kind:'intake',reply:'Are you stranded?',ready:false,intake:{vehicle:'2015 Honda Civic',starts:'no'}}:{ok:true,kind:'intake',reply:'Add your name and number below.',ready:true,intake:{vehicle:'2015 Honda Civic',city:'Fort Myers',starts:'no',stranded:'yes',recipient:'evil@example.invalid'}})};
+  }});
+  await settle();await x.say('My 2015 Honda Civic clicks and will not start.');
   const d=x.w.document;
-  assert.equal(d.querySelectorAll('.b1-request-service').length,2);
-  x.enter('request-vehicle','Honda, year uncertain');x.enter('request-starts','yes');
-  [...d.querySelectorAll('.b1-request-service')].at(-1).click();
-  assert.match(d.getElementById('request-details').value,/My 2015 Honda Civic clicks and will not start\./);
-  assert.match(d.getElementById('request-details').value,/I am stranded in Fort Myers\./);
-  assert.equal(d.getElementById('request-vehicle').value,'Honda, year uncertain');
-  assert.equal(d.getElementById('request-starts').value,'yes');
-  assert.equal(d.getElementById('request-city').value,'Fort Myers');assert.equal(d.getElementById('request-stranded').value,'yes');
-  assert.equal(d.getElementById('request-vehicle').required,false);
+  assert.equal(d.querySelector('.b1-send-now').hidden,false);assert.equal(d.querySelector('.b1-lead'),null);
+  assert.equal(d.querySelectorAll('.b1-request-service').length,0);
+  await x.say('I am stranded in Fort Myers.');
+  const card=d.querySelector('.b1-lead');assert.ok(card);assert.equal(d.querySelector('.b1-send-now').hidden,true);
   assert.equal(x.requests.some(r=>r.route==='/hooks/lead/webform'),false);
-  assert.match(d.getElementById('request-instructions').textContent,/Nothing has been sent/);
-  assert.equal(d.querySelector('[data-b1-mode="estimate"]'),null);assert.equal(d.querySelector('.b1-egg'),null);
+  card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='239-555-0100';card.querySelector('[name=sms]').checked=true;
+  card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,1);
+  const lead=sent[0].body;
+  assert.equal(lead.source,'ai');assert.equal(lead.name,'Synthetic');assert.equal(lead.phone,'239-555-0100');
+  assert.equal(lead.vehicle,'2015 Honda Civic');assert.equal(lead.city,'Fort Myers');assert.equal(lead.starts,'no');assert.equal(lead.stranded,'yes');
+  assert.match(lead.details,/clicks and will not start\.[\s\S]*stranded in Fort Myers/);assert.equal(lead.recipient,undefined);
+  assert.equal(lead.smsConsent,true);assert.match(lead.smsConsentDisclosure,/text messages/);assert.match(sent[0].headers['Idempotency-Key'],/^[A-Za-z0-9-]{16,}$/);
+  assert.equal(d.querySelector('.b1-lead'),null);assert.equal(d.querySelector('.b1-composer').hidden,true);
+  assert.match(d.querySelector('.b1-messages').textContent,/Sent\. Tony has your details[\s\S]*marked urgent/);
+  assert.ok(d.querySelector('.b1-messages a[href="tel:+12393972048"]'));
   assert.ok(x.requests.filter(r=>r.route==='/chat/message').every(r=>r.body.mode==='chat'));
+});
+test('a failed lead send keeps the card and details, and never claims Tony has them',async t=>{
+  const x=setup(t,{handler:async(route)=>route==='/hooks/lead/webform'?{ok:false,status:503,json:async()=>({ok:false,error:'The shop could not save your request.'})}:{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Thanks.',ready:true,intake:{}}}});
+  await settle();await x.say('Brakes grind.');const d=x.w.document,card=d.querySelector('.b1-lead');
+  card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='2395550100';
+  card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  assert.ok(d.querySelector('.b1-lead'));assert.match(card.querySelector('.b1-lead-status').textContent,/could not save[\s\S]*397-2048/);
+  assert.doesNotMatch(d.querySelector('.b1-messages').textContent,/Tony has your details/);
+  assert.equal(x.requests.find(r=>r.route==='/hooks/lead/webform').body.smsConsent,false);
 });
 test('initial AI connection failure stays truthful and unsent notes still hand off to the normal form',async t=>{
   const x=setup(t,{handler:async(route,body,w)=>{if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,chat:'ready'})};throw new w.TypeError('Synthetic network outage');}}),d=x.w.document;
@@ -74,10 +93,10 @@ test('service preselection is whitelisted, optional vehicle submits with explici
 });
 test('after-hours wording uses Eastern time and untrusted text is displayed as text',async t=>{
   const x=setup(t,{at:'2026-09-25T01:00:00Z'}),d=x.w.document;await settle();
-  assert.match(d.querySelector('.b1-messages').textContent,/8 PM to 8 AM Eastern/);
+  assert.match(d.querySelector('.b1-messages').textContent,/overnight/);
   await x.say('<img src=x onerror="window.bad=true"> The car will not start.');
   assert.equal(x.w.bad,undefined);assert.equal(d.querySelector('.b1-user img'),null);
-  d.querySelector('.b1-request-service').click();assert.match(d.getElementById('request-details').value,/<img src=x/);
+  d.querySelector('.b1-contact').click();assert.match(d.getElementById('request-details').value,/<img src=x/);
   assert.equal(d.querySelector('.b1-estimate'),null);
 });
 
@@ -85,7 +104,7 @@ test('long conversation preserves all customer words and blocks sending until th
   const x=setup(t),d=x.w.document;await settle();
   const words=['First vehicle information '+ 'a'.repeat(1500),'Second symptom detail '+ 'b'.repeat(1500),'Third location detail '+ 'c'.repeat(1500)];
   for(const text of words)await x.say(text);
-  [...d.querySelectorAll('.b1-request-service')].at(-1).click();
+  d.querySelector('.b1-contact').click();
   const field=d.getElementById('request-details');for(const text of words)assert.ok(field.value.includes(text));
   assert.equal(field.validity.customError,true);assert.match(d.getElementById('request-status').textContent,/All your notes are preserved/);
   x.enter('request-details','Customer-edited shorter description.');assert.equal(field.validity.customError,false);
