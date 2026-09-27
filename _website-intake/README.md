@@ -33,8 +33,9 @@ Bay One's chat extraction uses DeepSeek's cloud API by default (`DEEPSEEK_API_KE
 | Variable | Meaning |
 | --- | --- |
 | `BAYONE_PROVIDER=ollama` | Use local Ollama instead of DeepSeek. |
-| `OLLAMA_MODEL` | Required. An installed model tag, e.g. from `ollama list`. |
-| `OLLAMA_HOST` | Optional, default `http://127.0.0.1:11434`. Keep Ollama on loopback; never Funnel it. |
+| `OLLAMA_MODEL` | Required. An installed model tag, e.g. `qwen3.5:4b` (tested on the 8 GB p15g2 GPU; thinking is disabled per request). |
+| `OLLAMA_HOST` | Optional, default `http://127.0.0.1:11434`. Keep Ollama on loopback; never Funnel it, and turn off the Ollama app's "Expose Ollama to the network" setting. |
+| runtime.json `env` | The launcher copies these non-secret settings from an `env` object in `runtime.json` (see `runtime.example.json`). Never put API keys there. |
 | `OLLAMA_KEEP_ALIVE` | Optional, default `24h`. How long Ollama keeps the model loaded, so customers rarely hit a cold load. |
 | `OLLAMA_TIMEOUT_MS` / `CHAT_TIMEOUT_MS` | Optional, defaults 24000 / 25000. Keep both under 30000: the browser widget aborts at 35 s, and a server still working past that makes the customer's retry fail as pending. Warm the model after startup instead of raising these. |
 

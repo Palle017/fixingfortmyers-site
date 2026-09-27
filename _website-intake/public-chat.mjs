@@ -101,7 +101,7 @@ export function createOllamaProvider({baseUrl=process.env.OLLAMA_HOST||'http://1
     try{
       response=await fetchImpl(String(baseUrl).replace(/\/$/,'')+'/api/chat',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model,stream:false,format:'json',keep_alive:keepAlive,options:{temperature:0.3,num_predict:MAX_OUTPUT},
+        body:JSON.stringify({model,stream:false,think:false,format:'json',keep_alive:keepAlive,options:{temperature:0.3,num_predict:MAX_OUTPUT},
           messages:[{role:'system',content:buildPrompt(canEstimate)},...messages]}),
         signal:AbortSignal.timeout(timeoutMs),
       });

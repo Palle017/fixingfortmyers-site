@@ -1,206 +1,206 @@
-Synthetic test run 2026-09-27T07:44:13.137Z
+Synthetic test run 2026-09-27T07:48:58.708Z
 Node v22.22.2
 TAP version 13
-# (node:1566) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (node:1824) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: visitor events deduplicate, distinguish unique browsers, enforce origin, and persist
 ok 1 - visitor events deduplicate, distinguish unique browsers, enforce origin, and persist
   ---
-  duration_ms: 114.051522
+  duration_ms: 121.876118
   type: 'test'
   ...
 # Subtest: completed AI counts survive retries, midnight, restart, and seven-day cleanup
 ok 2 - completed AI counts survive retries, midnight, restart, and seven-day cleanup
   ---
-  duration_ms: 57.168414
+  duration_ms: 40.633413
   type: 'test'
   ...
-# (node:1567) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (node:1825) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: Ollama provider posts a JSON-mode chat to loopback and returns parsed intake with usage
 ok 3 - Ollama provider posts a JSON-mode chat to loopback and returns parsed intake with usage
   ---
-  duration_ms: 2.533966
+  duration_ms: 2.322887
   type: 'test'
   ...
 # Subtest: Ollama provider fails closed with customer-safe errors
 ok 4 - Ollama provider fails closed with customer-safe errors
   ---
-  duration_ms: 1.125472
+  duration_ms: 1.123474
   type: 'test'
   ...
 # Subtest: provider selection defaults to DeepSeek and switches to Ollama only when named
 ok 5 - provider selection defaults to DeepSeek and switches to Ollama only when named
   ---
-  duration_ms: 0.583967
+  duration_ms: 1.691772
   type: 'test'
   ...
 # Subtest: paraphrased free-text fields are dropped and asked again instead of failing the chat
 ok 6 - paraphrased free-text fields are dropped and asked again instead of failing the chat
   ---
-  duration_ms: 44.142217
+  duration_ms: 40.508816
   type: 'test'
   ...
-# (node:1568) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (node:1826) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions
 ok 7 - ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions
   ---
-  duration_ms: 19.952078
+  duration_ms: 17.400241
   type: 'test'
   ...
-# {"event":"lead_received","id":"fd02e24f-9863-4ca6-8d0a-20fc63478590","kind":"webform","receivedAt":"2026-09-27T07:44:11.268Z"}
-# {"event":"lead_received","id":"f1cdb0e3-1241-4129-86c1-038262126f07","kind":"webform","receivedAt":"2026-09-27T07:44:11.286Z"}
+# {"event":"lead_received","id":"5fa535ef-6f8f-406e-91bc-c4f59d7ff5a9","kind":"webform","receivedAt":"2026-09-27T07:48:56.910Z"}
+# {"event":"lead_received","id":"ded6d830-49a8-4f11-a0b6-971eca41a22d","kind":"webform","receivedAt":"2026-09-27T07:48:56.933Z"}
 # {"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
 # Subtest: lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts
 ok 8 - lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts
   ---
-  duration_ms: 82.630061
+  duration_ms: 90.987978
   type: 'test'
   ...
-# {"event":"lead_received","id":"b8a31c7d-cb2d-41fe-897c-8eedcfd7f1ee","kind":"webform","receivedAt":"2026-09-27T07:44:11.336Z"}
-# {"event":"lead_received","id":"88268355-a3c2-4ca1-be28-f244f74519a7","kind":"webform","receivedAt":"2026-09-27T07:44:11.345Z"}
-# {"event":"lead_received","id":"3d821937-a8e3-425f-b867-0bddfb827a51","kind":"webform","receivedAt":"2026-09-27T07:44:11.352Z"}
+# {"event":"lead_received","id":"36a37d79-870f-4d89-8551-cfffa8511b06","kind":"webform","receivedAt":"2026-09-27T07:48:56.991Z"}
+# {"event":"lead_received","id":"a4f0ac20-6e4f-4ceb-a323-7f41f3107889","kind":"webform","receivedAt":"2026-09-27T07:48:56.995Z"}
+# {"event":"lead_received","id":"7810547d-2ade-4c7f-b0bc-b9a7e864f692","kind":"webform","receivedAt":"2026-09-27T07:48:57.001Z"}
 # Subtest: persistent callback/global caps suppress repeated alert pairs without losing saved leads
 ok 9 - persistent callback/global caps suppress repeated alert pairs without losing saved leads
   ---
-  duration_ms: 66.930158
+  duration_ms: 56.288488
   type: 'test'
   ...
-# {"event":"lead_received","id":"2703cff5-d271-4b6b-89be-b16a90ea32c9","kind":"webform","receivedAt":"2026-09-27T07:44:11.394Z"}
+# {"event":"lead_received","id":"d6486f16-a855-4361-8432-a7bd0e6203e2","kind":"webform","receivedAt":"2026-09-27T07:48:57.033Z"}
 # Subtest: definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token
 ok 10 - definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token
   ---
-  duration_ms: 46.984785
+  duration_ms: 47.928943
   type: 'test'
   ...
 # Subtest: Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered
 ok 11 - Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered
   ---
-  duration_ms: 1.495919
+  duration_ms: 1.819989
   type: 'test'
   ...
 # Subtest: Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider
 ok 12 - Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider
   ---
-  duration_ms: 33.417452
+  duration_ms: 33.924605
   type: 'test'
   ...
-# (node:1590) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (node:1847) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 # (Use `node --trace-warnings ...` to show where the warning was created)
-# {"event":"lead_received","id":"fb2a5008-5ac2-4a60-a2c7-2fd02daa310b","kind":"webform","receivedAt":"2026-09-27T07:44:11.400Z"}
+# {"event":"lead_received","id":"a1be672b-dfae-4e92-bfec-82e08d078501","kind":"webform","receivedAt":"2026-09-27T07:48:57.022Z"}
 # Subtest: receives a real HTTP request, commits it, shows it privately, and deduplicates retries
 ok 13 - receives a real HTTP request, commits it, shows it privately, and deduplicates retries
   ---
-  duration_ms: 144.531192
+  duration_ms: 103.919283
   type: 'test'
   ...
 # Subtest: public API has strict origin checks, preflight, and no unauthenticated owner inbox
 ok 14 - public API has strict origin checks, preflight, and no unauthenticated owner inbox
   ---
-  duration_ms: 37.523242
+  duration_ms: 42.156704
   type: 'test'
   ...
-# {"event":"lead_received","id":"1b4fd303-2a07-4433-9af2-eb07dfa97315","kind":"webform","receivedAt":"2026-09-27T07:44:11.525Z"}
+# {"event":"lead_received","id":"8948b6d1-5a29-4e54-8b56-327e26f064af","kind":"webform","receivedAt":"2026-09-27T07:48:57.154Z"}
 # Subtest: validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON
 ok 15 - validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON
   ---
-  duration_ms: 37.912801
+  duration_ms: 38.137957
   type: 'test'
   ...
-# {"event":"lead_received","id":"969c2cf2-fa9c-4ce0-98d7-6309e988f5c6","kind":"webform","receivedAt":"2026-09-27T07:44:11.554Z"}
-# {"event":"lead_received","id":"25b3a992-de11-4d65-a0fd-f5243e6824b0","kind":"webform","receivedAt":"2026-09-27T07:44:11.558Z"}
+# {"event":"lead_received","id":"84c120cc-d55f-4e39-ae97-eecd00fe09ac","kind":"webform","receivedAt":"2026-09-27T07:48:57.178Z"}
+# {"event":"lead_received","id":"a20c5258-37db-4574-b589-041f36df4e97","kind":"webform","receivedAt":"2026-09-27T07:48:57.181Z"}
 # Subtest: rate limits apply before accepting more uploads
 ok 16 - rate limits apply before accepting more uploads
   ---
-  duration_ms: 26.236066
+  duration_ms: 21.267503
   type: 'test'
   ...
-# {"event":"lead_received","id":"6fda5401-d1bf-47e3-a0fa-33128fd0a8b3","kind":"webform","receivedAt":"2026-09-27T07:44:11.586Z"}
-# {"event":"lead_received","id":"0f18b445-b567-40eb-bb0c-adc05d725cf8","kind":"voicenote","receivedAt":"2026-09-27T07:44:11.598Z"}
+# {"event":"lead_received","id":"5198d583-3895-4759-9ce5-a12beda94058","kind":"webform","receivedAt":"2026-09-27T07:48:57.200Z"}
+# {"event":"lead_received","id":"d07c7ae4-88ae-4208-9d84-1efb072c9bb5","kind":"voicenote","receivedAt":"2026-09-27T07:48:57.212Z"}
 # Subtest: multipart recording is durable, privately playable with byte ranges, and requires name
 ok 17 - multipart recording is durable, privately playable with byte ranges, and requires name
   ---
-  duration_ms: 62.109339
+  duration_ms: 47.448074
   type: 'test'
   ...
-# {"event":"lead_received","id":"48799846-fa14-435b-9ffa-84afb2ee3651","kind":"voicenote","receivedAt":"2026-09-27T07:44:11.648Z"}
+# {"event":"lead_received","id":"49a6b42e-e2d5-46bb-b4a0-6585a14ac208","kind":"voicenote","receivedAt":"2026-09-27T07:48:57.250Z"}
 # Subtest: legacy raw recording works and MIME-spoofed uploads fail
 ok 18 - legacy raw recording works and MIME-spoofed uploads fail
   ---
-  duration_ms: 26.478813
+  duration_ms: 20.318571
   type: 'test'
   ...
 # Subtest: every intake reply carries customer words to editable form without a lead submit or forced vehicle repetition
 ok 19 - every intake reply carries customer words to editable form without a lead submit or forced vehicle repetition
   ---
-  duration_ms: 273.779536
+  duration_ms: 274.816721
   type: 'test'
   ...
 # Subtest: initial AI connection failure stays truthful and unsent notes still hand off to the normal form
 ok 20 - initial AI connection failure stays truthful and unsent notes still hand off to the normal form
   ---
-  duration_ms: 91.871529
+  duration_ms: 75.421666
   type: 'test'
   ...
 # Subtest: service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable
 ok 21 - service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable
   ---
-  duration_ms: 139.940639
+  duration_ms: 120.007781
   type: 'test'
   ...
 # Subtest: after-hours wording uses Eastern time and untrusted text is displayed as text
 ok 22 - after-hours wording uses Eastern time and untrusted text is displayed as text
   ---
-  duration_ms: 72.830132
+  duration_ms: 56.52379
   type: 'test'
   ...
 # Subtest: long conversation preserves all customer words and blocks sending until the customer shortens it
 ok 23 - long conversation preserves all customer words and blocks sending until the customer shortens it
   ---
-  duration_ms: 59.566417
+  duration_ms: 64.004599
   type: 'test'
   ...
 # Subtest: receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity
 ok 24 - receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity
   ---
-  duration_ms: 134.470802
+  duration_ms: 134.075199
   type: 'test'
   ...
 # Subtest: mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry
 ok 25 - mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry
   ---
-  duration_ms: 55.682975
+  duration_ms: 54.785633
   type: 'test'
   ...
 # Subtest: shipped config enables public Bay One against the p15g2 receiver
 ok 26 - shipped config enables public Bay One against the p15g2 receiver
   ---
-  duration_ms: 9.378795
+  duration_ms: 8.719207
   type: 'test'
   ...
 # Subtest: public Bay One is disabled before UI/assets/network while normal contact remains available
 ok 27 - public Bay One is disabled before UI/assets/network while normal contact remains available
   ---
-  duration_ms: 60.271817
+  duration_ms: 58.318019
   type: 'test'
   ...
 # Subtest: public form prepares an editable native text intent with no HTTP delivery or receipt claim
 ok 28 - public form prepares an editable native text intent with no HTTP delivery or receipt claim
   ---
-  duration_ms: 35.529495
+  duration_ms: 34.872484
   type: 'test'
   ...
 # Subtest: iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient
 ok 29 - iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient
   ---
-  duration_ms: 33.04922
+  duration_ms: 33.359271
   type: 'test'
   ...
 # Subtest: draft source carries only known page categories, never URL or session-injected personal data
 ok 30 - draft source carries only known page categories, never URL or session-injected personal data
   ---
-  duration_ms: 158.062844
+  duration_ms: 129.360423
   type: 'test'
   ...
 1..30
@@ -211,4 +211,4 @@ ok 30 - draft source carries only known page categories, never URL or session-in
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 2100.968123
+# duration_ms 1985.047533
