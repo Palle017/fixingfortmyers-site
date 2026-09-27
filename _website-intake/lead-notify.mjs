@@ -101,6 +101,8 @@ export function createSmsAdapter(twilio) {
   return {
     name: 'sms',
     skipUrgent: true,
+    // Twilio has no idempotency key: an uncertain send is never repeated, so Tony never gets billed copies.
+    noRetry: true,
     async send({text}) {
       const result = await twilio.send('notify_sms', {To: TONY_ALERT_NUMBER, From: twilio.fromNumber, Body: ('Perfect Timing website lead\n' + text).slice(0, 1500)});
       return {id: result.id};
@@ -150,21 +152,29 @@ export function createLeadNotifier(db, {channels = [], now = Date.now} = {}) {
   db.exec(`CREATE TABLE IF NOT EXISTS lead_notifications(lead_id TEXT NOT NULL,channel TEXT NOT NULL,state TEXT NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,
     message_json TEXT NOT NULL,next_attempt_ms INTEGER NOT NULL,last_error TEXT,updated_at TEXT NOT NULL,PRIMARY KEY(lead_id,channel));
     CREATE INDEX IF NOT EXISTS lead_notifications_due ON lead_notifications(state,next_attempt_ms);`);
-  // A crash mid-send may or may not have delivered; one duplicate alert beats a missed lead.
-  db.prepare("UPDATE lead_notifications SET state='pending' WHERE state='sending'").run();
   const byName = new Map(channels.map(channel => [channel.name, channel]));
+  const noRetry = channels.filter(channel => channel.noRetry).map(channel => channel.name);
+  // A crash mid-send may or may not have delivered; one duplicate alert beats a missed lead,
+  // except on channels that bill per send and cannot dedupe (texts), which go to review instead.
+  for (const name of noRetry) db.prepare("UPDATE lead_notifications SET state='needs_review',last_error='interrupted' WHERE state='sending' AND channel=?").run(name);
+  db.prepare("UPDATE lead_notifications SET state='pending' WHERE state='sending'").run();
   const stamp = () => new Date(now()).toISOString();
   let timer = null, busy = null, closing = false;
 
-  function enqueue(lead, id, decision, {urgentSmsHandled = false} = {}) {
+  // urgentTextQueued: urgent-alerts.mjs actually queued its own text to Tony for this lead. When urgent
+  // alerts are disabled, suppressed or capped, this channel still sends, so an urgent lead is never silent.
+  function enqueue(lead, id, decision, {urgentTextQueued = false} = {}) {
     const message = {...summarize(lead, id, decision), phone: lead.phone};
     for (const channel of channels) {
-      if (channel.skipUrgent && message.urgent && urgentSmsHandled && decision.actions.includes('notify_sms')) continue;
+      if (channel.skipUrgent && urgentTextQueued) continue;
       db.prepare('INSERT OR IGNORE INTO lead_notifications(lead_id,channel,state,message_json,next_attempt_ms,updated_at) VALUES(?,?,?,?,?,?)').run(id, channel.name, 'pending', JSON.stringify(message), now(), stamp());
     }
   }
   async function run() {
-    const rows = db.prepare("SELECT * FROM lead_notifications WHERE state='pending' AND next_attempt_ms<=? ORDER BY next_attempt_ms LIMIT 20").all(now());
+    // Only channels configured now: rows left from a removed channel must not fill the batch forever.
+    const names = [...byName.keys()];
+    if (!names.length) return;
+    const rows = db.prepare(`SELECT * FROM lead_notifications WHERE state='pending' AND next_attempt_ms<=? AND channel IN (${names.map(() => '?').join(',')}) ORDER BY next_attempt_ms LIMIT 20`).all(now(), ...names);
     await Promise.all(rows.map(async row => {
       const channel = byName.get(row.channel);
       if (!channel || closing) return;
@@ -173,9 +183,9 @@ export function createLeadNotifier(db, {channels = [], now = Date.now} = {}) {
         await channel.send(JSON.parse(row.message_json));
         db.prepare("UPDATE lead_notifications SET state='sent',last_error=NULL,updated_at=? WHERE lead_id=? AND channel=?").run(stamp(), row.lead_id, row.channel);
       } catch (err) {
-        const attempts = row.attempts + 1, done = attempts > DELAYS.length;
+        const attempts = row.attempts + 1, done = attempts > DELAYS.length || (channel.noRetry && err.retryable !== true);
         const code = String(err.message || 'failed').slice(0, 40) + (err.detail ? ':' + String(err.detail).slice(0, 10) : '');
-        db.prepare('UPDATE lead_notifications SET state=?,last_error=?,next_attempt_ms=?,updated_at=? WHERE lead_id=? AND channel=?').run(done ? 'failed' : 'pending', code, now() + DELAYS[Math.min(attempts - 1, DELAYS.length - 1)], stamp(), row.lead_id, row.channel);
+        db.prepare('UPDATE lead_notifications SET state=?,last_error=?,next_attempt_ms=?,updated_at=? WHERE lead_id=? AND channel=?').run(done ? (channel.noRetry && err.retryable !== true ? 'needs_review' : 'failed') : 'pending', code, now() + DELAYS[Math.min(attempts - 1, DELAYS.length - 1)], stamp(), row.lead_id, row.channel);
         console.error(JSON.stringify({event: 'lead_notification_failed', channel: row.channel, code}));
       }
     }));

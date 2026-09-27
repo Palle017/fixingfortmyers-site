@@ -245,7 +245,8 @@ export function createLeadServers(options = {}) {
     try{
       db.prepare('INSERT INTO leads (id, received_at, kind, idempotency_key, payload_hash, payload_json, audio_type, audio, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(id, now, payload.kind, key, hash, JSON.stringify(payload), type || null, audio || null, now);
       alerts.enqueue(payload,id,decision);
-      notifier.enqueue(payload,id,decision,{urgentSmsHandled:alerts.enabled});
+      const urgentTextQueued=alerts.inspect(id).alerts.some(row=>row.channel==='notify_sms'&&row.state==='pending');
+      notifier.enqueue(payload,id,decision,{urgentTextQueued});
       db.exec('COMMIT');
     }catch(err){db.exec('ROLLBACK');throw err;}
     console.log(JSON.stringify({ event: 'lead_received', id, kind: payload.kind, receivedAt: now }));
@@ -272,18 +273,22 @@ export function createLeadServers(options = {}) {
         res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=300', 'X-Content-Type-Options': 'nosniff' });
         return res.end(fs.readFileSync(path.join(HERE, 'widget.js')));
       }
-      const besideMatch = url.pathname.match(/^\/hooks\/lead\/beside\/([A-Za-z0-9_-]{24,128})$/);
+      const besideMatch = url.pathname.match(/^\/hooks\/lead\/beside\/([^/]{24,256})$/);
       if (besideMatch) {
         if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'POST only.' });
+        let token;
+        try { token = decodeURIComponent(besideMatch[1]); } catch { return json(res, 404, { ok: false, error: 'Not found.' }); }
+        // Wrong tokens are checked first and limited separately, so guessing cannot lock out real Beside events.
+        if (!desk.besideTokenMatches(token)) return json(res, 404, { ok: false, error: 'Not found.' });
         if (rate('beside:global') > 120) return json(res, 429, { ok: false, error: 'Too many events.' });
         const raw = (await readBody(req, MAX_JSON)).toString('utf8');
         let input;
         try { input = String(req.headers['content-type'] ?? '').startsWith('application/json') ? JSON.parse(raw) : Object.fromEntries(new URLSearchParams(raw)); } catch { throw error(400, 'Invalid event.'); }
         // The alert rows commit in the same transaction as the Beside lead.
-        const result = desk.besideHook(besideMatch[1], input && typeof input === 'object' ? input : {}, { afterInsert: (lead, id) => {
+        const result = desk.besideHook(token, input && typeof input === 'object' ? input : {}, { afterInsert: (lead, id) => {
           const decision=evaluateRoute({...lead,source:'unknown'});
           alerts.enqueue(lead,id,decision);
-          notifier.enqueue(lead,id,decision,{urgentSmsHandled:alerts.enabled});
+          notifier.enqueue(lead,id,decision,{urgentTextQueued:alerts.inspect(id).alerts.some(row=>row.channel==='notify_sms'&&row.state==='pending')});
         } });
         if (!result.duplicate) notifier.tick().catch(() => {});
         return json(res, 200, result);
@@ -393,7 +398,7 @@ export function createLeadServers(options = {}) {
           if(input.stage==='spam')return;
           const decision=evaluateRoute({...lead,source:'unknown'});
           alerts.enqueue(lead,id,decision);
-          notifier.enqueue(lead,id,decision,{urgentSmsHandled:alerts.enabled});
+          notifier.enqueue(lead,id,decision,{urgentTextQueued:alerts.inspect(id).alerts.some(row=>row.channel==='notify_sms'&&row.state==='pending')});
         }});
         if(!stageMatch)notifier.tick().catch(()=>{});
         return json(res,200,result);
@@ -448,6 +453,8 @@ export function createLeadServers(options = {}) {
         try { input = JSON.parse((await readBody(req, 2048)).toString()); } catch { throw error(400, 'Invalid update.'); }
         if (!['new', 'contacted', 'closed'].includes(input.status)) throw error(400, 'Invalid status.');
         const result = db.prepare('UPDATE leads SET status = ?, updated_at = ? WHERE id = ?').run(input.status, new Date().toISOString(), statusMatch[1]);
+        // Keep the desk pipeline in step with the inbox's status buttons.
+        if (result.changes) desk.syncStatus(statusMatch[1], input.status);
         return json(res, result.changes ? 200 : 404, { ok: Boolean(result.changes) });
       }
       if (req.method === 'GET' && url.pathname === '/api/metrics') {
@@ -487,7 +494,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   const notify = channelsFromEnv();
   for (const problem of notify.problems) console.error(JSON.stringify({ event: 'notification_channel_disabled', problem }));
   console.log(JSON.stringify({ event: 'notification_channels', channels: notify.channels.map(channel => channel.name) }));
-  const service = createLeadServers({notifyChannels:notify.channels,routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
+  // Monday weekly lead report goes to the text channels (email, push); a failure retries at the next check.
+  const digestChannels = notify.channels.filter(channel => ['email', 'push'].includes(channel.name));
+  const deskDigest = digestChannels.length ? async message => { const results = await Promise.allSettled(digestChannels.map(channel => channel.send(message))); if (results.every(r => r.status === 'rejected')) throw Error('digest_failed'); } : null;
+  if (!deskDigest) console.error(JSON.stringify({ event: 'weekly_digest_disabled', reason: 'no email or push channel' }));
+  const service = createLeadServers({notifyChannels:notify.channels,deskDigest,routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
   service.start().then(ports => console.log(JSON.stringify({ event: 'listening', public: `127.0.0.1:${ports.publicPort}`, inbox: `http://127.0.0.1:${ports.adminPort}/` }))).catch(err => { console.error(JSON.stringify({ event: 'startup_failed', code: err.code ?? 'internal' })); process.exit(1); });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => service.close().then(() => process.exit(0)));
 }

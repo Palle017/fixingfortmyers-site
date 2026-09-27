@@ -140,11 +140,11 @@ test('Beside hook is closed (404) when no token, or a token under 24 characters,
   assert.equal(count(none.db,'leads')+count(short.db,'leads'),0);
 });
 
-// Documents a bug: summarize() only knows ai/voice, so every Beside call/text notification says "website form".
+// Regression: Beside calls and texts must not be labelled as website form leads.
 test('Beside notification says where the lead came from',async t=>{
   const x=await setup(t);
   await x.beside(call);await x.app.notifier.tick();
-  assert.doesNotMatch(x.channel.sent[0].text,/Came from: website form/);
+  assert.match(x.channel.sent[0].text,/Came from: (?:Phone call|Text) \(Beside\)/);
 });
 
 // ---------- desk.addManual / setStage ----------
@@ -193,10 +193,27 @@ test('setStage estimate_sent requires a Tony-approved price (estimateLow + tonyA
   assert.throws(()=>x.desk.setStage(id,{stage:'archived'}),hasStatus(400));
 });
 
-// Documents a bug: addManual commits the lead before setStage validates, so a rejected
-// manual entry with an initial stage still saves a lead (and a retry saves another).
+// Regression: a rejected stage rolls back the manual entry, so a retry does not duplicate it.
 test('addManual with an unapproved estimate_sent stage is rejected without saving a lead',async t=>{
   const x=await setup(t);
   assert.throws(()=>x.desk.addManual({name:'Synthetic Staged',phone:'2395550144',stage:'estimate_sent'}),hasStatus(400));
   assert.equal(count(x.db,'leads'),0);
+});
+
+test('wrong Beside tokens cannot use up the rate limit that real Beside events rely on',async t=>{
+  const x=await setup(t);
+  for(let i=0;i<125;i++)assert.equal((await x.beside(call,{key:'y'.repeat(32)})).status,404);
+  assert.equal((await x.beside(call)).status,200);
+});
+
+test('inbox status buttons move the desk pipeline; lost never counts as contacted',async t=>{
+  const x=await setup(t);
+  const {id}=await(await x.webform({name:'Synthetic',phone:'2395550177',vehicle:'2015 Civic',details:'Synthetic test only',city:'Fort Myers',starts:'yes',stranded:'no',website:''})).json();
+  const status=s=>fetch(`${x.admin}/api/leads/${id}/status`,{method:'POST',headers:{'Content-Type':'application/json',Origin:x.admin},body:JSON.stringify({status:s})});
+  assert.equal((await status('contacted')).status,200);
+  assert.equal(x.desk.pipeline(id).stage,'contacted');assert.equal(x.desk.metrics().totals.contacted,1);
+  assert.equal((await status('closed')).status,200);
+  assert.equal(x.desk.pipeline(id).stage,'lost');
+  const lost=x.desk.addManual({name:'Never reached',phone:'2395550178',stage:'lost',lostReason:'wrong number'});
+  assert.equal(x.desk.pipeline(lost.id).contacted_at,null);
 });

@@ -72,3 +72,19 @@ test('the Ollama schema covers exactly the intake fields and can be switched bac
   await createOllamaProvider({model:'m',format:'json',fetchImpl:async(url,options)=>{body=JSON.parse(options.body);return {ok:true,text:async()=>JSON.stringify({done:true,done_reason:'stop',message:{content:'{}'}})};}})({messages:[]});
   assert.equal(body.format,'json');
 });
+
+test('urgency backstop: clear wording fills starts/stranded, negations and look-alikes never do',async t=>{
+  const unknown=async()=>({kind:'intake',relevant:true,intake:{starts:'unknown',stranded:'unknown'}});
+  const cases=[
+    ['My car won’t start and I’m stranded at Publix','no','yes'],
+    ["Check engine light is stuck on and the Civic won't start",'no','unknown'],
+    ['will not start but I am not stranded','no','unknown'],
+    ['AC is stuck on hot','unknown','unknown'],
+    ['Battery died last week, now it starts fine','unknown','unknown'],
+  ];
+  for(const [i,[said,starts,stranded]] of cases.entries()){
+    const {visitor}=open(t,{provider:unknown});
+    const out=await visitor('198.51.100.'+(60+i))(said);
+    assert.equal(out.intake.starts,starts,said);assert.equal(out.intake.stranded,stranded,said);
+  }
+});

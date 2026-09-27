@@ -3,8 +3,8 @@
 import {randomUUID, createHash, timingSafeEqual} from 'node:crypto';
 
 export const STAGES = ['new', 'contacted', 'estimate_sent', 'booked', 'won', 'lost', 'spam'];
-export const SOURCES = {ai: 'Bay One chat', form: 'Website form', voice: 'Website voice note', beside_call: 'Phone call (Beside)', beside_text: 'Text (Beside)',
-  facebook: 'Facebook', google: 'Google', referral: 'Referral', repeat: 'Repeat customer', other: 'Other', unknown: 'Unknown'};
+export const SOURCES = Object.freeze(Object.assign(Object.create(null), {ai: 'Bay One chat', form: 'Website form', voice: 'Website voice note', beside_call: 'Phone call (Beside)', beside_text: 'Text (Beside)',
+  facebook: 'Facebook', google: 'Google', referral: 'Referral', repeat: 'Repeat customer', other: 'Other', unknown: 'Unknown'}));
 const LEGACY_STATUS = {new: 'new', contacted: 'contacted', estimate_sent: 'contacted', booked: 'contacted', won: 'closed', lost: 'closed', spam: 'closed'};
 // Response targets. An inquiry past these shows up in "Needs action".
 export const TARGETS = {firstContactMinutes: 15, estimateHours: 24, followUpDays: 3};
@@ -39,6 +39,8 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
   CREATE TABLE IF NOT EXISTS beside_events(event_key TEXT PRIMARY KEY,lead_id TEXT,event_id TEXT,direction TEXT NOT NULL,
     occurred_at TEXT NOT NULL,received_at TEXT NOT NULL,payload_hash TEXT NOT NULL,payload_json TEXT NOT NULL);`);
   const stamp = () => new Date(now()).toISOString();
+  // The token is a URL path segment; one that cannot sit in a path would silently never match.
+  if (besideToken && (besideToken.length < 24 || besideToken.length > 256 || /[\/?#%\s]/.test(besideToken))) console.error(JSON.stringify({event: 'beside_hook_disabled', reason: 'BESIDE_WEBHOOK_TOKEN must be 24-256 characters with no / ? # % or spaces'}));
 
   // Every lead gets a pipeline row; older website leads are backfilled from their stored status.
   function sync() {
@@ -49,7 +51,7 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
       // "Closed" never said whether the job was won, so it is not counted as revenue.
       const stage = row.status === 'contacted' ? 'contacted' : row.status === 'closed' ? 'lost' : 'new';
       db.prepare('INSERT OR IGNORE INTO lead_pipeline(lead_id,stage,source,contacted_at,closed_at,lost_reason,updated_at) VALUES(?,?,?,?,?,?,?)').run(row.id, stage, source,
-        stage === 'new' ? null : row.updated_at, stage === 'lost' ? row.updated_at : null, stage === 'lost' ? 'Closed before stage tracking' : null, stamp());
+        stage === 'contacted' ? row.updated_at : null, stage === 'lost' ? row.updated_at : null, stage === 'lost' ? 'Closed before stage tracking' : null, stamp());
     }
   }
 
@@ -95,7 +97,8 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     const at = input.at && Number.isFinite(Date.parse(input.at)) ? new Date(Date.parse(input.at)).toISOString() : stamp();
     const next = {...row, stage, updated_at: stamp(), next_step: input.nextStep !== undefined ? text(input.nextStep, 300) : row.next_step};
     const order = STAGES.indexOf(stage);
-    if (order >= 1 && order <= 5 && !next.contacted_at) next.contacted_at = at;
+    // Lost or spam does not mean the customer was ever reached.
+    if (order >= 1 && order <= 4 && !next.contacted_at) next.contacted_at = at;
     if (stage === 'estimate_sent') {
       // Tony approves every price before a customer sees it; the desk never invents one.
       const low = money(input.estimateLow), high = money(input.estimateHigh);
@@ -116,12 +119,32 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     return {ok: true, stage};
   }
 
+  function besideTokenMatches(token) {
+    if (!besideToken || besideToken.length < 24 || besideToken.length > 256) return false;
+    const a = createHash('sha256').update(String(token)).digest(), b = createHash('sha256').update(besideToken).digest();
+    return timingSafeEqual(a, b);
+  }
+  // The inbox's New / Contacted / Closed buttons move the pipeline too. "Closed" from the inbox never
+  // said won or lost, so it only moves a lead that is still open, and never counts as revenue.
+  function syncStatus(id, status) {
+    sync();
+    const row = db.prepare('SELECT stage, contacted_at FROM lead_pipeline WHERE lead_id=?').get(id);
+    if (!row) return;
+    const open = ['new', 'contacted', 'estimate_sent', 'booked'].includes(row.stage);
+    if (status === 'contacted' && row.stage === 'new') {
+      db.prepare('UPDATE lead_pipeline SET stage=?,contacted_at=COALESCE(contacted_at,?),updated_at=? WHERE lead_id=?').run('contacted', stamp(), stamp(), id);
+    } else if (status === 'closed' && open) {
+      db.prepare("UPDATE lead_pipeline SET stage='lost',closed_at=?,lost_reason=COALESCE(lost_reason,'Closed in inbox'),updated_at=? WHERE lead_id=?").run(stamp(), stamp(), id);
+    } else if (status === 'new' && row.stage !== 'new') {
+      db.prepare("UPDATE lead_pipeline SET stage='new',closed_at=NULL,updated_at=? WHERE lead_id=?").run(stamp(), id);
+    } else return;
+    db.prepare('INSERT INTO lead_touches(lead_id,at,channel,note) VALUES(?,?,?,?)').run(id, stamp(), 'inbox', status);
+  }
+
   // Provider event identity deduplicates retries. A phone number is not a repair-job identity.
   // Only an explicitly mapped internal inquiry_id can attach another event to that job.
   function besideHook(token, input, {afterInsert = null} = {}) {
-    if (!besideToken || besideToken.length < 24) throw fail(404, 'Not found.');
-    const a = createHash('sha256').update(String(token)).digest(), b = createHash('sha256').update(besideToken).digest();
-    if (!timingSafeEqual(a, b)) throw fail(404, 'Not found.');
+    if (!besideTokenMatches(token)) throw fail(404, 'Not found.');
     if(!input||typeof input!=='object'||Array.isArray(input))throw fail(400,'Invalid Beside event.');
     const rawDirection=text(input.direction,30).toLowerCase();
     const direction=['inbound','incoming','in'].includes(rawDirection)?'inbound':['outbound','outgoing','out'].includes(rawDirection)?'outbound':'unknown';
@@ -189,7 +212,8 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
       else if (row.stage === 'contacted' && minutes(row.contacted_at, new Date(nowMs).toISOString()) / 60 > TARGETS.estimateHours) need.push({id: row.id, label, why: 'Contacted but no Tony-approved estimate yet', age});
       else if (row.stage === 'estimate_sent' && minutes(row.estimate_sent_at, new Date(nowMs).toISOString()) / 1440 > TARGETS.followUpDays) need.push({id: row.id, label, why: 'Estimate sent, no answer: follow up', age});
     }
-    need.sort((a, b) => b.age - a.age);
+    // Newest first: a lead that came in 20 minutes ago matters more than one left untouched for months.
+    need.sort((a, b) => a.age - b.age);
     const total = real.length;
     const pct = (n, d) => d ? Math.round(n / d * 100) : null;
     return {
@@ -226,7 +250,7 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
   }
   let timer = null;
   return {
-    sync, addManual, setStage, besideHook, metrics, digestText, maybeDigest,
+    sync, syncStatus, addManual, setStage, besideHook, besideTokenMatches, digestEnabled: Boolean(digest), metrics, digestText, maybeDigest,
     pipeline: id => db.prepare('SELECT * FROM lead_pipeline WHERE lead_id=?').get(id) || null,
     touches: id => db.prepare('SELECT at,channel,note FROM lead_touches WHERE lead_id=? ORDER BY at DESC LIMIT 20').all(id),
     start() { if (!timer) { timer = setInterval(() => { maybeDigest().catch(() => {}); }, 15 * 60000); timer.unref(); } },

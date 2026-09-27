@@ -46,7 +46,7 @@ test('summarize: urgent title, callback permission, source label, 3000-char deta
 
 // ---------- queue: enqueue / tick / retry / crash recovery ----------
 
-test('enqueue: one pending row per channel; SMS channel skipped only for urgent leads whose decision already texts Tony',t=>{
+test('enqueue: one pending row per channel; SMS channel skipped only when urgent alerts really queued a text to Tony',t=>{
   const db=memoryDb(t),now=1_000_000;
   const n=createLeadNotifier(db,{channels:[fakeChannel('email'),fakeChannel('sms',{skipUrgent:true})],now:()=>now});
   assert.deepEqual(n.channels,['email','sms']);
@@ -54,10 +54,10 @@ test('enqueue: one pending row per channel; SMS channel skipped only for urgent 
   assert.deepEqual(rows(db,'normal-1').map(r=>[r.channel,r.state,r.attempts,r.next_attempt_ms,r.last_error]),[['email','pending',0,now,null],['sms','pending',0,now,null]]);
   const message=JSON.parse(rows(db,'normal-1')[0].message_json);
   assert.equal(message.phone,'2395550100');assert.equal(message.urgent,false);assert.match(message.text,/Lead normal-1$/);
-  n.enqueue(lead({starts:'no',stranded:'yes'}),'urgent-1',URGENT,{urgentSmsHandled:true});
+  n.enqueue(lead({starts:'no',stranded:'yes'}),'urgent-1',URGENT,{urgentTextQueued:true});
   assert.deepEqual(rows(db,'urgent-1').map(r=>r.channel),['email']);
-  // Urgent priority from a rule that does not text Tony keeps the SMS channel.
-  n.enqueue(lead(),'urgent-2',{priority:'first',actions:['notify_call']});
+  // Urgent alerts disabled, suppressed or capped: no text is queued there, so this channel still texts Tony.
+  n.enqueue(lead({starts:'no',stranded:'yes'}),'urgent-2',URGENT);
   assert.deepEqual(rows(db,'urgent-2').map(r=>r.channel),['email','sms']);
   n.enqueue(lead(),'urgent-with-disabled-worker',URGENT);
   assert.deepEqual(rows(db,'urgent-with-disabled-worker').map(r=>r.channel),['email','sms']);
@@ -232,8 +232,7 @@ test('ntfy adapter: POST /<topic>, urgent vs high priority, tel: call action, re
   assert.doesNotThrow(()=>createNtfyAdapter({topic:'x'.repeat(16),fetchImpl}));
 });
 
-// Documents a bug: encodeURIComponent grows any title containing a space or colon, so the
-// real title (with URGENT and the vehicle) is never used. Flip to a normal test once fixed.
+// Regression: the push title keeps URGENT and the vehicle instead of falling back to generic text.
 test('ntfy Title header carries the real plain-ASCII title (URGENT + vehicle)',async()=>{
   const requests=[];
   const push=createNtfyAdapter({topic:'pt-leads-0123456789abcdef',fetchImpl:async(url,options)=>{requests.push(options);return {ok:true,status:200};}});
@@ -323,7 +322,7 @@ test('receiver: a web-form lead queues one notification per channel; a same-key 
   assert.deepEqual(row.notifications.map(n=>[n.channel,n.state,n.attempts,n.last_error]).sort(),[['email','sent',1,null],['push','sent',1,null]]);
 });
 
-test('receiver: urgent lead skips the SMS channel; one failing channel stays pending while the others send',async t=>{
+test('receiver: urgent lead skips the SMS channel only when urgent alerts queued a text; one failing channel stays pending',async t=>{
   quiet(t);
   const email=fakeChannel('email'),sms=fakeChannel('sms',{skipUrgent:true}),push=fakeChannel('push',{fail:true});
   const x=await setup(t,{notifyChannels:[email,sms,push],alerts:{adapter:{fromNumber:'+12025550100',async send(){return {id:'synthetic'};},async status(){return 'delivered';}}}});
@@ -349,4 +348,34 @@ test('receiver: the notification row is written in the lead transaction (a queue
   x.app.db.exec('DROP TRIGGER fail_notify');
   assert.equal((await x.send(lead())).status,201);
   assert.equal(x.app.db.prepare('SELECT count(*) n FROM lead_notifications').get().n,1);
+});
+
+test('receiver: with urgent alerts disabled an urgent lead still texts Tony through the SMS channel',async t=>{
+  quiet(t);
+  const sms=fakeChannel('sms',{skipUrgent:true});
+  const x=await setup(t,{notifyChannels:[sms]});
+  const urgent=await(await x.send(lead({starts:'no',stranded:'yes'}))).json();
+  assert.equal(urgent.routing.priority,'first');
+  assert.deepEqual(rows(x.app.db,urgent.id).map(r=>r.channel),['sms']);
+});
+
+test('run: rows for a channel that is no longer configured never block configured channels',async t=>{
+  const db=memoryDb(t);let now=1_000_000;
+  const old=createLeadNotifier(db,{channels:[fakeChannel('push')],now:()=>now});
+  for(let i=0;i<25;i++)old.enqueue(lead(),'old-'+i,NORMAL);
+  now+=1000;
+  const email=fakeChannel('email'),n=createLeadNotifier(db,{channels:[email],now:()=>now});
+  n.enqueue(lead(),'fresh',NORMAL);await n.tick();
+  assert.equal(email.sent.length,1);
+});
+
+test('run: a text that may have gone out is never resent (Twilio cannot dedupe)',async t=>{
+  const db=memoryDb(t);let now=1_000_000;
+  const sms={...fakeChannel('sms',{fail:true}),noRetry:true};
+  const n=createLeadNotifier(db,{channels:[sms],now:()=>now});
+  n.enqueue(lead(),'L9',NORMAL);await n.tick();now+=86400000;await n.tick();
+  assert.equal(sms.sent.length,1);assert.equal(rows(db,'L9')[0].state,'needs_review');
+  db.prepare("UPDATE lead_notifications SET state='sending'").run();
+  createLeadNotifier(db,{channels:[sms],now:()=>now});
+  assert.equal(rows(db,'L9')[0].state,'needs_review');
 });
