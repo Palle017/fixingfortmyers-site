@@ -209,3 +209,9 @@ test('draft source carries only known page categories, never URL or session-inje
     assert.ok(d.getElementById('request-text').getAttribute('href').startsWith('sms:+12393972048?body='));
   }
 });
+test('the site form and Bay One store the exact SMS consent wording shown beside the site checkbox',t=>{
+  const shown=new JSDOM(page).window.document.querySelector('.request-consent span').firstChild.textContent.trim();
+  assert.match(shown,/Reply STOP to opt out or HELP for help\.$/);
+  assert.ok(site.includes(`'${shown}'`),'site.js consentDisclosure matches index.html');
+  assert.ok(widget.includes(`'${shown}'`),'bay-one-widget.js CONSENT matches index.html');
+});
