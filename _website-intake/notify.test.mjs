@@ -54,11 +54,13 @@ test('enqueue: one pending row per channel; SMS channel skipped only for urgent 
   assert.deepEqual(rows(db,'normal-1').map(r=>[r.channel,r.state,r.attempts,r.next_attempt_ms,r.last_error]),[['email','pending',0,now,null],['sms','pending',0,now,null]]);
   const message=JSON.parse(rows(db,'normal-1')[0].message_json);
   assert.equal(message.phone,'2395550100');assert.equal(message.urgent,false);assert.match(message.text,/Lead normal-1$/);
-  n.enqueue(lead({starts:'no',stranded:'yes'}),'urgent-1',URGENT);
+  n.enqueue(lead({starts:'no',stranded:'yes'}),'urgent-1',URGENT,{urgentSmsHandled:true});
   assert.deepEqual(rows(db,'urgent-1').map(r=>r.channel),['email']);
   // Urgent priority from a rule that does not text Tony keeps the SMS channel.
   n.enqueue(lead(),'urgent-2',{priority:'first',actions:['notify_call']});
   assert.deepEqual(rows(db,'urgent-2').map(r=>r.channel),['email','sms']);
+  n.enqueue(lead(),'urgent-with-disabled-worker',URGENT);
+  assert.deepEqual(rows(db,'urgent-with-disabled-worker').map(r=>r.channel),['email','sms']);
   // Re-enqueueing the same lead is a no-op (INSERT OR IGNORE keeps the first message).
   n.enqueue(lead({name:'Changed Name'}),'normal-1',NORMAL);
   assert.equal(rows(db,'normal-1').length,2);
@@ -285,7 +287,9 @@ test('channelsFromEnv enables only configured channels and reports bad settings'
   const bad=channelsFromEnv({...base,SMTP_USER:'shop@example.test',SMTP_PASS:'p',LEAD_ALERT_EMAILS:'not-an-email',NTFY_TOPIC:'short'});
   assert.deepEqual(bad.channels,[]);
   assert.deepEqual(bad.problems,['email: Invalid email alert configuration.','push: Invalid push alert topic.']);
-  const sms=channelsFromEnv({...base,TWILIO_ACCOUNT_SID:'AC'+'a'.repeat(32),TWILIO_AUTH_TOKEN:'synthetic-token',LEAD_ALERT_FROM:'+12025550100'});
+  const smsConfig={...base,TWILIO_ACCOUNT_SID:'AC'+'a'.repeat(32),TWILIO_AUTH_TOKEN:'synthetic-token',LEAD_ALERT_FROM:'+12025550100'};
+  assert.deepEqual(channelsFromEnv(smsConfig).channels,[],'credentials alone do not activate paid SMS');
+  const sms=channelsFromEnv({...smsConfig,LEAD_ALERTS_ENABLED:'true'});
   assert.deepEqual(sms.channels.map(c=>[c.name,c.skipUrgent]),[['sms',true]]);
   if(process.platform==='win32')assert.deepEqual(channelsFromEnv({}).channels.map(c=>c.name),['desktop'],'desktop is on by default on Windows');
 });
@@ -322,7 +326,7 @@ test('receiver: a web-form lead queues one notification per channel; a same-key 
 test('receiver: urgent lead skips the SMS channel; one failing channel stays pending while the others send',async t=>{
   quiet(t);
   const email=fakeChannel('email'),sms=fakeChannel('sms',{skipUrgent:true}),push=fakeChannel('push',{fail:true});
-  const x=await setup(t,{notifyChannels:[email,sms,push]});
+  const x=await setup(t,{notifyChannels:[email,sms,push],alerts:{adapter:{fromNumber:'+12025550100',async send(){return {id:'synthetic'};},async status(){return 'delivered';}}}});
   const urgent=await(await x.send(lead({starts:'no',stranded:'yes'}))).json();
   assert.equal(urgent.routing.priority,'first');
   assert.deepEqual(rows(x.app.db,urgent.id).map(r=>r.channel),['email','push']);

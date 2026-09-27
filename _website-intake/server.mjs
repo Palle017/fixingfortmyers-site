@@ -245,7 +245,7 @@ export function createLeadServers(options = {}) {
     try{
       db.prepare('INSERT INTO leads (id, received_at, kind, idempotency_key, payload_hash, payload_json, audio_type, audio, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(id, now, payload.kind, key, hash, JSON.stringify(payload), type || null, audio || null, now);
       alerts.enqueue(payload,id,decision);
-      notifier.enqueue(payload,id,decision);
+      notifier.enqueue(payload,id,decision,{urgentSmsHandled:alerts.enabled});
       db.exec('COMMIT');
     }catch(err){db.exec('ROLLBACK');throw err;}
     console.log(JSON.stringify({ event: 'lead_received', id, kind: payload.kind, receivedAt: now }));
@@ -280,7 +280,11 @@ export function createLeadServers(options = {}) {
         let input;
         try { input = String(req.headers['content-type'] ?? '').startsWith('application/json') ? JSON.parse(raw) : Object.fromEntries(new URLSearchParams(raw)); } catch { throw error(400, 'Invalid event.'); }
         // The alert rows commit in the same transaction as the Beside lead.
-        const result = desk.besideHook(besideMatch[1], input && typeof input === 'object' ? input : {}, { afterInsert: (lead, id) => notifier.enqueue(lead, id, { priority: 'normal', actions: ['normal'] }) });
+        const result = desk.besideHook(besideMatch[1], input && typeof input === 'object' ? input : {}, { afterInsert: (lead, id) => {
+          const decision=evaluateRoute({...lead,source:'unknown'});
+          alerts.enqueue(lead,id,decision);
+          notifier.enqueue(lead,id,decision,{urgentSmsHandled:alerts.enabled});
+        } });
         if (!result.duplicate) notifier.tick().catch(() => {});
         return json(res, 200, result);
       }
@@ -385,7 +389,14 @@ export function createLeadServers(options = {}) {
         let input;
         try { input = JSON.parse((await readBody(req, 16384)).toString()); } catch { throw error(400, 'Invalid update.'); }
         if (!input || typeof input !== 'object' || Array.isArray(input)) throw error(400, 'Invalid update.');
-        return json(res, 200, stageMatch ? desk.setStage(stageMatch[1], input) : desk.addManual(input));
+        const result=stageMatch ? desk.setStage(stageMatch[1], input) : desk.addManual(input,{afterInsert:(lead,id)=>{
+          if(input.stage==='spam')return;
+          const decision=evaluateRoute({...lead,source:'unknown'});
+          alerts.enqueue(lead,id,decision);
+          notifier.enqueue(lead,id,decision,{urgentSmsHandled:alerts.enabled});
+        }});
+        if(!stageMatch)notifier.tick().catch(()=>{});
+        return json(res,200,result);
       }
       if (req.method === 'GET' && url.pathname === '/api/leads') {
         desk.sync();

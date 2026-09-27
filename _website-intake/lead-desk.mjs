@@ -17,7 +17,6 @@ const money = value => {
   return Math.round(n * 100) / 100;
 };
 const text = (value, max) => String(value ?? '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim().slice(0, max);
-const digits = phone => { const d = String(phone || '').replace(/\D/g, ''); return d.length === 10 ? '1' + d : d; };
 const median = values => { const v = values.filter(Number.isFinite).sort((a, b) => a - b); if (!v.length) return null; const m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 const round1 = n => n === null ? null : Math.round(n * 10) / 10;
 const etParts = ms => Object.fromEntries(new Intl.DateTimeFormat('en-US', {timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short', hour: '2-digit', hourCycle: 'h23'}).formatToParts(new Date(ms)).map(p => [p.type, p.value]));
@@ -36,7 +35,9 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     contacted_at TEXT, estimate_sent_at TEXT, booked_at TEXT, closed_at TEXT, updated_at TEXT NOT NULL);
   CREATE TABLE IF NOT EXISTS lead_touches(id INTEGER PRIMARY KEY, lead_id TEXT NOT NULL, at TEXT NOT NULL, channel TEXT NOT NULL, note TEXT);
   CREATE INDEX IF NOT EXISTS lead_touches_lead ON lead_touches(lead_id);
-  CREATE TABLE IF NOT EXISTS desk_digests(week TEXT PRIMARY KEY, sent_at TEXT NOT NULL);`);
+  CREATE TABLE IF NOT EXISTS desk_digests(week TEXT PRIMARY KEY, sent_at TEXT NOT NULL);
+  CREATE TABLE IF NOT EXISTS beside_events(event_key TEXT PRIMARY KEY,lead_id TEXT,event_id TEXT,direction TEXT NOT NULL,
+    occurred_at TEXT NOT NULL,received_at TEXT NOT NULL,payload_hash TEXT NOT NULL,payload_json TEXT NOT NULL);`);
   const stamp = () => new Date(now()).toISOString();
 
   // Every lead gets a pipeline row; older website leads are backfilled from their stored status.
@@ -62,6 +63,12 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     const stage = STAGES.includes(input.stage) ? input.stage : 'new';
     const id = randomUUID(), received = new Date(receivedMs).toISOString();
     const payload = {kind: 'manual', name: name || 'Unknown caller', phone, vehicle: text(input.vehicle, 160), service: text(input.service, 160), details, city: text(input.city, 100), source};
+    for(const key of ['starts','stranded','drivable']) {
+      if(input[key] !== undefined && !['yes','no','unknown'].includes(input[key]))throw fail(400,'Select yes, no, or unknown for vehicle status.');
+      payload[key]=input[key]||'unknown';
+    }
+    if(input.reviewRequired===true)payload.reviewRequired=true;
+    if(input.beside && typeof input.beside==='object')payload.beside=input.beside;
     const hash = createHash('sha256').update(JSON.stringify(payload) + received).digest('hex');
     db.exec('BEGIN IMMEDIATE');
     try {
@@ -109,30 +116,55 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     return {ok: true, stage};
   }
 
-  // Beside -> Zapier "New Lead" / "Message" / "Call" webhook. Repeat contact from the same number within
-  // 7 days is the same inquiry: it is logged as a touch instead of a new lead.
+  // Provider event identity deduplicates retries. A phone number is not a repair-job identity.
+  // Only an explicitly mapped internal inquiry_id can attach another event to that job.
   function besideHook(token, input, {afterInsert = null} = {}) {
     if (!besideToken || besideToken.length < 24) throw fail(404, 'Not found.');
     const a = createHash('sha256').update(String(token)).digest(), b = createHash('sha256').update(besideToken).digest();
     if (!timingSafeEqual(a, b)) throw fail(404, 'Not found.');
-    const rawPhone = text(input.phone || input.from || input.contact_phone || input.phone_number, 40);
+    if(!input||typeof input!=='object'||Array.isArray(input))throw fail(400,'Invalid Beside event.');
+    const rawDirection=text(input.direction,30).toLowerCase();
+    const direction=['inbound','incoming','in'].includes(rawDirection)?'inbound':['outbound','outgoing','out'].includes(rawDirection)?'outbound':'unknown';
+    const rawPhone = text(input.phone || input.contact_phone || input.phone_number || (direction==='outbound'?input.to:input.from), 40);
     // A withheld or garbled number is still an inquiry: keep the event, note what was shown.
     const phone = /^\d{10,15}$/.test(rawPhone.replace(/\D/g, '')) ? rawPhone : '';
     const kind = /text|sms|message/i.test(String(input.type || input.event || '')) ? 'beside_text' : 'beside_call';
     const note = text((rawPhone && !phone ? `Caller ID shown: ${rawPhone}\n` : '') + (input.summary || input.body || input.message || input.transcript || input.text || ''), 6000);
-    const key = digits(phone);
-    if (key) {
-      const recent = db.prepare("SELECT leads.id, leads.payload_json FROM leads JOIN lead_pipeline ON lead_pipeline.lead_id=leads.id WHERE leads.received_at>? ORDER BY leads.received_at DESC").all(new Date(now() - 7 * 86400000).toISOString())
-        .find(row => digits(JSON.parse(row.payload_json).phone) === key);
-      if (recent) { db.prepare('INSERT INTO lead_touches(lead_id,at,channel,note) VALUES(?,?,?,?)').run(recent.id, stamp(), kind, note.slice(0, 2000)); return {ok: true, id: recent.id, duplicate: true}; }
+    const suppliedId=input.event_id??input.eventId??input.message_id??input.call_id??input.id;
+    if(suppliedId!==undefined&&(typeof suppliedId!=='string'||!suppliedId.trim()||suppliedId.length>200))throw fail(400,'Map a nonempty provider event ID of at most 200 characters.');
+    const eventId=suppliedId?.trim()||null,eventKey=eventId?kind+':'+eventId:'unidentified:'+randomUUID();
+    const suppliedAt=input.occurred_at??input.timestamp??input.created_at;
+    if(suppliedAt!==undefined&&(typeof suppliedAt!=='string'||!/(?:Z|[+-]\d{2}:\d{2})$/i.test(suppliedAt)||!Number.isFinite(Date.parse(suppliedAt))))throw fail(400,'Map the event time as an ISO timestamp with timezone.');
+    const eventAt=suppliedAt===undefined?stamp():new Date(Date.parse(suppliedAt)).toISOString();
+    const inquiryId=input.inquiry_id===undefined?null:text(input.inquiry_id,100);
+    if(inquiryId&&!db.prepare('SELECT 1 FROM leads WHERE id=?').get(inquiryId))throw fail(400,'The supplied inquiry_id does not identify an existing repair request.');
+    const metadata={event_id:eventId,direction,occurred_at:suppliedAt===undefined?null:eventAt,time_basis:suppliedAt===undefined?'received':'provider',inquiry_id:inquiryId};
+    const event={...metadata,source:kind,name:text(input.name||input.contact_name||'Beside caller',100),phone,vehicle:text(input.vehicle,160),details:note,
+      starts:input.starts||'unknown',stranded:input.stranded||'unknown',drivable:input.drivable||'unknown'};
+    for(const field of ['starts','stranded','drivable'])if(!['yes','no','unknown'].includes(event[field]))throw fail(400,'Invalid vehicle status.');
+    const encoded=JSON.stringify(event),hash=createHash('sha256').update(encoded).digest('hex');
+    const prior=db.prepare('SELECT lead_id,payload_hash FROM beside_events WHERE event_key=?').get(eventKey);
+    if(prior){if(prior.payload_hash!==hash)throw fail(409,'This event ID was already received with different contents.');return {ok:true,id:prior.lead_id,eventKey,duplicate:true};}
+    const record=id=>db.prepare('INSERT INTO beside_events VALUES(?,?,?,?,?,?,?,?)').run(eventKey,id,eventId,direction,eventAt,stamp(),hash,encoded);
+    if(inquiryId||direction==='outbound'){
+      db.exec('BEGIN IMMEDIATE');
+      try{
+        record(inquiryId);
+        if(inquiryId)db.prepare('INSERT INTO lead_touches(lead_id,at,channel,note) VALUES(?,?,?,?)').run(inquiryId,eventAt,kind,note.slice(0,2000));
+        db.exec('COMMIT');
+      }catch(err){db.exec('ROLLBACK');throw err;}
+      return {ok:true,id:inquiryId,eventKey,duplicate:false,linked:!!inquiryId,reviewRequired:!inquiryId};
     }
-    return {...addManual({name: input.name || input.contact_name || 'Beside caller', phone, details: note, source: kind, vehicle: input.vehicle}, {afterInsert}), duplicate: false};
+    // An inbound communication is a candidate, not proof of a qualified repair inquiry.
+    const result=addManual({...event,receivedAt:eventAt,reviewRequired:true,beside:metadata},{afterInsert:(lead,id)=>{record(id);afterInsert?.(lead,id);}});
+    return {...result,eventKey,duplicate:false,reviewRequired:true,identityMissing:!eventId};
   }
 
   function metrics() {
     sync();
     const rows = db.prepare('SELECT leads.id, leads.received_at, leads.payload_json, lead_pipeline.* FROM leads JOIN lead_pipeline ON lead_pipeline.lead_id=leads.id ORDER BY leads.received_at DESC').all();
-    const real = rows.filter(row => row.stage !== 'spam');
+    const review=rows.filter(row=>row.stage==='new'&&JSON.parse(row.payload_json).reviewRequired===true);
+    const real = rows.filter(row => row.stage !== 'spam'&&!review.includes(row));
     const nowMs = now(), thisWeek = weekOf(nowMs);
     const weeks = [];
     for (let i = 11; i >= 0; i--) weeks.push(weekOf(nowMs - i * 7 * 86400000));
@@ -162,7 +194,7 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     const pct = (n, d) => d ? Math.round(n / d * 100) : null;
     return {
       ok: true, generatedAt: new Date(nowMs).toISOString(), targets: TARGETS,
-      totals: {leads: total, spam: rows.length - total, contacted: reached(1), estimateSent: reached(2), booked: reached(3), won: won.length, lost: real.filter(row => row.stage === 'lost').length, open: real.filter(row => ['new', 'contacted', 'estimate_sent', 'booked'].includes(row.stage)).length},
+      totals: {leads: total, spam: rows.filter(row=>row.stage==='spam').length, review:review.length,unlinkedEvents:db.prepare('SELECT COUNT(*) n FROM beside_events WHERE lead_id IS NULL').get().n, contacted: reached(1), estimateSent: reached(2), booked: reached(3), won: won.length, lost: real.filter(row => row.stage === 'lost').length, open: real.filter(row => ['new', 'contacted', 'estimate_sent', 'booked'].includes(row.stage)).length},
       rates: {contactedPct: pct(reached(1), total), estimatePct: pct(reached(2), total), bookedPct: pct(reached(3), total), wonPct: pct(won.length, total),
         contactedWithinTargetPct: pct(firstContact.filter(m => m <= TARGETS.firstContactMinutes).length, total)},
       speed: {medianMinutesToFirstContact: round1(median(firstContact)), medianHoursToEstimate: round1(median(toEstimate))},

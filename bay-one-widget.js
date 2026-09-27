@@ -176,6 +176,7 @@
 
     $('.b1-composer').addEventListener('submit', async event => {
       event.preventDefault(); if (state.busy) return;
+      if (pendingLead) { status.textContent = 'Retry the pending repair request below to confirm receipt before changing these details.'; return; }
       const text = input.value.trim(); if (!text) return;
       const retry = state.failed && state.failed.message === text && state.failed.mode === state.mode;
       const pending = retry ? state.failed : { request_id:uuid(), message:text, mode:state.mode };
@@ -222,8 +223,9 @@
       <button type="submit">Send to Tony</button>
       <p class="b1-lead-status" role="status" aria-live="polite"></p>`;
     const leadStatus = leadForm.querySelector('.b1-lead-status');
-    let leadKey = uuid(), leadBusy = false, leadSent = false;
-    leadForm.addEventListener('input', () => { if (!leadBusy) leadKey = uuid(); });
+    let leadKey = uuid(), leadBusy = false, leadSent = false, pendingLead = null;
+    leadForm.addEventListener('input', () => { if (!leadBusy && !pendingLead) leadKey = uuid(); });
+    function lockLeadFields(locked) { leadForm.querySelectorAll('input').forEach(field => { field.disabled = locked; }); }
     function showLead() {
       if (leadSent) return;
       sendNow.hidden = true; messages.append(leadForm); messages.scrollTop = messages.scrollHeight;
@@ -236,8 +238,10 @@
     sendNow.addEventListener('click', showLead);
     leadForm.addEventListener('submit', async event => {
       event.preventDefault(); if (leadBusy || leadSent) return;
-      const data = new FormData(leadForm), sms = data.get('sms') === 'on';
-      const body = {
+      const retryingPending = !!pendingLead;
+      if (!pendingLead) {
+        const data = new FormData(leadForm), sms = data.get('sms') === 'on';
+        const body = {
         name:String(data.get('name') || '').trim(), phone:String(data.get('phone') || '').trim(),
         vehicle:String(state.intake.vehicle || '').slice(0,160), service:String(window.PT_REPAIR_CONTEXT?.service || '').slice(0,160),
         details:('Bay One chat on '+location.pathname+':\n'+state.customerMessages.join('\n')).slice(0,6000),
@@ -245,21 +249,31 @@
         callbackTime:String(data.get('callbackTime') || '').trim().slice(0,160), source:'ai', website:'',
         smsConsent:sms, smsConsentTimestamp:sms ? new Date().toISOString() : '', smsConsentVersion:'2026-09-06-v1',
         smsConsentSource:'bay-one-chat', smsConsentPage:location.origin+location.pathname, smsConsentDisclosure:sms ? CONSENT : '',
-      };
+        };
+        // Keep the exact payload, including consent time, for an uncertain retry.
+        pendingLead = {key:leadKey,body};
+      }
+      const {body} = pendingLead, sms = body.smsConsent;
+      lockLeadFields(true);
       leadBusy = true; leadForm.querySelector('button').disabled = true; leadStatus.textContent = 'Sending to Tony…';
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
       try {
-        const response = await fetch(apiBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':leadKey}, body:JSON.stringify(body), signal:controller.signal });
+        const response = await fetch(apiBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':pendingLead.key}, body:JSON.stringify(body), signal:controller.signal });
         const result = await response.json().catch(() => ({}));
-        if (!response.ok || result.received !== true) throw new Error(result.error || 'Your details did not go through.');
+        if (!response.ok || result.received !== true) {
+          // Validation/refusal confirms no save; allow corrections. A timeout, 5xx or
+          // key conflict can be ambiguous, so preserve the snapshot and retry key.
+          if (!retryingPending && [400,403,413,422,429].includes(response.status)) { pendingLead = null; leadKey = uuid(); lockLeadFields(false); }
+          throw new Error(result.error || 'Receipt could not be confirmed.');
+        }
         leadSent = true; leadForm.remove(); $('.b1-composer').hidden = true;
         const urgent = body.stranded === 'yes' && body.starts === 'no';
-        const row = addMessage('assistant', `Sent. Tony has your details and will ${sms ? 'text or call' : 'call'} you at ${body.phone} from (239) 397-2048.` + (urgent ? ' You said you are stranded, so your request is marked urgent. If you are somewhere unsafe, call 911.' : ' Tony gives every price himself after he looks at the problem.'));
+        const row = addMessage('assistant', `Your request is saved for Tony to review. Your callback number is ${body.phone}; ${sms ? 'text or call' : 'call only'}. Booking is not confirmed.` + (urgent ? ' You said you are stranded, so your request is marked urgent. If you are somewhere unsafe, call 911.' : ' Tony gives every price himself after he looks at the problem.'));
         const call = document.createElement('a'); call.className = 'b1-request-service'; call.href = 'tel:+12393972048'; call.textContent = urgent ? 'Call Tony now' : 'Call Tony';
         row.append(call);
         try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id:result.id, receivedAt:result.receivedAt, confirmed:true, smsConsent:sms })); } catch (_) { /* Confirmation is already shown in the chat. */ }
       } catch (error) {
-        leadStatus.textContent = (error.name === 'AbortError' ? 'This took too long.' : error.message) + ' Please try again, or call or text Tony at (239) 397-2048.';
+        leadStatus.textContent = (error.name === 'AbortError' ? 'Receipt could not be confirmed.' : error.message) + (pendingLead ? ' Retry to check the same request; its details are preserved.' : ' Correct your details and try again.') + ' You can also call or text Tony at (239) 397-2048.';
       } finally { clearTimeout(timer); leadBusy = false; if (!leadSent) leadForm.querySelector('button').disabled = false; }
     });
 
