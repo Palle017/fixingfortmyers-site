@@ -119,8 +119,13 @@ function safeResult(result,messages=[],collected={}){
   }
   // Backstop for the two answers that make a lead urgent: clear customer wording wins over a model "unknown".
   const said=messages.filter(row=>row.role==='user').map(row=>row.content).join('\n');
-  if((!intake.starts||intake.starts==='unknown')&&/\b(?:won'?t|will not|wont|doesn'?t|does not|can'?t|cannot|not) (?:re-?)?(?:start|crank|turn over)\b|\bno[- ]start\b|\bdied\b|\bno prende\b|\bjust clicks\b/i.test(said))intake.starts='no';
-  if((!intake.stranded||intake.stranded==='unknown')&&/\b(?:stranded|stuck (?:in|on|at)|broke(?:n)? down (?:in|on|at)|on the side of)\b/i.test(said))intake.stranded='yes';
+  // Negated wording ("not stranded", "starts fine now") never counts, and curly apostrophes from phones match.
+  const noStart=/\b(?:won.?t|will not|wont|doesn.?t|does not|can.?t|cannot) (?:re-?)?(?:start|crank|turn over)\b|\bno[- ]start\b|\bno prende\b|\bjust clicks\b/i;
+  const startsNow=/\b(?:starts|started|runs|cranks) (?:fine|ok|okay|now|again|up fine)\b/i;
+  const stranded=/\b(?:i.?m|i am|we.?re|we are|currently|now|still) (?:stranded|stuck on the side of the road)\b|\bstranded (?:at|on|in)\b|\bbroke(?:n)? down (?:on|at) (?:the )?(?:road|highway|interstate|i-?75|side)\b|\bon the side of the (?:road|highway|interstate)\b/i;
+  const notStranded=/\b(?:not|n.t|no longer|am not) (?:currently )?stranded\b|\b(?:at|from) home\b|\bin my (?:driveway|garage)\b/i;
+  if((!intake.starts||intake.starts==='unknown')&&noStart.test(said)&&!startsNow.test(said))intake.starts='no';
+  if((!intake.stranded||intake.stranded==='unknown')&&stranded.test(said)&&!notStranded.test(said))intake.stranded='yes';
   const next=nextField(intake),safety=hazard(messages.at(-1)?.content||'')?'Stop using the vehicle and seek appropriate emergency or roadside help. ':'';
   return {kind:'intake',intake,nextField:next,ready:!next,reply:safety+(!result.relevant?'I help get your repair details to Tony. ':'')+(next?QUESTIONS[next]:'Thanks, that gives Tony what he needs. Add your name and number below and I will send it straight to him.')};
 }

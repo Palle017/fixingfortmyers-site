@@ -108,9 +108,10 @@
 .b1-lead-title{margin:0!important;color:#f7c76d;font:800 13px/1.3 'Barlow',system-ui,sans-serif!important;letter-spacing:.04em;text-transform:uppercase}
 .b1-lead label{display:grid;gap:4px;color:#cfe0ec;font-size:13px}
 .b1-lead small{color:#89a3b5}
-.b1-lead input:not([type=checkbox]){width:100%;padding:9px 10px;border:1px solid #3e5b6d;border-radius:9px;background:#08151f;color:#f1f7fc;font-size:16px}
-.b1-lead .b1-lead-check{display:flex;align-items:center;gap:8px}
-.b1-lead .b1-lead-check input{width:18px;height:18px;accent-color:#78e2e8}
+.b1-lead select,.b1-lead input:not([type=checkbox]){width:100%;padding:9px 10px;border:1px solid #3e5b6d;border-radius:9px;background:#08151f;color:#f1f7fc;font-size:16px}
+.b1-lead .b1-lead-check{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.45}
+.b1-lead .b1-lead-check a{color:#78e2e8}
+.b1-lead .b1-lead-check input{flex:0 0 auto;margin-top:1px;width:18px;height:18px;accent-color:#78e2e8}
 .b1-lead button{padding:11px 12px;border:1px solid #a6f3ef;border-radius:10px;background:#78e2e8;color:#08202a;font:800 15px/1.2 'Barlow',system-ui,sans-serif;cursor:pointer}
 .b1-lead button:disabled{opacity:.6;cursor:wait}
 .b1-lead-status{margin:0!important;color:#f9cc80;font-size:12px!important;line-height:1.45}

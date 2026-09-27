@@ -42,9 +42,13 @@ test('chat collects the problem, then its contact card sends one lead with the w
   await x.say('I am stranded in Fort Myers.');
   const card=d.querySelector('.b1-lead');assert.ok(card);assert.equal(d.querySelector('.b1-send-now').hidden,true);
   assert.equal(x.requests.some(r=>r.route==='/hooks/lead/webform'),false);
+  // The customer sees and can correct the urgency answers the chat inferred, and the full SMS disclosure.
+  assert.equal(card.querySelector('[name=starts]').value,'no');assert.equal(card.querySelector('[name=stranded]').value,'yes');
+  assert.match(card.querySelector('.b1-lead-check').textContent,/Reply STOP to opt out[\s\S]*SMS terms/);
   card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='239-555-0100';card.querySelector('[name=sms]').checked=true;
   card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
   const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,1);
+  assert.equal(sent[0].body.smsConsentDisclosure,card.querySelector('.b1-lead-check span').firstChild.textContent.trim());
   const lead=sent[0].body;
   assert.equal(lead.source,'ai');assert.equal(lead.name,'Synthetic');assert.equal(lead.phone,'239-555-0100');
   assert.equal(lead.vehicle,'2015 Honda Civic');assert.equal(lead.city,'Fort Myers');assert.equal(lead.starts,'no');assert.equal(lead.stranded,'yes');

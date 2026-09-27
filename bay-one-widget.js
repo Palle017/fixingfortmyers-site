@@ -52,7 +52,7 @@
     const customAvatar = config.avatar || script?.dataset.avatar;
     const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
     const css = document.createElement('link');
-    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260927-bay-one-v1', script?.src || location.href).href;
+    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260927-bay-one-v2', script?.src || location.href).href;
     document.head.append(css);
     const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
     widget.setAttribute('aria-label', 'Bay One repair assistant');
@@ -104,15 +104,11 @@
       else if (summary) { try { sessionStorage.setItem(handoffKey,JSON.stringify({at:Date.now(),summary,service,intake:state.intake})); } catch (_) { status.textContent = 'Your browser could not carry the notes to the form. Copy the important details before switching.'; event.preventDefault(); open(); } }
     }
 
-    function addMessage(speaker, text, requestText) {
+    function addMessage(speaker, text) {
       const row = document.createElement('div'); row.className = `b1-message b1-${speaker}`;
       const label = document.createElement('span'); label.className = 'b1-message-label'; label.textContent = speaker === 'user' ? 'YOU' : 'BAY ONE';
       const body = document.createElement('p'); body.textContent = String(text || '').slice(0, 20000);
       row.append(label, body);
-      if (speaker === 'assistant' && requestText) {
-        const service = document.createElement('a'); service.className = 'b1-request-service'; service.href = '/#contact'; service.textContent = 'Review details for Tony ↗';
-        service.addEventListener('click',handoff); row.append(service);
-      }
       messages.append(row); messages.scrollTop = messages.scrollHeight;
       return row;
     }
@@ -210,7 +206,9 @@
 
 
     // Contact card: the customer's name and number go with the chat straight to Tony's lead inbox.
-    const CONSENT = 'Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates.';
+    // The exact words beside the checkbox are what gets stored as consent evidence (same text as the site form).
+    const CONSENT = 'Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates. Optional; consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help.';
+    const choice = (name, label) => `<label>${label}<select name="${name}"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>`;
     const sendNow = $('.b1-send-now');
     const leadForm = document.createElement('form'); leadForm.className = 'b1-lead'; leadForm.noValidate = false;
     leadForm.innerHTML = `
@@ -218,14 +216,21 @@
       <label>First name<input name="name" autocomplete="given-name" maxlength="100" required></label>
       <label>Mobile number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" required></label>
       <label>Best time to reach you or anything else <small>(optional)</small><input name="callbackTime" maxlength="160"></label>
-      <label class="b1-lead-check"><input type="checkbox" name="sms"> Tony can text me about this repair</label>
+      ${choice('starts', 'Does the vehicle start?')}
+      ${choice('stranded', 'Are you stranded right now?')}
+      <label class="b1-lead-check"><input type="checkbox" name="sms"> <span>${CONSENT} <a href="/sms-terms">SMS terms</a> · <a href="/privacy-policy">Privacy policy</a>.</span></label>
       <button type="submit">Send to Tony</button>
       <p class="b1-lead-status" role="status" aria-live="polite"></p>`;
     const leadStatus = leadForm.querySelector('.b1-lead-status');
-    let leadKey = uuid(), leadBusy = false, leadSent = false;
-    leadForm.addEventListener('input', () => { if (!leadBusy) leadKey = uuid(); });
+    // One key per exact payload: a retry after a lost response resends the same body, so the server
+    // answers "already received" instead of 409; any edit starts a new request.
+    let leadKey = uuid(), leadBody = null, leadBusy = false, leadSent = false;
+    const newRequest = () => { if (!leadBusy) { leadKey = uuid(); leadBody = null; } };
+    leadForm.addEventListener('input', newRequest); leadForm.addEventListener('change', newRequest);
     function showLead() {
       if (leadSent) return;
+      // The customer confirms the two answers that decide urgency; the chat only prefills them.
+      if (!leadForm.isConnected) for (const name of ['starts', 'stranded']) leadForm.querySelector(`[name=${name}]`).value = ['yes', 'no'].includes(state.intake[name]) ? state.intake[name] : 'unknown';
       sendNow.hidden = true; messages.append(leadForm); messages.scrollTop = messages.scrollHeight;
       leadForm.querySelector('[name=name]').focus({preventScroll:true});
     }
@@ -237,15 +242,15 @@
     leadForm.addEventListener('submit', async event => {
       event.preventDefault(); if (leadBusy || leadSent) return;
       const data = new FormData(leadForm), sms = data.get('sms') === 'on';
-      const body = {
+      const body = leadBody || (leadBody = {
         name:String(data.get('name') || '').trim(), phone:String(data.get('phone') || '').trim(),
         vehicle:String(state.intake.vehicle || '').slice(0,160), service:String(window.PT_REPAIR_CONTEXT?.service || '').slice(0,160),
         details:('Bay One chat on '+location.pathname+':\n'+state.customerMessages.join('\n')).slice(0,6000),
-        city:String(state.intake.city || '').slice(0,100), starts:state.intake.starts || 'unknown', stranded:state.intake.stranded || 'unknown',
+        city:String(state.intake.city || '').slice(0,100), starts:String(data.get('starts') || 'unknown'), stranded:String(data.get('stranded') || 'unknown'),
         callbackTime:String(data.get('callbackTime') || '').trim().slice(0,160), source:'ai', website:'',
         smsConsent:sms, smsConsentTimestamp:sms ? new Date().toISOString() : '', smsConsentVersion:'2026-09-06-v1',
         smsConsentSource:'bay-one-chat', smsConsentPage:location.origin+location.pathname, smsConsentDisclosure:sms ? CONSENT : '',
-      };
+      });
       leadBusy = true; leadForm.querySelector('button').disabled = true; leadStatus.textContent = 'Sending to Tony…';
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
       try {
