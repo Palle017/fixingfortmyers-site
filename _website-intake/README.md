@@ -26,6 +26,17 @@ The shop computer must be powered on and awake, Tailscale connected, and this se
 
 Use **Node 24**. This computer's installed Node 24.19.0 was tested successfully with the built-in `node:sqlite` module. Do not run from a temporary checkout; copy the runtime files to a permanent business website folder first. Test data and logs do not belong in GitHub. Never overwrite or replace an existing data directory when deploying a code update. To back up a running SQLite database, use SQLite's backup API; alternatively stop this receiver and copy its data directory, including any WAL/SHM files.
 
+## Chat model
+
+Bay One's chat extraction uses DeepSeek's cloud API by default (`DEEPSEEK_API_KEY`). To run it on a local Ollama model instead, set these for the receiver process:
+
+| Variable | Meaning |
+| --- | --- |
+| `BAYONE_PROVIDER=ollama` | Use local Ollama instead of DeepSeek. |
+| `OLLAMA_MODEL` | Required. An installed model tag, e.g. from `ollama list`. |
+| `OLLAMA_HOST` | Optional, default `http://127.0.0.1:11434`. Keep Ollama on loopback; never Funnel it. |
+| `OLLAMA_TIMEOUT_MS` / `CHAT_TIMEOUT_MS` | Optional. Raise both (e.g. 60000) if the first answer after a model load is slow. |
+
 ## Endpoints
 
 Public loopback listener: `127.0.0.1:18795`.

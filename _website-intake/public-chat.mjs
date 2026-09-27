@@ -93,6 +93,32 @@ export function createDeepSeekProvider({apiKey=process.env.DEEPSEEK_API_KEY,fetc
   };
 }
 
+// Local Ollama on the same machine. The model never leaves loopback; only this server reaches it.
+export function createOllamaProvider({baseUrl=process.env.OLLAMA_HOST||'http://127.0.0.1:11434',model=process.env.OLLAMA_MODEL,fetchImpl=fetch,timeoutMs=Number(process.env.OLLAMA_TIMEOUT_MS||60000)}={}){
+  return async ({messages,canEstimate})=>{
+    if(!model)throw error(503,'chat_unavailable','Bay One is temporarily unavailable. Please call the shop.');
+    let response;
+    try{
+      response=await fetchImpl(String(baseUrl).replace(/\/$/,'')+'/api/chat',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model,stream:false,format:'json',keep_alive:'30m',options:{temperature:0.3,num_predict:MAX_OUTPUT},
+          messages:[{role:'system',content:buildPrompt(canEstimate)},...messages]}),
+        signal:AbortSignal.timeout(timeoutMs),
+      });
+    }catch{throw error(503,'chat_unavailable','Bay One is temporarily unavailable. Please try again later or call the shop.');}
+    if(!response.ok)throw error(503,'chat_unavailable','Bay One is temporarily unavailable. Please try again later or call the shop.');
+    const raw=await response.text();if(raw.length>100000)throw error(503,'invalid_answer','Bay One could not finish this answer.');
+    let body,result;try{body=JSON.parse(raw);result=JSON.parse(body.message?.content||'');}catch{throw error(503,'invalid_answer','Bay One could not finish this answer.');}
+    if(body.done!==true||(body.done_reason&&body.done_reason!=='stop'))throw error(503,'invalid_answer','Bay One could not finish this answer. Please try a shorter question.');
+    const prompt=Number(body.prompt_eval_count)||0,completion=Number(body.eval_count)||0;
+    return {result,usage:{prompt_tokens:prompt,completion_tokens:completion,total_tokens:prompt+completion}};
+  };
+}
+
+export function createDefaultProvider(options={}){
+  return (options.providerName??process.env.BAYONE_PROVIDER)==='ollama'?createOllamaProvider(options):createDeepSeekProvider(options);
+}
+
 const INTAKE_LIMITS={vehicle:160,details:6000,city:100,starts:7,stranded:7,drivable:7,callbackTime:160};
 const QUESTIONS={details:'What is happening with your vehicle?',vehicle:'What is the vehicle year, make and model? Share what you know.',starts:'Does the vehicle start? Yes, no, or unknown?',stranded:'Are you currently stranded? Yes, no, or unknown?',city:'What city or ZIP code is the vehicle in?'};
 const nextField=intake=>Object.keys(QUESTIONS).find(key=>!intake[key])||null;
@@ -132,9 +158,9 @@ export function createPublicChat(options={}){
       WHERE state='done' AND NOT EXISTS(SELECT 1 FROM chat_metric_migrations WHERE id='v1') GROUP BY quota_day;
     INSERT OR IGNORE INTO chat_metric_migrations(id) VALUES('v1');
     COMMIT;`);
-  const now=options.now||Date.now,provider=options.provider||createDeepSeekProvider(options);
+  const now=options.now||Date.now,provider=options.provider||createDefaultProvider(options);
   const dailyBudget=options.dailyTokenBudget??120000,maxDailyRequests=options.maxDailyRequests??200,requestBudget=options.requestTokenBudget??12000;
-  const maxConcurrent=options.maxConcurrent??4,timeoutMs=options.timeoutMs??25000;
+  const maxConcurrent=options.maxConcurrent??4,timeoutMs=options.timeoutMs??Number(process.env.CHAT_TIMEOUT_MS||25000);
   function prune(){
     db.prepare('DELETE FROM chat_requests WHERE created<?').run(now()-7*86400000);
     db.prepare('DELETE FROM chat_rates WHERE window<?').run(Math.floor(now()/60000)-2);
