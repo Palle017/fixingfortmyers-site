@@ -9,7 +9,7 @@ const page=fs.readFileSync(new URL('index.html',root),'utf8');
 const site=fs.readFileSync(new URL('site.js',root),'utf8');
 const widget=fs.readFileSync(new URL('bay-one-widget.js',root),'utf8');
 const settle=async()=>{for(let i=0;i<5;i++)await new Promise(setImmediate);};
-function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00Z',enabled=true,publicContact=false,userAgent,savedSource}={}){
+function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00Z',enabled=true,publicContact=false,userAgent,savedSource,beforeScripts}={}){
   const dom=new JSDOM(page,{url,runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,requests=[];
   t.after(()=>w.close());
   w.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});
@@ -21,6 +21,7 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   const NativeDate=w.Date;w.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[at]));}static now(){return NativeDate.parse(at);}};
   w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=JSON.parse(options.body||'{}');requests.push({route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
   if(savedSource)w.sessionStorage.setItem('pt-repair-source',savedSource);
+  beforeScripts?.(w);
   w.eval(site);w.eval(widget);
   const enter=(id,value)=>{const field=w.document.getElementById(id);field.value=value;field.dispatchEvent(new w.Event('input',{bubbles:true}));};
   const say=async text=>{enter('b1-message',text);w.document.querySelector('.b1-composer').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await settle();};
@@ -28,7 +29,7 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
 }
 test('every intake reply carries customer words to editable form without a lead submit or forced vehicle repetition',async t=>{
   const x=setup(t,{handler:async(route)=>({ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Does it start?',intake:{vehicle:'2015 Honda Civic',city:'Fort Myers',starts:'no',stranded:'yes',recipient:'evil@example.invalid'}}})});
-  await x.say('My 2015 Honda Civic clicks and will not start.');await x.say('I am stranded in Fort Myers.');
+  await settle();await x.say('My 2015 Honda Civic clicks and will not start.');await x.say('I am stranded in Fort Myers.');
   const d=x.w.document;
   assert.equal(d.querySelectorAll('.b1-request-service').length,2);
   x.enter('request-vehicle','Honda, year uncertain');x.enter('request-starts','yes');
@@ -45,8 +46,8 @@ test('every intake reply carries customer words to editable form without a lead 
   assert.ok(x.requests.filter(r=>r.route==='/chat/message').every(r=>r.body.mode==='chat'));
 });
 test('initial AI connection failure stays truthful and unsent notes still hand off to the normal form',async t=>{
-  const x=setup(t,{handler:async(route,body,w)=>{throw new w.TypeError('Synthetic network outage');}}),d=x.w.document;
-  d.querySelector('.b1-launcher').click();await settle();
+  const x=setup(t,{handler:async(route,body,w)=>{if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,chat:'ready'})};throw new w.TypeError('Synthetic network outage');}}),d=x.w.document;
+  await settle();d.querySelector('.b1-launcher').click();await settle();
   assert.match(d.querySelector('.b1-status').textContent,/could not connect/);
   assert.doesNotMatch(d.querySelector('.b1-status').textContent,/preserved|reply|still here/);
   x.enter('b1-message','The engine stopped; I do not know the model.');
@@ -72,7 +73,7 @@ test('service preselection is whitelisted, optional vehicle submits with explici
   const rejected=setup(t,{url:'https://preview.invalid/?service=%3Cscript%3Ebad%3C%2Fscript%3E'});assert.equal(rejected.w.document.getElementById('request-service').selectedIndex,0);
 });
 test('after-hours wording uses Eastern time and untrusted text is displayed as text',async t=>{
-  const x=setup(t,{at:'2026-09-25T01:00:00Z'}),d=x.w.document;
+  const x=setup(t,{at:'2026-09-25T01:00:00Z'}),d=x.w.document;await settle();
   assert.match(d.querySelector('.b1-messages').textContent,/8 PM to 8 AM Eastern/);
   await x.say('<img src=x onerror="window.bad=true"> The car will not start.');
   assert.equal(x.w.bad,undefined);assert.equal(d.querySelector('.b1-user img'),null);
@@ -81,7 +82,7 @@ test('after-hours wording uses Eastern time and untrusted text is displayed as t
 });
 
 test('long conversation preserves all customer words and blocks sending until the customer shortens it',async t=>{
-  const x=setup(t),d=x.w.document;
+  const x=setup(t),d=x.w.document;await settle();
   const words=['First vehicle information '+ 'a'.repeat(1500),'Second symptom detail '+ 'b'.repeat(1500),'Third location detail '+ 'c'.repeat(1500)];
   for(const text of words)await x.say(text);
   [...d.querySelectorAll('.b1-request-service')].at(-1).click();
@@ -101,13 +102,28 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
 });
 
 test('mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry',async t=>{
-  const x=setup(t),d=x.w.document,bar=d.querySelector('.mobile-contact-bar'),entry=bar.querySelector('.b1-bar-launcher');
+  const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar'),entry=bar.querySelector('.b1-bar-launcher');
   assert.equal(bar.children.length,3);assert.equal(bar.children[0].getAttribute('href'),'tel:+12393972048');assert.equal(bar.children[1].getAttribute('href'),'sms:+12393972048');
   assert.equal(entry.textContent,'Ask Bay One');assert.ok(d.getElementById('bay-one-widget').classList.contains('b1-has-contact-bar'));
   entry.click();await settle();assert.equal(d.getElementById('b1-panel').hidden,false);assert.equal(entry.getAttribute('aria-expanded'),'true');
   d.querySelector('.b1-close').click();assert.equal(d.getElementById('b1-panel').hidden,true);assert.equal(d.activeElement,entry);assert.equal(entry.getAttribute('aria-expanded'),'false');
   const inline=d.getElementById('request-bay-one');inline.click();await settle();d.querySelector('.b1-close').click();assert.equal(d.activeElement,inline);
   assert.ok(d.querySelector('.b1-launcher'));
+});
+
+test('an unreachable Bay One server shows no launcher, loads no assets and still restores carried notes',async t=>{
+  const draft=JSON.stringify({at:Date.parse('2026-09-24T15:55:00Z'),summary:'Customer notes from Bay One:\nGrinding when braking',service:'',intake:{city:'Fort Myers'}});
+  const x=setup(t,{handler:async(route,body,w)=>{if(route!=='/healthz')w.bad=true;throw new w.TypeError('Synthetic outage');},beforeScripts:w=>w.sessionStorage.setItem('pt-bayone-service-draft-v1',draft)}),d=x.w.document;
+  await settle();
+  assert.deepEqual(x.requests.map(r=>r.route),['/healthz']);assert.equal(x.w.bad,undefined);
+  assert.equal(d.getElementById('bay-one-widget'),null);assert.equal(d.querySelector('link[href*="bay-one-widget.css"]'),null);
+  assert.equal(d.querySelector('.b1-bar-launcher'),null);assert.equal(d.getElementById('request-bay-one').hidden,true);
+  assert.match(d.getElementById('request-details').value,/Grinding when braking/);assert.equal(d.getElementById('request-city').value,'Fort Myers');
+});
+
+test('a server whose chat failed to start is treated as unavailable',async t=>{
+  const x=setup(t,{handler:async route=>({ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'unavailable'}:{ok:true}})}),d=x.w.document;
+  await settle();assert.equal(d.getElementById('bay-one-widget'),null);assert.deepEqual(x.requests.map(r=>r.route),['/healthz']);
 });
 
 test('shipped config enables public Bay One against the p15g2 receiver',()=>{
