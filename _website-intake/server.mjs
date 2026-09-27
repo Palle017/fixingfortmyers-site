@@ -279,8 +279,9 @@ export function createLeadServers(options = {}) {
         const raw = (await readBody(req, MAX_JSON)).toString('utf8');
         let input;
         try { input = String(req.headers['content-type'] ?? '').startsWith('application/json') ? JSON.parse(raw) : Object.fromEntries(new URLSearchParams(raw)); } catch { throw error(400, 'Invalid event.'); }
-        const result = desk.besideHook(besideMatch[1], input && typeof input === 'object' ? input : {});
-        if (!result.duplicate) { const lead = db.prepare('SELECT payload_json FROM leads WHERE id=?').get(result.id); notifier.enqueue(JSON.parse(lead.payload_json), result.id, { priority: 'normal', actions: ['normal'] }); notifier.tick().catch(() => {}); }
+        // The alert rows commit in the same transaction as the Beside lead.
+        const result = desk.besideHook(besideMatch[1], input && typeof input === 'object' ? input : {}, { afterInsert: (lead, id) => notifier.enqueue(lead, id, { priority: 'normal', actions: ['normal'] }) });
+        if (!result.duplicate) notifier.tick().catch(() => {});
         return json(res, 200, result);
       }
       if (!['/hooks/lead/webform', '/hooks/lead/voicenote', '/hooks/analytics/visit'].includes(url.pathname)) return json(res, 404, { ok: false, error: 'Not found.' });

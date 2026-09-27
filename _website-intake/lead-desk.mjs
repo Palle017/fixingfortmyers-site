@@ -52,7 +52,7 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     }
   }
 
-  function addManual(input) {
+  function addManual(input, {afterInsert = null} = {}) {
     const name = text(input.name, 100), phone = text(input.phone, 40), details = text(input.details, 6000);
     if (!name && !phone) throw fail(400, 'Enter at least a name or a phone number.');
     if (phone && !/^\d{10,15}$/.test(phone.replace(/\D/g, ''))) throw fail(400, 'Enter a valid phone number.');
@@ -67,14 +67,20 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     try {
       db.prepare('INSERT INTO leads(id,received_at,kind,idempotency_key,payload_hash,payload_json,status,updated_at) VALUES(?,?,?,?,?,?,?,?)').run(id, received, 'manual', 'manual-' + id, hash, JSON.stringify(payload), LEGACY_STATUS[stage], stamp());
       db.prepare('INSERT INTO lead_pipeline(lead_id,stage,source,updated_at) VALUES(?,?,?,?)').run(id, 'new', source, stamp());
+      // A rejected stage (e.g. an estimate without Tony's approved price) rolls back the whole entry.
+      if (stage !== 'new') applyStage(id, {...input, stage, at: input.stageAt || received});
+      afterInsert?.(payload, id);
       db.exec('COMMIT');
     } catch (err) { db.exec('ROLLBACK'); throw err; }
-    if (stage !== 'new') setStage(id, {...input, stage, at: input.stageAt || received});
     return {ok: true, id};
   }
 
   function setStage(id, input) {
     sync();
+    return applyStage(id, input);
+  }
+
+  function applyStage(id, input) {
     const row = db.prepare('SELECT * FROM lead_pipeline WHERE lead_id=?').get(id);
     if (!row) throw fail(404, 'Lead not found.');
     const stage = input.stage;
@@ -105,20 +111,22 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
 
   // Beside -> Zapier "New Lead" / "Message" / "Call" webhook. Repeat contact from the same number within
   // 7 days is the same inquiry: it is logged as a touch instead of a new lead.
-  function besideHook(token, input) {
+  function besideHook(token, input, {afterInsert = null} = {}) {
     if (!besideToken || besideToken.length < 24) throw fail(404, 'Not found.');
     const a = createHash('sha256').update(String(token)).digest(), b = createHash('sha256').update(besideToken).digest();
     if (!timingSafeEqual(a, b)) throw fail(404, 'Not found.');
-    const phone = text(input.phone || input.from || input.contact_phone || input.phone_number, 40);
+    const rawPhone = text(input.phone || input.from || input.contact_phone || input.phone_number, 40);
+    // A withheld or garbled number is still an inquiry: keep the event, note what was shown.
+    const phone = /^\d{10,15}$/.test(rawPhone.replace(/\D/g, '')) ? rawPhone : '';
     const kind = /text|sms|message/i.test(String(input.type || input.event || '')) ? 'beside_text' : 'beside_call';
-    const note = text(input.summary || input.body || input.message || input.transcript || input.text, 6000);
+    const note = text((rawPhone && !phone ? `Caller ID shown: ${rawPhone}\n` : '') + (input.summary || input.body || input.message || input.transcript || input.text || ''), 6000);
     const key = digits(phone);
     if (key) {
       const recent = db.prepare("SELECT leads.id, leads.payload_json FROM leads JOIN lead_pipeline ON lead_pipeline.lead_id=leads.id WHERE leads.received_at>? ORDER BY leads.received_at DESC").all(new Date(now() - 7 * 86400000).toISOString())
         .find(row => digits(JSON.parse(row.payload_json).phone) === key);
       if (recent) { db.prepare('INSERT INTO lead_touches(lead_id,at,channel,note) VALUES(?,?,?,?)').run(recent.id, stamp(), kind, note.slice(0, 2000)); return {ok: true, id: recent.id, duplicate: true}; }
     }
-    return {...addManual({name: input.name || input.contact_name || 'Beside caller', phone, details: note, source: kind, vehicle: input.vehicle}), duplicate: false};
+    return {...addManual({name: input.name || input.contact_name || 'Beside caller', phone, details: note, source: kind, vehicle: input.vehicle}, {afterInsert}), duplicate: false};
   }
 
   function metrics() {

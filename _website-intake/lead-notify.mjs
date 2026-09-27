@@ -8,6 +8,7 @@ import tls from 'node:tls';
 import os from 'node:os';
 import {TONY_ALERT_NUMBER} from './lead-routing.mjs';
 import {createTwilioAlertAdapter} from './urgent-alerts.mjs';
+import {SOURCES} from './lead-desk.mjs';
 
 export const DEFAULT_ALERT_EMAILS = ['prudhvi.pallempati@gmail.com'];
 const DELAYS = [30000, 120000, 600000, 1800000, 3600000];
@@ -16,21 +17,23 @@ const yesNo = value => value === 'yes' ? 'Yes' : value === 'no' ? 'No' : 'Unknow
 export function summarize(lead, id, decision) {
   const urgent = decision?.priority === 'first';
   const title = `${urgent ? 'URGENT ' : ''}New repair request: ${lead.vehicle || 'vehicle not given'}`;
+  const source = SOURCES[lead.source] ? lead.source : lead.kind === 'voicenote' ? 'voice' : 'form';
+  // null = omitted line; '' = intentional blank separator.
   const lines = [
-    urgent ? 'FIRST PRIORITY: customer reports stranded and the vehicle does not start.' : '',
+    urgent ? 'FIRST PRIORITY: customer reports stranded and the vehicle does not start.' : null,
     `Name: ${lead.name}`,
-    `Callback: ${lead.phone} (${lead.smsConsent ? 'text OK' : 'call only, no text permission'})`,
+    lead.phone ? `Callback: ${lead.phone} (${lead.smsConsent ? 'text OK' : 'call only, no text permission'})` : 'Callback: no number given',
     `Vehicle: ${lead.vehicle || 'Not provided'}`,
     `Location: ${lead.city || 'Not provided'}`,
     `Starts: ${yesNo(lead.starts)} · Stranded: ${yesNo(lead.stranded)}`,
-    lead.callbackTime ? `Best time / notes: ${lead.callbackTime}` : '',
-    `Came from: ${lead.source === 'ai' ? 'Bay One chat' : lead.source === 'voice' ? 'voice note' : 'website form'}`,
+    lead.callbackTime ? `Best time / notes: ${lead.callbackTime}` : null,
+    `Came from: ${SOURCES[source]}`,
     '',
     'What the customer said:',
     (lead.details || 'Not provided').slice(0, 3000),
     '',
     `Lead ${id}`,
-  ].filter((line, index, all) => line !== '' || (index > 0 && all[index - 1] !== ''));
+  ].filter(line => line !== null);
   return {title, text: lines.join('\n'), urgent};
 }
 
@@ -84,7 +87,7 @@ export function createNtfyAdapter({topic, server = 'https://ntfy.sh', fetchImpl 
   return {
     name: 'push',
     async send({title, text, urgent, phone}) {
-      const headers = {Title: encodeURIComponent(title).length === title.length ? title : 'New repair request', Priority: urgent ? 'urgent' : 'high', Tags: urgent ? 'rotating_light' : 'wrench'};
+      const headers = {Title: title.replace(/[^\x20-\x7e]/g, '').trim() || 'New repair request', Priority: urgent ? 'urgent' : 'high', Tags: urgent ? 'rotating_light' : 'wrench'};
       if (phone) headers.Actions = `view, Call customer, tel:${phone.replace(/[^\d+]/g, '')}`;
       const response = await fetchImpl(`${server.replace(/\/$/, '')}/${topic}`, {method: 'POST', headers, body: text, signal: AbortSignal.timeout(10000)});
       if (!response.ok) throw Object.assign(Error('push_rejected'), {detail: String(response.status)});
