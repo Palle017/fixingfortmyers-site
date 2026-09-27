@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
-import {createOllamaProvider,createDefaultProvider,createDeepSeekProvider,createPublicChat} from './public-chat.mjs';
+import {createOllamaProvider,createDefaultProvider,createDeepSeekProvider,createPublicChat,INTAKE_SCHEMA} from './public-chat.mjs';
 
 const reply=(body,ok=true)=>({ok,text:async()=>JSON.stringify(body)});
 
@@ -15,7 +15,7 @@ test('Ollama provider posts a JSON-mode chat to loopback and returns parsed inta
     return reply({done:true,done_reason:'stop',prompt_eval_count:40,eval_count:12,message:{content:JSON.stringify({kind:'intake',relevant:true,intake:{vehicle:'Honda'}})}});}});
   const out=await provider({messages:[{role:'user',content:'My Honda will not start'}],canEstimate:false});
   assert.equal(calls[0].url,'http://127.0.0.1:11434/api/chat');
-  assert.equal(calls[0].body.model,'synthetic:model');assert.equal(calls[0].body.format,'json');assert.equal(calls[0].body.stream,false);assert.equal(calls[0].body.think,false);
+  assert.equal(calls[0].body.model,'synthetic:model');assert.deepEqual(calls[0].body.format,INTAKE_SCHEMA);assert.equal(calls[0].body.stream,false);assert.equal(calls[0].body.think,false);
   assert.equal(calls[0].body.messages[0].role,'system');assert.equal(calls[0].body.messages.at(-1).content,'My Honda will not start');
   assert.deepEqual(out.result.intake,{vehicle:'Honda'});assert.equal(out.usage.total_tokens,52);
 });

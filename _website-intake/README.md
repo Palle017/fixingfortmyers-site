@@ -38,8 +38,24 @@ Bay One's chat extraction uses DeepSeek's cloud API by default (`DEEPSEEK_API_KE
 | runtime.json `env` | The launcher copies these non-secret settings from an `env` object in `runtime.json` (see `runtime.example.json`). Never put API keys there. |
 | `OLLAMA_KEEP_ALIVE` | Optional, default `24h`. How long Ollama keeps the model loaded, so customers rarely hit a cold load. |
 | `OLLAMA_TIMEOUT_MS` / `CHAT_TIMEOUT_MS` | Optional, defaults 24000 / 25000. Keep both under 30000: the browser widget aborts at 35 s, and a server still working past that makes the customer's retry fail as pending. Warm the model after startup instead of raising these. |
+| `CHAT_MAX_CONCURRENT` | Optional. Model calls allowed at once; default 1 with Ollama (one GPU), 4 with DeepSeek. Extra chats get the scripted flow instead of waiting. |
+| `OLLAMA_FORMAT=json` | Optional. Ollama normally gets a JSON schema that limits the model to the intake fields. Set this only if an Ollama build rejects the schema; it falls back to plain JSON mode. |
 
 Vehicle, symptoms, city and callback time are kept only when they are the customer's exact words. A model that paraphrases them has that field dropped, and Bay One asks for it again; it is never stored.
+
+**Scripted fallback.** The model is optional; intake is not. When the model is down, slow, over its daily budget, busy with another customer, or returns unusable output, Bay One still answers: the customer's own reply fills the field it just asked about (yes/no/not sure for the status questions) and it asks the next question. Each reply carries `assist` (`model`, `rules` or `scripted`), and every fallback logs a `public_chat_scripted` event with the reason and no customer text.
+
+**Check a model before going live.** `golden-check.mjs` runs the 24 synthetic conversations in `golden-cases.json` through the real chat logic with the configured model, in a throwaway data directory, and reports which fields it got, how often it fell back to the script, and its latency:
+
+```text
+set BAYONE_PROVIDER=ollama
+set OLLAMA_MODEL=qwen3.5:4b
+node golden-check.mjs
+```
+
+It exits non-zero below an 80% pass rate or above a 20 s p95 (`--min-pass=0.9`, `--max-p95-ms=15000` to change them; `--json` for machine-readable output). A case fails if any turn fell back to the script, so a broken model cannot pass on the script's answers. Run it after changing models or Ollama versions.
+
+**Uptime.** The widget only shows Bay One when `GET /healthz` answers with `chat: "ready"`; otherwise the site keeps its call, text and form options. Point a free external uptime monitor at `https://<laptop>.<tailnet>.ts.net:10000/healthz` so someone hears when the laptop drops off.
 
 ## Endpoints
 
@@ -47,7 +63,7 @@ Public loopback listener: `127.0.0.1:18795`.
 
 | Method | Path | Behavior |
 | --- | --- | --- |
-| GET | `/healthz` | Minimal service health; no customer data. |
+| GET | `/healthz` | Minimal service health and whether chat started (`chat: "ready"` or `"unavailable"`); no customer data. Readable cross-origin by the shop origins so the widget can check it. |
 | POST | `/hooks/lead/webform` | JSON repair request. |
 | POST | `/hooks/lead/voicenote` | Multipart audio plus fields, or legacy raw audio with headers. |
 | OPTIONS | Either POST path | Browser CORS preflight for exact allowed origins. |
