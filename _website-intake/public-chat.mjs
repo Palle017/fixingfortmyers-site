@@ -18,7 +18,6 @@ export const PUBLIC_SHOP_PROFILE = Object.freeze({
 const TIMEZONE='America/New_York';
 const LIMIT=2;
 const MAX_MESSAGE=1600;
-const MAX_REPLY=1100;
 const MAX_OUTPUT=700;
 const error=(status,code,message,extra={})=>Object.assign(new Error(message),{status,code,...extra});
 const dayAt=ms=>new Intl.DateTimeFormat('en-CA',{timeZone:TIMEZONE,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));
@@ -33,32 +32,6 @@ const priceIntent=message=>{
   const physical=/\b(?:coolant|oil|fluid|fuel|water|air|voltage|current|pressure|capacity|charge|charging|amps?|volts?|quarts?|liters?|litres?|gallons?|temperature)\b/i;
   return /\b(?:how\s+much|cu[aá]nto)\b/i.test(message)&&!physical.test(message)||/\b(?:charge|charges|charged)\b.{0,35}\b(?:for|replace|repair|service)\b/i.test(message);
 };
-const moneyText=(value,{strictNumbers=true,arithmeticCurrency=false}={})=>{
-  let safe=String(value).replace(/\(?239\)?[ .-]*397[ .-]*2048/g,'shop phone');
-  if(!arithmeticCurrency&&/[$€£]|\b(?:USD|dollars?|bucks?)\b/i.test(safe))return true;
-  // Physical measurements and basic vehicle identifiers are useful in ordinary
-  // Q&A. Unqualified figures must use the quota-controlled estimate schema.
-  safe=safe.replace(/\b\d+(?:\.\d+)?\s*(?:AM|PM)\b/gi,'time');
-  const number='(?:\\d+(?:[.,]\\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)';
-  const units='(?:°\\s*[FC]|degrees?(?:\\s+[FC])?|volts?|[vmk]?v|amps?|[mk]?a|ohms?|psi|kpa|bar|rpm|mpg|miles?|kilometers?|km|mph|kph|liters?|litres?|[mcd]?l|quarts?|gallons?|ounces?|oz|pints?|percent|%|seconds?|minutes?|hours?|days?|weeks?|months?|years?|inches?|mm|cm|feet|ft|cylinders?|wheels?|tires?|tyres?|gears?|sensors?|codes?|bolts?|steps?)';
-  safe=safe.replace(new RegExp('\\b'+number+'(?:[ -]+(?:hundred|thousand))?(?:\\s*(?:[-–—]|to|through|and)\\s*'+number+')?\\s*'+units+'\\b','gi'),'measurement');
-  if(/\b(?:cost\w*|pric\w*|budget\w*)\b.{0,35}\b\d+/i.test(safe))return true;
-  if(!strictNumbers)return false;
-  safe=safe.replace(/\b(?:19|20)\d{2}\s+(?=(?:vehicle|car|truck|model|Mercedes|Benz|BMW|Ford|Chevrolet|Chevy|GMC|Dodge|Ram|Jeep|Honda|Acura|Toyota|Lexus|Nissan|Infiniti|Mazda|Subaru|Hyundai|Kia|Volkswagen|VW|Audi|Volvo|Porsche|Jaguar|Land Rover|Tesla|Buick|Cadillac|Chrysler|Mitsubishi)\b)/gi,'vehicle year ')
-    .replace(/\b(?:model year|built in|manufactured in)\s+(?:19|20)\d{2}\b/gi,'vehicle year')
-    .replace(/\b[PBCU]\d{4}\b/gi,'diagnostic code').replace(/^\s*\d+[.)]\s/gm,'');
-  return /\b\d+(?:[.,]\d+)?\b|\b(?:hundred|thousand)\b|\b(?:one|two|three|four|five|six|seven|eight|nine)[ -]+(?:ten|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)\b|\b(?:typically|usually|around|roughly|approximately|about|runs?)\b.{0,20}\b(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)\b/i.test(safe);
-};
-const noAction=value=>!/(?:\b(?:I|we)(?:'ve| have)?\s+(?:booked|scheduled|sent|emailed|created|saved|charged|ordered)\b|\bappointment (?:is )?confirmed\b)/i.test(value);
-function repairNumbersRequired(reply,messages=[]){
-  const question=messages.at(-1)?.content||'';
-  if(repairContext(question)||repairContext(reply)||priceIntent(question))return true;
-  if(standaloneGeneralQuestion(question))return false;
-  // Preserve repair context for short follow-ups, while a new standalone
-  // question about math, history, geography, etc. can contain ordinary numbers.
-  const followup=/\b(?:it|that|those|this|these|same|other|another)\b|^\s*(?:and\b|also\b|again\b|continue\b|go on\b)|\b(?:just|only)\s+(?:the\s+)?(?:number|figure|amount)|\b(?:second|third|next)\s+one\b/i.test(question);
-  return followup&&messages.slice(-3,-1).some(row=>repairContext(row.content)||priceIntent(row.content));
-}
 
 export function networkKey(ip){
   if(!isIP(ip))return 'unknown';
@@ -93,6 +66,40 @@ export function createDeepSeekProvider({apiKey=process.env.DEEPSEEK_API_KEY,fetc
   };
 }
 
+// Ollama constrains generation to this schema, so small local models cannot add keys or invent status values.
+const FREE_TEXT={type:['string','null']},STATUS={enum:['yes','no','unknown',null]};
+export const INTAKE_SCHEMA=Object.freeze({type:'object',additionalProperties:false,required:['kind','relevant','intake'],properties:{
+  kind:{enum:['intake']},relevant:{type:'boolean'},
+  intake:{type:'object',additionalProperties:false,properties:{vehicle:FREE_TEXT,details:FREE_TEXT,city:FREE_TEXT,starts:STATUS,stranded:STATUS,drivable:STATUS,callbackTime:FREE_TEXT}},
+}});
+
+// Local Ollama on the same machine. The model never leaves loopback; only this server reaches it.
+// OLLAMA_FORMAT=json falls back to plain JSON mode if an Ollama build rejects the schema.
+export function createOllamaProvider({baseUrl=process.env.OLLAMA_HOST||'http://127.0.0.1:11434',model=process.env.OLLAMA_MODEL,fetchImpl=fetch,timeoutMs=Number(process.env.OLLAMA_TIMEOUT_MS||24000),keepAlive=process.env.OLLAMA_KEEP_ALIVE||'24h',format=process.env.OLLAMA_FORMAT==='json'?'json':INTAKE_SCHEMA}={}){
+  return async ({messages,canEstimate})=>{
+    if(!model)throw error(503,'chat_unavailable','Bay One is temporarily unavailable. Please call the shop.');
+    let response;
+    try{
+      response=await fetchImpl(String(baseUrl).replace(/\/$/,'')+'/api/chat',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model,stream:false,think:false,format,keep_alive:keepAlive,options:{temperature:0.3,num_predict:MAX_OUTPUT},
+          messages:[{role:'system',content:buildPrompt(canEstimate)},...messages]}),
+        signal:AbortSignal.timeout(timeoutMs),
+      });
+    }catch{throw error(503,'chat_unavailable','Bay One is temporarily unavailable. Please try again later or call the shop.');}
+    if(!response.ok)throw error(503,'chat_unavailable','Bay One is temporarily unavailable. Please try again later or call the shop.');
+    const raw=await response.text();if(raw.length>100000)throw error(503,'invalid_answer','Bay One could not finish this answer.');
+    let body,result;try{body=JSON.parse(raw);result=JSON.parse(body.message?.content||'');}catch{throw error(503,'invalid_answer','Bay One could not finish this answer.');}
+    if(body.done!==true||(body.done_reason&&body.done_reason!=='stop'))throw error(503,'invalid_answer','Bay One could not finish this answer. Please try a shorter question.');
+    const prompt=Number(body.prompt_eval_count)||0,completion=Number(body.eval_count)||0;
+    return {result,usage:{prompt_tokens:prompt,completion_tokens:completion,total_tokens:prompt+completion}};
+  };
+}
+
+export function createDefaultProvider(options={}){
+  return (options.providerName??process.env.BAYONE_PROVIDER)==='ollama'?createOllamaProvider(options):createDeepSeekProvider(options);
+}
+
 const INTAKE_LIMITS={vehicle:160,details:6000,city:100,starts:7,stranded:7,drivable:7,callbackTime:160};
 const QUESTIONS={details:'What is happening with your vehicle?',vehicle:'What is the vehicle year, make and model? Share what you know.',starts:'Does the vehicle start? Yes, no, or unknown?',stranded:'Are you currently stranded? Yes, no, or unknown?',city:'What city or ZIP code is the vehicle in?'};
 const nextField=intake=>Object.keys(QUESTIONS).find(key=>!intake[key])||null;
@@ -105,11 +112,24 @@ function safeResult(result,messages=[],collected={}){
     if(value===null||value==='')continue;
     if(typeof value!=='string'||value.length>INTAKE_LIMITS[key]||/[<>\u0000-\u001f]/.test(value))throw error(503,'invalid_answer','Bay One could not finish this intake answer.');
     if(['starts','stranded','drivable'].includes(key)){if(!['yes','no','unknown'].includes(value))throw error(503,'invalid_answer','Please confirm the vehicle status in the form.');}
-    else if(!messages.some(row=>row.role==='user'&&row.content.toLowerCase().includes(value.toLowerCase())))throw error(503,'invalid_answer','Please confirm your details in the form.');
+    // Free-text fields must be the customer's own words; paraphrased or invented values are dropped, not stored.
+    else if(!messages.some(row=>row.role==='user'&&row.content.toLowerCase().includes(value.trim().toLowerCase())))continue;
     intake[key]=value.trim();
   }
   const next=nextField(intake),safety=hazard(messages.at(-1)?.content||'')?'Stop using the vehicle and seek appropriate emergency or roadside help. ':'';
   return {kind:'intake',intake,nextField:next,ready:!next,reply:safety+(!result.relevant?'I can only help collect a repair inquiry for Tony. ':'')+(next?QUESTIONS[next]:'Review these details in the repair form, add your callback information and permission, then submit. Nothing has been received or sent to Tony yet.')};
+}
+
+// Scripted mode: when the model is unavailable, over capacity or returns unusable output, the
+// customer's own answer fills the field just asked, so intake keeps moving without the model.
+function scriptedAnswer(next,message){
+  if(!next)return {kind:'intake',relevant:true,intake:{}};
+  if(['starts','stranded','drivable'].includes(next)){
+    const answer=/^\s*(?:i (?:do not|don.t) know|not sure|no idea|unsure|idk|unknown)\b/i.test(message)?'unknown':/^\s*(?:yes|yeah|yep|yup|y)\b/i.test(message)?'yes':/^\s*(?:no|nope|nah|n)\b/i.test(message)?'no':null;
+    return {kind:'intake',relevant:true,intake:answer?{[next]:answer}:{}};
+  }
+  const value=message.slice(0,INTAKE_LIMITS[next]).trim();
+  return {kind:'intake',relevant:true,intake:/[<>]/.test(value)?{}:{[next]:value}};
 }
 
 export function createPublicChat(options={}){
@@ -132,9 +152,10 @@ export function createPublicChat(options={}){
       WHERE state='done' AND NOT EXISTS(SELECT 1 FROM chat_metric_migrations WHERE id='v1') GROUP BY quota_day;
     INSERT OR IGNORE INTO chat_metric_migrations(id) VALUES('v1');
     COMMIT;`);
-  const now=options.now||Date.now,provider=options.provider||createDeepSeekProvider(options);
+  const now=options.now||Date.now,provider=options.provider||createDefaultProvider(options);
   const dailyBudget=options.dailyTokenBudget??120000,maxDailyRequests=options.maxDailyRequests??200,requestBudget=options.requestTokenBudget??12000;
-  const maxConcurrent=options.maxConcurrent??4,timeoutMs=options.timeoutMs??25000;
+  // One local GPU answers one chat at a time; extra chats get the scripted flow instead of waiting.
+  const maxConcurrent=options.maxConcurrent??Number(process.env.CHAT_MAX_CONCURRENT||((options.providerName??process.env.BAYONE_PROVIDER)==='ollama'?1:4)),timeoutMs=options.timeoutMs??Number(process.env.CHAT_TIMEOUT_MS||25000);
   function prune(){
     db.prepare('DELETE FROM chat_requests WHERE created<?').run(now()-7*86400000);
     db.prepare('DELETE FROM chat_rates WHERE window<?').run(Math.floor(now()/60000)-2);
@@ -166,23 +187,24 @@ export function createPublicChat(options={}){
     if(input.mode==='estimate')throw error(400,'intake_only','Bay One collects repair inquiries. Tony confirms prices and dispatches; use the repair form.');
     const requestId=digest(ids.visitor+':'+input.request_id),payloadHash=digest(JSON.stringify({message:messageText,mode:input.mode||'chat'}));
     const wantsEstimate=false,day=dayAt(now());
-    const cached=tx(()=>{
+    const admission=tx(()=>{
       db.prepare("UPDATE chat_requests SET state='expired',estimate_count=0 WHERE state='pending' AND expires<=?").run(now());
       db.prepare('DELETE FROM chat_rates WHERE window<?').run(Math.floor(now()/60000)-2);
       db.prepare('DELETE FROM chat_requests WHERE created<?').run(now()-7*86400000);
       const prior=db.prepare('SELECT * FROM chat_requests WHERE id=?').get(requestId);
-      if(prior){if(prior.payload_hash!==payloadHash)throw error(409,'request_changed','This message changed. Send it with a new request ID.');if(prior.state==='done')return JSON.parse(prior.response);if(prior.state==='pending')throw error(409,'request_pending','Bay One is still answering this message.',{retry_after:3});throw error(503,'request_failed','This message could not be completed. Send a new message to try again.');}
+      if(prior){if(prior.payload_hash!==payloadHash)throw error(409,'request_changed','This message changed. Send it with a new request ID.');if(prior.state==='done')return {cached:JSON.parse(prior.response)};if(prior.state==='pending')throw error(409,'request_pending','Bay One is still answering this message.',{retry_after:3});throw error(503,'request_failed','This message could not be completed. Send a new message to try again.');}
       rate('messages:global',80);rate('messages:'+ids.network,8);rate('visitor:'+ids.visitor,6);
       const allowance=usage(ids);if(wantsEstimate&&allowance.remaining===0)throw error(429,'estimate_limit','Your two rough estimates for today are used. You can still ask general questions or call the shop for pricing.',{usage:allowance});
       const pending=db.prepare("SELECT count(*) AS n FROM chat_requests WHERE state='pending' AND expires>?").get(now()).n;
       const busy=db.prepare("SELECT count(*) AS n FROM chat_requests WHERE state='pending' AND expires>? AND (visitor=? OR network=?)").get(now(),ids.visitor,ids.network).n;
-      if(pending>=maxConcurrent||busy>=1)throw error(429,'busy','Bay One is answering another question. Please try again shortly.',{retry_after:3});
+      if(busy>=1)throw error(429,'busy','Bay One is answering another question. Please try again shortly.',{retry_after:3});
       const budget=db.prepare('SELECT coalesce(sum(budget),0) AS tokens,count(*) AS calls FROM chat_requests WHERE day=?').get(day);
-      if(budget.tokens+requestBudget>dailyBudget||budget.calls>=maxDailyRequests)throw error(503,'daily_capacity','Bay One has reached today’s public chat capacity. Please call the shop.');
-      db.prepare('INSERT INTO chat_requests(id,visitor,network,day,quota_day,payload_hash,state,estimate_count,budget,created,expires,message)VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(requestId,ids.visitor,ids.network,day,day,payloadHash,'pending',wantsEstimate?1:0,requestBudget,now(),now()+timeoutMs+5000,messageText);
-      return null;
+      // Past model capacity the scripted flow still answers, so the customer is never turned away.
+      const overCapacity=pending>=maxConcurrent||budget.tokens+requestBudget>dailyBudget||budget.calls>=maxDailyRequests;
+      db.prepare('INSERT INTO chat_requests(id,visitor,network,day,quota_day,payload_hash,state,estimate_count,budget,created,expires,message)VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(requestId,ids.visitor,ids.network,day,day,payloadHash,'pending',wantsEstimate?1:0,overCapacity?0:requestBudget,now(),now()+timeoutMs+5000,messageText);
+      return {overCapacity};
     });
-    if(cached)return {...cached,usage:usage(ids),duplicate:true};
+    if(admission.cached)return {...admission.cached,usage:usage(ids),duplicate:true};
     let timer;
     try{
       const history=db.prepare("SELECT message,response FROM chat_requests WHERE visitor=? AND state='done' AND created>? ORDER BY created DESC,rowid DESC LIMIT 4").all(ids.visitor,now()-1800000).reverse();
@@ -199,18 +221,25 @@ export function createPublicChat(options={}){
       else if(/ignore (?:all |the |your |previous )*(?:instructions|rules)|system prompt|developer message|change (?:the )?recipient|send (?:this|leads|data) to/i.test(messageText)||priceIntent(messageText))direct={kind:'intake',relevant:false,intake:{}};
       else if(next&&/^(?:i (?:do not|don.t) know|not sure|unknown|unsure|idk|skip)[.! ]*$/i.test(messageText))direct={kind:'intake',relevant:true,intake:{[next]:['starts','stranded','drivable'].includes(next)?'unknown':messageText}};
       else if(['starts','stranded','drivable'].includes(next)&&/^(?:yes|no)[.! ]*$/i.test(messageText))direct={kind:'intake',relevant:true,intake:{[next]:messageText.replace(/[.! ]/g,'').toLowerCase()}};
-      const generated=direct||await Promise.race([provider({messages,canEstimate}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(error(503,'chat_timeout','Bay One took too long to answer. Please try again later.')),timeoutMs);})]);
-      const safe=safeResult(generated.result??generated,messages,collected);
+      let generated=direct,providerCalled=false,fallback=!direct&&admission.overCapacity?'capacity':null,safe;
+      if(!generated&&!fallback){
+        providerCalled=true;
+        try{generated=await Promise.race([provider({messages,canEstimate}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(error(503,'chat_timeout','Bay One took too long to answer.')),timeoutMs);})]);}
+        catch(err){fallback=err.code||'provider_error';}
+      }
+      if(generated){try{safe=safeResult(generated.result??generated,messages,collected);}catch(err){if(direct)throw err;fallback=err.code||'invalid_answer';}}
+      if(fallback){safe=safeResult(scriptedAnswer(next,messageText),messages,collected);console.error(JSON.stringify({event:'public_chat_scripted',reason:fallback}));}
+      const assist=fallback?'scripted':direct?'rules':'model';
       const response=tx(()=>{
         const current=db.prepare('SELECT state FROM chat_requests WHERE id=?').get(requestId);if(current?.state!=='pending')throw error(503,'request_failed','This message expired. Send a new message.');
         if(safe.kind==='estimate'&&(!reserved||day!==dayAt(now()))&&usage(ids).remaining===0)throw error(429,'estimate_limit','Your two rough estimates for today are used. General questions are still available.',{usage:usage(ids)});
-        const reportedTokens=generated.usage?.total_tokens;
-        const chargedBudget=Number.isSafeInteger(reportedTokens)&&reportedTokens>0&&reportedTokens<=requestBudget?reportedTokens:requestBudget;
+        const reportedTokens=generated?.usage?.total_tokens;
+        const chargedBudget=!providerCalled?0:Number.isSafeInteger(reportedTokens)&&reportedTokens>0&&reportedTokens<=requestBudget?reportedTokens:requestBudget;
         db.prepare('UPDATE chat_requests SET state=?,estimate_count=?,quota_day=?,budget=? WHERE id=?').run('done',safe.kind==='estimate'?1:0,dayAt(now()),chargedBudget,requestId);
         db.prepare(`INSERT INTO chat_metric_days(day,messages,estimates) VALUES(?,1,?)
           ON CONFLICT(day) DO UPDATE SET messages=messages+1,estimates=estimates+excluded.estimates`)
           .run(dayAt(now()),safe.kind==='estimate'?1:0);
-        const result={ok:true,...safe,usage:usage(ids),afterHoursAssistance:isAfterHours(now())};
+        const result={ok:true,...safe,assist,usage:usage(ids),afterHoursAssistance:isAfterHours(now())};
         db.prepare('UPDATE chat_requests SET response=? WHERE id=?').run(JSON.stringify(result),requestId);
         return result;
       });return response;

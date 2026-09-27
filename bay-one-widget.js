@@ -6,49 +6,9 @@
   if (config.enabled !== true) return;
   if (document.getElementById('bay-one-widget')) return;
   const script = document.currentScript;
-  const apiBase = String(config.endpoint || window.PT_CONTACT_CONFIG?.endpoint || 'https://redline.taild5f39d.ts.net:10000').replace(/\/$/, '');
-  const customAvatar = config.avatar || script?.dataset.avatar;
-  const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
-  const css = document.createElement('link');
-  css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260924-growth-v2', script?.src || location.href).href;
-  document.head.append(css);
-  const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
-  widget.setAttribute('aria-label', 'Bay One repair assistant');
-  const portrait = `<span class="b1-avatar${customAvatar ? '' : ' b1-avatar-sheet'}" aria-hidden="true"><span class="b1-monogram">B1</span></span>`;
-  widget.innerHTML = `
-    <button class="b1-launcher" type="button" aria-label="Ask Bay One, the AI repair assistant" aria-expanded="false" aria-controls="b1-panel">
-      ${portrait}<span class="b1-launcher-copy"><small><i class="b1-dot"></i> Here to help</small><strong><img class="b1-logo" src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">Ask Bay One</strong><span>Describe your problem · Reach Tony</span></span>
-    </button>
-    <section class="b1-panel" id="b1-panel" role="dialog" aria-label="Chat with Bay One" hidden>
-      <header class="b1-header">${portrait}<div class="b1-brand"><h2 class="b1-title"><img class="b1-wordmark" src="/assets/bay-one-wordmark-20260908.jpg" alt="Bay One AI" width="1280" height="960"></h2><p class="b1-subtitle">Tony’s automated repair intake</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
-      <div class="b1-allowance">Tony reviews your inquiry · Booking is not confirmed</div>
-      <div class="b1-messages" role="log" aria-label="Conversation with Bay One" aria-live="polite" aria-relevant="additions text"></div>
-      <div class="b1-suggestions"><button type="button" data-b1-suggestion="question">Describe the problem</button></div>
-      <form class="b1-composer">
-        <label class="b1-field-label" for="b1-message">What is happening with your vehicle?</label>
-        <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Describe the problem. Partial vehicle details are okay." required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
-        <div class="b1-status" role="status" aria-live="polite"></div>
-      </form>
-      <footer class="b1-footer"><span>Review your details before sending. <a href="/privacy-policy.html">Chat privacy</a> · <a href="tel:+12393972048">Call Tony</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
-    </section>`;
-  document.body.append(widget);
-  const $ = selector => widget.querySelector(selector);
-  const launcher = $('.b1-launcher'), panel = $('.b1-panel'), input = $('#b1-message');
-  const messages = $('.b1-messages'), status = $('.b1-status');
-  const sendButton = $('.b1-send');
-  let opener = launcher;
-  const entryButtons = [launcher];
-  const storageKey = 'pt-bayone-visitor-v1';
-  const state = { token: '', sessionReady: false, sessionPromise: null, busy: false, mode: 'chat', failed: null, customerMessages:[], intake:{} };
-  try { state.token = localStorage.getItem(storageKey) || ''; } catch (_) { /* The server also enforces the allowance by network. */ }
-  const uuid = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const n = crypto.getRandomValues(new Uint8Array(1))[0] & 15; return (c === 'x' ? n : ((n & 3) | 8)).toString(16); });
-
-  if (avatarUrl) widget.querySelectorAll('.b1-avatar').forEach(container => {
-    const img = document.createElement('img'); img.src = avatarUrl; img.alt = ''; img.decoding = 'async';
-    img.addEventListener('load', () => container.classList.add('has-image'));
-    img.addEventListener('error', () => img.remove()); container.append(img);
-  });
-
+  const apiBase = String(config.endpoint || window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
+  if (!apiBase) return;
+  // Notes carried from Bay One on another page are restored even if the server is now unreachable.
   const handoffKey = 'pt-bayone-service-draft-v1';
   function prefillService(summary, service, fields = {}) {
     const details = document.getElementById('request-details');
@@ -80,134 +40,187 @@
     if (saved && Date.now() - saved.at < 30*60*1000 && typeof saved.summary === 'string' && prefillService(saved.summary,saved.service,saved.intake || {})) sessionStorage.removeItem(handoffKey);
   } catch (_) { /* An explicit service handoff still works without storage. */ }
 
-  function handoff(event) {
-    const notes = [...state.customerMessages];
-    const unsent = input.value.trim();
-    if (unsent && notes.at(-1) !== unsent) notes.push(unsent);
-    const summary = notes.length ? `Customer notes from Bay One:\n${notes.join('\n\n')}` : '';
-    const service = window.PT_REPAIR_CONTEXT?.service || '';
-    const samePage = summary && prefillService(summary,service,state.intake);
-    close();
-    if (samePage) { event.preventDefault(); location.hash = 'contact'; document.getElementById('bookingForm').scrollIntoView({behavior:'auto',block:'start'}); document.getElementById('request-name')?.focus({preventScroll:true}); }
-    else if (summary) { try { sessionStorage.setItem(handoffKey,JSON.stringify({at:Date.now(),summary,service,intake:state.intake})); } catch (_) { status.textContent = 'Your browser could not carry the notes to the form. Copy the important details before switching.'; event.preventDefault(); open(); } }
-  }
+  // Only offer Bay One when its server answers; otherwise the page keeps its call, text and form options.
+  const controller = new AbortController(), healthTimer = setTimeout(() => controller.abort(), 6000);
+  fetch(apiBase+'/healthz', { credentials:'omit', cache:'no-store', signal:controller.signal })
+    .then(response => response.ok ? response.json() : null)
+    .then(health => { if (health?.ok === true && health.chat !== 'unavailable' && !document.getElementById('bay-one-widget')) mount(); })
+    .catch(() => { /* Unreachable: leave the page's normal contact options as they are. */ })
+    .finally(() => clearTimeout(healthTimer));
 
-  function addMessage(speaker, text, requestText) {
-    const row = document.createElement('div'); row.className = `b1-message b1-${speaker}`;
-    const label = document.createElement('span'); label.className = 'b1-message-label'; label.textContent = speaker === 'user' ? 'YOU' : 'BAY ONE';
-    const body = document.createElement('p'); body.textContent = String(text || '').slice(0, 20000);
-    row.append(label, body);
-    if (speaker === 'assistant' && requestText) {
-      const service = document.createElement('a'); service.className = 'b1-request-service'; service.href = '/#contact'; service.textContent = 'Review details for Tony ↗';
-      service.addEventListener('click',handoff); row.append(service);
+  function mount() {
+    const customAvatar = config.avatar || script?.dataset.avatar;
+    const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
+    const css = document.createElement('link');
+    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260927-bay-one-v1', script?.src || location.href).href;
+    document.head.append(css);
+    const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
+    widget.setAttribute('aria-label', 'Bay One repair assistant');
+    const portrait = `<span class="b1-avatar${customAvatar ? '' : ' b1-avatar-sheet'}" aria-hidden="true"><span class="b1-monogram">B1</span></span>`;
+    widget.innerHTML = `
+      <button class="b1-launcher" type="button" aria-label="Ask Bay One, the AI repair assistant" aria-expanded="false" aria-controls="b1-panel">
+        ${portrait}<span class="b1-launcher-copy"><small><i class="b1-dot"></i> Here to help</small><strong><img class="b1-logo" src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">Ask Bay One</strong><span>Describe your problem · Reach Tony</span></span>
+      </button>
+      <section class="b1-panel" id="b1-panel" role="dialog" aria-label="Chat with Bay One" hidden>
+        <header class="b1-header">${portrait}<div class="b1-brand"><h2 class="b1-title"><img class="b1-wordmark" src="/assets/bay-one-wordmark-20260908.jpg" alt="Bay One AI" width="1280" height="960"></h2><p class="b1-subtitle">Tony’s automated repair intake</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
+        <div class="b1-allowance">Tony reviews your inquiry · Booking is not confirmed</div>
+        <div class="b1-messages" role="log" aria-label="Conversation with Bay One" aria-live="polite" aria-relevant="additions text"></div>
+        <div class="b1-suggestions"><button type="button" data-b1-suggestion="question">Describe the problem</button></div>
+        <form class="b1-composer">
+          <label class="b1-field-label" for="b1-message">What is happening with your vehicle?</label>
+          <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Describe the problem. Partial vehicle details are okay." required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+          <div class="b1-status" role="status" aria-live="polite"></div>
+        </form>
+        <footer class="b1-footer"><span>Review your details before sending. <a href="/privacy-policy.html">Chat privacy</a> · <a href="tel:+12393972048">Call Tony</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
+      </section>`;
+    document.body.append(widget);
+    const $ = selector => widget.querySelector(selector);
+    const launcher = $('.b1-launcher'), panel = $('.b1-panel'), input = $('#b1-message');
+    const messages = $('.b1-messages'), status = $('.b1-status');
+    const sendButton = $('.b1-send');
+    let opener = launcher;
+    const entryButtons = [launcher];
+    const storageKey = 'pt-bayone-visitor-v1';
+    const state = { token: '', sessionReady: false, sessionPromise: null, busy: false, mode: 'chat', failed: null, customerMessages:[], intake:{} };
+    try { state.token = localStorage.getItem(storageKey) || ''; } catch (_) { /* The server also enforces the allowance by network. */ }
+    const uuid = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const n = crypto.getRandomValues(new Uint8Array(1))[0] & 15; return (c === 'x' ? n : ((n & 3) | 8)).toString(16); });
+
+    if (avatarUrl) widget.querySelectorAll('.b1-avatar').forEach(container => {
+      const img = document.createElement('img'); img.src = avatarUrl; img.alt = ''; img.decoding = 'async';
+      img.addEventListener('load', () => container.classList.add('has-image'));
+      img.addEventListener('error', () => img.remove()); container.append(img);
+    });
+
+    function handoff(event) {
+      const notes = [...state.customerMessages];
+      const unsent = input.value.trim();
+      if (unsent && notes.at(-1) !== unsent) notes.push(unsent);
+      const summary = notes.length ? `Customer notes from Bay One:\n${notes.join('\n\n')}` : '';
+      const service = window.PT_REPAIR_CONTEXT?.service || '';
+      const samePage = summary && prefillService(summary,service,state.intake);
+      close();
+      if (samePage) { event.preventDefault(); location.hash = 'contact'; document.getElementById('bookingForm').scrollIntoView({behavior:'auto',block:'start'}); document.getElementById('request-name')?.focus({preventScroll:true}); }
+      else if (summary) { try { sessionStorage.setItem(handoffKey,JSON.stringify({at:Date.now(),summary,service,intake:state.intake})); } catch (_) { status.textContent = 'Your browser could not carry the notes to the form. Copy the important details before switching.'; event.preventDefault(); open(); } }
     }
-    messages.append(row); messages.scrollTop = messages.scrollHeight;
-    return row;
-  }
 
-  async function request(path, body) {
-    if (!apiBase) throw new Error('Bay One’s connection is not configured. You can still contact the shop.');
-    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 35000);
-    try {
-      const response = await fetch(apiBase+path, { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:controller.signal });
-      let data;
-      try { data = await response.json(); } catch (_) { throw new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'Bay One’s reply could not be confirmed. Your message is still here.'); }
-      if (!response.ok || data.ok !== true) {
-        const error = new Error(String(data.error || 'Bay One is unavailable at the moment. Please try again or contact the shop.'));
-        error.code = data.code; error.usage = data.usage; error.retryAfter = data.retry_after; throw error;
+    function addMessage(speaker, text, requestText) {
+      const row = document.createElement('div'); row.className = `b1-message b1-${speaker}`;
+      const label = document.createElement('span'); label.className = 'b1-message-label'; label.textContent = speaker === 'user' ? 'YOU' : 'BAY ONE';
+      const body = document.createElement('p'); body.textContent = String(text || '').slice(0, 20000);
+      row.append(label, body);
+      if (speaker === 'assistant' && requestText) {
+        const service = document.createElement('a'); service.className = 'b1-request-service'; service.href = '/#contact'; service.textContent = 'Review details for Tony ↗';
+        service.addEventListener('click',handoff); row.append(service);
       }
-      return data;
-    } catch (error) {
-      if (error.name === 'AbortError') throw new Error(path === '/chat/session' ? 'Bay One could not connect in time. Try again, use the repair form or call the shop.' : 'Bay One took too long to reply. Send again to retry the same request, or contact the shop.');
-      if (error instanceof TypeError) throw new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'The connection dropped. Your message is preserved. Send again to retry, or contact the shop.');
-      throw error;
-    } finally { clearTimeout(timer); }
-  }
+      messages.append(row); messages.scrollTop = messages.scrollHeight;
+      return row;
+    }
 
-  async function session() {
-    if (state.sessionReady) return;
-    if (state.sessionPromise) return state.sessionPromise;
-    state.sessionPromise = request('/chat/session', { visitor_token:state.token || undefined }).then(result => {
-      if (typeof result.visitor_token !== 'string' || !result.visitor_token) throw new Error('Bay One could not start this conversation. Please try again.');
-      state.token = result.visitor_token; state.sessionReady = true;
-      try { localStorage.setItem(storageKey, state.token); } catch (_) { /* Continue with the current tab’s token. */ }
-    }).finally(() => { state.sessionPromise = null; });
-    return state.sessionPromise;
-  }
-
-  function busy(value) {
-    state.busy = value; input.disabled = value; sendButton.disabled = value;
-    widget.dataset.avatarState = value ? 'thinking' : 'idle';
-    sendButton.setAttribute('aria-label', value ? 'Waiting for Bay One' : 'Send message to Bay One');
-  }
-
-  function open(event) {
-    opener = event?.currentTarget instanceof HTMLElement ? event.currentTarget : document.activeElement;
-    panel.hidden = false; launcher.hidden = true; launcher.setAttribute('aria-expanded','true');
-    entryButtons.forEach(button => button.setAttribute('aria-expanded','true'));
-    $('.b1-close').focus({preventScroll:true}); viewport();
-    if (!state.sessionReady) { status.textContent = 'Connecting to Bay One…'; session().then(() => { if (!state.busy) status.textContent = ''; }).catch(error => { status.textContent = error.message; }); }
-  }
-  function close() { panel.hidden = true; launcher.hidden = false; entryButtons.forEach(button => button.setAttribute('aria-expanded','false')); (opener?.isConnected ? opener : launcher).focus({preventScroll:true}); viewport(); }
-  launcher.addEventListener('click', open); $('.b1-close').addEventListener('click', close);
-  $('.b1-contact').addEventListener('click',event => handoff(event));
-  const formLauncher = document.getElementById('request-bay-one');
-  if (formLauncher) { formLauncher.hidden = false; formLauncher.setAttribute('aria-controls','b1-panel'); formLauncher.setAttribute('aria-expanded','false'); entryButtons.push(formLauncher); formLauncher.addEventListener('click',open); }
-  const contactBar = document.querySelector('.mobile-contact-bar');
-  if (contactBar) {
-    const barLauncher = document.createElement('button'); barLauncher.type = 'button'; barLauncher.className = 'b1-bar-launcher'; barLauncher.textContent = 'Ask Bay One'; barLauncher.setAttribute('aria-controls','b1-panel'); barLauncher.setAttribute('aria-expanded','false');
-    barLauncher.addEventListener('click',open); entryButtons.push(barLauncher); contactBar.append(barLauncher); contactBar.classList.add('has-bay-one'); widget.classList.add('b1-has-contact-bar');
-  }
-  widget.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); close(); } });
-  input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('.b1-composer').requestSubmit(); } });
-  widget.querySelectorAll('[data-b1-suggestion]').forEach(button => button.addEventListener('click', () => input.focus()));
-
-  $('.b1-composer').addEventListener('submit', async event => {
-    event.preventDefault(); if (state.busy) return;
-    const text = input.value.trim(); if (!text) return;
-    const retry = state.failed && state.failed.message === text && state.failed.mode === state.mode;
-    const pending = retry ? state.failed : { request_id:uuid(), message:text, mode:state.mode };
-    if (!retry) { addMessage('user',text); state.customerMessages.push(text); }
-    $('.b1-contact').textContent = 'Review details for Tony ↗';
-    $('.b1-suggestions').hidden = true; busy(true); status.textContent = 'Bay One is replying…';
-    try {
-      await session();
-      const result = await request('/chat/message', { ...pending, visitor_token:state.token });
-      if (typeof result.reply !== 'string' || !result.reply.trim()) throw new Error('Bay One’s reply was empty. Your message is preserved; send again to retry.');
-      if (result.intake && typeof result.intake === 'object') {
-        for (const [name,limit] of [['vehicle',160],['city',100],['starts',7],['stranded',7]]) {
-          const value = result.intake[name];
-          if (typeof value !== 'string' || value.length > limit || (['starts','stranded'].includes(name) && !['yes','no','unknown'].includes(value))) continue;
-          state.intake[name] = value;
+    async function request(path, body) {
+      if (!apiBase) throw new Error('Bay One’s connection is not configured. You can still contact the shop.');
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 35000);
+      try {
+        const response = await fetch(apiBase+path, { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:controller.signal });
+        let data;
+        try { data = await response.json(); } catch (_) { throw new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'Bay One’s reply could not be confirmed. Your message is still here.'); }
+        if (!response.ok || data.ok !== true) {
+          const error = new Error(String(data.error || 'Bay One is unavailable at the moment. Please try again or contact the shop.'));
+          error.code = data.code; error.usage = data.usage; error.retryAfter = data.retry_after; throw error;
         }
-      }
-      addMessage('assistant',result.reply,pending.message); state.failed = null; input.value = ''; status.textContent = '';
-    } catch (error) {
-      state.failed = !error.code || error.code === 'request_pending' ? pending : null;
-      if (error.code === 'invalid_session') {
-        state.sessionReady = false; state.token = '';
-        try { localStorage.removeItem(storageKey); } catch (_) { /* The next request will still create a fresh session. */ }
-      }
-      status.textContent = error.message;
-      if (error.code === 'rate_limit' && error.retryAfter) status.textContent += ` Try again in about ${Math.ceil(Number(error.retryAfter))} seconds.`;
-    } finally {
-      busy(false); if (!panel.hidden && matchMedia('(pointer:fine)').matches) input.focus({preventScroll:true});
+        return data;
+      } catch (error) {
+        if (error.name === 'AbortError') throw new Error(path === '/chat/session' ? 'Bay One could not connect in time. Try again, use the repair form or call the shop.' : 'Bay One took too long to reply. Send again to retry the same request, or contact the shop.');
+        if (error instanceof TypeError) throw new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'The connection dropped. Your message is preserved. Send again to retry, or contact the shop.');
+        throw error;
+      } finally { clearTimeout(timer); }
     }
-  });
 
-  function viewport() {
-    const vv = window.visualViewport;
-    widget.style.setProperty('--b1-viewport-height', `${vv?.height || window.innerHeight}px`);
-    const mobile = matchMedia('(max-width:800px)').matches;
-    const keyboard = vv ? Math.max(0, window.innerHeight-vv.height-vv.offsetTop) : 0;
-    widget.style.bottom = keyboard > 120 && !panel.hidden ? `${keyboard+12}px` : '';
-    if (mobile && keyboard > 120) panel.style.height = `${Math.max(180,vv.height-24)}px`; else panel.style.height = '';
+    async function session() {
+      if (state.sessionReady) return;
+      if (state.sessionPromise) return state.sessionPromise;
+      state.sessionPromise = request('/chat/session', { visitor_token:state.token || undefined }).then(result => {
+        if (typeof result.visitor_token !== 'string' || !result.visitor_token) throw new Error('Bay One could not start this conversation. Please try again.');
+        state.token = result.visitor_token; state.sessionReady = true;
+        try { localStorage.setItem(storageKey, state.token); } catch (_) { /* Continue with the current tab’s token. */ }
+      }).finally(() => { state.sessionPromise = null; });
+      return state.sessionPromise;
+    }
+
+    function busy(value) {
+      state.busy = value; input.disabled = value; sendButton.disabled = value;
+      widget.dataset.avatarState = value ? 'thinking' : 'idle';
+      sendButton.setAttribute('aria-label', value ? 'Waiting for Bay One' : 'Send message to Bay One');
+    }
+
+    function open(event) {
+      opener = event?.currentTarget instanceof HTMLElement ? event.currentTarget : document.activeElement;
+      panel.hidden = false; launcher.hidden = true; launcher.setAttribute('aria-expanded','true');
+      entryButtons.forEach(button => button.setAttribute('aria-expanded','true'));
+      $('.b1-close').focus({preventScroll:true}); viewport();
+      if (!state.sessionReady) { status.textContent = 'Connecting to Bay One…'; session().then(() => { if (!state.busy) status.textContent = ''; }).catch(error => { status.textContent = error.message; }); }
+    }
+    function close() { panel.hidden = true; launcher.hidden = false; entryButtons.forEach(button => button.setAttribute('aria-expanded','false')); (opener?.isConnected ? opener : launcher).focus({preventScroll:true}); viewport(); }
+    launcher.addEventListener('click', open); $('.b1-close').addEventListener('click', close);
+    $('.b1-contact').addEventListener('click',event => handoff(event));
+    const formLauncher = document.getElementById('request-bay-one');
+    if (formLauncher) { formLauncher.hidden = false; formLauncher.setAttribute('aria-controls','b1-panel'); formLauncher.setAttribute('aria-expanded','false'); entryButtons.push(formLauncher); formLauncher.addEventListener('click',open); }
+    const contactBar = document.querySelector('.mobile-contact-bar');
+    if (contactBar) {
+      const barLauncher = document.createElement('button'); barLauncher.type = 'button'; barLauncher.className = 'b1-bar-launcher'; barLauncher.textContent = 'Ask Bay One'; barLauncher.setAttribute('aria-controls','b1-panel'); barLauncher.setAttribute('aria-expanded','false');
+      barLauncher.addEventListener('click',open); entryButtons.push(barLauncher); contactBar.append(barLauncher); contactBar.classList.add('has-bay-one'); widget.classList.add('b1-has-contact-bar');
+    }
+    widget.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); close(); } });
+    input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('.b1-composer').requestSubmit(); } });
+    widget.querySelectorAll('[data-b1-suggestion]').forEach(button => button.addEventListener('click', () => input.focus()));
+
+    $('.b1-composer').addEventListener('submit', async event => {
+      event.preventDefault(); if (state.busy) return;
+      const text = input.value.trim(); if (!text) return;
+      const retry = state.failed && state.failed.message === text && state.failed.mode === state.mode;
+      const pending = retry ? state.failed : { request_id:uuid(), message:text, mode:state.mode };
+      if (!retry) { addMessage('user',text); state.customerMessages.push(text); }
+      $('.b1-contact').textContent = 'Review details for Tony ↗';
+      $('.b1-suggestions').hidden = true; busy(true); status.textContent = 'Bay One is replying…';
+      const slow = setTimeout(() => { if (state.busy) status.textContent = 'Still working on it. Thanks for waiting…'; }, 8000);
+      try {
+        await session();
+        const result = await request('/chat/message', { ...pending, visitor_token:state.token });
+        if (typeof result.reply !== 'string' || !result.reply.trim()) throw new Error('Bay One’s reply was empty. Your message is preserved; send again to retry.');
+        if (result.intake && typeof result.intake === 'object') {
+          for (const [name,limit] of [['vehicle',160],['city',100],['starts',7],['stranded',7]]) {
+            const value = result.intake[name];
+            if (typeof value !== 'string' || value.length > limit || (['starts','stranded'].includes(name) && !['yes','no','unknown'].includes(value))) continue;
+            state.intake[name] = value;
+          }
+        }
+        addMessage('assistant',result.reply,pending.message); state.failed = null; input.value = ''; status.textContent = '';
+      } catch (error) {
+        state.failed = !error.code || error.code === 'request_pending' ? pending : null;
+        if (error.code === 'invalid_session') {
+          state.sessionReady = false; state.token = '';
+          try { localStorage.removeItem(storageKey); } catch (_) { /* The next request will still create a fresh session. */ }
+        }
+        status.textContent = error.message;
+        if (error.code === 'rate_limit' && error.retryAfter) status.textContent += ` Try again in about ${Math.ceil(Number(error.retryAfter))} seconds.`;
+      } finally {
+        clearTimeout(slow); busy(false); if (!panel.hidden && matchMedia('(pointer:fine)').matches) input.focus({preventScroll:true});
+      }
+    });
+
+    function viewport() {
+      const vv = window.visualViewport;
+      widget.style.setProperty('--b1-viewport-height', `${vv?.height || window.innerHeight}px`);
+      const mobile = matchMedia('(max-width:800px)').matches;
+      const keyboard = vv ? Math.max(0, window.innerHeight-vv.height-vv.offsetTop) : 0;
+      widget.style.bottom = keyboard > 120 && !panel.hidden ? `${keyboard+12}px` : '';
+      if (mobile && keyboard > 120) panel.style.height = `${Math.max(180,vv.height-24)}px`; else panel.style.height = '';
+    }
+    window.addEventListener('resize', viewport, {passive:true}); window.visualViewport?.addEventListener('resize', viewport, {passive:true}); viewport();
+    const contact = document.getElementById('bookingForm');
+    if (contact && 'IntersectionObserver' in window) new IntersectionObserver(entries => widget.classList.toggle('b1-near-contact', entries[0].isIntersecting), {threshold:.05}).observe(contact);
+    const easternHour = Number(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'numeric',hourCycle:'h23'}).format(new Date()));
+    addMessage('assistant', easternHour >= 20 || easternHour < 8
+      ? 'Hi, I’m Bay One, the AI assistant helping Tony overnight, from 8 PM to 8 AM Eastern. Describe your vehicle problem, then choose Review details for Tony to check your inquiry before sending. Tony confirms availability and booking. What is happening with your vehicle?'
+      : 'Hi, I’m Bay One, Tony’s automated repair intake assistant. I collect the details for Tony to review and text you if you choose text follow-up. You can edit your inquiry before sending. What is happening with your vehicle?');
   }
-  window.addEventListener('resize', viewport, {passive:true}); window.visualViewport?.addEventListener('resize', viewport, {passive:true}); viewport();
-  const contact = document.getElementById('bookingForm');
-  if (contact && 'IntersectionObserver' in window) new IntersectionObserver(entries => widget.classList.toggle('b1-near-contact', entries[0].isIntersecting), {threshold:.05}).observe(contact);
-  const easternHour = Number(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'numeric',hourCycle:'h23'}).format(new Date()));
-  addMessage('assistant', easternHour >= 20 || easternHour < 8
-    ? 'Hi, I’m Bay One, the AI assistant helping Tony overnight, from 8 PM to 8 AM Eastern. Describe your vehicle problem, then choose Review details for Tony to check your inquiry before sending. Tony confirms availability and booking. What is happening with your vehicle?'
-    : 'Hi, I’m Bay One, Tony’s automated repair intake assistant. I collect the details for Tony to review and text you if you choose text follow-up. You can edit your inquiry before sending. What is happening with your vehicle?');
 })();

@@ -46,6 +46,9 @@ test('public API has strict origin checks, preflight, and no unauthenticated own
   assert.equal(rebindingStatus,403);
   assert.equal((await fetch(x.publicUrl+'/chat/widget.js')).status,200);
   assert.equal((await fetch(x.publicUrl+'/healthz')).status,200);
+  const health=await fetch(x.publicUrl+'/healthz',{headers:{Origin:origin}});assert.equal(health.headers.get('access-control-allow-origin'),origin);
+  assert.deepEqual(await health.json(),{ok:true,service:'Perfect Timing website requests',chat:'ready'});
+  assert.equal((await fetch(x.publicUrl+'/healthz',{headers:{Origin:'https://evil.example'}})).headers.get('access-control-allow-origin'),null);
 });
 
 test('validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON',async t=>{

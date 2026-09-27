@@ -2,5 +2,9 @@
   "nodePath": "C:\\Program Files\\nodejs\\node.exe",
   "publicPort": 18795,
   "inboxPort": 18798,
-  "devOrigins": []
+  "devOrigins": [],
+  "env": {
+    "BAYONE_PROVIDER": "ollama",
+    "OLLAMA_MODEL": "qwen3.5:4b"
+  }
 }

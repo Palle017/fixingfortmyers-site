@@ -44,10 +44,11 @@ test('completed AI counts survive retries, midnight, restart, and seven-day clea
     await app.message(input,ip);await app.message(input,ip);
     assert.deepEqual({...app.db.prepare('SELECT * FROM chat_metric_days').get()},{day:'2026-09-08',messages:1,estimates:0});
     now+=5000;await app.message({...input,request_id:randomUUID()},ip);
-    fail=true;await assert.rejects(app.message({...input,request_id:randomUUID()},ip));
-    assert.equal(app.db.prepare('SELECT sum(messages) n FROM chat_metric_days').get().n,2);
+    // A model outage answers in scripted mode, so the reply still completes and counts.
+    fail=true;assert.equal((await app.message({...input,request_id:randomUUID()},ip)).assist,'scripted');
+    assert.equal(app.db.prepare('SELECT sum(messages) n FROM chat_metric_days').get().n,3);
     app.close();now+=8*86400000;app=createPublicChat({dataDir,now:()=>now,provider});
     assert.equal(app.db.prepare('SELECT count(*) n FROM chat_requests').get().n,0);
-    assert.equal(app.db.prepare('SELECT sum(messages) n FROM chat_metric_days').get().n,2);
+    assert.equal(app.db.prepare('SELECT sum(messages) n FROM chat_metric_days').get().n,3);
   } finally {app.close();}
 });
