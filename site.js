@@ -17,6 +17,12 @@
     reportVisit().catch(() => setTimeout(() => reportVisit().catch(() => {}), 3000));
   }
   const byId = id => document.getElementById(id);
+  // Remember where this visit started (e.g. ?utm_source=google from the Google Business Profile) for the lead.
+  try {
+    const landed = (new URLSearchParams(location.search).get('utm_source') || '').toLowerCase();
+    if (/^[a-z0-9_-]{2,30}$/.test(landed)) sessionStorage.setItem('pt-lead-channel', landed);
+    window.PT_LEAD_CHANNEL = sessionStorage.getItem('pt-lead-channel') || '';
+  } catch (_) { window.PT_LEAD_CHANNEL = ''; }
   // Service attribution is a fixed category, never arbitrary query text.
   const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine / transmission',engine:'Engine / transmission',programming:'Module programming',diesel:'Diesel service',maintenance:'Maintenance / other repair'});
   const servicePages = {'auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'engine','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
@@ -64,17 +70,25 @@
     const field = byId(id);
     if (field) field.addEventListener('input',()=>{field.dataset.userEdited='true';});
   }
-  const endpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
+  const configuredEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
+  let endpoint = configuredEndpoint;
   const status = byId('request-status');
   const submit = byId('request-submit');
   const backup = byId('request-backup');
   const preview = byId('request-preview');
   const textDraft = byId('request-text');
   const phoneField = byId('request-phone');
+  const applyMode = () => {
   phoneField.required = Boolean(endpoint);
   byId('request-phone-label').textContent = endpoint ? 'Phone number' : 'Callback number, if different (optional)';
   byId('request-sms-consent').closest('.request-consent').hidden = !endpoint;
   byId('request-direct-consent').hidden = Boolean(endpoint);
+  const media = byId('request-media'); if (media) media.closest('label').hidden = !(endpoint && mediaReady);
+  const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = !endpoint;
+  submit.textContent = endpoint ? 'Send repair request' : 'Prepare text to Tony';
+  byId('request-instructions').textContent = endpoint ? 'Send your repair details or contact Tony directly. Your request is received only after the inquiry system confirms it has saved your details. An appointment is confirmed after Tony replies.' : 'Fill in what you know, then review a text draft for Tony. Open it in your texting app, add photos or a short video of the problem if you can, and tap Send yourself. Preparing a draft does not send an inquiry or book an appointment.';
+  };
+  let mediaReady = false;
   // Messages uses a different body separator on Apple mobile devices. Keep copy/email
   // available because support still depends on the device's registered texting app.
   const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -99,7 +113,7 @@
     const symptoms = String(data.get('details') || '').trim();
     // Keep these details useful to the existing receiver during a staged rollout.
     const context = [city ? `City / ZIP: ${city}` : '',`Vehicle starts: ${starts}`,`Stranded: ${stranded}`].filter(Boolean).join('\n');
-    return { name: String(data.get('name')).trim(), phone: String(data.get('phone')).trim(), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service')), details: symptoms ? `${symptoms}\n\n${context}` : '', city, starts, stranded, website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    return { name: String(data.get('name')).trim(), phone: String(data.get('phone')).replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service')), details: symptoms ? `${symptoms}\n\n${context}` : '', city, starts, stranded, website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
@@ -120,14 +134,31 @@
       return result;
     } finally { clearTimeout(timer); }
   };
-  if (!endpoint) {
-    submit.textContent = 'Prepare text to Tony';
-    byId('request-instructions').textContent = 'Fill in what you know, then review a text draft for Tony. Open it in your texting app, add photos or a short video of the problem if you can, and tap Send yourself. Preparing a draft does not send an inquiry or book an appointment.';
-    const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = true;
-  } else {
-    submit.textContent = 'Send repair request';
-    byId('request-instructions').textContent = 'Send your repair details or contact Tony directly. Your request is received only after the inquiry system confirms it has saved your details. An appointment is confirmed after Tony replies.';
+  applyMode();
+  // Online only while the shop's receiver answers; otherwise the form keeps preparing a text draft.
+  if (configuredEndpoint) {
+    const probe = new AbortController(), probeTimer = setTimeout(() => probe.abort(), 6000);
+    fetch(configuredEndpoint + '/healthz', {credentials:'omit', cache:'no-store', signal:probe.signal})
+      .then(response => response.ok ? response.json() : null)
+      .then(health => { if (health?.ok !== true) throw new Error('down'); mediaReady = health.media === 'ready'; applyMode(); })
+      .catch(() => { if (!sentRequestId && !submit.disabled) { endpoint = ''; applyMode(); } })
+      .finally(() => clearTimeout(probeTimer));
   }
+  const mediaTypes = {jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',heic:'image/heic',heif:'image/heif',mp4:'video/mp4',m4v:'video/mp4',mov:'video/quicktime',webm:'video/webm'};
+  const uploadMedia = async result => {
+    const items = !(mediaReady && result.mediaToken) ? [] : [...(byId('request-media')?.files || [])]
+      .map(file => ({file, type: Object.values(mediaTypes).includes((file.type||'').toLowerCase()) ? file.type.toLowerCase() : mediaTypes[(file.name.split('.').pop()||'').toLowerCase()] || ''}))
+      .filter(item => item.type && item.file.size <= (item.type.startsWith('video/') ? 100 : 15) * 1024 * 1024).slice(0, 6);
+    let sent = 0;
+    for (const [n, item] of items.entries()) {
+      status.textContent = `Request received. Sending photo/video ${n + 1} of ${items.length}… keep this page open.`;
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 300000);
+      try { const response = await fetch(`${endpoint}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type,'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal}); if (response.ok) sent++; }
+      catch (_) { /* The request is saved; the customer can text the file instead. */ }
+      finally { clearTimeout(timer); }
+    }
+    return {sent, total: items.length};
+  };
   form.addEventListener('input', () => { requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = ''; });
   form.addEventListener('submit', async event => {
     event.preventDefault();
@@ -145,6 +176,8 @@
       const result = await send('/hooks/lead/webform', data, submittedKey);
       if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
       sentRequestId = result.id;
+      const sentMedia = await uploadMedia(result);
+      if (sentMedia.sent < sentMedia.total) { status.textContent = `Repair request received (reference ${result.id}). ${sentMedia.total - sentMedia.sent} photo/video file(s) did not go through; text them to Tony at (239) 397-2048.`; submit.textContent = 'Request received'; backup.hidden = true; return; }
       status.textContent = `Repair request received. Reference: ${result.id}. Opening your confirmation…`;
       backup.hidden = true;
       submit.textContent = 'Request received';

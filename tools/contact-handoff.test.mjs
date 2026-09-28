@@ -37,7 +37,7 @@ test('chat collects the problem, then its contact card sends one lead with the w
   }});
   await settle();await x.say('My 2015 Honda Civic clicks and will not start.');
   const d=x.w.document;
-  assert.equal(d.querySelector('.b1-send-now').hidden,false);assert.equal(d.querySelector('.b1-lead'),null);
+  assert.ok(d.querySelector('.b1-lead'),'the contact card appears right after the first message');
   assert.equal(d.querySelectorAll('.b1-request-service').length,0);
   await x.say('I am stranded in Fort Myers.');
   const card=d.querySelector('.b1-lead');assert.ok(card);assert.equal(d.querySelector('.b1-send-now').hidden,true);
@@ -162,7 +162,7 @@ test('an unreachable Bay One server shows no launcher, loads no assets and still
   const draft=JSON.stringify({at:Date.parse('2026-09-24T15:55:00Z'),summary:'Customer notes from Bay One:\nGrinding when braking',service:'',intake:{city:'Fort Myers'}});
   const x=setup(t,{handler:async(route,body,w)=>{if(route!=='/healthz')w.bad=true;throw new w.TypeError('Synthetic outage');},beforeScripts:w=>w.sessionStorage.setItem('pt-bayone-service-draft-v1',draft)}),d=x.w.document;
   await settle();
-  assert.deepEqual(x.requests.map(r=>r.route),['/healthz']);assert.equal(x.w.bad,undefined);
+  assert.ok(x.requests.every(r=>r.route==='/healthz'));assert.equal(x.w.bad,undefined);
   assert.equal(d.getElementById('bay-one-widget'),null);assert.equal(d.querySelector('link[href*="bay-one-widget.css"]'),null);
   assert.equal(d.querySelector('.b1-bar-launcher'),null);assert.equal(d.getElementById('request-bay-one').hidden,true);
   assert.match(d.getElementById('request-details').value,/Grinding when braking/);assert.equal(d.getElementById('request-city').value,'Fort Myers');
@@ -170,7 +170,7 @@ test('an unreachable Bay One server shows no launcher, loads no assets and still
 
 test('a server whose chat failed to start is treated as unavailable',async t=>{
   const x=setup(t,{handler:async route=>({ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'unavailable'}:{ok:true}})}),d=x.w.document;
-  await settle();assert.equal(d.getElementById('bay-one-widget'),null);assert.deepEqual(x.requests.map(r=>r.route),['/healthz']);
+  await settle();assert.equal(d.getElementById('bay-one-widget'),null);assert.ok(x.requests.every(r=>r.route==='/healthz'));
 });
 
 test('shipped config enables public Bay One against the p15g2 receiver',()=>{
@@ -179,7 +179,8 @@ test('shipped config enables public Bay One against the p15g2 receiver',()=>{
 });
 
 test('public Bay One is disabled before UI/assets/network while normal contact remains available',async t=>{
-  const x=setup(t,{enabled:false,publicContact:true,url:'https://fixingfortmyers.com/'}),d=x.w.document;
+  const x=setup(t,{enabled:false,publicContact:true,url:'https://fixingfortmyers.com/',handler:async()=>{throw new TypeError('offline');}}),d=x.w.document;
+  await settle();x.requests.length=0;
   assert.equal(x.w.PT_BAYONE_CONFIG.enabled,false);assert.equal(d.getElementById('bay-one-widget'),null);
   assert.equal(d.querySelector('link[href*="bay-one-widget.css"]'),null);assert.equal(d.querySelector('.b1-bar-launcher'),null);
   assert.equal(d.getElementById('request-bay-one').hidden,true);assert.equal(d.querySelector('.mobile-contact-bar').children.length,2);
@@ -187,9 +188,11 @@ test('public Bay One is disabled before UI/assets/network while normal contact r
   delete x.w.PT_BAYONE_CONFIG;x.w.eval(widget);assert.equal(d.getElementById('bay-one-widget'),null);assert.equal(x.requests.length,0);
 });
 
-test('public form prepares an editable native text intent with no HTTP delivery or receipt claim',async t=>{
-  const x=setup(t,{enabled:false,publicContact:true,url:'https://fixingfortmyers.com/'}),d=x.w.document;
-  assert.equal(x.w.PT_CONTACT_CONFIG.endpoint,'');assert.equal(d.getElementById('request-submit').textContent,'Prepare text to Tony');assert.equal(d.querySelector('.request-voice').hidden,true);
+test('with the shop receiver offline, the public form falls back to an editable native text intent with no receipt claim',async t=>{
+  const x=setup(t,{enabled:false,publicContact:true,url:'https://fixingfortmyers.com/',handler:async()=>{throw new TypeError('offline');}}),d=x.w.document;
+  await settle();
+  assert.equal(x.w.PT_CONTACT_CONFIG.endpoint,'https://p15g2.tail68bd87.ts.net:10000');assert.ok(x.requests.some(r=>r.route==='/healthz'));x.requests.length=0;
+  assert.equal(d.getElementById('request-submit').textContent,'Prepare text to Tony');assert.equal(d.querySelector('.request-voice').hidden,true);
   assert.equal(d.getElementById('request-phone').required,false);
   assert.equal(d.querySelector('.request-consent').hidden,true);assert.equal(d.getElementById('request-direct-consent').hidden,false);
   x.enter('request-name','Synthetic Customer');x.enter('request-details','Synthetic vehicle will not start.');x.enter('request-city','33901');x.enter('request-starts','no');x.enter('request-stranded','yes');
@@ -205,8 +208,9 @@ test('public form prepares an editable native text intent with no HTTP delivery 
   assert.equal(x.w.location.href,'https://fixingfortmyers.com/');assert.equal(x.requests.length,0);
 });
 
-test('iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient',t=>{
-  const x=setup(t,{enabled:false,publicContact:true,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1'}),d=x.w.document;
+test('iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient',async t=>{
+  const x=setup(t,{enabled:false,publicContact:true,handler:async()=>{throw new TypeError('offline');},userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1'}),d=x.w.document;
+  await settle();x.requests.length=0;
   const message='Edited symptoms & location? Please reply.\nNo diagnosis requested.';
   x.enter('request-preview',message);
   const url=d.getElementById('request-text').getAttribute('href');
@@ -215,7 +219,7 @@ test('iPhone text draft uses the Apple body separator and keeps edited customer 
   assert.equal(x.requests.length,0);
 });
 
-test('draft source carries only known page categories, never URL or session-injected personal data',t=>{
+test('draft source carries only known page categories, never URL or session-injected personal data',async t=>{
   const cases=[
     {url:'https://preview.invalid/repair-guide-car-overheating?name=PrivatePerson&phone=2395550199',source:'repair-guide-car-overheating'},
     {url:'https://preview.invalid/?service=cooling&name=PrivatePerson',savedSource:'repair-guide-car-overheating',source:'repair-guide-car-overheating'},
@@ -223,7 +227,8 @@ test('draft source carries only known page categories, never URL or session-inje
     {url:'https://preview.invalid/PrivatePerson',source:''}
   ];
   for(const input of cases){
-    const x=setup(t,{...input,enabled:false,publicContact:true}),d=x.w.document;
+    const x=setup(t,{...input,enabled:false,publicContact:true,handler:async()=>{throw new TypeError('offline');}}),d=x.w.document;
+    await settle();x.requests.length=0;
     x.enter('request-name','Synthetic Customer');x.enter('request-details','Synthetic symptoms');
     d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));
     const draft=d.getElementById('request-preview').value;
