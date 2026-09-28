@@ -40,6 +40,7 @@ function render(lead) {
   const badges = el('div', undefined, 'badges');
   if (lead.routing?.priority === 'first') badges.append(el('span', 'URGENT', 'badge hot'));
   if (lead.bigJob) badges.append(el('span', 'BIG JOB', 'badge big'));
+  if (lead.channel) badges.append(el('span', 'From ' + (lead.channel === 'google' ? 'Google' : lead.channel), 'badge'));
   if (lead.media?.length) badges.append(el('span', lead.media.length + ' photo/video', 'badge'));
   if (lead.pipeline?.stage && lead.pipeline.stage !== 'new') badges.append(el('span', lead.pipeline.stage.replaceAll('_', ' '), 'badge' + (lead.pipeline.stage === 'won' ? ' good' : '')));
   title.append(badges);
