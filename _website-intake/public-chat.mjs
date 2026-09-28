@@ -11,7 +11,7 @@ export const PUBLIC_SHOP_PROFILE = Object.freeze({
   phone:'(239) 397-2048', email:'fixingfortmyers@gmail.com',
   hours:'24/7. After-hours repairs depend on the job, location and availability; Tony confirms all dispatches.',
   assistance:'Outside 8 a.m.–8 p.m. Eastern, Tony is assisted by Bay One AI.',
-  location:'Mobile auto repair serving Fort Myers and nearby Southwest Florida. Tony confirms the job, location and dispatch; no shop drop-off is offered by this intake.',
+  location:'Mobile auto repair shop serving Fort Myers and nearby Southwest Florida, backed by Tony\'s fully equipped workshop for engine, transmission and other major work. Tony confirms the job, location and dispatch; any workshop visit is arranged directly with Tony.',
   services:'Diagnostics, A/C, brakes, engine and transmission repair, module programming, electrical, cooling, suspension, maintenance, exhaust, diesel, car audio, performance and hot rods. Concierge pickup/return is arranged with the shop for an additional fee.',
   pricing:'The public site does not publish hourly labor rates, diagnostic fees, or fixed repair prices.',
 });
