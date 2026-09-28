@@ -11,6 +11,11 @@ Prepared September 28, 2026. **This is a plan for review, not a set of applied c
 | Business name | **Keep it exactly as it appears now.** It matches the signage. No change. |
 | Hours | **Keep Open 24 hours**, with the existing after-hours disclosure. |
 | Service towns | **All 12 confirmed:** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel, Pine Island. |
+| Categories | **Add all of them**, A/C and electrical included, plus detailing and paint (see 1.2). |
+| Priority jobs | **Engine jobs, transmission jobs and no-start problems.** |
+| Scope | **Confirmed:** engine rebuilds and replacements; transmission rebuilds and replacements; diesel; hot rods; restoration. **New:** paint work, buffing, paint correction and detailing. |
+| Business phone | **The Beside number** is the business number. I can't open Beside from here (no connection to it, and a logged-in browser tab on your machine isn't reachable from this cloud session), so the owner needs to say which number it is (see 6a). |
+| Facebook | **Leave both pages as they are.** |
 | Shopmonkey booking link | **Not confirmed removed.** The website has no Shopmonkey link (checked across all pages and scripts). Google's public Maps page can't be read without a browser session, and there's no owner access from here, so the owner needs to check it in the editor (Edit profile → Booking / appointment links). |
 
 ## Starting facts
@@ -32,8 +37,8 @@ These facts come from the owner and the current `main` branch (after PR #8):
 
 ### 1.0 Order of work
 
-1. **Wait until verification completes.** Don't pile edits onto a profile that is still under review. Name, category and address edits are the ones most likely to trigger another review.
-2. Once verified: remove the Shopmonkey link (the task already recorded as pending), then set the categories, service area, services, description and attributes **in one sitting**.
+1. ~~Wait until verification completes.~~ **Done:** the profile is verified.
+2. Now: remove the Shopmonkey link (the task already recorded as pending), then set the categories, service area, services, description and attributes **in one sitting**.
 3. Photos and the first posts go up **after** that sitting, as the owner's material arrives.
 4. Review requests start as soon as the profile is public (section 1.10).
 
@@ -50,24 +55,27 @@ Google lets you choose one primary category plus up to 9 additional ones (10 in 
 
 | Role | Category | Why / condition |
 | --- | --- | --- |
-| **Primary** | **Auto repair shop** | Matches "mobile repair shop" and the site's `AutoRepair` schema. Covers the broadest set of repair searches. |
-| Secondary | **Engine rebuilding service** | Only if Tony does rebuilds in the workshop, not just replacements. Supports `engine-rebuild-vs-replacement-fort-myers` and `engine-repair-fort-myers`. |
-| Secondary | **Transmission shop** | Owner-stated workshop capability. Supports `transmission-repair-fort-myers`. |
-| Secondary | **Diesel engine repair service** | Only if diesel work is regular, not occasional. Supports `diesel-repair-fort-myers`. |
-| Secondary | **Auto restoration service** | Only if hot rod and restoration projects are real, current work. Supports `hot-rod-restoration-fort-myers`. |
-| Secondary (optional) | **Auto air conditioning service** | A/C is a large mobile job type on the site. Add it only if Tony wants more A/C calls. |
-| Secondary (optional) | **Auto electrical service** | Same condition as A/C: electrical, no-start and module work. |
+| **Primary** | **Auto repair shop** | Matches "mobile repair shop" and the site's `AutoRepair` schema. Covers the broadest set of repair searches, including no-start calls (which have no category of their own). |
+| Secondary | **Engine rebuilding service** | Confirmed: rebuilds and replacements. A priority job. Supports `engine-repair-fort-myers` and `engine-rebuild-vs-replacement-fort-myers`. |
+| Secondary | **Transmission shop** | Confirmed: rebuilds and replacements. A priority job. Supports `transmission-repair-fort-myers`. |
+| Secondary | **Diesel engine repair service** | Confirmed. Supports `diesel-repair-fort-myers`. |
+| Secondary | **Auto restoration service** | Confirmed: hot rods and restoration. Supports `hot-rod-restoration-fort-myers`. |
+| Secondary | **Auto air conditioning service** | Owner wants it. Supports `ac-repair-fort-myers`. |
+| Secondary | **Auto electrical service** | Owner wants it. Covers electrical, no-start and module work. Supports `auto-electrical-repair-fort-myers` and `no-start-diagnosis-fort-myers`. |
+| Secondary | **Car detailing service** | New: detailing, buffing and paint correction. The site has no page for this yet (see 3.6). |
+| Secondary | **Auto painting** (use this exact name only if the picker offers it) | New: paint work. If the picker has no painting category, list paint work as a service instead. Avoid "Auto body shop" unless Tony does collision repair. |
 
-**Categories to avoid (for now):**
+That comes to 9 of the 10 allowed. Set the primary category and all secondary ones in one sitting.
+
+**Categories to avoid:**
 
 - **"Mobile mechanic"**: Google has no such category (Google's Business Profile community forum has confirmed this repeatedly), and the owner has asked **not** to be positioned as one anyway. Say "mobile" in the description and services.
 - **"Mechanic"**: generic, and it adds little on top of "Auto repair shop".
 - **"Auto machine shop"**: only if the tool list shows that machining (boring, honing, decking, valve work) is done **in-house**. Tolerance measurement alone is not a machine shop.
-- Anything Tony doesn't do (body shop, tires, towing, car wash), even if competitors use it.
+- **"Auto body shop"**: implies collision repair. Use it only if Tony does that work.
 
 Walnut blasting has no category of its own. It goes under **Services** (1.4).
 
-Start with 4–5 categories. Add more only when the business can back them up. Categories that don't fit the work send the wrong calls.
 
 ### 1.3 Service area vs. showing the Bayshore Ranch address
 
@@ -103,14 +111,23 @@ Enter services under each category. Pick the ones Google predefines where they m
 
 | Service | Draft service description (no prices) | Evidence needed |
 | --- | --- | --- |
-| Engine rebuild | "Engine teardown, inspection and reassembly in Tony's workshop, including tolerance and timing checks. We explain rebuild vs. replacement before work starts." | Tony confirms rebuilds are in scope; photos of engine assembly |
-| Engine replacement | "Replacement engine sourcing and installation, with the engine removed and installed in Tony's workshop. We review options with you first." | Tony confirms; engine hoist/stand in the tool list |
+| Engine rebuild | "Engine teardown, inspection and reassembly in Tony's workshop, including tolerance and timing checks. We explain rebuild vs. replacement before work starts." | Confirmed; photos of engine assembly |
+| Engine replacement | "Replacement engine sourcing and installation, with the engine removed and installed in Tony's workshop. We review options with you first." | Confirmed; engine hoist/stand in the tool list |
 | Engine timing repair | "Timing chain and belt service with timing verification in the workshop." | Timing tools in the tool list |
-| Transmission repair / replacement | "Transmission diagnosis on-site; removal, repair or replacement in Tony's workshop." | Tony confirms the rebuild vs. R&R scope; transmission jack in the list |
+| Transmission rebuild / replacement | "Transmission diagnosis on-site; rebuild or replacement in Tony's workshop." | Confirmed; transmission jack in the list |
+| No-start diagnosis and repair | "Car won't start? Tony comes to you to find out why: battery, starter, fuel, ignition, security or wiring faults. Many are fixed on the spot." | Priority job; mirrors `no-start-diagnosis-fort-myers` |
 | Walnut blasting (intake carbon cleaning) | "Walnut shell blasting to remove carbon build-up from intake valves, common on direct-injection engines." | Walnut blaster in the list; before/after photos |
-| Diesel repair | "Diesel diagnostics and repair; bigger work is done in the workshop." | Tony confirms which diesel platforms |
+| Diesel repair | "Diesel diagnostics and repair; bigger work is done in the workshop." | Confirmed; platforms to be listed if Tony wants |
 | Hot rod and restoration | "Engine, drivetrain and mechanical work on hot rods and restoration projects." | Real project photos with the owner's permission |
 | Race car modifications | Only if current. It mirrors `race-car-modifications-fort-myers`. | Tony confirms |
+
+**Paint and detailing (new):**
+
+| Service | Draft service description | Evidence needed |
+| --- | --- | --- |
+| Paint work | "Automotive paint work. Ask about your vehicle and the area to be painted." | Photos of finished work; scope (spot repair, panels, full resprays?) |
+| Paint correction and buffing | "Machine polishing to remove swirls, scratches and oxidation from the paint." | Before/after photos |
+| Detailing | "Interior and exterior detailing." | Tony to say which packages he offers (no prices on Google) |
 
 **Core mobile work:** diagnostics / check engine light, no-start diagnosis, brake repair, battery replacement, alternator and starter, A/C repair, electrical repair, cooling system, fuel system, suspension and steering, exhaust, module programming, oil change, pre-purchase inspection. These mirror the site's service pages, so each service matches a page that already exists.
 
@@ -118,9 +135,9 @@ Do not add a service the site doesn't back up or Tony doesn't want to do.
 
 ### 1.5 Business description (draft, 750-character limit)
 
-> Perfect Timing Auto Repair is a mobile repair shop serving Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers and nearby Southwest Florida. Tony comes to you for diagnostics and on-site repairs such as brakes, batteries, A/C and electrical faults, where the vehicle and location allow. Bigger jobs go to Tony's own fully equipped workshop at Bayshore Ranch: engine assembly and rebuilds, tolerance and timing checks, transmission work and walnut blasting to clean carbon from intake valves, plus diesel, hot rod and restoration projects. Tell us your vehicle, the symptoms and where it is parked. Tony confirms what can be done on-site, what needs the workshop and the plan before any work starts. Workshop visits are by arrangement.
+> Perfect Timing Auto Repair is a mobile repair shop serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Tony comes to you for no-start problems, diagnostics, A/C, electrical, brakes and other on-site repairs. Bigger jobs go to Tony's own fully equipped workshop at Bayshore Ranch: engine and transmission rebuilds and replacements, tolerance and timing checks, walnut blasting to clean carbon from intake valves, diesel repair, hot rods and restoration. Paint work, buffing, paint correction and detailing are available too. Tell us your vehicle, the symptoms and where it is parked. Tony confirms what can be done on-site, what needs the workshop and the plan before work starts.
 
-About 737 characters. It has no URL, no price, no promotional language and no phone number (the phone has its own field). Before publishing, remove "rebuilds", "diesel" or "hot rod and restoration" if Tony doesn't confirm them.
+About 702 characters. It has no URL, no price, no promotional language and no phone number (the phone has its own field). All the services named are owner-confirmed.
 
 ### 1.6 Other profile fields
 
@@ -171,6 +188,7 @@ Rules: real photos only. **No stock images, no AI-generated images** and no illu
 
 - **One post per week** for the first 8 weeks, then **every 1–2 weeks**. Use the "Update" type (Offers only for a real, owner-approved offer; Events only for real events). Update posts drop out of prominence after about a week, so a steady flow matters more than any single post.
 - Each post: one real photo, 80–200 words, one call to action ("Call" or "Learn more" linking to the matching service page).
+- **Priority:** at least every other post is about **engines, transmissions or no-start problems**, the jobs Tony wants most.
 - **Rotation (8-week starter):**
   1. Meet the workshop: wide shot with a caption naming what it's used for.
   2. Walnut blasting before and after on a real job, and why carbon builds up on direct-injection engines.
@@ -178,8 +196,8 @@ Rules: real photos only. **No stock images, no AI-generated images** and no illu
   4. Mobile diagnostics at a customer's driveway: what Tony checks on-site. Link `auto-diagnostics-fort-myers`.
   5. Transmission job: on-site diagnosis → workshop repair. Link `transmission-repair-fort-myers`.
   6. Symptom guide: engine knocking (link `engine-knocking-noise-fort-myers`) or blue smoke (link `blue-smoke-burning-oil-fort-myers`).
-  7. Diesel or hot rod project, with the owner's permission.
-  8. The Florida heat: A/C and cooling check. Link `ac-repair-fort-myers` or `repair-guide-car-overheating`.
+  7. No-start call: what Tony checks at the car when it won't crank or won't fire. Link `no-start-diagnosis-fort-myers` or `repair-guide-car-wont-start`.
+  8. Paint correction before and after, or a diesel or hot rod project, with the owner's permission. Then continue with the Florida heat: A/C and cooling check. Link `ac-repair-fort-myers` or `repair-guide-car-overheating`.
 - Describe real work only. No invented outcomes, no "saved $X", no customer quotes without permission.
 
 ### 1.10 Q&A seed list
@@ -189,16 +207,18 @@ Rules: real photos only. **No stock images, no AI-generated images** and no illu
 1. **Do you come to me, or do I bring the car to you?** Both. Tony comes to you for diagnostics and many repairs. Engine, transmission and other major work is done in his fully equipped workshop, and he arranges that with you.
 2. **Is this a "mobile mechanic"?** It's a mobile repair shop: Tony brings tools to you and also has his own workshop for bigger jobs.
 3. **Can I drop my car off at the workshop?** Workshop visits are by arrangement. Call or text (239) 397-2048 first.
-4. **Do you rebuild engines or replace them?** Both, depending on the engine and what the teardown shows. Tony explains rebuild vs. replacement before work starts. *(Only if Tony confirms rebuilds.)*
+4. **Do you rebuild engines or replace them?** Both, depending on the engine and what the teardown shows. Tony explains rebuild vs. replacement before work starts.
 5. **What is walnut blasting?** Walnut blasting cleans carbon build-up off intake valves using crushed walnut shells. It is common on direct-injection engines, which can build up carbon on the valves.
-6. **Do you work on transmissions?** Yes. Diagnosis can start on-site, and removal and repair are done in the workshop.
-7. **Do you work on diesels?** *(Answer as Tony specifies, including which platforms.)*
-8. **Do you work on hot rods and classic cars?** *(Answer as Tony specifies.)*
-9. **What areas do you cover?** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers and nearby Southwest Florida. Tell us where the vehicle is parked.
+6. **Do you work on transmissions?** Yes, rebuilds and replacements. Diagnosis can start on-site, and the transmission work is done in the workshop.
+7. **Do you work on diesels?** Yes. Tell us the year, make, model and engine, and what it's doing.
+8. **Do you work on hot rods and classic cars?** Yes. Hot rods and restoration projects are done in the workshop.
+8a. **Do you do paint or detailing?** Yes: paint work, buffing, paint correction and detailing. Send photos of the vehicle and the area of concern.
+8b. **My car won't start. Can you come to me?** Yes. Tell us where it's parked and what happens when you turn the key (clicks, cranks, or nothing). Tony confirms whether he can come to you.
+9. **What areas do you cover?** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel and Pine Island. Tell us where the vehicle is parked.
 10. **What should I send when I contact you?** Year, make and model, the symptoms, where it's parked and whether it starts and drives.
 11. **Are you available after hours?** Available 24/7. Outside 8 a.m.–8 p.m. Eastern, Bay One AI assists and Tony confirms every dispatch. After-hours repairs depend on the job, location and availability.
 
-(Answers 9–11 match wording that is already live on the site.)
+(Answers 10–11 match wording that is already live on the site. Answer 9 adds the seven newly confirmed towns.)
 
 ### 1.11 Review-request process
 
@@ -360,6 +380,10 @@ On `engine-repair-fort-myers.html` and `transmission-repair-fort-myers.html`, al
 
 **Checks before merge:** `npm test` (`tools/verify.mjs`: local links, the footer disclosure, JSON-LD); `node tools/version-assets.mjs --check` (asset versions); `node tools/audit-accessibility.mjs` for the new page; and a mobile-width look at the home page and `/workshop`. After publishing: request indexing for `/workshop` in Search Console and add the same photos to the Google profile.
 
+### 3.5a Paint and detailing on the website
+
+The site has no page for paint, buffing, paint correction or detailing. Google categories work better when the website backs them up, so add a page `paint-correction-detailing-fort-myers.html` (built from the service-page template, and added to `sitemap.xml`, the home services grid and the footer). Before and after photos of real work are the most important content. Until that page exists, set the Google categories anyway; they just carry less weight.
+
 ### 3.5 What stays out of the site
 
 - The street address (under option A), prices, warranties, certifications and brand endorsements, until Tony confirms them.
@@ -407,16 +431,16 @@ Checked September 28, 2026. Confirm the live category names, character limits an
 3. ~~Business name~~: keep as is.
 4. ~~24/7 hours~~: keep.
 5. ~~Service towns~~: all 12 confirmed.
-6. The top three jobs Tony wants more of.
-6a. **Is (239) 271-4854 still a business line?** BBB and Yahoo list it instead of (239) 397-2048. If it's old, those listings need updating. Also confirm whether the "Mobile Mechanic" Facebook page (100084118269910) is still in use.
+6. ~~Top jobs~~: engines, transmissions and no-start.
+6a. **Which number is the Beside line: (239) 397-2048 (on the site and Google) or (239) 271-4854 (on BBB and Yahoo)?** The other one needs to be replaced everywhere it appears. ~~Facebook~~: leave both pages.
 
 **Scope confirmations** (yes/no, with details)
 
-7. Engine: rebuilds, replacements or both? In-house machining or sent out?
-8. Transmission: in-house repair/rebuild, or remove-and-replace only?
-9. Diesel: regular work? Which platforms?
-10. Hot rod / restoration / race car: regular, current work?
-11. A/C and electrical: add as Google categories (more of those calls), or leave them as services only?
+7. ~~Engine~~: rebuilds and replacements. (Still open: is machining done in-house or sent out? This only affects the "Auto machine shop" category.)
+8. ~~Transmission~~: rebuilds and replacements.
+9. ~~Diesel~~: yes.
+10. ~~Hot rod and restoration~~: yes. (Race car modifications: still unconfirmed.)
+11. ~~Categories~~: all of them, plus detailing and paint. **New:** photos of paint, correction and detailing work, and which detailing services Tony offers.
 
 **Profile details**
 
