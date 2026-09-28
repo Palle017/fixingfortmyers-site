@@ -17,6 +17,12 @@
     reportVisit().catch(() => setTimeout(() => reportVisit().catch(() => {}), 3000));
   }
   const byId = id => document.getElementById(id);
+  // Remember where this visit started (e.g. ?utm_source=google from the Google Business Profile) for the lead.
+  try {
+    const landed = (new URLSearchParams(location.search).get('utm_source') || '').toLowerCase();
+    if (/^[a-z0-9_-]{2,30}$/.test(landed)) sessionStorage.setItem('pt-lead-channel', landed);
+    window.PT_LEAD_CHANNEL = sessionStorage.getItem('pt-lead-channel') || '';
+  } catch (_) { window.PT_LEAD_CHANNEL = ''; }
   // Service attribution is a fixed category, never arbitrary query text.
   const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine / transmission',engine:'Engine / transmission',programming:'Module programming',diesel:'Diesel service',maintenance:'Maintenance / other repair'});
   const servicePages = {'auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'engine','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
@@ -107,7 +113,7 @@
     const symptoms = String(data.get('details') || '').trim();
     // Keep these details useful to the existing receiver during a staged rollout.
     const context = [city ? `City / ZIP: ${city}` : '',`Vehicle starts: ${starts}`,`Stranded: ${stranded}`].filter(Boolean).join('\n');
-    return { name: String(data.get('name')).trim(), phone: String(data.get('phone')).trim(), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service')), details: symptoms ? `${symptoms}\n\n${context}` : '', city, starts, stranded, website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    return { name: String(data.get('name')).trim(), phone: String(data.get('phone')).replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service')), details: symptoms ? `${symptoms}\n\n${context}` : '', city, starts, stranded, website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';

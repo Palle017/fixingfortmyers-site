@@ -32,7 +32,7 @@ export function summarize(lead, id, decision) {
     `Location: ${lead.city || 'Not provided'}`,
     `Starts: ${yesNo(lead.starts)} · Stranded: ${yesNo(lead.stranded)}`,
     lead.callbackTime ? `Best time / notes: ${lead.callbackTime}` : null,
-    `Came from: ${SOURCES[source]}`,
+    `Came from: ${SOURCES[source]}${lead.channel ? ' (via ' + (lead.channel === 'google' ? 'Google' : lead.channel) + ')' : ''}`,
     '',
     'What the customer said:',
     (lead.details || 'Not provided').slice(0, 3000),

@@ -46,7 +46,8 @@ const normalizeVisitorKey = (ip, agent, seed = '') => {
 function normalize(input, kind) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw error(400, 'Invalid request.');
   if (input.website) throw error(400, 'Please leave the website field empty.');
-  const phone = clean(input.phone, 40, true);
+  // Autofill and copy/paste can add invisible characters; keep only digits and phone punctuation.
+  const phone = clean(typeof input.phone === 'string' ? input.phone.replace(/[^\d+()\s.-]/g, '') : input.phone, 40, true);
   if (!/^\+?[\d\s().-]+$/.test(phone) || !/^\d{10,15}$/.test(phone.replace(/\D/g, ''))) throw error(400, 'Please enter a valid phone number.');
   const consent = input.smsConsent === true || input.smsConsent === 'true';
   if (![undefined, false, true, '', 'true', 'false'].includes(input.smsConsent)) throw error(400, 'Invalid text message preference.');
@@ -72,6 +73,8 @@ function normalize(input, kind) {
     smsConsentPage: clean(input.smsConsentPage, 500),
     smsConsentDisclosure: clean(input.smsConsentDisclosure, 3000),
     ...routing,
+    // Where the visitor came from (e.g. 'google' from the Business Profile link). Only added when present.
+    ...(typeof input.channel === 'string' && /^[a-z0-9_-]{2,30}$/.test(input.channel) ? { channel: input.channel } : {}),
   };
 }
 

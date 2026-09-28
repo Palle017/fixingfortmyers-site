@@ -306,7 +306,7 @@
       if (!pendingLead) {
         const data = new FormData(leadForm), sms = data.get('sms') === 'on';
         const body = {
-        name:String(data.get('name') || '').trim(), phone:String(data.get('phone') || '').trim(),
+        name:String(data.get('name') || '').trim(), phone:String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}),
         vehicle:String(state.intake.vehicle || '').slice(0,160), service:String(window.PT_REPAIR_CONTEXT?.service || '').slice(0,160),
         details:('Bay One chat on '+location.pathname+':\n'+state.customerMessages.join('\n')).slice(0,6000),
         city:String(state.intake.city || '').slice(0,100), starts:String(data.get('starts') || 'unknown'), stranded:String(data.get('stranded') || 'unknown'),

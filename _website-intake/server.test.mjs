@@ -90,3 +90,14 @@ test('legacy raw recording works and MIME-spoofed uploads fail',async t=>{
   const bad=await fetch(x.publicUrl+'/hooks/lead/voicenote',{method:'POST',headers,body:Buffer.alloc(50)});assert.equal(bad.status,415);
   const valid=await fetch(x.publicUrl+'/hooks/lead/voicenote',{method:'POST',headers,body:wav()});assert.equal(valid.status,201);
 });
+
+test('phone numbers with invisible autofill characters are accepted, and the Google channel is kept', async t => {
+  const dataDir = fs.mkdtempSync(path.join((await import('node:os')).tmpdir(), 'pt-phone-'));
+  const app = createLeadServers({dataDir, alertWorker: false, besideToken: ''});
+  const ports = await app.start(0, 0); t.after(() => app.close());
+  const response = await fetch(`http://127.0.0.1:${ports.publicPort}/hooks/lead/webform`, {method: 'POST', headers: {Origin: 'https://fixingfortmyers.com', 'Content-Type': 'application/json', 'Idempotency-Key': randomUUID()},
+    body: JSON.stringify({name: 'Synthetic', phone: '‪7632737140‬', details: 'Synthetic test only.', channel: 'google', website: ''})});
+  assert.equal(response.status, 201);
+  const lead = (await (await fetch(`http://127.0.0.1:${ports.adminPort}/api/leads`)).json()).leads[0];
+  assert.equal(lead.phone, '7632737140'); assert.equal(lead.channel, 'google');
+});
