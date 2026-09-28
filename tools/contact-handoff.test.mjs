@@ -19,7 +19,7 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   // Tests set the Bay One flag explicitly; the shipped flag is checked separately below.
   w.PT_BAYONE_CONFIG={enabled};
   const NativeDate=w.Date;w.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[at]));}static now(){return NativeDate.parse(at);}};
-  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=JSON.parse(options.body||'{}');requests.push({route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
+  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=typeof options.body==='string'||options.body===undefined?JSON.parse(options.body||'{}'):options.body;requests.push({route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
   if(savedSource)w.sessionStorage.setItem('pt-repair-source',savedSource);
   beforeScripts?.(w);
   w.eval(site);w.eval(widget);
@@ -238,4 +238,31 @@ test('the site form and Bay One store the exact SMS consent wording shown beside
   assert.match(shown,/Reply STOP to opt out or HELP for help\.$/);
   assert.ok(site.includes(`'${shown}'`),'site.js consentDisclosure matches index.html');
   assert.ok(widget.includes(`'${shown}'`),'bay-one-widget.js CONSENT matches index.html');
+});
+test('Bay One card sends photos and video to Tony after the request is saved, only when the receiver supports it',async t=>{
+  const id='12345678-1234-4234-8234-123456789012';
+  const x=setup(t,{handler:async(route,body)=>{
+    if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,chat:'ready',media:'ready'})};
+    if(route==='/chat/session')return {ok:true,status:200,json:async()=>({ok:true,visitor_token:'synthetic-token'})};
+    if(route==='/hooks/lead/webform')return {ok:true,status:201,json:async()=>({ok:true,received:true,id,receivedAt:'2026-09-24T16:00:00.000Z',mediaToken:'synthetic-media-token-000000000000'})};
+    if(route.startsWith('/hooks/lead/media/'))return body.name==='bad.mov'?{ok:false,status:415,json:async()=>({ok:false,error:'no'})}:{ok:true,status:201,json:async()=>({ok:true,received:true,index:1,count:1})};
+    return {ok:true,status:200,json:async()=>({ok:true,kind:'intake',reply:'Add your name and number below.',ready:true,intake:{vehicle:'2015 Honda Civic'}})};
+  }});
+  await settle();await x.say('Oil leak under the engine.');
+  const d=x.w.document,card=d.querySelector('.b1-lead'),picker=card.querySelector('[name=media]');
+  assert.equal(picker.closest('label').hidden,false);assert.equal(picker.accept,'image/*,video/*');assert.equal(picker.multiple,true);
+  const files=[new x.w.File([new Uint8Array([255,216,255,224,1,2,3])],'leak.jpg',{type:'image/jpeg'}),new x.w.File([new Uint8Array(20)],'IMG_0001.HEIC',{type:''}),new x.w.File([new Uint8Array(20)],'bad.mov',{type:'video/quicktime'}),new x.w.File(['x'],'notes.pdf',{type:'application/pdf'})];
+  Object.defineProperty(picker,'files',{value:files,configurable:true});picker.dispatchEvent(new x.w.Event('change'));
+  assert.match(card.querySelector('.b1-lead-status').textContent,/3 files will go to Tony[\s\S]*Not added: notes\.pdf/);
+  card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='239-555-0100';
+  card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();await settle();
+  const uploads=x.requests.filter(r=>r.route===`/hooks/lead/media/${id}`);
+  assert.deepEqual(uploads.map(r=>[r.headers['Content-Type'],r.headers['X-Media-Token'],r.body.name]),[['image/jpeg','synthetic-media-token-000000000000','leak.jpg'],['image/heic','synthetic-media-token-000000000000','IMG_0001.HEIC'],['video/quicktime','synthetic-media-token-000000000000','bad.mov']]);
+  assert.ok(x.requests.findIndex(r=>r.route==='/hooks/lead/webform')<x.requests.findIndex(r=>r.route.startsWith('/hooks/lead/media/')),'the lead is saved before any upload');
+  assert.match(d.querySelector('.b1-messages').textContent,/Tony has your 2 files\. 1 did not go through \(bad\.mov\)\. You can text it to Tony at \(239\) 397-2048\./);
+});
+test('without receiver support the photo picker stays hidden and nothing is uploaded',async t=>{
+  const x=setup(t,{handler:async(route)=>route==='/healthz'?{ok:true,status:200,json:async()=>({ok:true,chat:'ready'})}:{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Thanks.',ready:true,intake:{}}}});
+  await settle();await x.say('Brakes grind.');
+  assert.equal(x.w.document.querySelector('.b1-lead [name=media]').closest('label').hidden,true);
 });

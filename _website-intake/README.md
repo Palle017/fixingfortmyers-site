@@ -66,11 +66,20 @@ Public loopback listener: `127.0.0.1:18795`.
 | GET | `/healthz` | Minimal service health and whether chat started (`chat: "ready"` or `"unavailable"`); no customer data. Readable cross-origin by the shop origins so the widget can check it. |
 | POST | `/hooks/lead/webform` | JSON repair request. |
 | POST | `/hooks/lead/voicenote` | Multipart audio plus fields, or legacy raw audio with headers. |
-| OPTIONS | Either POST path | Browser CORS preflight for exact allowed origins. |
+| POST | `/hooks/lead/media/{leadId}` | One customer photo or video, raw body, `Content-Type` set to the file type and `X-Media-Token` set to the `mediaToken` from the webform receipt. |
+| OPTIONS | Any POST path above | Browser CORS preflight for exact allowed origins. |
 | GET | `/chat/widget.js` | Contact launcher JavaScript. |
 | Any | Everything else | 404. No public inbox, recording retrieval, assistant, or admin route. |
 
 The private inbox binds only `127.0.0.1:18798`. Its Host allowlist rejects DNS rebinding; Origin checks reject cross-site reads; status updates require same-origin JSON. All customer strings use `textContent`. Audio has a checked container signature and media MIME type and is served with `nosniff`.
+
+### Photos and video
+
+A webform receipt includes a `mediaToken` (valid 2 hours; resending the same request issues a new one and retires the old). The lead is always saved before any upload, so a failed upload never loses a lead. Each file is streamed to `data/media/{leadId}/{n}.{ext}` and must really be the declared type (checked on its first bytes): JPEG, PNG, WebP, HEIC/HEIF up to 15 MB; MP4, MOV, WebM up to 100 MB; at most 6 files and 200 MB per request, with 1 GiB of disk kept free. A retried upload of the same file is not stored twice. Uploads get 5 minutes; every other request body still has 30 seconds. Tony gets one grouped "Photos/video added" alert per request (push, desktop, email; never an extra paid text) about 45 seconds after the last upload. The private inbox shows photos and plays videos from `/api/leads/{id}/media/{n}`, served with the validated type, `nosniff` and a `sandbox` CSP. Back up `data/media` together with the database.
+
+### Customer confirmation text
+
+When a customer ticks text permission, the receiver can text them within seconds: "Perfect Timing Auto Repair: Hi Maria, Tony got your repair request for your 2012 F-150. He'll call or text you from (239) 397-2048… Reply STOP to opt out, HELP for help." It is **off** until both are true: `LEAD_CUSTOMER_TEXTS=true` and the Twilio variables (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `LEAD_ALERT_FROM`) are set. US carriers also require the sending number to be A2P 10DLC registered first. At most one text per phone number per day and 60 per day overall. An uncertain send is never repeated (Twilio has no idempotency key); it shows as "may not have gone out" in the inbox. Replies go to the Twilio number, so the text points customers to (239) 397-2048.
 
 ### Request contract
 

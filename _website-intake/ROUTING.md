@@ -42,7 +42,7 @@ The form supplies `city` (up to 100 characters), `starts` and `stranded` as expl
 
 **The customer's reviewed final form values are authoritative.** Model suggestions do not trigger the rules by themselves. The customer can correct every value or use the conventional form directly. Immediate recognized hazards receive fixed emergency/roadside guidance even if the model is unavailable. Common phone/email/VIN and explicitly introduced name patterns are removed before provider requests; this reduces accidental identifiers and is not full anonymization.
 
-Owner-confirmed availability is 24/7. If Bay One is later enabled, its prepared assistance window is outside **8 a.m.–8 p.m. America/New_York**. Bay One is currently off by owner instruction. After-hours repairs depend on the job, location and availability; Tony confirms dispatches. The prepared urgent rule runs at every hour, independently of that assistance window.
+Owner-confirmed availability is 24/7. If Bay One is later enabled, its prepared assistance window is outside **8 a.m.–8 p.m. America/New_York**. Bay One is currently off by owner instruction. After-hours repairs depend on the job, location and availability; Tony confirms appointments. The prepared urgent rule runs at every hour, independently of that assistance window.
 
 ## Storage, duplicate protection and limits
 

@@ -10,6 +10,19 @@ async function alertAction(route,body={}){
   const response=await fetch(route,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+operatorToken.value},body:JSON.stringify(body)});
   const result=await response.json();if(!response.ok)throw Error(result.error||'Alert action failed.');return result;
 }
+const dayKey = value => new Date(value).toLocaleDateString('en-CA');
+function renderSummary(leads) {
+  const box = document.getElementById('summary'), today = dayKey(Date.now()), weekAgo = Date.now() - 7 * 86400000;
+  const tiles = [['New', leads.filter(l => l.status === 'new').length, 'accent'], ['Today', leads.filter(l => dayKey(l.received_at) === today).length], ['Last 7 days', leads.filter(l => Date.parse(l.received_at) >= weekAgo).length],
+    ['Big jobs', leads.filter(l => l.bigJob).length, 'hot'], ['With photos', leads.filter(l => l.media?.length).length], ['Won', leads.filter(l => l.pipeline?.stage === 'won').length, 'good']];
+  const grid = el('div', undefined, 'tiles');
+  for (const [label, value, tone] of tiles) { const tile = el('div', undefined, 'tile' + (tone ? ' ' + tone : '')); tile.append(el('strong', String(value)), el('span', label)); grid.append(tile); }
+  const days = [...Array(14)].map((_, i) => dayKey(Date.now() - (13 - i) * 86400000)), counts = days.map(d => leads.filter(l => dayKey(l.received_at) === d).length), max = Math.max(1, ...counts);
+  const chart = el('div', undefined, 'chart'); chart.setAttribute('role', 'img'); chart.setAttribute('aria-label', 'Requests per day, last 14 days: ' + counts.join(', '));
+  days.forEach((d, i) => { const col = el('div', undefined, 'bar'); const fill = el('i'); fill.style.height = Math.max(3, counts[i] / max * 100) + '%'; col.title = d + ': ' + counts[i]; col.append(el('b', counts[i] ? String(counts[i]) : ''), fill, el('span', d.slice(8))); chart.append(col); });
+  const wrap = el('div', undefined, 'chart-wrap'); wrap.append(el('p', 'Requests per day · last 14 days', 'chart-title'), chart);
+  box.replaceChildren(grid, wrap);
+}
 function render(lead) {
   const card = el('article', undefined, 'lead ' + lead.status);
   card.id = 'lead-' + lead.id;
@@ -24,6 +37,12 @@ function render(lead) {
     catch { document.getElementById('status').textContent = 'Status was not saved. Please try again.'; select.value = lead.status; }
     finally { select.disabled = false; }
   });
+  const badges = el('div', undefined, 'badges');
+  if (lead.routing?.priority === 'first') badges.append(el('span', 'URGENT', 'badge hot'));
+  if (lead.bigJob) badges.append(el('span', 'BIG JOB', 'badge big'));
+  if (lead.media?.length) badges.append(el('span', lead.media.length + ' photo/video', 'badge'));
+  if (lead.pipeline?.stage && lead.pipeline.stage !== 'new') badges.append(el('span', lead.pipeline.stage.replaceAll('_', ' '), 'badge' + (lead.pipeline.stage === 'won' ? ' good' : '')));
+  title.append(badges);
   header.append(title, select); card.append(header);
   const facts = el('div', undefined, 'facts');
   const digits = lead.phone.replace(/\D/g,'');
@@ -46,8 +65,25 @@ function render(lead) {
     card.append(line);
   }
   if (lead.requestId) { const related = el('a', 'View related repair request'); related.href = '#lead-' + lead.requestId; card.append(related); }
+  if (lead.media?.length) {
+    const gallery = el('div', undefined, 'media');
+    for (const item of lead.media) {
+      const src = '/api/leads/' + lead.id + '/media/' + item.idx, size = Math.max(1, Math.round(item.bytes / 1048576)) + ' MB';
+      if (item.type.startsWith('video/')) { const video = el('video'); video.controls = true; video.preload = 'metadata'; video.src = src; video.setAttribute('aria-label', 'Customer video ' + item.idx); gallery.append(video); }
+      else if (['image/heic', 'image/heif'].includes(item.type)) { const link = el('a', 'Open HEIC photo ' + item.idx + ' (' + size + ')'); link.href = src; link.target = '_blank'; gallery.append(link); }
+      else { const link = el('a'); link.href = src; link.target = '_blank'; const img = el('img'); img.src = src; img.alt = 'Customer photo ' + item.idx; img.loading = 'lazy'; link.append(img); gallery.append(link); }
+    }
+    card.append(el('p', lead.media.length + ' photo/video attachment' + (lead.media.length > 1 ? 's' : ''), 'tag'), gallery);
+  }
   if (lead.audio_bytes) { const audio = el('audio'); audio.controls = true; audio.preload = 'none'; audio.src = '/api/leads/' + lead.id + '/audio'; card.append(audio); }
   card.append(el('p', lead.smsConsent ? 'Customer opted in to service-related text follow-up.' : 'Call follow-up requested; no text permission selected.', 'tag'));
+  if (!['won', 'lost', 'spam'].includes(lead.pipeline?.stage)) {
+    const done = el('button', 'Job done · ask for a review', 'done'); done.type = 'button';
+    done.addEventListener('click', async () => { done.disabled = true; try { const r = await fetch('/api/leads/' + lead.id + '/stage', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({stage:'won'})}); const out = await r.json(); if (!r.ok) throw Error(out.error || 'Not saved.'); document.getElementById('status').textContent = out.reviewQueued ? 'Marked won. A Google review request will be texted in 2 hours.' : 'Marked won. No review text queued (needs text permission, Twilio and GOOGLE_REVIEW_URL).'; fingerprint = ''; await refresh(); } catch (err) { document.getElementById('status').textContent = err.message; done.disabled = false; } });
+    card.append(done);
+  }
+  if (lead.reviewText) card.append(el('p', 'Review request text: ' + ({pending:'scheduled', sending:'sending', sent:'sent', failed:'rejected by the carrier', needs_review:'may not have gone out'}[lead.reviewText.state] || lead.reviewText.state), 'tag'));
+  if (lead.customerText) card.append(el('p', 'Confirmation text to customer: ' + ({sent:'sent', pending:'sending', sending:'sending', skipped:'not sent (' + (lead.customerText.last_error === 'already_texted_today' ? 'already texted today' : 'daily limit') + ')', failed:'rejected by the carrier', needs_review:'may not have gone out; check Twilio before resending'}[lead.customerText.state] || lead.customerText.state), 'tag'));
   const detail = el('details'); detail.append(el('summary','Request and consent record'));
   detail.append(el('p','Request ID: ' + lead.id + '\nReceived: ' + date(lead.received_at) + '\nConsent recorded: ' + (lead.smsConsentTimestamp || 'Not selected') + '\nVersion: ' + lead.smsConsentVersion + '\nSource: ' + lead.smsConsentSource + '\nPage: ' + lead.smsConsentPage + '\nDisclosure: ' + lead.smsConsentDisclosure)); card.append(detail);
   return card;
@@ -59,7 +95,8 @@ async function refresh() {
     const fresh = data.leads.filter(item => !known.has(item.id));
     if (!initial && fresh.length && 'Notification' in window && Notification.permission === 'granted') new Notification('Perfect Timing: new website request', {body: fresh.length + ' new request(s). Open your website inbox to review them.'});
     known = new Set(data.leads.map(item => item.id)); initial = false;
-    const signature = data.leads.map(item => item.id + ':' + item.updated_at+':'+JSON.stringify(item.alerts||[])).join('|');
+    renderSummary(data.leads);
+    const signature = data.leads.map(item => item.id + ':' + item.updated_at+':'+JSON.stringify(item.alerts||[])+':'+(item.media||[]).length+':'+(item.pipeline?.stage||'')+':'+(item.reviewText?.state||'')).join('|');
     if (signature !== fingerprint || !document.getElementById('leads').children.length) { const list = document.getElementById('leads'); list.replaceChildren(...(data.leads.length ? data.leads.map(render) : [el('div','No requests yet. New website messages will appear here automatically.','empty')])); fingerprint = signature; }
     const count = data.leads.filter(item => item.status === 'new').length;
     document.title = (count ? '(' + count + ') ' : '') + 'Website Requests · Perfect Timing';

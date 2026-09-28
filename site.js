@@ -122,7 +122,7 @@
   };
   if (!endpoint) {
     submit.textContent = 'Prepare text to Tony';
-    byId('request-instructions').textContent = 'Fill in what you know, then review a text draft for Tony. Open it in your texting app and tap Send yourself. Preparing a draft does not send an inquiry or book an appointment.';
+    byId('request-instructions').textContent = 'Fill in what you know, then review a text draft for Tony. Open it in your texting app, add photos or a short video of the problem if you can, and tap Send yourself. Preparing a draft does not send an inquiry or book an appointment.';
     const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = true;
   } else {
     submit.textContent = 'Send repair request';
@@ -138,7 +138,7 @@
     if (!data.name || !data.details) { status.textContent = 'Please enter your name and a description of the problem. Incomplete vehicle details are okay.'; return; }
     makeBackup(data);
     requestPayload = data;
-    if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app and tap Send. Nothing has been sent yet. You can also copy the text, email it or call Tony.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
+    if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app, attach photos or a short video of the problem if you have them, and tap Send. Nothing has been sent yet. You can also copy the text, email it or call Tony.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
     const submittedKey = requestKey;
     submit.disabled = true; submit.textContent = 'Sending…'; status.textContent = 'Sending your repair request…';
     try {
