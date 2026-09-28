@@ -4,10 +4,10 @@ import re, json
 
 root = Path(__file__).resolve().parents[1]
 days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-disclosure = ('After-hours repairs depend on the job, location and availability; Tony confirms all dispatches. '
-              'Bay One AI intake is currently offline. Call or text Tony directly.')
+disclosure = ('Outside 8 a.m.–8 p.m. Eastern, Tony is assisted by Bay One AI. '
+              'After-hours repairs depend on the job, location and availability; Tony confirms all appointments.')
 hours = '24/7 availability · Service by confirmed appointment'
-short = '<p class="service-hours">Available 24/7<a class="hours-asterisk" href="#hours-disclaimer" aria-label="Read after-hours service details">*</a><span>Tony confirms availability and dispatch.</span></p>'
+short = '<p class="service-hours">Available 24/7<a class="hours-asterisk" href="#hours-disclaimer" aria-label="Read after-hours service details">*</a><span>Tony confirms your appointment.</span></p>'
 for file in root.glob('*.html'):
     if file.name.startswith('repair-guide'):
         continue  # New guide pages have their own reviewed template.
@@ -18,7 +18,7 @@ for file in root.glob('*.html'):
         'Monday-Saturday, 7AM-7PM, by appointment.': hours + '.',
         'By-appointment scheduling built around your work week, Mon–Sat 7am–7pm': '24/7 availability, with service scheduled around your work and the job requirements',
         'By appointment, Mon–Sat 7am–7pm': hours,
-        'Mobile service is by appointment, Monday through Saturday, 7am to 7pm.': 'Mobile repair is available 24/7, with dispatch and appointments confirmed by Tony. Outside 8 a.m.–8 p.m. Eastern, Bay One AI assists Tony.',
+        'Mobile service is by appointment, Monday through Saturday, 7am to 7pm.': 'Shop service is available 24/7 by appointment, confirmed by Tony. Outside 8 a.m.–8 p.m. Eastern, Bay One AI assists Tony.',
         'Mon&ndash;Sat, 7AM&ndash;7PM, by appointment.': hours + '.',
     }
     for old, new in replacements.items():
@@ -46,8 +46,8 @@ for file in root.glob('*.html'):
     if 'class="service-hero__desc"' in html and 'class="service-hours"' not in html:
         html = re.sub(r'(<p class="service-hero__desc">.*?</p>)', r'\1\n'+short, html, count=1, flags=re.S)
     if file.name == 'index.html':
-        html = html.replace('Owner-led team. Tony\'s personal final check.', 'Available 24/7<a class="hours-asterisk" href="#hours-disclaimer" aria-label="Read after-hours service details">*</a> · AI-assisted after hours. Tony confirms dispatch.')
-        html = html.replace('<title>Mobile Mechanic Fort Myers | Perfect Timing Auto Repair</title>', '<title>24/7 Mobile Mechanic Fort Myers | Perfect Timing Auto Repair</title>')
+        html = html.replace('Owner-led team. Tony\'s personal final check.', 'Available 24/7<a class="hours-asterisk" href="#hours-disclaimer" aria-label="Read after-hours service details">*</a> · AI-assisted after hours. Tony confirms your appointment.')
+        html = html.replace('<title>Mobile Mechanic Fort Myers | Perfect Timing Auto Repair</title>', '<title>24/7 Auto Repair Shop Fort Myers | Perfect Timing Auto Repair</title>')
     html = re.sub(r'(<li><a href="(?:/)?#services">Services</a></li>)(?!<li><a href="/repair-guides")', r'\1<li><a href="/repair-guides">Repair Guides</a></li>', html)
     html = re.sub(r'(<div class="nav__mobile-menu"[^>]*>\s*<a href="(?:/)?#services">Services</a>)(?!<a href="/repair-guides")', r'\1<a href="/repair-guides">Repair Guides</a>', html)
     if html != before:

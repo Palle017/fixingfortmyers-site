@@ -10,11 +10,11 @@ Keep Perfect Timing's existing visual design, branding, mobile contact actions, 
 
 **The owner's latest instruction turns public Bay One OFF until the rest of the website is production grade.** This configuration is now published and verified in the live mobile browser: no launcher or dialog appears, and the live configuration explicitly disables it. Keep its source/design assets and prepared routing work for later review. Backend activation is stopped at the owner's request. The previous 8 a.m.–8 p.m. Eastern/AI-assisted after-hours wording is superseded for this release. Do not enable the assistant simply because its local tests pass.
 
-The revised public hours disclosure is:
+The revised public hours disclosure at that time was below. **Superseded September 28, 2026:** Bay One is back on and Perfect Timing is a fully equipped repair shop, not a mobile service; the current disclosure is “* Outside 8 a.m.–8 p.m. Eastern, Tony is assisted by Bay One AI. After-hours repairs depend on the job, location and availability; Tony confirms all appointments.” and the hero qualifier is “Tony confirms your appointment.”
 
-> \* After-hours repairs depend on the job, location and availability; Tony confirms all dispatches. Bay One AI intake is currently offline. Call or text Tony directly.
+> \* After-hours repairs depend on the job, location and availability; Tony confirms all appointments. Bay One AI intake is currently offline. Call or text Tony directly.
 
-The corresponding hero qualifier is “Tony confirms availability and dispatch.” Keep the `24/7*` links and readable disclosure consistent across pages and business structured data. Do not publish the superseded AI-assisted after-hours claim.
+The corresponding hero qualifier was “Tony confirms availability and your appointment.” Keep the `24/7*` links and readable disclosure consistent across pages and business structured data. Do not publish the superseded AI-assisted after-hours claim.
 
 ## What is prepared
 

@@ -19,9 +19,9 @@ The request links use the frontend's agreed service whitelist. They contain no c
 
 ## Editorial scope
 
-The articles explain useful symptom observations and information to provide with an inquiry. They do not identify a failed part from a symptom, give repair prices, declare a vehicle safe to drive, promise a dispatch, or present generic jump-start/refrigerant procedures. They include brief hazard guidance and direct contact paths. No Tony technical-review claim, invented testimonial, certification, repair outcome, or original workshop image is added.
+The articles explain useful symptom observations and information to provide with an inquiry. They do not identify a failed part from a symptom, give repair prices, declare a vehicle safe to drive, promise an appointment, or present generic jump-start/refrigerant procedures. They include brief hazard guidance and direct contact paths. No Tony technical-review claim, invented testimonial, certification, repair outcome, or original workshop image is added.
 
-Each page displays `24/7*` linking to the readable current footer note: “* After-hours repairs depend on the job, location and availability; Tony confirms all dispatches. Bay One AI intake is currently offline. Call or text Tony directly.” This replaces the earlier AI-assisted after-hours wording.
+Each page displays `24/7*` linking to the readable current footer note: “* Outside 8 a.m.–8 p.m. Eastern, Tony is assisted by Bay One AI. After-hours repairs depend on the job, location and availability; Tony confirms all appointments.” (Current as of September 28, 2026: Bay One is back on and the business is a fully equipped repair shop, not a mobile service.)
 
 Article metadata identifies the site as publisher, without inventing a named author or review. Canonicals use the existing extensionless convention. The hub has CollectionPage/Article links and every page has breadcrumb structured data. The root release task owns adding these URLs to the existing sitemap and navigation; creating these files does not establish indexing or deployment.
 
