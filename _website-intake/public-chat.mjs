@@ -12,7 +12,7 @@ export const PUBLIC_SHOP_PROFILE = Object.freeze({
   hours:'24/7. After-hours repairs depend on the job, location and availability; Tony confirms all appointments.',
   assistance:'Outside 8 a.m.–8 p.m. Eastern, Tony is assisted by Bay One AI.',
   location:'Fully equipped repair workshop serving Fort Myers and nearby Southwest Florida, with walnut blasting, engine assembly, tolerance and timing checks, and transmission work. Customers book an appointment and bring or tow the vehicle to Tony\'s shop; call or text (239) 397-2048 to book a drop-off time. Tony confirms the job and appointment.',
-  services:'Diagnostics, A/C, brakes, engine and transmission repair, module programming, electrical, cooling, suspension, maintenance, exhaust, diesel, car audio, performance and hot rods. Concierge pickup/return is arranged with the shop for an additional fee.',
+  services:'Diagnostics, A/C, brakes, engine and transmission repair, module programming, electrical, cooling, suspension, maintenance, exhaust, diesel, car audio, performance, hot rods and restoration, engine and transmission rebuilds and replacements, walnut blasting, paint work, buffing, paint correction and detailing. Workshop details: fixingfortmyers.com/workshop. Concierge pickup/return is arranged with the shop for an additional fee.',
   pricing:'The public site does not publish hourly labor rates, diagnostic fees, or fixed repair prices.',
 });
 const TIMEZONE='America/New_York';

@@ -15,7 +15,7 @@ for(const path of paths){
   assert.equal(response.status,privatePath?404:200,path);
   if(path==='/'||path.includes('repair-guide')||path==='/no-start-diagnosis-fort-myers'){
     assert.match(body,/24\/7/);assert.match(body,/Tony is assisted by Bay One AI/);
-    assert.match(body,/20260927-bay-one-v3/);
+    assert.match(body,/20260928-workshop/);
   }
   if(path==='/bay-one-config.js'){assert.match(body,/enabled:\s*true/);assert.match(body,/p15g2\.tail68bd87\.ts\.net:10000/);}
   if(path==='/contact-config.js')assert.match(body,/endpoint:\s*''/);

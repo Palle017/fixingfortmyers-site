@@ -407,6 +407,36 @@ The site has no page for paint, buffing, paint correction or detailing. Google c
 
 ---
 
+## Staged on this branch (September 28, 2026)
+
+Part 3 is now **built on top of the workshop wording on `main` (PRs #12–#18), with placeholder images**. Every photo slot shows a dark "PHOTO Wx (placeholder)" image. When the real photos arrive, save each one as WebP at **1536×1024** (landscape, 3:2) **under the same filename**, and remove the location data. No HTML changes are needed.
+
+| Shot | File | Used on |
+| --- | --- | --- |
+| W20 Tony working in the bay | `assets/tony-at-work.webp` (+ `-small.webp`, 720×480) | **Hero on every page**, home page, Workshop gallery |
+| W1 workshop wide | `assets/workshop-wide.webp` (+ `-small.webp`) | Workshop hero and gallery, home page workshop section |
+| W3 lift | `assets/workshop-lift.webp` | Workshop gallery |
+| W4 engine assembly | `assets/workshop-engine-assembly.webp` | Workshop, home About section, Careers hero |
+| W5 measuring | `assets/workshop-measuring.webp` | Workshop |
+| W7 timing | `assets/workshop-timing.webp` | Workshop gallery |
+| W8 transmission | `assets/workshop-transmission.webp` | Workshop |
+| W9 walnut blaster | `assets/workshop-walnut-blaster.webp` | Workshop |
+| W10 / W11 valves before and after | `assets/workshop-valves-before.webp`, `assets/workshop-valves-after.webp` | Workshop before/after |
+| W12 diagnostics | `assets/workshop-diagnostics.webp` | Workshop |
+| W13 tool storage | `assets/workshop-tool-storage.webp` | Workshop gallery |
+| W14 fabrication | `assets/workshop-fabrication.webp` | Workshop gallery |
+| W17 project vehicle | `assets/workshop-project.webp` | Workshop |
+| W19 Tony portrait | `assets/tony-workshop-portrait.webp` | Workshop |
+| P1 / P2 paint before and after | `assets/paint-correction-before.webp`, `assets/paint-correction-after.webp` | Paint page, Workshop |
+| P3 paint work | `assets/paint-work.webp` | Paint page |
+| P4 detailed interior | `assets/detailing-interior.webp` | Paint page |
+
+W18 (drop-off area) is for Google only and is not used on the site while the address stays hidden.
+
+**What was built:** `workshop.html`, `paint-correction-detailing-fort-myers.html`, the image swaps in 3.2, the workshop links in 3.3 (every visible "Tony's fully equipped workshop" now links to `/workshop`), footer links on every page, all 12 towns in `areaServed`, Sanibel and Pine Island on the home service area, the sitemap, the About page, Bay One's service list, and the asset version bumped to `20260928-workshop`. Neither page describes Tony as mobile. Drop-off is by appointment, and the workshop is named only as "based at Bayshore Ranch".
+
+**Do not merge while any placeholder is still in place.** The hero on every page currently shows the W20 placeholder. The old images (`tony-mobile-*.webp`, `perfect-timing-mobile-workshop.webp`) are no longer referenced and can be deleted once the real photos are in.
+
 ## Listings elsewhere that disagree (found September 28, 2026)
 
 A public web search shows other directories with details that conflict with the site and the Google profile. Inconsistent name, address and phone details across directories confuse customers and weaken local rankings.
