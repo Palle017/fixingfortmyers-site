@@ -14,13 +14,18 @@ export const DEFAULT_ALERT_EMAILS = ['prudhvi.pallempati@gmail.com'];
 const DELAYS = [30000, 120000, 600000, 1800000, 3600000];
 const yesNo = value => value === 'yes' ? 'Yes' : value === 'no' ? 'No' : 'Unknown';
 
+// Engine, transmission and other workshop-sized jobs: tagged so Tony calls the highest-value leads back first.
+const BIG_JOB = /\b(?:rebuild|rebuilt|re-?build|engine (?:swap|replace\w*|knock\w*|seiz\w*)|(?:blown|seized|spun|thrown) (?:engine|motor|bearing|rod)|rod knock|knock\w* (?:noise|engine)|head gasket|cracked head|warped head|timing (?:chain|belt)|transmission|tranny|slipping gears?|gears? slipping|won.?t (?:shift|go into gear)|burning oil|blue smoke|hydro-?lock\w*|restoration|hot rod)\b/i;
+export const isBigJob = lead => BIG_JOB.test([lead.service, lead.details, lead.vehicle].filter(Boolean).join('\n'));
+
 export function summarize(lead, id, decision) {
-  const urgent = decision?.priority === 'first';
-  const title = `${urgent ? 'URGENT ' : ''}New repair request: ${lead.vehicle || 'vehicle not given'}`;
+  const urgent = decision?.priority === 'first', big = isBigJob(lead);
+  const title = `${urgent ? 'URGENT ' : ''}${big ? 'BIG JOB ' : ''}New repair request: ${lead.vehicle || 'vehicle not given'}`;
   const source = SOURCES[lead.source] ? lead.source : lead.kind === 'voicenote' ? 'voice' : 'form';
   // null = omitted line; '' = intentional blank separator.
   const lines = [
     urgent ? 'FIRST PRIORITY: customer reports stranded and the vehicle does not start.' : null,
+    big ? 'BIG JOB: sounds like engine, transmission or other workshop work. Call back first.' : null,
     `Name: ${lead.name}`,
     lead.phone ? `Callback: ${lead.phone} (${lead.smsConsent ? 'text OK' : 'call only, no text permission'})` : 'Callback: no number given',
     `Vehicle: ${lead.vehicle || 'Not provided'}`,
@@ -34,7 +39,7 @@ export function summarize(lead, id, decision) {
     '',
     `Lead ${id}`,
   ].filter(line => line !== null);
-  return {title, text: lines.join('\n'), urgent};
+  return {title, text: lines.join('\n'), urgent, bigJob: big};
 }
 
 // Minimal SMTP submission client (implicit TLS, AUTH PLAIN). Enough for Gmail with an app password.

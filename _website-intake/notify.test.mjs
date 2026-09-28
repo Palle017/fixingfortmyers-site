@@ -7,7 +7,7 @@ import net from 'node:net';
 import {EventEmitter} from 'node:events';
 import {randomUUID} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
-import {createLeadNotifier,summarize,createSmtpAdapter,createNtfyAdapter,createDesktopAdapter,createSmsAdapter,channelsFromEnv} from './lead-notify.mjs';
+import {createLeadNotifier,summarize,isBigJob,createSmtpAdapter,createNtfyAdapter,createDesktopAdapter,createSmsAdapter,channelsFromEnv} from './lead-notify.mjs';
 import {createLeadServers} from './server.mjs';
 import {TONY_ALERT_NUMBER} from './lead-routing.mjs';
 
@@ -378,4 +378,17 @@ test('run: a text that may have gone out is never resent (Twilio cannot dedupe)'
   db.prepare("UPDATE lead_notifications SET state='sending'").run();
   createLeadNotifier(db,{channels:[sms],now:()=>now});
   assert.equal(rows(db,'L9')[0].state,'needs_review');
+});
+
+test('big jobs (engine, transmission, rebuild) are tagged so Tony calls them back first; small jobs are not',()=>{
+  for(const details of ['Rod knock on my 5.3, thinking rebuild or engine swap','Transmission slipping between 2nd and 3rd','Blown head gasket, white smoke','Burning oil and blue smoke on startup','Engine won’t shift… actually the trans won’t go into gear'])
+    assert.equal(isBigJob({details}),true,details);
+  for(const details of ['Battery keeps dying overnight','Brakes squeal when I stop','AC blows warm at idle','Need an oil change and battery swap'])
+    assert.equal(isBigJob({details}),false,details);
+  const big=summarize({name:'Synthetic',phone:'2395550100',vehicle:'2014 Silverado',details:'Rod knock, rebuild or replace?'},'L1',{priority:'normal',actions:['normal']});
+  assert.match(big.title,/^BIG JOB New repair request: 2014 Silverado$/);assert.match(big.text,/^BIG JOB: .*Call back first\./m);assert.equal(big.bigJob,true);
+  const small=summarize({name:'Synthetic',phone:'2395550100',vehicle:'2014 Silverado',details:'Brakes squeal'},'L2',{priority:'normal',actions:['normal']});
+  assert.doesNotMatch(small.title+small.text,/BIG JOB/);
+  const both=summarize({name:'Synthetic',phone:'2395550100',vehicle:'Civic',details:'Spun bearing, stranded',starts:'no',stranded:'yes'},'L3',{priority:'first',actions:['notify_sms']});
+  assert.match(both.title,/^URGENT BIG JOB New repair request/);
 });
