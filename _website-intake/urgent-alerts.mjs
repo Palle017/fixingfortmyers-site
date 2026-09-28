@@ -39,10 +39,10 @@ function alertBody(lead,id,channel,fromNumber){
     'Perfect Timing: FIRST PRIORITY — customer reports stranded + no start.',`Lead ${id}`,`Name: ${lead.name}`,`Callback: ${lead.phone}`,
     `Vehicle: ${lead.vehicle||'Unknown'}`,`City/ZIP: ${lead.city||'Not provided'}`,`Symptoms: ${(lead.details||'Not provided').slice(0,1200)}`,
     `Starts: ${lead.starts||'unknown'}; stranded: ${lead.stranded||'unknown'}`,`Contact: ${lead.smsConsent?'text permission recorded':'call only; no text permission'}`,
-    'Review the saved inquiry; Tony confirms dispatch. Reply STOP to opt out.',
+    'Review the saved inquiry; Tony confirms the appointment. Reply STOP to opt out.',
   ].join('\n')};
   // Do not speak personal customer data into voicemail or an unknown answerer.
-  return {To:TONY_ALERT_NUMBER,From:fromNumber,Twiml:'<Response><Say>Perfect Timing urgent website inquiry. A customer reports being stranded with a vehicle that does not start. Please review your website inbox and the text alert. No dispatch has been confirmed.</Say></Response>',Timeout:'25'};
+  return {To:TONY_ALERT_NUMBER,From:fromNumber,Twiml:'<Response><Say>Perfect Timing urgent website inquiry. A customer reports being stranded with a vehicle that does not start. Please review your website inbox and the text alert. No appointment has been confirmed.</Say></Response>',Timeout:'25'};
 }
 export function createUrgentAlerts(db,options={}){
   const now=options.now||Date.now;let adapter=options.adapter||null;
