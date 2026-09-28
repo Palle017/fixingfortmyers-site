@@ -6,7 +6,7 @@ Prepared September 28, 2026. **This is a plan for review, not a set of applied c
 
 | Question | Decision |
 | --- | --- |
-| Address | **Updated Sept 28: show the address (option B, hybrid).** Customers can come to the base or drop the car off and leave. The Google profile shows the Bayshore Ranch address with a map pin **and** keeps the 12-town service area. *(Earlier the same day: hidden.)* The exact street address is still needed from the owner. |
+| Address | **Updated Sept 28: show the address (option B, hybrid).** Customers can come to the base or drop the car off and leave. The Google profile shows the Bayshore Ranch address with a map pin **and** keeps the 12-town service area. *(Earlier the same day: hidden.)* **Address: 17686 Saddleback Loop, North Fort Myers, FL 33917** (owner, Sept 28). |
 | Verification | The Google profile **is verified**. The edits in 1.0 step 2 can go ahead. |
 | Business name | **Keep it exactly as it appears now.** It matches the signage. No change. |
 | Hours | **Keep Open 24 hours**, also with the address shown (owner's choice, Sept 28). See the risk note under "Positioning update". |
@@ -113,7 +113,7 @@ Google distinguishes three setups:
 
 **Decision (owner, Sept 28, updated): option B, hybrid.** Show the Bayshore Ranch address with a map pin and keep the 12-town service area. The owner confirmed customers can come to the base or drop the car off and leave. *(The first decision that day was option A, hidden.)*
 
-**To do before switching:** (1) get the exact street address from the owner; (2) put permanent signage with the business name at the entrance; (3) set up a clear drop-off spot and key drop, since the hours stay at 24; (4) in the Google profile, go to **Edit profile → Location → Business location**, turn on showing the address to customers, enter it, and keep the service areas; (5) expect a re-verification request, and complete it before making other edits; (6) add the same address to the website footer, the `AutoRepair` schema (`address`) and the workshop page, so the name, address and phone match everywhere.
+**To do before switching:** (1) ~~get the exact street address~~ **done: 17686 Saddleback Loop, North Fort Myers, FL 33917**; (2) put permanent signage with the business name at the entrance; (3) set up a clear drop-off spot and key drop, since the hours stay at 24; (4) in the Google profile, go to **Edit profile → Location → Business location**, turn on showing the address to customers, enter it, and keep the service areas; (5) expect a re-verification request, and complete it before making other edits; (6) add the same address to the website footer, the `AutoRepair` schema (`address`) and the workshop page, so the name, address and phone match everywhere.
 
 **When to revisit option B:** only if **all** of these hold: (1) the workshop is a lawful place to receive customers (zoning, lease, HOA), (2) someone is there during fixed, published drop-off hours, (3) the owner accepts people arriving without an appointment, and (4) there is signage at the entrance. Then show the address with **real** drop-off hours, and cover 24/7 phone and Bay One availability in the description and in posts rather than in the hours field.
 
@@ -431,7 +431,7 @@ Part 3 is now **built on top of the workshop wording on `main` (PRs #12–#18), 
 | P3 paint work | `assets/paint-work.webp` | Paint page |
 | P4 detailed interior | `assets/detailing-interior.webp` | Paint page |
 
-W18 (drop-off area) is for Google only for now. **Address shown (Sept 28 update):** once the owner gives the exact street address, add it to the Workshop page ("Where is the workshop?" FAQ and the drop-off box), the footer on every page and the `AutoRepair` schema `address`, so it matches Google exactly.
+W18 (drop-off area) is for Google only for now. **Address shown (Sept 28 update): done on the site.** 17686 Saddleback Loop, North Fort Myers, FL 33917 is in the footer of every page, the `AutoRepair` schema `address` on every page, the Workshop page (hero box, drop-off section, FAQ, directions link) and Bay One's profile. Enter it on Google in exactly this form.
 
 **What was built:** `workshop.html`, `paint-correction-detailing-fort-myers.html`, the image swaps in 3.2, the workshop links in 3.3 (every visible "Tony's fully equipped workshop" now links to `/workshop`), footer links on every page, all 12 towns in `areaServed`, Sanibel and Pine Island on the home service area, the sitemap, the About page, Bay One's service list, and the asset version bumped to `20260928-workshop`. Neither page describes Tony as mobile. Drop-off is by appointment, and the workshop is named only as "based at Bayshore Ranch".
 
@@ -471,7 +471,7 @@ Checked September 28, 2026. Confirm the live category names, character limits an
 
 **Decisions**
 
-1. ~~Address~~: **show it** (option B). **Still needed: the exact street address**, and confirmation that there is signage at the entrance.
+1. ~~Address~~: **show it** (option B). Address: **17686 Saddleback Loop, North Fort Myers, FL 33917**. Still needed: confirmation that there is signage at the entrance.
 2. ~~Verified~~: yes. **Still open:** check in the profile editor that the Shopmonkey booking link is gone, and remove it if not.
 3. ~~Business name~~: keep as is.
 4. ~~24/7 hours~~: keep, also with the address shown. Needs a secure after-hours drop-off.
