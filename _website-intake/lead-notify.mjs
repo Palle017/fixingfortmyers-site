@@ -175,6 +175,20 @@ export function createLeadNotifier(db, {channels = [], now = Date.now} = {}) {
       db.prepare('INSERT OR IGNORE INTO lead_notifications(lead_id,channel,state,message_json,next_attempt_ms,updated_at) VALUES(?,?,?,?,?,?)').run(id, channel.name, 'pending', JSON.stringify(message), now(), stamp());
     }
   }
+  // One follow-up per lead when the customer adds photos or video. Uploads within a minute of each other
+  // share the same alert (the message is refreshed while it is still waiting), so Tony gets one ping.
+  function enqueueMedia(lead, id, items) {
+    const photos = items.filter(item => item.type.startsWith('image/')).length, videos = items.length - photos;
+    const what = [photos && `${photos} photo${photos > 1 ? 's' : ''}`, videos && `${videos} video${videos > 1 ? 's' : ''}`].filter(Boolean).join(' and ');
+    const message = {title: `Photos/video added: ${lead.vehicle || 'repair request'}`, phone: lead.phone,
+      text: [`${lead.name || 'The customer'} added ${what} to their repair request.`, lead.phone ? `Callback: ${lead.phone}` : null, 'Open the website inbox on the shop laptop to view them.', '', `Lead ${id}`].filter(line => line !== null).join('\n'), urgent: false};
+    for (const channel of channels) {
+      if (channel.noRetry) continue; // Texts cost money per send; the lead text already went out.
+      db.prepare(`INSERT INTO lead_notifications(lead_id,channel,state,message_json,next_attempt_ms,updated_at) VALUES(?,?,?,?,?,?)
+        ON CONFLICT(lead_id,channel) DO UPDATE SET message_json=excluded.message_json,updated_at=excluded.updated_at WHERE lead_notifications.state='pending'`)
+        .run(id + ':media', channel.name, 'pending', JSON.stringify(message), now() + 45000, stamp());
+    }
+  }
   async function run() {
     // Only channels configured now: rows left from a removed channel must not fill the batch forever.
     const names = [...byName.keys()];
@@ -197,7 +211,7 @@ export function createLeadNotifier(db, {channels = [], now = Date.now} = {}) {
   }
   const tick = () => { if (busy) return busy; busy = run().finally(() => { busy = null; }); return busy; };
   return {
-    enqueue, tick, channels: channels.map(channel => channel.name),
+    enqueue, enqueueMedia, tick, channels: channels.map(channel => channel.name),
     inspect: id => db.prepare('SELECT channel,state,attempts,last_error,updated_at FROM lead_notifications WHERE lead_id=?').all(id),
     start() { if (channels.length && !timer) { timer = setInterval(() => { tick().catch(() => {}); }, 5000); timer.unref(); } },
     async close() { closing = true; clearInterval(timer); if (busy) await busy; },
