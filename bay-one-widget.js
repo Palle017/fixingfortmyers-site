@@ -44,11 +44,11 @@
   const controller = new AbortController(), healthTimer = setTimeout(() => controller.abort(), 6000);
   fetch(apiBase+'/healthz', { credentials:'omit', cache:'no-store', signal:controller.signal })
     .then(response => response.ok ? response.json() : null)
-    .then(health => { if (health?.ok === true && health.chat !== 'unavailable' && !document.getElementById('bay-one-widget')) mount(); })
+    .then(health => { if (health?.ok === true && health.chat !== 'unavailable' && !document.getElementById('bay-one-widget')) mount(health.media === 'ready'); })
     .catch(() => { /* Unreachable: leave the page's normal contact options as they are. */ })
     .finally(() => clearTimeout(healthTimer));
 
-  function mount() {
+  function mount(mediaReady = false) {
     const customAvatar = config.avatar || script?.dataset.avatar;
     const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
     const css = document.createElement('link');
@@ -219,10 +219,64 @@
       <label>Best time to reach you or anything else <small>(optional)</small><input name="callbackTime" maxlength="160"></label>
       ${choice('starts', 'Does the vehicle start?')}
       ${choice('stranded', 'Are you stranded right now?')}
+      <label class="b1-lead-media"${mediaReady ? '' : ' hidden'}>Add photos or a short video <small>(optional, up to 6)</small><input type="file" name="media" accept="image/*,video/*" multiple></label>
       <label class="b1-lead-check"><input type="checkbox" name="sms"> <span>${CONSENT} <a href="/sms-terms">SMS terms</a> · <a href="/privacy-policy">Privacy policy</a>.</span></label>
       <button type="submit">Send to Tony</button>
       <p class="b1-lead-status" role="status" aria-live="polite"></p>`;
     const leadStatus = leadForm.querySelector('.b1-lead-status');
+    // Photos and short videos go up after the request is saved, so a slow upload never loses the lead.
+    const MEDIA = {image:15*1024*1024, video:100*1024*1024, files:6};
+    const EXT_TYPES = {jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',heic:'image/heic',heif:'image/heif',mp4:'video/mp4',m4v:'video/mp4',mov:'video/quicktime',webm:'video/webm'};
+    const OK_TYPES = new Set(Object.values(EXT_TYPES));
+    const mediaInput = leadForm.querySelector('[name=media]');
+    const typeOf = file => { const type = (file.type || '').toLowerCase(); return OK_TYPES.has(type) ? type : EXT_TYPES[(file.name.split('.').pop() || '').toLowerCase()] || type; };
+    function pickMedia() {
+      const picked = [...(mediaInput?.files || [])], keep = [], skipped = [];
+      for (const file of picked) {
+        const type = typeOf(file), video = type.startsWith('video/');
+        if (!OK_TYPES.has(type)) skipped.push(`${file.name} (use JPG, PNG, HEIC, MP4 or MOV)`);
+        else if (!video && file.size > MEDIA.image && !/jpeg|png|webp/.test(type)) skipped.push(`${file.name} (photos up to 15 MB)`);
+        else if (video && file.size > MEDIA.video) skipped.push(`${file.name} (videos up to 100 MB, about 30 seconds)`);
+        else if (keep.length >= MEDIA.files) skipped.push(`${file.name} (6 files max)`);
+        else keep.push({file, type});
+      }
+      return {keep, skipped};
+    }
+    mediaInput?.addEventListener('change', () => {
+      const {keep, skipped} = pickMedia();
+      leadStatus.textContent = (keep.length ? `${keep.length} file${keep.length > 1 ? 's' : ''} will go to Tony with your request.` : '') + (skipped.length ? ` Not added: ${skipped.join(', ')}.` : '');
+    });
+    // Large phone photos are resized before upload: much faster on mobile data, still plenty for Tony.
+    async function shrink(item) {
+      if (!/^image\/(jpeg|png|webp)$/.test(item.type) || item.file.size < 2.5*1024*1024 || !window.createImageBitmap) return item;
+      try {
+        const bitmap = await createImageBitmap(item.file), scale = Math.min(1, 2400 / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas'); canvas.width = Math.round(bitmap.width*scale); canvas.height = Math.round(bitmap.height*scale);
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height); bitmap.close?.();
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+        return blob && blob.size < item.file.size ? {file: blob, type: 'image/jpeg'} : item;
+      } catch (_) { return item.file.size <= MEDIA.image ? item : null; }
+    }
+    async function uploadMedia(result, items) {
+      if (!items.length) return;
+      const row = addMessage('assistant', `Sending ${items.length} photo/video file${items.length > 1 ? 's' : ''} to Tony…`), text = row.querySelector('p');
+      if (!result.mediaToken) { text.textContent = 'Your request is saved, but photos could not be attached right now. Text them to Tony at (239) 397-2048.'; return; }
+      let sent = 0; const failed = [];
+      for (const [n, original] of items.entries()) {
+        text.textContent = `Sending file ${n + 1} of ${items.length} to Tony… keep this page open.`;
+        const item = await shrink(original);
+        if (!item || (item.type.startsWith('image/') && item.file.size > MEDIA.image)) { failed.push(original.file.name + ' (too large)'); continue; }
+        const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 300000);
+        try {
+          const response = await fetch(`${apiBase}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type, 'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal});
+          const reply = await response.json().catch(() => ({}));
+          if (!response.ok || reply.received !== true) throw new Error(reply.error || 'not saved');
+          sent++;
+        } catch (error) { failed.push(original.file.name + (error.name === 'AbortError' ? ' (timed out)' : '')); }
+        finally { clearTimeout(timer); }
+      }
+      text.textContent = (sent ? `Tony has your ${sent} file${sent > 1 ? 's' : ''}.` : '') + (failed.length ? ` ${failed.length} did not go through (${failed.join(', ')}). You can text ${failed.length > 1 ? 'them' : 'it'} to Tony at (239) 397-2048.` : '');
+    }
     let leadKey = uuid(), leadBusy = false, leadSent = false, pendingLead = null;
     leadForm.addEventListener('input', () => { if (!leadBusy && !pendingLead) leadKey = uuid(); });
     function lockLeadFields(locked) { leadForm.querySelectorAll('input,select').forEach(field => { field.disabled = locked; }); }
@@ -273,6 +327,7 @@
         const row = addMessage('assistant', `Your request is saved for Tony to review. Your callback number is ${body.phone}; ${sms ? 'text or call' : 'call only'}. Booking is not confirmed.` + (urgent ? ' You said you are stranded, so your request is marked urgent. If you are somewhere unsafe, call 911.' : ' Tony gives every price himself after he looks at the problem.'));
         const call = document.createElement('a'); call.className = 'b1-request-service'; call.href = 'tel:+12393972048'; call.textContent = urgent ? 'Call Tony now' : 'Call Tony';
         row.append(call);
+        uploadMedia(result, mediaInput && !mediaInput.closest('label').hidden ? pickMedia().keep : []).catch(() => {});
         try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id:result.id, receivedAt:result.receivedAt, confirmed:true, smsConsent:sms })); } catch (_) { /* Confirmation is already shown in the chat. */ }
       } catch (error) {
         leadStatus.textContent = (error.name === 'AbortError' ? 'Receipt could not be confirmed.' : error.message) + (pendingLead ? ' Retry to check the same request; its details are preserved.' : ' Correct your details and try again.') + ' You can also call or text Tony at (239) 397-2048.';
