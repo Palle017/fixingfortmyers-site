@@ -109,6 +109,9 @@
 .b1-lead label{display:grid;gap:4px;color:#cfe0ec;font-size:13px}
 .b1-lead small{color:#89a3b5}
 .b1-lead select,.b1-lead input:not([type=checkbox]){width:100%;padding:9px 10px;border:1px solid #3e5b6d;border-radius:9px;background:#08151f;color:#f1f7fc;font-size:16px}
+.b1-lead label[hidden]{display:none}
+.b1-lead .b1-lead-media input{width:100%;padding:8px;border:1px dashed #78e2e8;border-radius:9px;background:#08151f;color:#cfe0ec;font-size:14px}
+.b1-lead .b1-lead-media input::file-selector-button{margin-right:10px;padding:7px 10px;border:0;border-radius:7px;background:#78e2e8;color:#08202a;font-weight:700;cursor:pointer}
 .b1-lead .b1-lead-check{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.45}
 .b1-lead .b1-lead-check a{color:#78e2e8}
 .b1-lead .b1-lead-check input{flex:0 0 auto;margin-top:1px;width:18px;height:18px;accent-color:#78e2e8}

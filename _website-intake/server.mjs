@@ -267,7 +267,7 @@ export function createLeadServers(options = {}) {
       if (req.method === 'GET' && url.pathname === '/healthz') {
         // The site's widget checks this before showing Bay One, so the shop origins may read it.
         if (origins.has(req.headers.origin)) { res.setHeader('Access-Control-Allow-Origin', req.headers.origin); res.setHeader('Vary', 'Origin'); }
-        return json(res, 200, { ok: true, service: 'Perfect Timing website requests', chat: publicChat ? 'ready' : 'unavailable' });
+        return json(res, 200, { ok: true, service: 'Perfect Timing website requests', chat: publicChat ? 'ready' : 'unavailable', media: 'ready' });
       }
       if (['/chat/session','/chat/message'].includes(url.pathname)) {
         const forwarded = String(req.headers['x-forwarded-for'] ?? '').split(',').at(-1).trim();
