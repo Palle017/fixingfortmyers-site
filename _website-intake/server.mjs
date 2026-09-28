@@ -2,7 +2,7 @@ import http from 'node:http';
 import {createPublicChat,routePublicChat} from './public-chat.mjs';
 import {createRuleEvaluator,loadRules} from './lead-routing.mjs';
 import {createUrgentAlerts} from './urgent-alerts.mjs';
-import {createLeadNotifier,channelsFromEnv} from './lead-notify.mjs';
+import {createLeadNotifier,channelsFromEnv,isBigJob} from './lead-notify.mjs';
 import {createLeadDesk} from './lead-desk.mjs';
 import {createLeadMedia} from './lead-media.mjs';
 import {createCustomerTexts,createTwilioCustomerAdapter} from './customer-texts.mjs';
@@ -141,7 +141,7 @@ export function createLeadServers(options = {}) {
   // Factory callers get no notification channels unless they pass them in.
   const notifier=createLeadNotifier(db,{channels:options.notifyChannels||[]});
   // Factory callers (tests/previews) never text customers unless they pass an adapter in.
-  const customerTexts=createCustomerTexts(db,{adapter:options.customerTextAdapter||null});
+  const customerTexts=createCustomerTexts(db,{adapter:options.customerTextAdapter||null,reviewUrl:options.reviewUrl||''});
   const media=createLeadMedia(db,{dataDir,diskFree:options.recordingDiskFreeBytes??(()=>{const space=fs.statfsSync(dataDir,{bigint:true});return space.bavail*space.bsize;})});
   const desk=createLeadDesk(db,{digest:options.deskDigest||null,besideToken:options.besideToken??process.env.BESIDE_WEBHOOK_TOKEN??''});
   const origins = new Set(options.origins ?? ['https://fixingfortmyers.com', 'https://www.fixingfortmyers.com', ...(process.env.LEAD_DEV_ORIGINS ?? '').split(',').map(x => x.trim()).filter(Boolean)]);
@@ -435,6 +435,7 @@ export function createLeadServers(options = {}) {
           notifier.enqueue(lead,id,decision,{urgentTextQueued:alerts.inspect(id).alerts.some(row=>row.channel==='notify_sms'&&row.state==='pending')});
         }});
         if(!stageMatch)notifier.tick().catch(()=>{});
+        if(stageMatch&&input.stage==='won')result.reviewQueued=customerTexts.queueReview(stageMatch[1]);
         return json(res,200,result);
       }
       if (req.method === 'GET' && url.pathname === '/api/leads') {
@@ -463,7 +464,7 @@ export function createLeadServers(options = {}) {
         const page = rows.slice(0, limit);
         const last = page.at(-1);
         const nextCursor = hasMore && last ? Buffer.from(JSON.stringify({ v: 1, received_at: last.received_at, id: last.id })).toString('base64url') : null;
-        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id),media:media.list(row.id),customerText:customerTexts.inspect(row.id) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
+        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id),media:media.list(row.id),customerText:customerTexts.inspect(row.id),reviewText:customerTexts.inspectReview(row.id),bigJob:isBigJob(JSON.parse(payload_json)) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
       }
       const mediaFile = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/media\/([1-9]\d{0,2})$/);
       if (req.method === 'GET' && mediaFile) {
@@ -557,7 +558,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     catch (err) { console.error(JSON.stringify({ event: 'customer_texts_disabled', reason: err.message })); }
   }
   console.log(JSON.stringify({ event: 'customer_texts', enabled: Boolean(customerTextAdapter) }));
-  const service = createLeadServers({notifyChannels:notify.channels,deskDigest,customerTextAdapter,routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
+  const service = createLeadServers({notifyChannels:notify.channels,deskDigest,customerTextAdapter,reviewUrl:process.env.GOOGLE_REVIEW_URL||'',routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
   service.start().then(ports => console.log(JSON.stringify({ event: 'listening', public: `127.0.0.1:${ports.publicPort}`, inbox: `http://127.0.0.1:${ports.adminPort}/` }))).catch(err => { console.error(JSON.stringify({ event: 'startup_failed', code: err.code ?? 'internal' })); process.exit(1); });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => service.close().then(() => process.exit(0)));
 }

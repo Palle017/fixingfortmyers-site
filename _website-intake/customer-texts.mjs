@@ -34,7 +34,10 @@ export function createTwilioCustomerAdapter({accountSid, authToken, fromNumber, 
   }};
 }
 
-export function createCustomerTexts(db, {adapter = null, now = Date.now, maxPerDay = 60} = {}) {
+export const reviewText = (lead, url) => { const first = String(lead.name || '').trim().split(/\s+/)[0].replace(/[^\p{L}'-]/gu, '').slice(0, 30);
+  return `Perfect Timing Auto Repair: Thanks${first ? ', ' + first : ''}, for trusting Tony with your vehicle. If we took good care of you, a quick Google review helps a lot: ${url} Reply STOP to opt out.`; };
+
+export function createCustomerTexts(db, {adapter = null, now = Date.now, maxPerDay = 60, reviewUrl = ''} = {}) {
   db.exec(`CREATE TABLE IF NOT EXISTS customer_texts(lead_id TEXT PRIMARY KEY, phone_key TEXT NOT NULL, state TEXT NOT NULL, body TEXT, attempts INTEGER NOT NULL DEFAULT 0,
     next_attempt_ms INTEGER NOT NULL, provider_id TEXT, last_error TEXT, created_ms INTEGER NOT NULL, updated_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS customer_texts_due ON customer_texts(state, next_attempt_ms);`);
@@ -55,9 +58,20 @@ export function createCustomerTexts(db, {adapter = null, now = Date.now, maxPerD
     db.prepare('INSERT OR IGNORE INTO customer_texts(lead_id,phone_key,state,body,next_attempt_ms,last_error,created_ms,updated_at) VALUES(?,?,?,?,?,?,?,?)')
       .run(id, phoneKey, skip ? 'skipped' : 'pending', skip ? null : confirmationText(lead, {urgent}), now(), skip, now(), stamp());
   }
+  // After Tony marks a job won: one Google review request, two hours later, only with text permission.
+  function queueReview(id) {
+    if (!adapter || !/^https:\/\/\S{8,300}$/.test(reviewUrl)) return false;
+    const row = db.prepare('SELECT payload_json FROM leads WHERE id=?').get(id);
+    const lead = row && JSON.parse(row.payload_json), to = lead && customerNumber(lead.phone);
+    if (!lead || lead.smsConsent !== true || !to) return false;
+    const phoneKey = createHash('sha256').update(to).digest('hex');
+    if (db.prepare("SELECT 1 FROM customer_texts WHERE phone_key=? AND lead_id LIKE '%:review' AND created_ms>?").get(phoneKey, now() - 180 * 86400000)) return false;
+    db.prepare('INSERT OR IGNORE INTO customer_texts(lead_id,phone_key,state,body,next_attempt_ms,created_ms,updated_at) VALUES(?,?,?,?,?,?,?)').run(id + ':review', phoneKey, 'pending', reviewText(lead, reviewUrl), now() + 2 * 3600000, now(), stamp());
+    return true;
+  }
   async function run() {
     if (!adapter || closing) return;
-    const rows = db.prepare("SELECT customer_texts.*, leads.payload_json FROM customer_texts JOIN leads ON leads.id=customer_texts.lead_id WHERE state='pending' AND next_attempt_ms<=? ORDER BY next_attempt_ms LIMIT 10").all(now());
+    const rows = db.prepare("SELECT customer_texts.*, leads.payload_json FROM customer_texts JOIN leads ON leads.id=replace(customer_texts.lead_id,':review','') WHERE state='pending' AND next_attempt_ms<=? ORDER BY next_attempt_ms LIMIT 10").all(now());
     for (const row of rows) {
       if (closing) break;
       db.prepare("UPDATE customer_texts SET state='sending',attempts=attempts+1,updated_at=? WHERE lead_id=?").run(stamp(), row.lead_id);
@@ -72,8 +86,9 @@ export function createCustomerTexts(db, {adapter = null, now = Date.now, maxPerD
   }
   const tick = () => { if (busy) return busy; busy = run().finally(() => { busy = null; }); return busy; };
   return {
-    enqueue, tick, enabled: Boolean(adapter),
+    enqueue, queueReview, tick, enabled: Boolean(adapter), reviewsEnabled: Boolean(adapter && reviewUrl),
     inspect: id => db.prepare('SELECT state, last_error, updated_at FROM customer_texts WHERE lead_id=?').get(id) || null,
+    inspectReview: id => db.prepare('SELECT state, last_error, next_attempt_ms, updated_at FROM customer_texts WHERE lead_id=?').get(id + ':review') || null,
     start() { if (adapter && !timer) { timer = setInterval(() => { tick().catch(() => {}); }, 5000); timer.unref(); } },
     async close() { closing = true; clearInterval(timer); if (busy) await busy; },
   };
