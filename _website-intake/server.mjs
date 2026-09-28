@@ -4,6 +4,7 @@ import {createRuleEvaluator,loadRules} from './lead-routing.mjs';
 import {createUrgentAlerts} from './urgent-alerts.mjs';
 import {createLeadNotifier,channelsFromEnv} from './lead-notify.mjs';
 import {createLeadDesk} from './lead-desk.mjs';
+import {createLeadMedia} from './lead-media.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
@@ -16,7 +17,7 @@ const MAX_JSON = 48 * 1024;
 const MAX_AUDIO = 8 * 1024 * 1024;
 const MAX_METRICS_JSON = 16 * 1024;
 const AUDIO_TYPES = new Map([['audio/webm', 'webm'], ['audio/ogg', 'ogg'], ['audio/wav', 'wav'], ['audio/x-wav', 'wav'], ['audio/mp4', 'm4a'], ['audio/mpeg', 'mp3']]);
-const CORS_HEADERS = 'Content-Type, Idempotency-Key, X-Idempotency-Key, X-Phone, X-Name, X-SMS-Consent, X-SMS-Consent-Timestamp, X-SMS-Consent-Version, X-SMS-Consent-Source, X-SMS-Consent-Page, X-SMS-Consent-Disclosure';
+const CORS_HEADERS = 'Content-Type, X-Media-Token, Idempotency-Key, X-Idempotency-Key, X-Phone, X-Name, X-SMS-Consent, X-SMS-Consent-Timestamp, X-SMS-Consent-Version, X-SMS-Consent-Source, X-SMS-Consent-Page, X-SMS-Consent-Disclosure';
 const sha = value => createHash('sha256').update(value).digest('hex');
 const error = (status, message) => Object.assign(new Error(message), { status });
 const utcDay = value => new Intl.DateTimeFormat('en-CA', {timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value));
@@ -73,15 +74,19 @@ function normalize(input, kind) {
   };
 }
 
-async function readBody(req, max) {
+// Small bodies must arrive within 30 s even though the server allows slow media uploads.
+async function readBody(req, max, deadlineMs = 30000) {
   if (Number(req.headers['content-length']) > max) throw error(413, 'This request is too large.');
   const chunks = [];
   let size = 0;
-  for await (const chunk of req) {
-    size += chunk.length;
-    if (size > max) throw error(413, 'This request is too large.');
-    chunks.push(chunk);
-  }
+  const timer = setTimeout(() => req.destroy(error(408, 'The request took too long.')), deadlineMs);
+  try {
+    for await (const chunk of req) {
+      size += chunk.length;
+      if (size > max) throw error(413, 'This request is too large.');
+      chunks.push(chunk);
+    }
+  } finally { clearTimeout(timer); }
   return Buffer.concat(chunks);
 }
 
@@ -134,6 +139,7 @@ export function createLeadServers(options = {}) {
   const alerts=createUrgentAlerts(db,options.alerts||{enabled:false});
   // Factory callers get no notification channels unless they pass them in.
   const notifier=createLeadNotifier(db,{channels:options.notifyChannels||[]});
+  const media=createLeadMedia(db,{dataDir,diskFree:options.recordingDiskFreeBytes??(()=>{const space=fs.statfsSync(dataDir,{bigint:true});return space.bavail*space.bsize;})});
   const desk=createLeadDesk(db,{digest:options.deskDigest||null,besideToken:options.besideToken??process.env.BESIDE_WEBHOOK_TOKEN??''});
   const origins = new Set(options.origins ?? ['https://fixingfortmyers.com', 'https://www.fixingfortmyers.com', ...(process.env.LEAD_DEV_ORIGINS ?? '').split(',').map(x => x.trim()).filter(Boolean)]);
   let publicChat = null;
@@ -233,7 +239,7 @@ export function createLeadServers(options = {}) {
     const existing = db.prepare('SELECT id, received_at, payload_hash FROM leads WHERE idempotency_key = ?').get(key);
     if (existing) {
       if (existing.payload_hash !== hash) throw error(409, 'This request changed. Please try sending it again.');
-      return { ok: true, received: true, id: existing.id, receivedAt: existing.received_at, duplicate: true,...alerts.inspect(existing.id) };
+      return { ok: true, received: true, id: existing.id, receivedAt: existing.received_at, duplicate: true,...alerts.inspect(existing.id),...(payload.kind==='webform'?{mediaToken:media.issueToken(existing.id)}:{}) };
     }
     if (audio) ensureRecordingSpace(audio);
     const id = randomUUID();
@@ -252,7 +258,7 @@ export function createLeadServers(options = {}) {
     console.log(JSON.stringify({ event: 'lead_received', id, kind: payload.kind, receivedAt: now }));
     desk.sync();
     notifier.tick().catch(() => {});
-    return { ok: true, received: true, id, receivedAt: now,...alerts.inspect(id) };
+    return { ok: true, received: true, id, receivedAt: now,...alerts.inspect(id),...(payload.kind==='webform'?{mediaToken:media.issueToken(id)}:{}) };
   };
 
   const publicServer = http.createServer(async (req, res) => {
@@ -292,6 +298,28 @@ export function createLeadServers(options = {}) {
         } });
         if (!result.duplicate) notifier.tick().catch(() => {});
         return json(res, 200, result);
+      }
+      const mediaMatch = url.pathname.match(/^\/hooks\/lead\/media\/([a-f0-9-]{36})$/);
+      if (mediaMatch) {
+        const origin = req.headers.origin;
+        if (!origins.has(origin)) return json(res, 403, { ok: false, error: 'This request must come from the shop website.' });
+        res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin');
+        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Media-Token');
+        if (req.method === 'OPTIONS') { res.writeHead(204, { 'Access-Control-Max-Age': '600' }); return res.end(); }
+        if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'POST only.' });
+        const forwarded = String(req.headers['x-forwarded-for'] ?? '').split(',').at(-1).trim();
+        const ip = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && isIP(forwarded) ? forwarded : req.socket.remoteAddress;
+        if (rate('media:global') > 120 || rate('media:ip:' + ip) > 20) { res.setHeader('Retry-After', String(Math.ceil(windowMs / 1000))); return json(res, 429, { ok: false, error: 'Too many uploads at once. Please wait a minute and try again.' }); }
+        const leadId = mediaMatch[1], lead = db.prepare('SELECT payload_json FROM leads WHERE id = ?').get(leadId);
+        if (!lead) return json(res, 403, { ok: false, error: 'This upload link has expired. Your request is saved; text photos to (239) 397-2048 instead.' });
+        // Media uploads may be slow on phones; they get five minutes instead of the usual 30 seconds.
+        const deadline = setTimeout(() => req.destroy(), 300000);
+        let saved;
+        try { saved = await media.save(leadId, String(req.headers['x-media-token'] ?? ''), String(req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase(), req, { declaredBytes: Number(req.headers['content-length']) }); }
+        finally { clearTimeout(deadline); }
+        if (!saved.duplicate) { notifier.enqueueMedia(JSON.parse(lead.payload_json), leadId, media.list(leadId)); notifier.tick().catch(() => {}); }
+        console.log(JSON.stringify({ event: 'lead_media_received', id: leadId, index: saved.index, duplicate: saved.duplicate }));
+        return json(res, saved.duplicate ? 200 : 201, { ok: true, received: true, index: saved.index, count: saved.count });
       }
       if (!['/hooks/lead/webform', '/hooks/lead/voicenote', '/hooks/analytics/visit'].includes(url.pathname)) return json(res, 404, { ok: false, error: 'Not found.' });
       const origin = req.headers.origin;
@@ -366,7 +394,8 @@ export function createLeadServers(options = {}) {
       if (!err.status) console.error(JSON.stringify({ event: 'receiver_error', code: err.code ?? 'internal' }));
     }
   });
-  publicServer.requestTimeout = 30000;
+  // Photo and video uploads need longer than 30 s on a phone; readBody keeps a 30 s limit for everything else.
+  publicServer.requestTimeout = 330000;
   publicServer.headersTimeout = 10000;
   publicServer.maxConnections = 40;
 
@@ -429,7 +458,24 @@ export function createLeadServers(options = {}) {
         const page = rows.slice(0, limit);
         const last = page.at(-1);
         const nextCursor = hasMore && last ? Buffer.from(JSON.stringify({ v: 1, received_at: last.received_at, id: last.id })).toString('base64url') : null;
-        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
+        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id),media:media.list(row.id) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
+      }
+      const mediaFile = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/media\/([1-9]\d{0,2})$/);
+      if (req.method === 'GET' && mediaFile) {
+        const item = media.file(mediaFile[1], Number(mediaFile[2]));
+        if (!item || !fs.existsSync(item.path)) return json(res, 404, { ok: false, error: 'Photo or video not found.' });
+        // Customer files: exact validated type, never sniffed, never able to run script.
+        const headers = { 'Content-Type': item.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'none'; sandbox", 'Content-Disposition': `inline; filename="${path.basename(item.path)}"`, 'Accept-Ranges': 'bytes' };
+        const range = req.headers.range?.match(/^bytes=(\d+)-(\d*)$/);
+        if (req.headers.range && !range) { res.writeHead(416, { 'Content-Range': `bytes */${item.bytes}` }); return res.end(); }
+        if (range) {
+          const start = Number(range[1]), end = range[2] ? Math.min(Number(range[2]), item.bytes - 1) : item.bytes - 1;
+          if (start > end || start >= item.bytes) { res.writeHead(416, { 'Content-Range': `bytes */${item.bytes}` }); return res.end(); }
+          res.writeHead(206, { ...headers, 'Content-Length': end - start + 1, 'Content-Range': `bytes ${start}-${end}/${item.bytes}` });
+          return fs.createReadStream(item.path, { start, end }).pipe(res);
+        }
+        res.writeHead(200, { ...headers, 'Content-Length': item.bytes });
+        return fs.createReadStream(item.path).pipe(res);
       }
       const audioMatch = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/audio$/);
       if (req.method === 'GET' && audioMatch) {

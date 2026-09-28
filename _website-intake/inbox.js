@@ -46,6 +46,16 @@ function render(lead) {
     card.append(line);
   }
   if (lead.requestId) { const related = el('a', 'View related repair request'); related.href = '#lead-' + lead.requestId; card.append(related); }
+  if (lead.media?.length) {
+    const gallery = el('div', undefined, 'media');
+    for (const item of lead.media) {
+      const src = '/api/leads/' + lead.id + '/media/' + item.idx, size = Math.max(1, Math.round(item.bytes / 1048576)) + ' MB';
+      if (item.type.startsWith('video/')) { const video = el('video'); video.controls = true; video.preload = 'metadata'; video.src = src; video.setAttribute('aria-label', 'Customer video ' + item.idx); gallery.append(video); }
+      else if (['image/heic', 'image/heif'].includes(item.type)) { const link = el('a', 'Open HEIC photo ' + item.idx + ' (' + size + ')'); link.href = src; link.target = '_blank'; gallery.append(link); }
+      else { const link = el('a'); link.href = src; link.target = '_blank'; const img = el('img'); img.src = src; img.alt = 'Customer photo ' + item.idx; img.loading = 'lazy'; link.append(img); gallery.append(link); }
+    }
+    card.append(el('p', lead.media.length + ' photo/video attachment' + (lead.media.length > 1 ? 's' : ''), 'tag'), gallery);
+  }
   if (lead.audio_bytes) { const audio = el('audio'); audio.controls = true; audio.preload = 'none'; audio.src = '/api/leads/' + lead.id + '/audio'; card.append(audio); }
   card.append(el('p', lead.smsConsent ? 'Customer opted in to service-related text follow-up.' : 'Call follow-up requested; no text permission selected.', 'tag'));
   const detail = el('details'); detail.append(el('summary','Request and consent record'));
@@ -59,7 +69,7 @@ async function refresh() {
     const fresh = data.leads.filter(item => !known.has(item.id));
     if (!initial && fresh.length && 'Notification' in window && Notification.permission === 'granted') new Notification('Perfect Timing: new website request', {body: fresh.length + ' new request(s). Open your website inbox to review them.'});
     known = new Set(data.leads.map(item => item.id)); initial = false;
-    const signature = data.leads.map(item => item.id + ':' + item.updated_at+':'+JSON.stringify(item.alerts||[])).join('|');
+    const signature = data.leads.map(item => item.id + ':' + item.updated_at+':'+JSON.stringify(item.alerts||[])+':'+(item.media||[]).length).join('|');
     if (signature !== fingerprint || !document.getElementById('leads').children.length) { const list = document.getElementById('leads'); list.replaceChildren(...(data.leads.length ? data.leads.map(render) : [el('div','No requests yet. New website messages will appear here automatically.','empty')])); fingerprint = signature; }
     const count = data.leads.filter(item => item.status === 'new').length;
     document.title = (count ? '(' + count + ') ' : '') + 'Website Requests · Perfect Timing';
