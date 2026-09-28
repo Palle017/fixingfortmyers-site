@@ -58,6 +58,7 @@ function render(lead) {
   }
   if (lead.audio_bytes) { const audio = el('audio'); audio.controls = true; audio.preload = 'none'; audio.src = '/api/leads/' + lead.id + '/audio'; card.append(audio); }
   card.append(el('p', lead.smsConsent ? 'Customer opted in to service-related text follow-up.' : 'Call follow-up requested; no text permission selected.', 'tag'));
+  if (lead.customerText) card.append(el('p', 'Confirmation text to customer: ' + ({sent:'sent', pending:'sending', sending:'sending', skipped:'not sent (' + (lead.customerText.last_error === 'already_texted_today' ? 'already texted today' : 'daily limit') + ')', failed:'rejected by the carrier', needs_review:'may not have gone out; check Twilio before resending'}[lead.customerText.state] || lead.customerText.state), 'tag'));
   const detail = el('details'); detail.append(el('summary','Request and consent record'));
   detail.append(el('p','Request ID: ' + lead.id + '\nReceived: ' + date(lead.received_at) + '\nConsent recorded: ' + (lead.smsConsentTimestamp || 'Not selected') + '\nVersion: ' + lead.smsConsentVersion + '\nSource: ' + lead.smsConsentSource + '\nPage: ' + lead.smsConsentPage + '\nDisclosure: ' + lead.smsConsentDisclosure)); card.append(detail);
   return card;

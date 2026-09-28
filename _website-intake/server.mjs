@@ -5,6 +5,7 @@ import {createUrgentAlerts} from './urgent-alerts.mjs';
 import {createLeadNotifier,channelsFromEnv} from './lead-notify.mjs';
 import {createLeadDesk} from './lead-desk.mjs';
 import {createLeadMedia} from './lead-media.mjs';
+import {createCustomerTexts,createTwilioCustomerAdapter} from './customer-texts.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
@@ -139,6 +140,8 @@ export function createLeadServers(options = {}) {
   const alerts=createUrgentAlerts(db,options.alerts||{enabled:false});
   // Factory callers get no notification channels unless they pass them in.
   const notifier=createLeadNotifier(db,{channels:options.notifyChannels||[]});
+  // Factory callers (tests/previews) never text customers unless they pass an adapter in.
+  const customerTexts=createCustomerTexts(db,{adapter:options.customerTextAdapter||null});
   const media=createLeadMedia(db,{dataDir,diskFree:options.recordingDiskFreeBytes??(()=>{const space=fs.statfsSync(dataDir,{bigint:true});return space.bavail*space.bsize;})});
   const desk=createLeadDesk(db,{digest:options.deskDigest||null,besideToken:options.besideToken??process.env.BESIDE_WEBHOOK_TOKEN??''});
   const origins = new Set(options.origins ?? ['https://fixingfortmyers.com', 'https://www.fixingfortmyers.com', ...(process.env.LEAD_DEV_ORIGINS ?? '').split(',').map(x => x.trim()).filter(Boolean)]);
@@ -253,11 +256,13 @@ export function createLeadServers(options = {}) {
       alerts.enqueue(payload,id,decision);
       const urgentTextQueued=alerts.inspect(id).alerts.some(row=>row.channel==='notify_sms'&&row.state==='pending');
       notifier.enqueue(payload,id,decision,{urgentTextQueued});
+      if(payload.kind==='webform')customerTexts.enqueue(payload,id,{urgent:decision.priority==='first'});
       db.exec('COMMIT');
     }catch(err){db.exec('ROLLBACK');throw err;}
     console.log(JSON.stringify({ event: 'lead_received', id, kind: payload.kind, receivedAt: now }));
     desk.sync();
     notifier.tick().catch(() => {});
+    customerTexts.tick().catch(() => {});
     return { ok: true, received: true, id, receivedAt: now,...alerts.inspect(id),...(payload.kind==='webform'?{mediaToken:media.issueToken(id)}:{}) };
   };
 
@@ -458,7 +463,7 @@ export function createLeadServers(options = {}) {
         const page = rows.slice(0, limit);
         const last = page.at(-1);
         const nextCursor = hasMore && last ? Buffer.from(JSON.stringify({ v: 1, received_at: last.received_at, id: last.id })).toString('base64url') : null;
-        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id),media:media.list(row.id) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
+        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id),media:media.list(row.id),customerText:customerTexts.inspect(row.id) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
       }
       const mediaFile = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/media\/([1-9]\d{0,2})$/);
       if (req.method === 'GET' && mediaFile) {
@@ -518,16 +523,17 @@ export function createLeadServers(options = {}) {
   adminServer.requestTimeout = 10000;
   adminServer.headersTimeout = 5000;
   return {
-    publicServer, adminServer, db, dataDir, alerts, notifier, desk,
+    publicServer, adminServer, db, dataDir, alerts, notifier, desk, media, customerTexts,
     async start(publicPort = Number(process.env.LEAD_PUBLIC_PORT || 18795), adminPort = Number(process.env.LEAD_INBOX_PORT || 18798)) {
       await new Promise((resolve, reject) => { publicServer.once('error', reject); publicServer.listen(publicPort, '127.0.0.1', resolve); });
       try { await new Promise((resolve, reject) => { adminServer.once('error', reject); adminServer.listen(adminPort, '127.0.0.1', resolve); }); } catch (err) { await new Promise(resolve => publicServer.close(resolve)); throw err; }
-      if(options.alertWorker!==false){alerts.start();notifier.start();desk.start();}
+      if(options.alertWorker!==false){alerts.start();notifier.start();desk.start();customerTexts.start();}
       return { publicPort: publicServer.address().port, adminPort: adminServer.address().port };
     },
     async close() {
       await alerts.close();
       await notifier.close();
+      await customerTexts.close();
       desk.close();
       await Promise.all([publicServer, adminServer].map(server => new Promise(resolve => { server.close(resolve); server.closeIdleConnections(); })));
       publicChat?.close();
@@ -544,7 +550,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   const digestChannels = notify.channels.filter(channel => ['email', 'push'].includes(channel.name));
   const deskDigest = digestChannels.length ? async message => { const results = await Promise.allSettled(digestChannels.map(channel => channel.send(message))); if (results.every(r => r.status === 'rejected')) throw Error('digest_failed'); } : null;
   if (!deskDigest) console.error(JSON.stringify({ event: 'weekly_digest_disabled', reason: 'no email or push channel' }));
-  const service = createLeadServers({notifyChannels:notify.channels,deskDigest,routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
+  // Customer confirmation texts: off unless explicitly switched on and Twilio is configured.
+  let customerTextAdapter = null;
+  if (process.env.LEAD_CUSTOMER_TEXTS === 'true') {
+    try { customerTextAdapter = createTwilioCustomerAdapter({accountSid: process.env.TWILIO_ACCOUNT_SID, authToken: process.env.TWILIO_AUTH_TOKEN, fromNumber: process.env.LEAD_ALERT_FROM}); }
+    catch (err) { console.error(JSON.stringify({ event: 'customer_texts_disabled', reason: err.message })); }
+  }
+  console.log(JSON.stringify({ event: 'customer_texts', enabled: Boolean(customerTextAdapter) }));
+  const service = createLeadServers({notifyChannels:notify.channels,deskDigest,customerTextAdapter,routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
   service.start().then(ports => console.log(JSON.stringify({ event: 'listening', public: `127.0.0.1:${ports.publicPort}`, inbox: `http://127.0.0.1:${ports.adminPort}/` }))).catch(err => { console.error(JSON.stringify({ event: 'startup_failed', code: err.code ?? 'internal' })); process.exit(1); });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => service.close().then(() => process.exit(0)));
 }
