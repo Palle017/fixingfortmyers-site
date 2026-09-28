@@ -14,7 +14,7 @@ Prepared September 28, 2026. **This is a plan for review, not a set of applied c
 | Categories | **Add all of them**, A/C and electrical included, plus detailing and paint (see 1.2). |
 | Priority jobs | **Engine jobs, transmission jobs and no-start problems.** |
 | Scope | **Confirmed:** engine rebuilds and replacements; transmission rebuilds and replacements; diesel; hot rods; restoration. **New:** paint work, buffing, paint correction and detailing. |
-| Business phone | **The Beside number** is the business number. I can't open Beside from here (no connection to it, and a logged-in browser tab on your machine isn't reachable from this cloud session), so the owner needs to say which number it is (see 6a). |
+| Business phone | **(239) 397-2048** is the business line (Beside "Tony's Box", confirmed from the owner's Beside settings, Sept 28). **(239) 271-4854** is Tony's personal sign-in phone in Beside, not a business line. It should not appear on any listing. |
 | Facebook | **Leave both pages as they are.** |
 | Shopmonkey booking link | **Not confirmed removed.** The website has no Shopmonkey link (checked across all pages and scripts). Google's public Maps page can't be read without a browser session, and there's no owner access from here, so the owner needs to check it in the editor (Edit profile → Booking / appointment links). |
 
@@ -477,7 +477,7 @@ Checked September 28, 2026. Confirm the live category names, character limits an
 4. ~~24/7 hours~~: keep, also with the address shown. Needs a secure after-hours drop-off.
 5. ~~Service towns~~: all 12 confirmed.
 6. ~~Top jobs~~: engines, transmissions and no-start.
-6a. **Which number is the Beside line: (239) 397-2048 (on the site and Google) or (239) 271-4854 (on BBB and Yahoo)?** The other one needs to be replaced everywhere it appears. ~~Facebook~~: leave both pages.
+6a. ~~Business phone~~: **(239) 397-2048** (Beside). **To do:** change BBB and Yahoo Local from 271-4854 (Tony's personal phone) to 397-2048. ~~Facebook~~: leave both pages.
 6b. **Address, after the workshop change:** keep it hidden (option A), or show it with drop-off hours (option B)? See "Positioning update" at the top.
 6c. **Hours, after the workshop change:** keep Open 24 hours, or set real drop-off hours? Required if the address is shown.
 6d. **The "Mobile Mechanic" Facebook page:** leave it as decided, or rename or retire it?
