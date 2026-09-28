@@ -18,16 +18,30 @@ Prepared September 28, 2026. **This is a plan for review, not a set of applied c
 | Facebook | **Leave both pages as they are.** |
 | Shopmonkey booking link | **Not confirmed removed.** The website has no Shopmonkey link (checked across all pages and scripts). Google's public Maps page can't be read without a browser session, and there's no owner access from here, so the owner needs to check it in the editor (Edit profile → Booking / appointment links). |
 
+## Positioning update (September 28, 2026, after PR #12)
+
+The site now describes Perfect Timing as a **fully equipped repair workshop**: customers book a time and bring or tow the vehicle in, and Tony confirms the job and the drop-off time. The workshop has walnut blasting, engine assembly, tolerance and timing checks, and transmission work. This plan was first written for a mobile model, so its drafts (profile model, description, services, attributes, photos, posts, Q&A and the workshop page) have been rewritten to match. Tony is never described as mobile.
+
+The owner decisions above are kept exactly as recorded. Three of them now pull against the workshop model, so they are flagged here for the owner to recheck rather than changed:
+
+| Decision | Why it conflicts now | Trade-off |
+| --- | --- | --- |
+| **Address hidden** (service-area profile, option A) | Google allows a hidden address only when the business **does not receive customers at its address**. A shop where customers drop off or tow in their car does receive them. | **Keep hidden:** privacy, no unannounced drop-ins, no re-verification, and it fits the 24-hour hours. But the profile misstates the model, which is a suspension risk, and customers get the location only after booking. **Show it (option B, hybrid):** matches Google's rules and adds a map pin, but it needs signage, staffed drop-off hours, a lawful place to receive customers, and probably re-verification (see 1.3). |
+| **Open 24 hours** | With customers visiting, Google reads the hours as the times someone is there to receive them. | **Keep:** matches the site's 24/7 wording (calls and Bay One answer any time). It is safest while the address stays hidden. **Change to drop-off hours:** required if the address is shown; the 24/7 contact line then moves to the description and posts. |
+| **Leave both Facebook pages as they are** | One of them (`100084118269910`) is titled **"Mobile Mechanic"**, which contradicts the site and the no-mobile rule. | **Leave it:** no work, but searchers see two pages and the wrong model. **Rename or retire it:** one consistent name; Facebook may limit how often a page name changes. |
+
+The 12 service towns and the business name do not conflict. The towns stay as the areas customers come from (see 1.3 for how Google treats a service area on a shop that customers visit).
+
 ## Starting facts
 
-These facts come from the owner and the current `main` branch (after PR #8):
+These facts come from the owner and the current `main` branch (after PR #12):
 
 - **Business:** Perfect Timing Auto Repair LLC, (239) 397-2048, fixingfortmyers.com, fixingfortmyers@gmail.com.
-- **Model:** a **mobile repair shop**, not a "mobile mechanic". Tony comes to the customer for diagnosis and on-site repairs. Tony also has his own fully equipped workshop, based at Bayshore Ranch in the Fort Myers area.
+- **Model:** a **fully equipped repair workshop**, based at Bayshore Ranch in the Fort Myers area. Customers book a time and bring or tow the vehicle in; Tony confirms the job and the drop-off time. The business is never described as mobile.
 - **Workshop capabilities (owner-stated):** engine assembly, tolerance and timing checks, transmissions, walnut blasting (carbon cleaning), "and more". The full tool list has not been supplied yet.
-- **The site shows no street address.** The footer and schema say "Fort Myers & Southwest Florida". The `AutoRepair` schema in every page has `areaServed` (Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice) and no `address`. Bay One's shop profile says "any workshop visit is arranged directly with Tony" (`_website-intake/public-chat.mjs`).
+- **The site shows no street address.** The footer and schema say "Fort Myers & Southwest Florida". The `AutoRepair` schema in every page has `areaServed` (Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice) and no `address`. Bay One's shop profile says "Customers book an appointment and bring or tow the vehicle to Tony's shop; call or text (239) 397-2048 to book a drop-off time" (`_website-intake/public-chat.mjs`).
 - **The profile already exists.** According to `docs/COMPANY-UPDATE.md`: profile ID `15150482990043040433`; all seven days saved as **Open 24 hours**; verification was **processing**; an old Shopmonkey quote link is still in Booking and must be removed once the controls unlock. `tools/CONTACT-AND-SEO-UPDATE.md` also says: "Do not add the future address there until it is ready for customer traffic."
-- **Images:** the website's hero and "mobile" images are `assets/tony-mobile-diagnostics.webp` (plus `-small`), `assets/tony-mobile-engine-repair.webp` and `assets/perfect-timing-mobile-workshop.webp`. The last one is captioned on the site as an **illustration** ("Illustrative service setup"). None of them shows the real workshop.
+- **Images:** the website's hero and workshop-section images are `assets/tony-mobile-diagnostics.webp` (plus `-small`), `assets/tony-mobile-engine-repair.webp` and `assets/perfect-timing-mobile-workshop.webp` (old file names; they show a driveway and a van). The last one is captioned on the site as an **illustration** ("Illustrative workshop setup"). None of them shows the real workshop.
 
 **Claim boundaries for everything below:** no prices, no warranties, no guarantees, no certifications (ASE or otherwise), no brand affiliations, no "best" or "#1" claims and no review counts unless Tony confirms each one in writing. Where this plan says "only if true", leave the item out until the owner confirms it.
 
@@ -55,7 +69,7 @@ Google lets you choose one primary category plus up to 9 additional ones (10 in 
 
 | Role | Category | Why / condition |
 | --- | --- | --- |
-| **Primary** | **Auto repair shop** | Matches "mobile repair shop" and the site's `AutoRepair` schema. Covers the broadest set of repair searches, including no-start calls (which have no category of their own). |
+| **Primary** | **Auto repair shop** | Matches the site's "fully equipped repair shop" wording and its `AutoRepair` schema. Covers the broadest set of repair searches, including no-start calls (which have no category of their own). |
 | Secondary | **Engine rebuilding service** | Confirmed: rebuilds and replacements. A priority job. Supports `engine-repair-fort-myers` and `engine-rebuild-vs-replacement-fort-myers`. |
 | Secondary | **Transmission shop** | Confirmed: rebuilds and replacements. A priority job. Supports `transmission-repair-fort-myers`. |
 | Secondary | **Diesel engine repair service** | Confirmed. Supports `diesel-repair-fort-myers`. |
@@ -69,7 +83,7 @@ That comes to 9 of the 10 allowed. Set the primary category and all secondary on
 
 **Categories to avoid:**
 
-- **"Mobile mechanic"**: Google has no such category (Google's Business Profile community forum has confirmed this repeatedly), and the owner has asked **not** to be positioned as one anyway. Say "mobile" in the description and services.
+- **"Mobile mechanic"**: Google has no such category (Google's Business Profile community forum has confirmed this repeatedly), and Tony is a repair workshop, not a mobile mechanic. Don't use "mobile" anywhere on the profile.
 - **"Mechanic"**: generic, and it adds little on top of "Auto repair shop".
 - **"Auto machine shop"**: only if the tool list shows that machining (boring, honing, decking, valve work) is done **in-house**. Tolerance measurement alone is not a machine shop.
 - **"Auto body shop"**: implies collision repair. Use it only if Tony does that work.
@@ -83,9 +97,9 @@ Google distinguishes three setups:
 
 | Setup | What customers see | Google's condition |
 | --- | --- | --- |
-| **A. Service-area business (address hidden)** – *recommended now* | A shaded service area; no pin or street address | The business serves customers at their location and does not receive customers at its address. |
+| **A. Service-area business (address hidden)** – *owner's decision; see the flag below* | A shaded service area; no pin or street address | The business serves customers at their location and does not receive customers at its address. |
 | B. Hybrid (address shown + service area) | A map pin at the workshop plus the service area | Customers are served at the address, the address is staffed during the stated hours, and there is permanent signage with the business name. Home-based businesses that only travel to customers must hide the address. |
-| C. Storefront only | Pin and address | Customers come to you. Doesn't fit a mobile shop. |
+| C. Storefront only | Pin and address | Customers come to you, and there is no service area. Fits the workshop model, but loses the 12-town service area. |
 
 **Trade-offs of showing the Bayshore Ranch address (option B):**
 
@@ -97,11 +111,13 @@ Google distinguishes three setups:
 | | **Re-verification.** Changing the address or visibility usually triggers another round of verification, and the profile is only just getting through the first one. |
 | | **Ranking radius.** A shown address anchors local ranking to that point. Bayshore is on the north-east side of the area, so Cape Coral and South Fort Myers searches may rank the pin lower than a clean service-area profile does. |
 
-**Decision (owner, Sept 28): option A.** The address stays hidden. The workshop can be named as based at Bayshore Ranch in text only. **Original recommendation:** use **option A (service-area business, address hidden)** now. That is consistent with the website (no street address), with Bay One ("workshop visits arranged directly with Tony") and with the 24/7 hours. Say in the description that there is a fully equipped workshop and prove it with photos, without publishing the street address.
+**Decision (owner, Sept 28): option A.** The address stays hidden. The workshop can be named as based at Bayshore Ranch in text only.
 
-**When to revisit option B:** only if **all** of these hold: (1) the workshop is a lawful place to receive customers (zoning, lease, HOA), (2) someone is there during fixed, published drop-off hours, (3) the owner accepts people arriving without an appointment, and (4) there is signage at the entrance. Then show the address with **real** workshop hours, and cover after-hours mobile availability in the description and in posts rather than in the hours field.
+**Flag for the owner (after the workshop change):** option A was recommended when Tony went to customers. Now that customers bring or tow their cars in, the workshop **receives customers at its address**, which is exactly what Google's option A condition rules out. Option B (hybrid: address shown plus the 12-town service area) is the setup that matches Google's rules for this model. The decision stays A until the owner changes it. If it stays A: say "based at Bayshore Ranch" and "drop-off by appointment" in text only, give the exact location only to booked customers, and keep the hours and photos from revealing the address. The trade-offs of B are in the table above and in "Positioning update" at the top.
 
-**Service areas to enter (option A, owner-confirmed):** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel, Pine Island (12 of the 20 allowed). The site's `areaServed` currently lists only the first five, so it needs the other seven (see 3.4). Keep the list to places Tony actually serves. Google allows up to 20 service areas, and the whole area should be within about 2 hours' drive of the base.
+**When to revisit option B:** only if **all** of these hold: (1) the workshop is a lawful place to receive customers (zoning, lease, HOA), (2) someone is there during fixed, published drop-off hours, (3) the owner accepts people arriving without an appointment, and (4) there is signage at the entrance. Then show the address with **real** drop-off hours, and cover 24/7 phone and Bay One availability in the description and in posts rather than in the hours field.
+
+**Service areas to enter (option A, owner-confirmed):** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel, Pine Island (12 of the 20 allowed). The site's `areaServed` currently lists only the first five, so it needs the other seven (see 3.4). Keep the list to places customers actually come from. Google allows up to 20 service areas, and the whole area should be within about 2 hours' drive of the base. (Google describes a service area as where the business serves customers. For a shop customers visit, the towns tell Google where customers come from; if the profile moves to option B, keep them there.)
 
 ### 1.4 Services list
 
@@ -114,10 +130,10 @@ Enter services under each category. Pick the ones Google predefines where they m
 | Engine rebuild | "Engine teardown, inspection and reassembly in Tony's workshop, including tolerance and timing checks. We explain rebuild vs. replacement before work starts." | Confirmed; photos of engine assembly |
 | Engine replacement | "Replacement engine sourcing and installation, with the engine removed and installed in Tony's workshop. We review options with you first." | Confirmed; engine hoist/stand in the tool list |
 | Engine timing repair | "Timing chain and belt service with timing verification in the workshop." | Timing tools in the tool list |
-| Transmission rebuild / replacement | "Transmission diagnosis on-site; rebuild or replacement in Tony's workshop." | Confirmed; transmission jack in the list |
-| No-start diagnosis and repair | "Car won't start? Tony comes to you to find out why: battery, starter, fuel, ignition, security or wiring faults. Many are fixed on the spot." | Priority job; mirrors `no-start-diagnosis-fort-myers` |
+| Transmission rebuild / replacement | "Transmission diagnosis, rebuild or replacement in Tony's workshop." | Confirmed; transmission jack in the list |
+| No-start diagnosis and repair | "Car won't start? Book a time and tow it in. Tony finds out why in the workshop: battery, starter, fuel, ignition, security or wiring faults." | Priority job; mirrors `no-start-diagnosis-fort-myers` |
 | Walnut blasting (intake carbon cleaning) | "Walnut shell blasting to remove carbon build-up from intake valves, common on direct-injection engines." | Walnut blaster in the list; before/after photos |
-| Diesel repair | "Diesel diagnostics and repair; bigger work is done in the workshop." | Confirmed; platforms to be listed if Tony wants |
+| Diesel repair | "Diesel diagnostics and repair in Tony's workshop." | Confirmed; platforms to be listed if Tony wants |
 | Hot rod and restoration | "Engine, drivetrain and mechanical work on hot rods and restoration projects." | Real project photos with the owner's permission |
 | Race car modifications | Only if current. It mirrors `race-car-modifications-fort-myers`. | Tony confirms |
 
@@ -129,22 +145,22 @@ Enter services under each category. Pick the ones Google predefines where they m
 | Paint correction and buffing | "Machine polishing to remove swirls, scratches and oxidation from the paint." | Before/after photos |
 | Detailing | "Interior and exterior detailing." | Tony to say which packages he offers (no prices on Google) |
 
-**Core mobile work:** diagnostics / check engine light, no-start diagnosis, brake repair, battery replacement, alternator and starter, A/C repair, electrical repair, cooling system, fuel system, suspension and steering, exhaust, module programming, oil change, pre-purchase inspection. These mirror the site's service pages, so each service matches a page that already exists.
+**Everyday repairs (all in the workshop):** diagnostics / check engine light, no-start diagnosis, brake repair, battery replacement, alternator and starter, A/C repair, electrical repair, cooling system, fuel system, suspension and steering, exhaust, module programming, oil change, pre-purchase inspection. These mirror the site's service pages, so each service matches a page that already exists.
 
 Do not add a service the site doesn't back up or Tony doesn't want to do.
 
 ### 1.5 Business description (draft, 750-character limit)
 
-> Perfect Timing Auto Repair is a mobile repair shop serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Tony comes to you for no-start problems, diagnostics, A/C, electrical, brakes and other on-site repairs. Bigger jobs go to Tony's own fully equipped workshop at Bayshore Ranch: engine and transmission rebuilds and replacements, tolerance and timing checks, walnut blasting to clean carbon from intake valves, diesel repair, hot rods and restoration. Paint work, buffing, paint correction and detailing are available too. Tell us your vehicle, the symptoms and where it is parked. Tony confirms what can be done on-site, what needs the workshop and the plan before work starts.
+> Perfect Timing Auto Repair is a fully equipped repair workshop based at Bayshore Ranch, serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Customers book a time and bring or tow the vehicle in. Tony handles no-start problems, diagnostics, A/C, electrical and brakes, and the bigger jobs: engine and transmission rebuilds and replacements, engine assembly with tolerance and timing checks, walnut blasting to clean carbon from intake valves, diesel repair, hot rods and restoration. Paint work, buffing, paint correction and detailing are available too. Tell us your vehicle, the symptoms and whether it starts or drives, so we know if it needs a tow. Tony confirms the job and the drop-off time before work starts.
 
-About 702 characters. It has no URL, no price, no promotional language and no phone number (the phone has its own field). All the services named are owner-confirmed.
+About 740 characters, under the 750 limit. It has no URL, no price, no promotional language and no phone number (the phone has its own field). All the services named are owner-confirmed.
 
 ### 1.6 Other profile fields
 
 - **Phone:** (239) 397-2048 (primary). Keep it identical to the site.
 - **Website:** `https://fixingfortmyers.com/`. Add UTM tags (`?utm_source=google&utm_medium=organic&utm_campaign=gbp`) only if someone will actually read the analytics.
 - **Booking / appointment link:** remove the old Shopmonkey link (pending). Replace it with `https://fixingfortmyers.com/#contact` only if Tony wants web requests from Google. Otherwise leave the field empty.
-- **Hours:** keep **Open 24 hours** only while the profile is a service-area business (option A) and only while the site's 24/7 disclosure is true ("Outside 8 a.m.–8 p.m. Eastern, Tony is assisted by Bay One AI… Tony confirms all dispatches"). If Tony can't actually answer or return calls overnight, switch to real hours. Google treats hours that aren't true as misleading.
+- **Hours:** keep **Open 24 hours** (owner's decision) only while the profile is a service-area business (option A) and only while the site's 24/7 disclosure is true ("Outside 8 a.m.–8 p.m. Eastern, Tony is assisted by Bay One AI. After-hours repairs depend on the job, location and availability; Tony confirms all appointments."). If Tony can't actually answer or return calls overnight, switch to real hours. Google treats hours that aren't true as misleading. If the address is ever shown, the hours must become real drop-off hours (flagged at the top).
 - **Opening date:** only if the owner gives a verified date.
 - **Social links:** the existing Facebook page (`facebook.com/profile.php?id=61574375434643`).
 
@@ -154,12 +170,12 @@ Set **only** those the owner confirms. The ones likely to apply:
 
 | Attribute | Default until confirmed |
 | --- | --- |
-| Onsite services (serves customers at their location) | **Yes**. This is the core model. |
+| Onsite services (serves customers at their location) | **No / leave off.** Customers bring or tow the vehicle to the workshop. |
 | Online appointments / requests | Yes, if the website request path is kept as the booking link |
 | Payments: credit cards, debit cards, NFC/mobile pay, cash, checks | Ask. Set only the methods Tony accepts. |
 | Self-identified attributes (veteran-owned, family-owned, Black-owned, women-owned, Latino-owned, etc.) | **Only** if the owner chooses to self-identify |
 | Language(s) spoken | Ask (e.g. Spanish) |
-| Accessibility (wheelchair-accessible entrance, parking, restroom) | Leave blank under option A (customers don't visit) |
+| Accessibility (wheelchair-accessible entrance, parking, restroom) | Customers now visit to drop off, so ask Tony and set only what is true |
 | Warranty-type or certification attributes, if offered | **Leave blank** until Tony supplies written confirmation |
 
 ### 1.8 Photo shot list for Google
@@ -169,7 +185,7 @@ Upload these as soon as they are available, spread over several weeks rather tha
 | # | Photo | GBP slot |
 | --- | --- | --- |
 | 1 | Logo (square, from `assets/pt-logo-new@2x.png`) | Logo |
-| 2 | Tony at a customer's vehicle with the service vehicle behind him, a real job | Cover (first choice) |
+| 2 | Tony working on a customer's vehicle in the workshop bay, a real job | Cover (first choice) |
 | 3 | Wide shot of the workshop interior: lift, benches, tool storage | Cover (alternative) / Interior |
 | 4 | Engine on a stand mid-assembly | Work |
 | 5 | Measuring tools on an engine part (micrometer, bore gauge, Plastigage) | Work |
@@ -177,7 +193,7 @@ Upload these as soon as they are available, spread over several weeks rather tha
 | 7 | Transmission on a jack or bench | Work |
 | 8 | Walnut blasting: the machine, then the intake valves **before** and **after** | Work (strong post material) |
 | 9 | Diagnostic scan tool with live data (VIN and plate redacted) | Work |
-| 10 | Service vehicle exterior (the mobile shop) | Exterior |
+| 10 | Drop-off area where customers park or a tow truck unloads, with no street signs or numbers | Exterior |
 | 11 | Workshop exterior **without** street signs, house numbers or landmarks (under option A) | Exterior |
 | 12 | Tony portrait: plain background, good light | Team |
 | 13–20 | Real completed jobs, one per high-ticket service, with owner permission | Work |
@@ -193,10 +209,10 @@ Rules: real photos only. **No stock images, no AI-generated images** and no illu
   1. Meet the workshop: wide shot with a caption naming what it's used for.
   2. Walnut blasting before and after on a real job, and why carbon builds up on direct-injection engines.
   3. Engine assembly in progress: what tolerance checks are and why they matter. Link `engine-rebuild-vs-replacement-fort-myers`.
-  4. Mobile diagnostics at a customer's driveway: what Tony checks on-site. Link `auto-diagnostics-fort-myers`.
-  5. Transmission job: on-site diagnosis → workshop repair. Link `transmission-repair-fort-myers`.
+  4. Diagnostics in the bay: what Tony checks first when a car comes in with a warning light. Link `auto-diagnostics-fort-myers`.
+  5. Transmission job: from diagnosis to rebuild in the workshop. Link `transmission-repair-fort-myers`.
   6. Symptom guide: engine knocking (link `engine-knocking-noise-fort-myers`) or blue smoke (link `blue-smoke-burning-oil-fort-myers`).
-  7. No-start call: what Tony checks at the car when it won't crank or won't fire. Link `no-start-diagnosis-fort-myers` or `repair-guide-car-wont-start`.
+  7. No-start: what Tony checks when a car is towed in that won't crank or won't fire, and how to book the tow-in. Link `no-start-diagnosis-fort-myers` or `repair-guide-car-wont-start`.
   8. Paint correction before and after, or a diesel or hot rod project, with the owner's permission. Then continue with the Florida heat: A/C and cooling check. Link `ac-repair-fort-myers` or `repair-guide-car-overheating`.
 - Describe real work only. No invented outcomes, no "saved $X", no customer quotes without permission.
 
@@ -204,19 +220,19 @@ Rules: real photos only. **No stock images, no AI-generated images** and no illu
 
 **Google has retired Business Profile Q&A.** It stopped taking new questions from late 2025 (industry reports put the API shutdown at November 3, 2025), and existing Q&A is frozen and being phased out. In its place, an AI "Ask" feature in Maps answers visitors' questions from the profile fields, reviews, photos and website content. The owner can't seed it directly, so these questions and answers go where that feature reads them: the **description** (1.5), the **service descriptions** (1.4), **posts** (1.9) and the website's **FAQ sections** (where answers 1, 3, 5 and 6 should be added, on the workshop page in 3.1 and the relevant service pages). If a Q&A box does still appear on the profile, post these there too.
 
-1. **Do you come to me, or do I bring the car to you?** Both. Tony comes to you for diagnostics and many repairs. Engine, transmission and other major work is done in his fully equipped workshop, and he arranges that with you.
-2. **Is this a "mobile mechanic"?** It's a mobile repair shop: Tony brings tools to you and also has his own workshop for bigger jobs.
-3. **Can I drop my car off at the workshop?** Workshop visits are by arrangement. Call or text (239) 397-2048 first.
+1. **Do I bring my car to you?** Yes. Perfect Timing is a fully equipped repair workshop. Book a time, then bring or tow the vehicle in. Tony confirms the job and the drop-off time.
+2. **Do you come to my house or the roadside?** No. All work is done in Tony's workshop. If the car can't be driven, tell us and we'll say whether it needs a tow.
+3. **Can I drop my car off at the workshop?** Yes, by appointment. The workshop is based at Bayshore Ranch. Call or text (239) 397-2048 to book a drop-off time; the drop-off details come with your booking.
 4. **Do you rebuild engines or replace them?** Both, depending on the engine and what the teardown shows. Tony explains rebuild vs. replacement before work starts.
 5. **What is walnut blasting?** Walnut blasting cleans carbon build-up off intake valves using crushed walnut shells. It is common on direct-injection engines, which can build up carbon on the valves.
-6. **Do you work on transmissions?** Yes, rebuilds and replacements. Diagnosis can start on-site, and the transmission work is done in the workshop.
+6. **Do you work on transmissions?** Yes, rebuilds and replacements, diagnosed and done in the workshop.
 7. **Do you work on diesels?** Yes. Tell us the year, make, model and engine, and what it's doing.
 8. **Do you work on hot rods and classic cars?** Yes. Hot rods and restoration projects are done in the workshop.
 8a. **Do you do paint or detailing?** Yes: paint work, buffing, paint correction and detailing. Send photos of the vehicle and the area of concern.
-8b. **My car won't start. Can you come to me?** Yes. Tell us where it's parked and what happens when you turn the key (clicks, cranks, or nothing). Tony confirms whether he can come to you.
-9. **What areas do you cover?** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel and Pine Island. Tell us where the vehicle is parked.
-10. **What should I send when I contact you?** Year, make and model, the symptoms, where it's parked and whether it starts and drives.
-11. **Are you available after hours?** Available 24/7. Outside 8 a.m.–8 p.m. Eastern, Bay One AI assists and Tony confirms every dispatch. After-hours repairs depend on the job, location and availability.
+8b. **My car won't start. What should I do?** Call or text any hour and tell us what happens when you turn the key (clicks, cranks, or nothing). We'll confirm a time to tow it in.
+9. **Where do your customers come from?** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel and Pine Island.
+10. **What should I send when I contact you?** Your vehicle year, make and model, the symptoms and whether it starts or drives, so we know if it needs a tow.
+11. **Are you available after hours?** Available 24/7. Outside 8 a.m.–8 p.m. Eastern, Tony is assisted by Bay One AI. After-hours repairs depend on the job, location and availability; Tony confirms all appointments.
 
 (Answers 10–11 match wording that is already live on the site. Answer 9 adds the seven newly confirmed towns.)
 
@@ -226,7 +242,7 @@ Rules: real photos only. **No stock images, no AI-generated images** and no illu
 
 **Process:**
 
-1. **Copy the review link** from the profile (Read reviews → Get more reviews) once it is public. Google also generates a QR code for it (desktop browser only). Put the QR code on the service vehicle and on a card for the workshop.
+1. **Copy the review link** from the profile (Read reviews → Get more reviews) once it is public. Google also generates a QR code for it (desktop browser only). Put the QR code on a card at the workshop and on invoices.
 2. **Ask every customer** when the job is complete and the car is confirmed working. Ask in person, then send a text the same day:
    > "Thanks for choosing Perfect Timing. If you have a minute, an honest Google review helps other drivers find us: [link]. – Tony"
    Send it to **every** customer, whatever their mood. No "if you were happy" wording.
@@ -245,7 +261,7 @@ Rules: real photos only. **No stock images, no AI-generated images** and no illu
 **General instructions (send to Tony as-is):**
 
 - **Device:** a recent phone is fine. Use the main (1×) lens. Wide-angle (0.5×) only for the full-room shots. Clean the lens.
-- **Orientation:** shoot **landscape** by default. Also shoot **portrait** for items marked (P) (for mobile screens and Google posts).
+- **Orientation:** shoot **landscape** by default. Also shoot **portrait** for items marked (P) (for phone screens and Google posts).
 - **Resolution:** full resolution, original files. No filters, no beauty mode, no heavy HDR. Don't send screenshots or WhatsApp-compressed copies. Use AirDrop, Google Drive or email "actual size".
 - **Light:** daytime with the bay doors open plus the shop lights on. Avoid a bright doorway directly behind the subject. For close-ups, add a work light from the side (about 45°) so the shot shows metal texture without glare.
 - **Clean-up:** a tidy bench reads as professional. Remove drinks, trash and personal items. Cover or move anything with the street address, house numbers, customer names, plates or VINs, or turn it away from the camera.
@@ -274,7 +290,7 @@ Rules: real photos only. **No stock images, no AI-generated images** and no illu
 | W15 | Shop press / bearing work (if any) | Press in use | Heavy-component capability |
 | W16 | Engine hoist / cherry picker (if any) | Engine being lifted or hoist ready | Engine R&R capability |
 | W17 | Diesel or hot rod project (if any, with owner permission) | 3/4 view of the vehicle in the bay | Specialty work |
-| W18 | Service vehicle, loaded (P) | Outside, doors open showing the mobile tools | Mobile + workshop together |
+| W18 | Drop-off area (P) | Outside the bay doors, **no** street numbers, signs or landmarks | Where customers park or a tow truck unloads |
 | W19 | Tony portrait | Waist up, in the workshop, looking at the camera, soft light | The face of the business |
 | W20 | Tony working (candid) | Mid-task, not posing | Authenticity |
 | W21 | Workshop exterior | Wide, **no** street numbers, signs or landmarks | That it's a real building (use only if the address stays hidden) |
@@ -288,7 +304,7 @@ Send Tony this template (a spreadsheet or a filled-in copy of this table works).
 
 Columns, the same for every group:
 
-| Item | Make / model (optional) | Qty | Access (Own / Shared / Rent) | Location (Workshop / Mobile / Both) | What it lets Tony do (plain words) | OK to name the brand publicly? (Y/N) | Photo # |
+| Item | Make / model (optional) | Qty | Access (Own / Shared / Rent) | Location (Workshop / Elsewhere) | What it lets Tony do (plain words) | OK to name the brand publicly? (Y/N) | Photo # |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 
 Groups (fill in the rows that apply; delete the rest):
@@ -303,9 +319,8 @@ Groups (fill in the rows that apply; delete the rest):
 8. **Fabrication and metalwork:** welder(s) (MIG/TIG/stick), plasma cutter, grinder, bench vise, hydraulic press, drill press, tube bender, heat tools.
 9. **A/C and cooling:** A/C recovery/recharge machine (refrigerant types), leak detector, vacuum pump, cooling system pressure tester.
 10. **Brakes, suspension and steering:** brake lathe (if any), bleeder, ball-joint press, spring compressor, alignment equipment (if any).
-11. **Mobile service vehicle kit:** what travels with Tony, including power (generator/inverter), lighting, air compressor and the portable lift or jacks.
-12. **Air and power:** shop compressor, air tools, impacts, lighting.
-13. **Safety and environment:** fire suppression, fluid disposal/recycling arrangement, spill kit. (Internal. It supports claims about proper disposal if Tony wants them.)
+11. **Air and power:** shop compressor, air tools, impacts, lighting.
+12. **Safety and environment:** fire suppression, fluid disposal/recycling arrangement, spill kit. (Internal. It supports claims about proper disposal if Tony wants them.)
 
 Plus four short questions for Tony:
 
@@ -326,12 +341,12 @@ Nothing below happens until the photos and tool list arrive and Tony approves th
 
 **Draft structure:**
 
-1. **Hero:** H1 "Tony's Workshop" (draft). Sub-line: "A mobile repair shop with a fully equipped workshop behind it. Diagnosis comes to you; the big jobs come here." Hero image: W1.
-2. **How mobile and workshop fit together:** three steps, 1) on-site diagnosis, 2) the plan and quote before work, 3) workshop repair when the job needs a lift, teardown or machine equipment. Reuse the existing FAQ wording ("Work that needs a lift, teardown or machine equipment is done in Tony's fully equipped workshop").
+1. **Hero:** H1 "Tony's Workshop" (draft). Sub-line: "A fully equipped repair workshop. Book a time, bring or tow the car in, and the work is done here." Hero image: W1.
+2. **How a workshop job works:** three steps, 1) book: send the vehicle, the symptoms and whether it starts or drives, 2) drop off or tow in at the booked time, and Tony diagnoses it in the bay, 3) the plan and quote before work starts. Reuse the live home-page FAQ wording ("Perfect Timing is a fully equipped repair shop… Call or text (239) 397-2048 to book a drop-off time").
 3. **Capabilities**, one block per tool-list group that Tony fills in: Engine assembly & measurement → Transmission → Diagnostics → Cleaning & walnut blasting → Fabrication → Lifts. Each block: a photo, 2–3 sentences in plain words about **what the equipment lets Tony do for the customer**, and a link to the matching service page. Name brands only where column "OK to name the brand" = Y.
 4. **Walnut blasting before and after:** the W10/W11 pair side by side, with a factual caption.
 5. **Gallery:** 6–10 remaining shots, lazy-loaded, with descriptive `alt` text.
-6. **Visiting the workshop:** "Tony's workshop is based at Bayshore Ranch. Visits are by arrangement. Call or text (239) 397-2048." **No street address, map or pin** (consistent with option A).
+6. **Visiting the workshop:** "Tony's workshop is based at Bayshore Ranch. Drop-off is by appointment: call or text (239) 397-2048 to book a time, and the drop-off details come with your booking." **No street address, map or pin** while the owner's option A decision stands (flagged at the top).
 7. **CTA:** the existing contact pattern, `/?service=engine#contact`.
 8. **Schema:** `WebPage` with `about` → `https://fixingfortmyers.com/#business`, `primaryImageOfPage` → W1. No `address` added.
 
@@ -339,11 +354,11 @@ Nothing below happens until the photos and tool list arrive and Tony approves th
 
 | Current asset | Where it is used | Replace with |
 | --- | --- | --- |
-| `assets/tony-mobile-diagnostics.webp` / `-small.webp` | Home hero `<img>` (`index.html`); hero background in `style.css`, `service-pages.css`, `site-updates.css`; `<link rel="preload">` in 30+ pages; inline background in `auto-repair-cape-coral.html` | A **real** photo: W18 (service vehicle + Tony) or W20, in 1536w and 720w WebP versions |
+| `assets/tony-mobile-diagnostics.webp` / `-small.webp` | Home hero `<img>` (`index.html`); hero background in `style.css`, `service-pages.css`, `site-updates.css`; `<link rel="preload">` in 30+ pages; inline background in `auto-repair-cape-coral.html` | A **real** photo: W1 (workshop wide) or W20 (Tony working), in 1536w and 720w WebP versions |
 | `assets/tony-mobile-engine-repair.webp` | `index.html` About section; `careers.html` hero | W4 (engine on a stand) or W20 |
-| `assets/perfect-timing-mobile-workshop.webp` (illustration) | `index.html` mobile section, captioned "Illustrative service setup" | W1 (the real workshop). Change the caption to a factual one, e.g. "Tony's workshop, where engine and transmission work is done." |
+| `assets/perfect-timing-mobile-workshop.webp` (illustration) | `index.html` workshop section, captioned "Shop service by appointment. Illustrative workshop setup." | W1 (the real workshop). Change the caption to a factual one, e.g. "Tony's workshop, where engine and transmission work is done." |
 
-**Approach:** add **new, descriptively named** files (e.g. `assets/workshop-wide.webp`, `assets/workshop-engine-assembly.webp`, `assets/tony-service-vehicle.webp`, each with a `-small` 720w version) rather than overwriting the old files under names that would no longer describe the content. Then update the references. Delete the old files only after nothing refers to them (check with `grep -rn "tony-mobile-\|perfect-timing-mobile-workshop" --include=*.html --include=*.css .`). Keep each hero image around or under 200 KB and keep the `width`/`height` attributes to avoid layout shift. Strip EXIF location data.
+**Approach:** add **new, descriptively named** files (e.g. `assets/workshop-wide.webp`, `assets/workshop-engine-assembly.webp`, `assets/tony-at-work.webp`, each with a `-small` 720w version) rather than overwriting the old files under names that would no longer describe the content. Then update the references. Delete the old files only after nothing refers to them (check with `grep -rn "tony-mobile-\|perfect-timing-mobile-workshop" --include=*.html --include=*.css .`). Keep each hero image around or under 200 KB and keep the `width`/`height` attributes to avoid layout shift. Strip EXIF location data.
 
 ### 3.3 Link to the workshop from the engine and transmission pages (and related pages)
 
@@ -365,9 +380,9 @@ On `engine-repair-fort-myers.html` and `transmission-repair-fort-myers.html`, al
 | File | Change |
 | --- | --- |
 | `workshop.html` | **New** workshop page (3.1) |
-| `assets/workshop-*.webp`, `assets/tony-service-vehicle*.webp` (names final once photos are chosen) | **New** optimized images |
+| `assets/workshop-*.webp`, `assets/tony-at-work*.webp` (names final once photos are chosen) | **New** optimized images |
 | `index.html` + every page's `AutoRepair` schema | Add Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel and Pine Island to `areaServed`; update the "Service Area" section to match |
-| `index.html` | Hero image, About image and mobile-section image swapped; mobile-section caption rewritten; "Tony's workshop" link in the mobile FAQ answer and the footer "Company" column; optionally add `image` array entries in the `AutoRepair` schema |
+| `index.html` | Hero image, About image and workshop-section image swapped; workshop-section caption rewritten; "Tony's workshop" link in the "Shop repair questions" FAQ and the footer "Company" column; optionally add `image` array entries in the `AutoRepair` schema |
 | `style.css`, `service-pages.css`, `site-updates.css` | Hero background URLs → the new hero image |
 | All pages with `<link rel="preload" … tony-mobile-diagnostics…>` (about 30 service and city pages) | Preload URLs → the new hero image |
 | `auto-repair-cape-coral.html` | Inline hero background URL |
@@ -378,7 +393,7 @@ On `engine-repair-fort-myers.html` and `transmission-repair-fort-myers.html`, al
 | `_website-intake/public-chat.mjs` | Optional: mention the `/workshop` page in Bay One's shop profile so the chat can point people to it |
 | `assets/tony-mobile-*.webp`, `assets/perfect-timing-mobile-workshop.webp` | Deleted once no references remain |
 
-**Checks before merge:** `npm test` (`tools/verify.mjs`: local links, the footer disclosure, JSON-LD); `node tools/version-assets.mjs --check` (asset versions); `node tools/audit-accessibility.mjs` for the new page; and a mobile-width look at the home page and `/workshop`. After publishing: request indexing for `/workshop` in Search Console and add the same photos to the Google profile.
+**Checks before merge:** `npm test` (`tools/verify.mjs`: local links, the footer disclosure, JSON-LD); `node tools/version-assets.mjs --check` (asset versions); `node tools/audit-accessibility.mjs` for the new page; and a phone-width look at the home page and `/workshop`. After publishing: request indexing for `/workshop` in Search Console and add the same photos to the Google profile.
 
 ### 3.5a Paint and detailing on the website
 
@@ -398,11 +413,11 @@ A public web search shows other directories with details that conflict with the 
 
 | Listing | What it shows | Fix |
 | --- | --- | --- |
-| [BBB](https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208) | Phone **(239) 271-4854**; category "Mobile Auto Repair"; Fort Myers 33905 | Change the phone to (239) 397-2048 if 271-4854 is no longer the business line |
+| [BBB](https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208) | Phone **(239) 271-4854**; category "Mobile Auto Repair"; Fort Myers 33905 | Change the phone to (239) 397-2048 if 271-4854 is no longer the business line, and the category to "Auto Repair" (the business is not mobile) |
 | [Yahoo Local](https://local.yahoo.com/info-235950242-perfect-timing-auto-repair-fort-myers/) | Phone **(239) 271-4854** | Same (Yahoo pulls from Yext/data partners) |
 | [Yelp](https://www.yelp.com/biz/perfect-timing-auto-repair-fort-myers) | Couldn't be read (blocked); search snippets show it active with photos | Owner to check phone and service-area settings in Yelp for Business |
 | [fortmyersdirections.com](https://www.fortmyersdirections.com/s/perfect-timing-auto-repair-llc--13037-second-street-fort-myers-fl-33905) | A **street address (13037 Second St)** | Ask for removal or correction if that address shouldn't be public |
-| [Facebook page 100084118269910](https://www.facebook.com/100084118269910) | Titled **"Mobile Mechanic"**; a different page from the one the site links (`61574375434643`) | Rename to "mobile repair shop" wording, or merge into / retire in favor of the linked page |
+| [Facebook page 100084118269910](https://www.facebook.com/100084118269910) | Titled **"Mobile Mechanic"**; a different page from the one the site links (`61574375434643`) | Owner decided to leave both pages as they are. That decision is flagged at the top: the title contradicts the workshop model. If the owner changes it, rename the page to "Perfect Timing Auto Repair" or retire it in favor of the linked page |
 | [Nextdoor](https://nextdoor.com/pages/perfect-timing-auto-repair-llc/) | Business page exists | Check the phone and description |
 
 A search summary also described Tony as a "certified mechanic". Don't repeat that anywhere until a certification is confirmed in writing.
@@ -433,6 +448,10 @@ Checked September 28, 2026. Confirm the live category names, character limits an
 5. ~~Service towns~~: all 12 confirmed.
 6. ~~Top jobs~~: engines, transmissions and no-start.
 6a. **Which number is the Beside line: (239) 397-2048 (on the site and Google) or (239) 271-4854 (on BBB and Yahoo)?** The other one needs to be replaced everywhere it appears. ~~Facebook~~: leave both pages.
+6b. **Address, after the workshop change:** keep it hidden (option A), or show it with drop-off hours (option B)? See "Positioning update" at the top.
+6c. **Hours, after the workshop change:** keep Open 24 hours, or set real drop-off hours? Required if the address is shown.
+6d. **The "Mobile Mechanic" Facebook page:** leave it as decided, or rename or retire it?
+6e. **Drop-off details:** where customers park, where a tow truck unloads, and whether after-hours key drop is possible.
 
 **Scope confirmations** (yes/no, with details)
 
@@ -456,4 +475,4 @@ Checked September 28, 2026. Confirm the live category names, character limits an
 18. The optional walkthrough video / 3D scan (V1), for planning.
 19. The filled-in tool and equipment list (2.2), including the "Access" and "OK to name brand" columns.
 20. Photos of completed jobs with the vehicle owners' permission (for posts and the gallery), especially a walnut-blasting before/after pair and an engine or transmission job.
-21. Approval of the draft description (1.5), the service descriptions (1.4), the Q&A answers (1.10) and the review-request text (1.11).
+21. Approval of the rewritten draft description (1.5), the service descriptions (1.4), the Q&A answers (1.10) and the review-request text (1.11).
