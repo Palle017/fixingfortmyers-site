@@ -6,10 +6,10 @@ Prepared September 28, 2026. **This is a plan for review, not a set of applied c
 
 | Question | Decision |
 | --- | --- |
-| Address | **Hidden.** No street address on Google or the site. It stays a service-area business (option A in 1.3). The workshop may be **named** as based at Bayshore Ranch, with no street, number or map pin. |
+| Address | **Updated Sept 28: show the address (option B, hybrid).** Customers can come to the base or drop the car off and leave. The Google profile shows the Bayshore Ranch address with a map pin **and** keeps the 12-town service area. *(Earlier the same day: hidden.)* The exact street address is still needed from the owner. |
 | Verification | The Google profile **is verified**. The edits in 1.0 step 2 can go ahead. |
 | Business name | **Keep it exactly as it appears now.** It matches the signage. No change. |
-| Hours | **Keep Open 24 hours**, with the existing after-hours disclosure. |
+| Hours | **Keep Open 24 hours**, also with the address shown (owner's choice, Sept 28). See the risk note under "Positioning update". |
 | Service towns | **All 12 confirmed:** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel, Pine Island. |
 | Categories | **Add all of them**, A/C and electrical included, plus detailing and paint (see 1.2). |
 | Priority jobs | **Engine jobs, transmission jobs and no-start problems.** |
@@ -26,8 +26,8 @@ The owner decisions above are kept exactly as recorded. Three of them now pull a
 
 | Decision | Why it conflicts now | Trade-off |
 | --- | --- | --- |
-| **Address hidden** (service-area profile, option A) | Google allows a hidden address only when the business **does not receive customers at its address**. A shop where customers drop off or tow in their car does receive them. | **Keep hidden:** privacy, no unannounced drop-ins, no re-verification, and it fits the 24-hour hours. But the profile misstates the model, which is a suspension risk, and customers get the location only after booking. **Show it (option B, hybrid):** matches Google's rules and adds a map pin, but it needs signage, staffed drop-off hours, a lawful place to receive customers, and probably re-verification (see 1.3). |
-| **Open 24 hours** | With customers visiting, Google reads the hours as the times someone is there to receive them. | **Keep:** matches the site's 24/7 wording (calls and Bay One answer any time). It is safest while the address stays hidden. **Change to drop-off hours:** required if the address is shown; the 24/7 contact line then moves to the description and posts. |
+| ~~Address hidden~~ | **Resolved Sept 28:** the owner chose to show the address (option B). This matches Google's rule for a shop that customers visit. | Expect Google to ask for re-verification after the address is added. Put permanent signage with the business name at the entrance first. |
+| **Open 24 hours** (kept with the address shown) | With a public address, Google and customers read the hours as the times someone is there to receive them. | **Owner's choice: keep 24 hours.** This is only safe if someone really can receive a customer or a drop-off at any hour (e.g. a secure after-hours drop-off with key drop and posted instructions). If a report or a Google review says "closed when I arrived", change to real drop-off hours and move the 24/7 contact line into the description. |
 | **Leave both Facebook pages as they are** | One of them (`100084118269910`) is titled **"Mobile Mechanic"**, which contradicts the site and the no-mobile rule. | **Leave it:** no work, but searchers see two pages and the wrong model. **Rename or retire it:** one consistent name; Facebook may limit how often a page name changes. |
 
 The 12 service towns and the business name do not conflict. The towns stay as the areas customers come from (see 1.3 for how Google treats a service area on a shop that customers visit).
@@ -111,9 +111,9 @@ Google distinguishes three setups:
 | | **Re-verification.** Changing the address or visibility usually triggers another round of verification, and the profile is only just getting through the first one. |
 | | **Ranking radius.** A shown address anchors local ranking to that point. Bayshore is on the north-east side of the area, so Cape Coral and South Fort Myers searches may rank the pin lower than a clean service-area profile does. |
 
-**Decision (owner, Sept 28): option A.** The address stays hidden. The workshop can be named as based at Bayshore Ranch in text only.
+**Decision (owner, Sept 28, updated): option B, hybrid.** Show the Bayshore Ranch address with a map pin and keep the 12-town service area. The owner confirmed customers can come to the base or drop the car off and leave. *(The first decision that day was option A, hidden.)*
 
-**Flag for the owner (after the workshop change):** option A was recommended when Tony went to customers. Now that customers bring or tow their cars in, the workshop **receives customers at its address**, which is exactly what Google's option A condition rules out. Option B (hybrid: address shown plus the 12-town service area) is the setup that matches Google's rules for this model. The decision stays A until the owner changes it. If it stays A: say "based at Bayshore Ranch" and "drop-off by appointment" in text only, give the exact location only to booked customers, and keep the hours and photos from revealing the address. The trade-offs of B are in the table above and in "Positioning update" at the top.
+**To do before switching:** (1) get the exact street address from the owner; (2) put permanent signage with the business name at the entrance; (3) set up a clear drop-off spot and key drop, since the hours stay at 24; (4) in the Google profile, go to **Edit profile → Location → Business location**, turn on showing the address to customers, enter it, and keep the service areas; (5) expect a re-verification request, and complete it before making other edits; (6) add the same address to the website footer, the `AutoRepair` schema (`address`) and the workshop page, so the name, address and phone match everywhere.
 
 **When to revisit option B:** only if **all** of these hold: (1) the workshop is a lawful place to receive customers (zoning, lease, HOA), (2) someone is there during fixed, published drop-off hours, (3) the owner accepts people arriving without an appointment, and (4) there is signage at the entrance. Then show the address with **real** drop-off hours, and cover 24/7 phone and Bay One availability in the description and in posts rather than in the hours field.
 
@@ -431,7 +431,7 @@ Part 3 is now **built on top of the workshop wording on `main` (PRs #12–#18), 
 | P3 paint work | `assets/paint-work.webp` | Paint page |
 | P4 detailed interior | `assets/detailing-interior.webp` | Paint page |
 
-W18 (drop-off area) is for Google only and is not used on the site while the address stays hidden.
+W18 (drop-off area) is for Google only for now. **Address shown (Sept 28 update):** once the owner gives the exact street address, add it to the Workshop page ("Where is the workshop?" FAQ and the drop-off box), the footer on every page and the `AutoRepair` schema `address`, so it matches Google exactly.
 
 **What was built:** `workshop.html`, `paint-correction-detailing-fort-myers.html`, the image swaps in 3.2, the workshop links in 3.3 (every visible "Tony's fully equipped workshop" now links to `/workshop`), footer links on every page, all 12 towns in `areaServed`, Sanibel and Pine Island on the home service area, the sitemap, the About page, Bay One's service list, and the asset version bumped to `20260928-workshop`. Neither page describes Tony as mobile. Drop-off is by appointment, and the workshop is named only as "based at Bayshore Ranch".
 
@@ -471,10 +471,10 @@ Checked September 28, 2026. Confirm the live category names, character limits an
 
 **Decisions**
 
-1. ~~Address~~: decided, hidden (Bayshore Ranch named in text only).
+1. ~~Address~~: **show it** (option B). **Still needed: the exact street address**, and confirmation that there is signage at the entrance.
 2. ~~Verified~~: yes. **Still open:** check in the profile editor that the Shopmonkey booking link is gone, and remove it if not.
 3. ~~Business name~~: keep as is.
-4. ~~24/7 hours~~: keep.
+4. ~~24/7 hours~~: keep, also with the address shown. Needs a secure after-hours drop-off.
 5. ~~Service towns~~: all 12 confirmed.
 6. ~~Top jobs~~: engines, transmissions and no-start.
 6a. **Which number is the Beside line: (239) 397-2048 (on the site and Google) or (239) 271-4854 (on BBB and Yahoo)?** The other one needs to be replaced everywhere it appears. ~~Facebook~~: leave both pages.
