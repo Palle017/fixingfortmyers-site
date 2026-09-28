@@ -2,6 +2,17 @@
 
 Prepared September 28, 2026. **This is a plan for review, not a set of applied changes.** It makes no website edits, no Google Business Profile edits and no publication. Any customer-facing wording below is a **draft** until Tony approves it.
 
+## Owner decisions (September 28, 2026)
+
+| Question | Decision |
+| --- | --- |
+| Address | **Hidden.** No street address on Google or the site. It stays a service-area business (option A in 1.3). The workshop may be **named** as based at Bayshore Ranch, with no street, number or map pin. |
+| Verification | The Google profile **is verified**. The edits in 1.0 step 2 can go ahead. |
+| Business name | **Keep it exactly as it appears now.** It matches the signage. No change. |
+| Hours | **Keep Open 24 hours**, with the existing after-hours disclosure. |
+| Service towns | **All 12 confirmed:** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel, Pine Island. |
+| Shopmonkey booking link | **Not confirmed removed.** The website has no Shopmonkey link (checked across all pages and scripts). Google's public Maps page can't be read without a browser session, and there's no owner access from here, so the owner needs to check it in the editor (Edit profile → Booking / appointment links). |
+
 ## Starting facts
 
 These facts come from the owner and the current `main` branch (after PR #8):
@@ -78,11 +89,11 @@ Google distinguishes three setups:
 | | **Re-verification.** Changing the address or visibility usually triggers another round of verification, and the profile is only just getting through the first one. |
 | | **Ranking radius.** A shown address anchors local ranking to that point. Bayshore is on the north-east side of the area, so Cape Coral and South Fort Myers searches may rank the pin lower than a clean service-area profile does. |
 
-**Recommendation:** use **option A (service-area business, address hidden)** now. That is consistent with the website (no street address), with Bay One ("workshop visits arranged directly with Tony") and with the 24/7 hours. Say in the description that there is a fully equipped workshop and prove it with photos, without publishing the street address.
+**Decision (owner, Sept 28): option A.** The address stays hidden. The workshop can be named as based at Bayshore Ranch in text only. **Original recommendation:** use **option A (service-area business, address hidden)** now. That is consistent with the website (no street address), with Bay One ("workshop visits arranged directly with Tony") and with the 24/7 hours. Say in the description that there is a fully equipped workshop and prove it with photos, without publishing the street address.
 
 **When to revisit option B:** only if **all** of these hold: (1) the workshop is a lawful place to receive customers (zoning, lease, HOA), (2) someone is there during fixed, published drop-off hours, (3) the owner accepts people arriving without an appointment, and (4) there is signage at the entrance. Then show the address with **real** workshop hours, and cover after-hours mobile availability in the description and in posts rather than in the hours field.
 
-**Service areas to enter (option A):** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice. These match the site's `areaServed`. Add Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel or Pine Island only if Tony confirms he travels there. Keep the list to places Tony actually serves. Google allows up to 20 service areas, and the whole area should be within about 2 hours' drive of the base.
+**Service areas to enter (option A, owner-confirmed):** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel, Pine Island (12 of the 20 allowed). The site's `areaServed` currently lists only the first five, so it needs the other seven (see 3.4). Keep the list to places Tony actually serves. Google allows up to 20 service areas, and the whole area should be within about 2 hours' drive of the base.
 
 ### 1.4 Services list
 
@@ -107,9 +118,9 @@ Do not add a service the site doesn't back up or Tony doesn't want to do.
 
 ### 1.5 Business description (draft, 750-character limit)
 
-> Perfect Timing Auto Repair is a mobile repair shop serving Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers and nearby Southwest Florida. Tony comes to you for diagnostics and on-site repairs such as brakes, batteries, A/C and electrical faults, where the vehicle and location allow. Bigger jobs go to Tony's own fully equipped workshop: engine assembly and rebuilds, tolerance and timing checks, transmission work and walnut blasting to clean carbon from intake valves, plus diesel, hot rod and restoration projects. Tell us your vehicle, the symptoms and where it is parked. Tony confirms what can be done on-site, what needs the workshop and the plan before any work starts. Workshop visits are by arrangement.
+> Perfect Timing Auto Repair is a mobile repair shop serving Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers and nearby Southwest Florida. Tony comes to you for diagnostics and on-site repairs such as brakes, batteries, A/C and electrical faults, where the vehicle and location allow. Bigger jobs go to Tony's own fully equipped workshop at Bayshore Ranch: engine assembly and rebuilds, tolerance and timing checks, transmission work and walnut blasting to clean carbon from intake valves, plus diesel, hot rod and restoration projects. Tell us your vehicle, the symptoms and where it is parked. Tony confirms what can be done on-site, what needs the workshop and the plan before any work starts. Workshop visits are by arrangement.
 
-About 719 characters. It has no URL, no price, no promotional language and no phone number (the phone has its own field). Before publishing, remove "rebuilds", "diesel" or "hot rod and restoration" if Tony doesn't confirm them.
+About 737 characters. It has no URL, no price, no promotional language and no phone number (the phone has its own field). Before publishing, remove "rebuilds", "diesel" or "hot rod and restoration" if Tony doesn't confirm them.
 
 ### 1.6 Other profile fields
 
@@ -300,7 +311,7 @@ Nothing below happens until the photos and tool list arrive and Tony approves th
 3. **Capabilities**, one block per tool-list group that Tony fills in: Engine assembly & measurement → Transmission → Diagnostics → Cleaning & walnut blasting → Fabrication → Lifts. Each block: a photo, 2–3 sentences in plain words about **what the equipment lets Tony do for the customer**, and a link to the matching service page. Name brands only where column "OK to name the brand" = Y.
 4. **Walnut blasting before and after:** the W10/W11 pair side by side, with a factual caption.
 5. **Gallery:** 6–10 remaining shots, lazy-loaded, with descriptive `alt` text.
-6. **Visiting the workshop:** "Workshop visits are by arrangement. Call or text (239) 397-2048." **No street address** (consistent with option A).
+6. **Visiting the workshop:** "Tony's workshop is based at Bayshore Ranch. Visits are by arrangement. Call or text (239) 397-2048." **No street address, map or pin** (consistent with option A).
 7. **CTA:** the existing contact pattern, `/?service=engine#contact`.
 8. **Schema:** `WebPage` with `about` → `https://fixingfortmyers.com/#business`, `primaryImageOfPage` → W1. No `address` added.
 
@@ -335,6 +346,7 @@ On `engine-repair-fort-myers.html` and `transmission-repair-fort-myers.html`, al
 | --- | --- |
 | `workshop.html` | **New** workshop page (3.1) |
 | `assets/workshop-*.webp`, `assets/tony-service-vehicle*.webp` (names final once photos are chosen) | **New** optimized images |
+| `index.html` + every page's `AutoRepair` schema | Add Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel and Pine Island to `areaServed`; update the "Service Area" section to match |
 | `index.html` | Hero image, About image and mobile-section image swapped; mobile-section caption rewritten; "Tony's workshop" link in the mobile FAQ answer and the footer "Company" column; optionally add `image` array entries in the `AutoRepair` schema |
 | `style.css`, `service-pages.css`, `site-updates.css` | Hero background URLs → the new hero image |
 | All pages with `<link rel="preload" … tony-mobile-diagnostics…>` (about 30 service and city pages) | Preload URLs → the new hero image |
@@ -356,6 +368,21 @@ On `engine-repair-fort-myers.html` and `transmission-repair-fort-myers.html`, al
 
 ---
 
+## Listings elsewhere that disagree (found September 28, 2026)
+
+A public web search shows other directories with details that conflict with the site and the Google profile. Inconsistent name, address and phone details across directories confuse customers and weaken local rankings.
+
+| Listing | What it shows | Fix |
+| --- | --- | --- |
+| [BBB](https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208) | Phone **(239) 271-4854**; category "Mobile Auto Repair"; Fort Myers 33905 | Change the phone to (239) 397-2048 if 271-4854 is no longer the business line |
+| [Yahoo Local](https://local.yahoo.com/info-235950242-perfect-timing-auto-repair-fort-myers/) | Phone **(239) 271-4854** | Same (Yahoo pulls from Yext/data partners) |
+| [Yelp](https://www.yelp.com/biz/perfect-timing-auto-repair-fort-myers) | Couldn't be read (blocked); search snippets show it active with photos | Owner to check phone and service-area settings in Yelp for Business |
+| [fortmyersdirections.com](https://www.fortmyersdirections.com/s/perfect-timing-auto-repair-llc--13037-second-street-fort-myers-fl-33905) | A **street address (13037 Second St)** | Ask for removal or correction if that address shouldn't be public |
+| [Facebook page 100084118269910](https://www.facebook.com/100084118269910) | Titled **"Mobile Mechanic"**; a different page from the one the site links (`61574375434643`) | Rename to "mobile repair shop" wording, or merge into / retire in favor of the linked page |
+| [Nextdoor](https://nextdoor.com/pages/perfect-timing-auto-repair-llc/) | Business page exists | Check the phone and description |
+
+A search summary also described Tony as a "certified mechanic". Don't repeat that anywhere until a certification is confirmed in writing.
+
 ## Sources and confidence
 
 Checked September 28, 2026. Confirm the live category names, character limits and post behavior inside the Business Profile editor before relying on them. The editor reflects the current rules.
@@ -375,12 +402,13 @@ Checked September 28, 2026. Confirm the live category names, character limits an
 
 **Decisions**
 
-1. Show the Bayshore Ranch address on Google (option B), or stay a service-area business (option A, recommended)? If B: the exact address, confirmation that customers may lawfully visit (zoning/lease/HOA), staffed drop-off hours and signage.
-2. Is the Google profile verified now? Has the Shopmonkey link been removed?
-3. The exact business name as it appears on signage and invoices (with or without "LLC").
-4. Keep the 24/7 hours? Can Tony, or Bay One plus Tony, really answer overnight?
-5. The service towns: confirm Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, and say whether to add Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel or Pine Island.
+1. ~~Address~~: decided, hidden (Bayshore Ranch named in text only).
+2. ~~Verified~~: yes. **Still open:** check in the profile editor that the Shopmonkey booking link is gone, and remove it if not.
+3. ~~Business name~~: keep as is.
+4. ~~24/7 hours~~: keep.
+5. ~~Service towns~~: all 12 confirmed.
 6. The top three jobs Tony wants more of.
+6a. **Is (239) 271-4854 still a business line?** BBB and Yahoo list it instead of (239) 397-2048. If it's old, those listings need updating. Also confirm whether the "Mobile Mechanic" Facebook page (100084118269910) is still in use.
 
 **Scope confirmations** (yes/no, with details)
 
