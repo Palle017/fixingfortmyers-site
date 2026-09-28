@@ -18,7 +18,7 @@ for(const path of paths){
     assert.match(body,/20260927-bay-one-v3/);
   }
   if(path==='/bay-one-config.js'){assert.match(body,/enabled:\s*true/);assert.match(body,/p15g2\.tail68bd87\.ts\.net:10000/);}
-  if(path==='/contact-config.js')assert.match(body,/endpoint:\s*''/);
+  if(path==='/contact-config.js')assert.match(body,/endpoint:\s*'https:\/\/p15g2\.tail68bd87\.ts\.net:10000'/);
   if(path==='/sitemap.xml'){assert.match(body,/repair-guide-battery-keeps-dying/);assert.match(body,/repair-guide-car-overheating/);assert.match(body,/repair-guide-flashing-check-engine-light/);}
   checks.push({path,status:response.status,bytes:Buffer.byteLength(body)});
 }

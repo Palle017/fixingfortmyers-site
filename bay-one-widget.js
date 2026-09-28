@@ -158,6 +158,11 @@
     }
     function close() { panel.hidden = true; launcher.hidden = false; entryButtons.forEach(button => button.setAttribute('aria-expanded','false')); (opener?.isConnected ? opener : launcher).focus({preventScroll:true}); viewport(); }
     launcher.addEventListener('click', open); $('.b1-close').addEventListener('click', close);
+    // Owner request: Bay One opens by itself on page load, until the visitor closes it this visit.
+    $('.b1-close').addEventListener('click', () => { try { sessionStorage.setItem('pt-bayone-closed', '1'); } catch (_) { /* reopening is harmless */ } });
+    let closedThisVisit = false;
+    try { closedThisVisit = sessionStorage.getItem('pt-bayone-closed') === '1'; } catch (_) { /* treat as not closed */ }
+    if (!closedThisVisit && config.autoOpen !== false) setTimeout(() => { if (panel.hidden) open(); }, 800);
     $('.b1-contact').addEventListener('click',event => handoff(event));
     const formLauncher = document.getElementById('request-bay-one');
     if (formLauncher) { formLauncher.hidden = false; formLauncher.setAttribute('aria-controls','b1-panel'); formLauncher.setAttribute('aria-expanded','false'); entryButtons.push(formLauncher); formLauncher.addEventListener('click',open); }
@@ -191,7 +196,7 @@
             state.intake[name] = value;
           }
         }
-        addMessage('assistant',result.reply); offerSend(result.ready === true); state.failed = null; input.value = ''; status.textContent = '';
+        addMessage('assistant',result.reply); offerSend(true); state.failed = null; input.value = ''; status.textContent = '';
       } catch (error) {
         state.failed = !error.code || error.code === 'request_pending' ? pending : null;
         if (error.code === 'invalid_session') {
@@ -287,7 +292,10 @@
       sendNow.hidden = true; messages.append(leadForm); messages.scrollTop = messages.scrollHeight;
       leadForm.querySelector('[name=name]').focus({preventScroll:true});
     }
+    // The card appears after the first message; later chat answers still fill the urgency boxes the customer has not touched.
+    for (const name of ['starts', 'stranded']) leadForm.querySelector(`[name=${name}]`).addEventListener('change', event => { event.target.dataset.touched = '1'; });
     function offerSend(ready) {
+      if (leadForm.isConnected && !leadSent) for (const name of ['starts', 'stranded']) { const field = leadForm.querySelector(`[name=${name}]`); if (!field.dataset.touched && ['yes', 'no'].includes(state.intake[name])) field.value = state.intake[name]; }
       if (leadSent || leadForm.isConnected) return;
       if (ready) showLead(); else if (state.customerMessages.length) sendNow.hidden = false;
     }
