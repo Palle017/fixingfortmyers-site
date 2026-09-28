@@ -64,17 +64,25 @@
     const field = byId(id);
     if (field) field.addEventListener('input',()=>{field.dataset.userEdited='true';});
   }
-  const endpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
+  const configuredEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
+  let endpoint = configuredEndpoint;
   const status = byId('request-status');
   const submit = byId('request-submit');
   const backup = byId('request-backup');
   const preview = byId('request-preview');
   const textDraft = byId('request-text');
   const phoneField = byId('request-phone');
+  const applyMode = () => {
   phoneField.required = Boolean(endpoint);
   byId('request-phone-label').textContent = endpoint ? 'Phone number' : 'Callback number, if different (optional)';
   byId('request-sms-consent').closest('.request-consent').hidden = !endpoint;
   byId('request-direct-consent').hidden = Boolean(endpoint);
+  const media = byId('request-media'); if (media) media.closest('label').hidden = !(endpoint && mediaReady);
+  const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = !endpoint;
+  submit.textContent = endpoint ? 'Send repair request' : 'Prepare text to Tony';
+  byId('request-instructions').textContent = endpoint ? 'Send your repair details or contact Tony directly. Your request is received only after the inquiry system confirms it has saved your details. An appointment is confirmed after Tony replies.' : 'Fill in what you know, then review a text draft for Tony. Open it in your texting app, add photos or a short video of the problem if you can, and tap Send yourself. Preparing a draft does not send an inquiry or book an appointment.';
+  };
+  let mediaReady = false;
   // Messages uses a different body separator on Apple mobile devices. Keep copy/email
   // available because support still depends on the device's registered texting app.
   const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -120,14 +128,31 @@
       return result;
     } finally { clearTimeout(timer); }
   };
-  if (!endpoint) {
-    submit.textContent = 'Prepare text to Tony';
-    byId('request-instructions').textContent = 'Fill in what you know, then review a text draft for Tony. Open it in your texting app, add photos or a short video of the problem if you can, and tap Send yourself. Preparing a draft does not send an inquiry or book an appointment.';
-    const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = true;
-  } else {
-    submit.textContent = 'Send repair request';
-    byId('request-instructions').textContent = 'Send your repair details or contact Tony directly. Your request is received only after the inquiry system confirms it has saved your details. An appointment is confirmed after Tony replies.';
+  applyMode();
+  // Online only while the shop's receiver answers; otherwise the form keeps preparing a text draft.
+  if (configuredEndpoint) {
+    const probe = new AbortController(), probeTimer = setTimeout(() => probe.abort(), 6000);
+    fetch(configuredEndpoint + '/healthz', {credentials:'omit', cache:'no-store', signal:probe.signal})
+      .then(response => response.ok ? response.json() : null)
+      .then(health => { if (health?.ok !== true) throw new Error('down'); mediaReady = health.media === 'ready'; applyMode(); })
+      .catch(() => { if (!sentRequestId && !submit.disabled) { endpoint = ''; applyMode(); } })
+      .finally(() => clearTimeout(probeTimer));
   }
+  const mediaTypes = {jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',heic:'image/heic',heif:'image/heif',mp4:'video/mp4',m4v:'video/mp4',mov:'video/quicktime',webm:'video/webm'};
+  const uploadMedia = async result => {
+    const items = !(mediaReady && result.mediaToken) ? [] : [...(byId('request-media')?.files || [])]
+      .map(file => ({file, type: Object.values(mediaTypes).includes((file.type||'').toLowerCase()) ? file.type.toLowerCase() : mediaTypes[(file.name.split('.').pop()||'').toLowerCase()] || ''}))
+      .filter(item => item.type && item.file.size <= (item.type.startsWith('video/') ? 100 : 15) * 1024 * 1024).slice(0, 6);
+    let sent = 0;
+    for (const [n, item] of items.entries()) {
+      status.textContent = `Request received. Sending photo/video ${n + 1} of ${items.length}… keep this page open.`;
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 300000);
+      try { const response = await fetch(`${endpoint}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type,'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal}); if (response.ok) sent++; }
+      catch (_) { /* The request is saved; the customer can text the file instead. */ }
+      finally { clearTimeout(timer); }
+    }
+    return {sent, total: items.length};
+  };
   form.addEventListener('input', () => { requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = ''; });
   form.addEventListener('submit', async event => {
     event.preventDefault();
@@ -145,6 +170,8 @@
       const result = await send('/hooks/lead/webform', data, submittedKey);
       if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
       sentRequestId = result.id;
+      const sentMedia = await uploadMedia(result);
+      if (sentMedia.sent < sentMedia.total) { status.textContent = `Repair request received (reference ${result.id}). ${sentMedia.total - sentMedia.sent} photo/video file(s) did not go through; text them to Tony at (239) 397-2048.`; submit.textContent = 'Request received'; backup.hidden = true; return; }
       status.textContent = `Repair request received. Reference: ${result.id}. Opening your confirmation…`;
       backup.hidden = true;
       submit.textContent = 'Request received';
