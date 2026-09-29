@@ -1,0 +1,54 @@
+/* Homepage: one useful introduction and one repair inquiry. */
+.home-start{padding:128px 0 56px;background:radial-gradient(ellipse at 8% 15%,#142435 0,transparent 58%),#0b1119;border-bottom:1px solid #263b4d}
+.home-start__grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(32px,5vw,76px);align-items:start}
+.home-start__intro{padding:28px 0 0;max-width:530px}
+.home-start h1{font:400 clamp(54px,5.9vw,86px)/1.02 'Bebas Neue',sans-serif;letter-spacing:.015em;color:#fff;margin:16px 0 22px}
+.home-start h1 span{color:#72ceff}
+.home-start__lead{font-size:19px;line-height:1.65;color:#dce7f0;max-width:47ch}
+.home-start__focus{list-style:none;padding:0;margin:26px 0;border-top:1px solid #2b4155;color:#e1edf6;font-size:16px}
+.home-start__focus li{padding:10px 0;border-bottom:1px solid #2b4155}
+.home-start__details,.home-start__hours{font-size:14px;line-height:1.65;color:#b8c7d7;margin-top:20px}
+.home-start__hours{margin-top:9px}.home-start__hours a{color:#91dbff;text-decoration:underline;text-underline-offset:3px}
+.home-clean .request-panel{padding:28px;border-color:#3d596f;background:#111c28;box-shadow:0 16px 50px #0002}
+.home-clean #contact{scroll-margin-top:24px}
+.home-clean .request-panel :is(h2,h3){font-size:26px;line-height:1.2;margin-bottom:10px}
+.home-clean .request-panel #request-instructions{margin-bottom:18px;color:#c8d6e3;font-size:14px;line-height:1.5}
+.home-clean .request-fields{margin:18px 0;gap:13px}
+.home-clean .request-fields--core{margin-top:0}
+.home-clean .request-panel input:not([type=checkbox]),.home-clean .request-panel textarea,.home-clean .request-panel select{padding:10px 11px;margin-top:5px;background:#0a131e}
+.home-clean .request-panel textarea{min-height:90px}
+.home-clean .field-note{color:#b3c4d5;font-weight:400;font-size:13px}
+.home-clean .request-options{border-top:1px solid #2f475a;margin:8px 0 18px}
+.home-clean .request-options>summary{min-height:44px;padding:12px 0 0;cursor:pointer;color:#a4dfff;font-size:14px;font-weight:600;line-height:1.5}
+.home-clean .request-options>summary span{font-weight:400;color:#b3c4d5}
+.home-clean .request-options[open]{padding-bottom:16px;border-bottom:1px solid #2f475a}
+.home-clean .request-consent{margin-top:20px;margin-bottom:0}
+.home-clean .request-voice{margin-top:18px;padding-top:10px}
+.home-clean .request-primary-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.home-clean .request-primary-actions .btn{min-height:48px;flex:1;justify-content:center;font-size:15px;padding:12px 16px}
+.home-clean .request-call{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:48px;color:#a5ddff;font-weight:700;font-size:15px;text-decoration:underline;text-underline-offset:4px;white-space:nowrap}
+.home-clean .request-call span{font-weight:400;font-size:13px}
+.home-clean .request-panel .request-privacy{font-size:12px;margin-top:12px;line-height:1.5}
+.home-clean .request-status:empty{margin:0}
+.home-clean .request-media small{display:block;font-weight:400}
+.home-clean .request-backup .request-actions{gap:8px}
+.home-method{padding:58px 0;background:#0e1722}
+.home-method__heading{max-width:740px;margin-bottom:30px}
+.home-method h2{font:400 clamp(34px,4vw,50px)/1.1 'Bebas Neue',sans-serif;letter-spacing:.02em;color:#f1f7ff;margin:10px 0 14px}
+.home-method__heading>p:last-child{font-size:17px;line-height:1.65;color:#c6d5e3;max-width:60ch}
+.home-method__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+.home-method__grid article{border-top:1px solid #3a5368;padding-top:18px}
+.home-method__number{display:block;color:#74cdfd;font-size:14px;font-weight:700;letter-spacing:.1em;margin-bottom:12px}
+.home-method h3{font:700 20px/1.3 'Barlow',sans-serif;color:#f0f7ff;margin-bottom:10px}
+.home-method__grid p{font-size:15px;line-height:1.65;color:#c2d1df}
+.home-method__grid a{display:inline-flex;align-items:center;min-height:44px;margin-top:10px;color:#91d8ff;text-decoration:underline;text-underline-offset:4px;font-size:14px}
+.home-method__timing{padding-top:22px;margin-top:28px;border-top:1px solid #2a4155;color:#bdcedd;font-size:14px;line-height:1.7;max-width:95ch}
+.home-method__timing strong{color:#e5f1fb;font-weight:600}
+.home-clean .slogan-banner{display:none}
+.home-clean .home-proof__heading h2,.home-clean .proof-heading h2{font-size:clamp(30px,4vw,46px)!important}
+.home-clean .home-symptoms,.home-clean .services,.home-clean .areas,.home-clean .testimonials{padding-top:58px;padding-bottom:58px}
+.home-clean .section-title{font-size:clamp(32px,4vw,50px)}
+@media(max-width:1000px){.home-start__grid{gap:28px;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}.home-start h1{font-size:60px}.home-clean .request-panel{padding:24px}.home-clean .request-primary-actions{gap:12px}}
+@media(max-width:800px){.home-start{padding:108px 0 34px}.home-start__grid{grid-template-columns:minmax(0,1fr);gap:24px}.home-start__intro{max-width:none;padding:0}.home-start h1{font-size:clamp(45px,9vw,65px);margin:10px 0 14px}.home-start__lead{font-size:16px;line-height:1.55;max-width:60ch}.home-start__focus{display:none}.home-start__details{margin-top:12px;font-size:13px}.home-start__details br{display:none}.home-start__hours{font-size:13px;margin-top:5px}.home-clean .request-panel{padding:22px}.home-method{padding:38px 0}.home-method__grid{grid-template-columns:1fr;gap:18px}.home-method__heading{margin-bottom:22px}.home-method__grid article{padding-top:15px}.home-method__number{float:left;width:32px;line-height:26px;margin:0}.home-method__grid h3{margin-left:32px}.home-method__grid p{font-size:15px}.home-method__timing{margin-top:22px}.home-clean .home-symptoms,.home-clean .services,.home-clean .areas,.home-clean .testimonials{padding-top:38px;padding-bottom:38px}}
+@media(max-width:480px){.home-clean .request-panel{padding:19px 17px}.home-clean .request-panel h3{font-size:24px}.home-clean .request-fields--core{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.home-clean .request-panel label{font-size:14px}.home-clean .request-primary-actions{gap:12px}.home-clean .request-primary-actions .btn{font-size:14px;padding:11px}.home-clean .request-call span{font-size:12px}.home-clean .request-options>summary{font-size:13px}.home-start .section-label{font-size:11px}.home-start__details{max-width:40ch}.home-clean .request-panel input,.home-clean .request-panel textarea{font-size:16px}}
+@media(max-width:350px){.home-clean .request-fields--core{grid-template-columns:minmax(0,1fr)}.home-clean .request-primary-actions{align-items:stretch;flex-direction:column}.home-clean .request-call{flex-direction:row;align-items:center;gap:8px}}

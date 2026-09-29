@@ -29,12 +29,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Barlow:wght@400;600;700;800&amp;family=Russo+One&amp;display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./base.css?v=20260927-bay-one-v3">
-  <link rel="stylesheet" href="./style.css?v=20260927-bay-one-v3">
-  <link rel="stylesheet" href="./service-pages.css?v=20260927-bay-one-v3">
-  <link rel="stylesheet" href="./proof.css?v=20260927-bay-one-v3">
-  <link rel="preload" as="image" href="./assets/tony-mobile-diagnostics.webp" fetchpriority="high" media="(min-width: 641px)">
-  <link rel="preload" as="image" href="./assets/tony-mobile-diagnostics-small.webp" fetchpriority="high" media="(max-width: 640px)">
+  <link rel="stylesheet" href="./base.css?v=20260929-clean-flow">
+  <link rel="stylesheet" href="./style.css?v=20260929-clean-flow">
+  <link rel="stylesheet" href="./service-pages.css?v=20260929-clean-flow">
+  <link rel="stylesheet" href="./proof.css?v=20260929-clean-flow">
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -184,7 +182,7 @@
   ]
 }
 </script>
-<link rel="stylesheet" href="/site-updates.css?v=20260927-bay-one-v3"><script type="application/ld+json">
+<link rel="stylesheet" href="/site-updates.css?v=20260929-clean-flow"><script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -216,8 +214,9 @@
   ]
 }
 </script>
+  <link rel="stylesheet" href="/home-clean.css?v=20260929-clean-flow">
 </head>
-<body>
+<body class="home-clean">
 
   <a class="skip-link" href="#home">Skip to content</a><!-- ============ NAVIGATION ============ -->
   <nav class="nav" id="nav">
@@ -239,7 +238,7 @@
           <li><a href="/case-studies">Repair Proof</a></li>
           <li><a href="/about-perfect-timing">About Our Team</a></li>
 
-          <li><a href="#contact" class="nav__cta">Request a Repair</a></li>
+          <li><a href="#contact" class="nav__cta">Request a repair</a></li>
         </ul>
 
         <button class="nav__mobile-toggle" id="mobileToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu" type="button">
@@ -254,122 +253,50 @@
         <a href="/case-studies">Repair Proof</a>
         <a href="/about-perfect-timing">About Our Team</a>
 
-        <a href="#contact" class="nav__cta">Request a Repair</a>
+        <a href="#contact" class="nav__cta">Request a repair</a>
       </div>
     </div>
   </nav>
 
   <main id="main-content">
 
-  <!-- ============ HERO ============ -->
-  <section class="home-hero" id="home" aria-labelledby="home-title" tabindex="-1">
-  <div class="container home-hero__grid">
-    <div class="home-hero__copy">
-      <p class="home-hero__eyebrow">Perfect Timing Auto Repair · Fort Myers, FL</p>
-      <h1 id="home-title">Auto repair shop<br><span>in Fort Myers.</span></h1>
-      <p class="home-hero__lead">Car won’t start? Warning light on? Call or text Tony. Bring your vehicle to Tony's fully equipped shop for diagnostics, engine and transmission work and more, serving Fort Myers and nearby Southwest Florida.</p>
-      <div class="home-hero__actions">
-        <a class="btn btn--primary" href="tel:+12393972048">Call (239) 397-2048</a>
-        <a class="btn btn--outline" href="sms:+12393972048">Text Tony</a>
+  <!-- ============ INTRO AND REPAIR REQUEST ============ -->
+  <section class="home-start" id="home" aria-labelledby="home-title" tabindex="-1">
+    <div class="container home-start__grid">
+      <div class="home-start__intro">
+        <p class="section-label">Perfect Timing Auto Repair</p>
+        <h1 id="home-title">Auto repair.<br><span>A clear next step.</span></h1>
+        <p class="home-start__lead">Diagnostics, maintenance and repair in Fort Myers. Tell Tony about your vehicle and the problem. He’ll review the details and confirm the next step with you.</p>
+        <ul class="home-start__focus" aria-label="Repair capabilities">
+          <li>Electrical &amp; warning-light diagnosis</li>
+          <li>Engine &amp; transmission work</li>
+          <li>A/C, brakes &amp; maintenance</li>
+        </ul>
+        <p class="home-start__details">Serving Fort Myers &amp; nearby Southwest Florida.<br> Shop appointments confirmed by Tony.</p>
+        <p class="home-start__hours">24/7 availability<a href="#hours-disclaimer" aria-label="Read after-hours service details">*</a> · AI-assisted after hours</p>
       </div>
-      <p class="home-hero__note">Available 24/7<a class="hours-asterisk" href="#hours-disclaimer" aria-label="Read after-hours service details">*</a> · AI-assisted after hours. Tony confirms your appointment.<br>Want help describing it? <a href="#contact">Request a callback by text.</a></p>
-      <div class="home-hero__services" aria-label="Explore repair services">
-        <a href="/auto-diagnostics-fort-myers">Diagnostics ↗</a>
-        <a href="/ac-repair-fort-myers">A/C ↗</a>
-        <a href="/brake-repair-fort-myers">Brakes ↗</a>
-        <a href="/auto-electrical-repair-fort-myers">Electrical ↗</a>
-        <a href="/engine-repair-fort-myers">Engines ↗</a>
-        <a href="/transmission-repair-fort-myers">Transmissions ↗</a>
-      </div>
-    </div>
-    <div class="home-hero__art">
-      <img src="/assets/tony-mobile-diagnostics.webp" srcset="/assets/tony-mobile-diagnostics-small.webp 720w, /assets/tony-mobile-diagnostics.webp 1536w" sizes="(max-width:800px) 92vw, 45vw" width="1536" height="1024" alt="Tony from Perfect Timing Auto Repair diagnosing a vehicle" fetchpriority="high" decoding="async">
-      <p>Tony. Your local repair shop.</p>
-    </div>
-  </div>
-</section>
-<!-- ============ SHOP SERVICE ANNOUNCEMENT ============ -->
-  <section class="shop-notice" id="new-shop" aria-labelledby="new-shop-title"><div class="container"><div><h2 id="new-shop-title">Stranded with a car that won’t start?</h2><p>Call Tony any hour. Share your city, vehicle and what happens when you try to start it. Tony confirms a time to bring or tow it to the shop.</p></div><a href="tel:+12393972048">Call Tony ↗</a></div></section>
-  <section class="shop-notice" id="big-jobs" aria-labelledby="big-jobs-title"><div class="container"><div><h2 id="big-jobs-title">Engine knocking, burning oil or slipping gears?</h2><p>Tony diagnoses it first, then does the teardown, measuring and rebuild or replacement in his own fully equipped workshop. You get both paths quoted in writing before any big work starts. <a href="/engine-rebuild-vs-replacement-fort-myers">Rebuild or replace?</a> · <a href="/engine-knocking-noise-fort-myers">Knocking noise</a> · <a href="/blue-smoke-burning-oil-fort-myers">Blue smoke</a> · <a href="/transmission-repair-fort-myers">Transmission</a></p></div><a href="/?service=engine#contact">Get a quote ↗</a></div></section><!-- ============ TRUST BAR ============ -->
-  <div class="trust-bar">
-    <div class="container">
-      <div class="trust-bar__inner">
-        <div class="trust-item">
-          <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          Tony's Final Review
-        </div>
-        <div class="trust-item">
-          <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-          Clear Repair Plan
-        </div>
-        <div class="trust-item">
-          <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-          By Appointment Only
-        </div>
-        <div class="trust-item">
-          <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-          Upfront Pricing
-        </div>
-        <div class="trust-item">
-          <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          4.8★ on Google
-        </div>
-      </div>
-    </div>
-  </div>
-
-<section class="shop-notice" id="same-day-service" aria-labelledby="same-day-title">
-  <div class="container">
-    <div>
-      <h2 id="same-day-title">Less time without your vehicle. Same-day service whenever possible.</h2>
-      <p>Tony’s access to a wide range of specialty tools helps make same-day diagnosis and repairs possible. At Perfect Timing, keeping your time without your vehicle as short as possible matters to us. Timing depends on the repair, parts and availability; Tony will discuss what’s realistic for your vehicle.</p>
-    </div>
-    <a href="#contact">Ask about same-day service ↗</a>
-  </div>
-</section>
-
-<section class="contact" id="contact" aria-labelledby="contact-title">
-  <div class="container contact__grid">
-    <div class="contact__info">
-      <p class="section-label">Let's get it figured out</p>
-      <h2 class="section-title" id="contact-title">Tell Tony what’s happening.</h2>
-      <p class="section-sub">Text Tony directly, or use this short form to prepare your message. Include what you know; incomplete vehicle details are okay.</p>
-      <div class="contact-direct">
-        <a class="contact-direct__phone" href="tel:+12393972048">(239) 397-2048</a>
-        <p><a href="sms:+12393972048">Text Tony</a> · <a href="mailto:fixingfortmyers@gmail.com">Email the team</a></p>
-        <p><strong>Fort Myers &amp; Southwest Florida</strong><br>Shop service by appointment. Call or text (239) 397-2048 to book a drop-off time and confirm the work your vehicle needs.</p>
-        <p>24/7 availability · Service by confirmed appointment</p>
-      </div>
-    </div>
-    <div class="request-panel">
-      <form id="bookingForm" class="repair-request" method="post" action="#contact">
-        <h3>Text Tony about your repair</h3>
-        <p id="request-instructions">Prepare a text with your vehicle and symptoms. Review it, then open your texting app and tap Send. Preparing a draft does not send an inquiry or confirm an appointment.</p>
-        <div class="request-fields">
-          <label for="request-name">Your name<input id="request-name" name="name" autocomplete="name" maxlength="100" required></label>
-          <label for="request-phone"><span id="request-phone-label">Callback number, if different (optional)</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30"></label>
-          <label class="request-full" for="request-vehicle">Vehicle year, make &amp; model (if known)<input id="request-vehicle" name="vehicle" placeholder="Example: 2018 Ford F-150, or what you know" maxlength="160"></label>
-          <label class="request-full" for="request-service">What can we help with?<select id="request-service" name="service"><option>Diagnosis / not sure yet</option><option>A/C repair</option><option>Brakes</option><option>Electrical / no-start</option><option>Engine / transmission</option><option>Module programming</option><option>Diesel service</option><option>Maintenance / other repair</option></select></label>
-          <label class="request-full" for="request-details">Describe the problem<textarea id="request-details" name="details" rows="5" maxlength="4000" placeholder="What happens, and when did it start? Use your own words." required></textarea></label>
-          <label class="request-full" for="request-city">City or ZIP code<input id="request-city" name="city" autocomplete="address-level2" maxlength="100" placeholder="No street address needed"></label>
-          <label for="request-starts">Does it start?<select id="request-starts" name="starts"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-          <label for="request-stranded">Are you stranded?<select id="request-stranded" name="stranded"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-        </div>
-        <label class="request-full request-media" for="request-media" hidden>Photos or a short video of the problem <small>(optional, up to 6)</small><input id="request-media" name="media" type="file" accept="image/*,video/*" multiple></label>
+      <div class="request-panel" id="contact" role="region" aria-labelledby="request-heading">
+        <form id="bookingForm" class="repair-request" method="post" action="#contact">
+          <h2 id="request-heading">Request a repair</h2>
+          <p id="request-instructions">Share your vehicle, the problem and how to reach you. Tony confirms the appointment after reviewing your request.</p>
+          <div class="request-fields request-fields--core">
+            <label class="request-full" for="request-vehicle">Year, make &amp; model <span class="field-note">(if known)</span><input id="request-vehicle" name="vehicle" placeholder="e.g. 2018 Ford F-150" maxlength="160"></label>
+            <label class="request-full" for="request-details">What’s happening?<textarea id="request-details" name="details" rows="3" maxlength="4000" placeholder="Describe the problem in your own words." required></textarea></label>
+            <label for="request-name">Your name<input id="request-name" name="name" autocomplete="name" maxlength="100" required></label>
+            <label for="request-phone"><span id="request-phone-label">Phone number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required></label>
+          </div>
+          <details class="request-options" id="request-options">
+            <summary>More details &amp; contact preferences <span>(optional)</span></summary>
+            <div class="request-fields">
+              <label class="request-full" for="request-service">Service, if known<select id="request-service" name="service"><option>Diagnosis / not sure yet</option><option>A/C repair</option><option>Brakes</option><option>Electrical / no-start</option><option>Engine / transmission</option><option>Module programming</option><option>Diesel service</option><option>Maintenance / other repair</option></select></label>
+              <label class="request-full" for="request-city">City or ZIP code<input id="request-city" name="city" autocomplete="address-level2" maxlength="100" placeholder="No street address needed"></label>
+              <label for="request-starts">Does it start?<select id="request-starts" name="starts"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label for="request-stranded">Are you stranded?<select id="request-stranded" name="stranded"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label class="request-full" for="request-timing">Preferred timing <span class="field-note">(optional)</span><input id="request-timing" name="timing" maxlength="160" placeholder="e.g. This week; best callback after 3 pm"></label>
+            </div>
+            <label class="request-full request-media" for="request-media" hidden>Photos or a short video of the problem <small>(optional, up to 6)</small><input id="request-media" name="media" type="file" accept="image/*,video/*" multiple></label>
         <label class="request-consent" hidden><input type="checkbox" id="request-sms-consent" name="smsConsent"> <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates. Optional; consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="/sms-terms">SMS terms</a> · <a href="/privacy-policy">Privacy policy</a>.</span></label>
-        <p id="request-direct-consent" class="request-fineprint">By sending this text, you ask Tony to reply about this repair inquiry. No marketing. <a href="/privacy-policy">Privacy policy</a>.</p>
-        <div class="request-honeypot" aria-hidden="true"><label>Leave this blank<input name="website" tabindex="-1" autocomplete="off"></label></div>
-        <button class="btn btn--primary" id="request-submit" type="submit">Prepare text to Tony</button>
-        <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
-        <button class="btn btn--outline" id="request-bay-one" type="button" hidden>Ask Bay One for help</button>
-      </form>
-      <div class="request-backup" id="request-backup" hidden>
-        <h3>Your text draft</h3>
-        <p>Edit the message if needed. Then open your texting app and tap Send. This page has not sent your inquiry. If your device cannot open texts or leaves the message blank, copy the message or use email. Add a callback number if you want a call, especially when using email.</p>
-        <label for="request-preview">Message to Tony</label>
-        <textarea id="request-preview" rows="8"></textarea>
-        <div class="request-actions"><a class="btn btn--primary" id="request-text" href="sms:+12393972048">Open text draft to Tony</a><a class="btn btn--outline" id="request-email" href="mailto:fixingfortmyers@gmail.com">Open email draft</a><button class="btn btn--outline" type="button" id="request-copy">Copy request</button></div>
-      </div>
+
       <details class="request-voice">
         <summary>Prefer to describe it in your own voice?</summary>
         <p>Record up to 60 seconds. You can listen before sending. Include your name, phone number and vehicle details in your repair request above.</p>
@@ -379,45 +306,40 @@
         <div class="request-actions"><button class="btn btn--outline" type="button" id="voice-send" hidden>Send recording</button><a id="voice-download" class="btn btn--outline" hidden>Download recording</a></div>
         <p class="request-fineprint">Microphone access starts only when you choose Start recording. If sending is unavailable, download the recording and attach it to your email or text.</p>
       </details>
-      <noscript><p>To request a repair, <a href="tel:+12393972048">call (239) 397-2048</a> or <a href="mailto:fixingfortmyers@gmail.com">email fixingfortmyers@gmail.com</a>. The online request form requires JavaScript.</p></noscript>
-    </div>
-  </div>
-</section>
-<section class="home-symptoms" id="repair-guides" aria-labelledby="repair-guides-title"><div class="container"><p class="section-label">Start with the symptoms</p><h2 class="section-title" id="repair-guides-title">What is your car doing?</h2><p class="section-sub">Plain-language repair guides: what to notice, what a mechanic may check and what to send Tony.</p><div class="symptom-links"><a href="/repair-guide-car-wont-start"><strong>Car won’t start</strong><span>Clicking, cranking or no response →</span></a><a href="/repair-guide-battery-keeps-dying"><strong>Battery keeps dying</strong><span>Dead again after a jump or overnight →</span></a><a href="/repair-guide-ac-warm-at-idle"><strong>A/C warm at idle</strong><span>Cold while driving, warm at a stop →</span></a><a href="/repair-guide-car-overheating"><strong>Engine overheating</strong><span>Temperature warning, steam or coolant leak →</span></a><a href="/repair-guide-flashing-check-engine-light"><strong>Flashing check-engine light</strong><span>Shaking, rough running or loss of power →</span></a></div><p class="service-more"><a href="/repair-guides">Browse all repair guides →</a></p></div></section>
-  <!-- ============ ABOUT ============ -->
-  <section class="about" id="about">
-    <div class="container">
-      <div class="about__grid">
-        <div class="about__image-wrap reveal">
-          <img src="./assets/tony-mobile-engine-repair.webp" width="1536" height="1024" alt="Tony from Perfect Timing Auto Repair working on an engine beside a tool cart" loading="lazy" decoding="async">
-          <div class="about__border-accent"></div>
-        </div>
-        <div class="about__content">
-          <p class="section-label reveal">Who We Are</p>
-          <h2 class="section-title reveal reveal-delay-1">The tools to test.<br>The time to explain.</h2>
-          <p class="section-sub reveal reveal-delay-2">
-            Access to a wide range of specialty tools helps Tony investigate more than a warning code. The equipment and tests depend on your vehicle and the problem; tell us what you drive so Tony can confirm the right approach.
-          </p>
-          <p class="section-sub reveal reveal-delay-2" style="margin-top: 1rem;">
-            Need your vehicle back for work or family? Tony explains the findings, parts needs and expected timing before you commit to a repair. Ask whether same-day work is realistic for your job.
-          </p>
-          <p class="section-sub reveal reveal-delay-2" style="margin-top: 1rem;">
-            <a href="/fort-myers-mechanic" style="color: var(--color-accent); font-weight: 700; text-decoration: none;">Meet the Perfect Timing repair team →</a>
-          </p>
 
-          <div class="about__stats"><div class="stat-card"><div class="stat-card__number">24/7*</div><div class="stat-card__label">Call or text Tony</div></div><div class="stat-card"><div class="stat-card__number">4.8★</div><div class="stat-card__label"><a href="#testimonials">70 Google reviews</a></div></div></div>
+            <button class="btn btn--outline" id="request-bay-one" type="button" hidden>Ask Bay One for help</button>
+          </details>
+          <p id="request-direct-consent" class="request-fineprint" hidden>By sending this text, you ask Tony to reply about this repair inquiry. No marketing. <a href="/privacy-policy">Privacy policy</a>.</p>
+          <div class="request-honeypot" aria-hidden="true"><label>Leave this blank<input name="website" tabindex="-1" autocomplete="off"></label></div>
+          <div class="request-primary-actions"><button class="btn btn--primary" id="request-submit" type="submit" disabled>Send repair request</button><a class="request-call" href="tel:+12393972048">Call <span>(239) 397-2048</span></a></div>
+          <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
+          <p class="request-fineprint request-privacy">Your details are used to respond to this inquiry. <a href="/privacy-policy">Privacy policy</a>.</p>
+        </form>
+      <div class="request-backup" id="request-backup" hidden>
+        <h3>Your text draft</h3>
+        <p>Edit the message if needed. Then open your texting app and tap Send. This page has not sent your inquiry. If your device cannot open texts or leaves the message blank, copy the message or use email. Add a callback number if you want a call, especially when using email.</p>
+        <label for="request-preview">Message to Tony</label>
+        <textarea id="request-preview" rows="8"></textarea>
+        <div class="request-actions"><a class="btn btn--primary" id="request-text" href="sms:+12393972048">Open text draft to Tony</a><a class="btn btn--outline" id="request-email" href="mailto:fixingfortmyers@gmail.com">Open email draft</a><button class="btn btn--outline" type="button" id="request-copy">Copy request</button></div>
+      </div>
 
-
-          <div class="reveal reveal-delay-4">
-            <a href="#contact" class="btn btn--primary">Talk to Tony</a>
-          </div>
-        </div>
+        <noscript><p>To request a repair, <a href="tel:+12393972048">call (239) 397-2048</a> or <a href="mailto:fixingfortmyers@gmail.com">email fixingfortmyers@gmail.com</a>. The online request form requires JavaScript.</p></noscript>
       </div>
     </div>
   </section>
 
-  <div class="accent-divider"></div>
-
+  <section class="home-method" id="about" aria-labelledby="home-method-title">
+    <div class="container">
+      <div class="home-method__heading"><p class="section-label">The work behind the repair</p><h2 id="home-method-title">Test. Explain. Repair.</h2><p>Specialty tools help Tony investigate the problem. The right checks depend on your vehicle and symptoms.</p></div>
+      <div class="home-method__grid">
+        <article><span class="home-method__number" aria-hidden="true">01</span><h3>Find the cause</h3><p>Fault codes, live data and targeted circuit or component checks help build a repair recommendation.</p><a href="/auto-diagnostics-fort-myers">Our diagnostic approach →</a></article>
+        <article><span class="home-method__number" aria-hidden="true">02</span><h3>Measure before major work</h3><p>Engine assembly, tolerance and timing checks, transmission work and walnut blasting are part of the shop’s repair capabilities.</p><a href="/engine-repair-fort-myers">Engine repair options →</a></article>
+        <article><span class="home-method__number" aria-hidden="true">03</span><h3>Understand the plan</h3><p>Tony explains the findings, recommended work and parts needs before you approve the repair, then checks the completed work.</p><a href="/about-perfect-timing">About Tony &amp; the shop →</a></article>
+      </div>
+      <p class="home-method__timing" id="same-day-service"><strong>Keeping downtime short.</strong> Same-day diagnosis and repairs whenever the repair, parts and availability allow. Tony confirms what’s realistic for your vehicle.</p>
+    </div>
+  </section>
+<section class="home-symptoms" id="repair-guides" aria-labelledby="repair-guides-title"><div class="container"><p class="section-label">Start with the symptoms</p><h2 class="section-title" id="repair-guides-title">What is your car doing?</h2><p class="section-sub">Plain-language repair guides: what to notice, what a mechanic may check and what to send Tony.</p><div class="symptom-links"><a href="/repair-guide-car-wont-start"><strong>Car won’t start</strong><span>Clicking, cranking or no response →</span></a><a href="/repair-guide-battery-keeps-dying"><strong>Battery keeps dying</strong><span>Dead again after a jump or overnight →</span></a><a href="/repair-guide-ac-warm-at-idle"><strong>A/C warm at idle</strong><span>Cold while driving, warm at a stop →</span></a><a href="/repair-guide-car-overheating"><strong>Engine overheating</strong><span>Temperature warning, steam or coolant leak →</span></a><a href="/repair-guide-flashing-check-engine-light"><strong>Flashing check-engine light</strong><span>Shaking, rough running or loss of power →</span></a></div><p class="service-more"><a href="/repair-guides">Browse all repair guides →</a></p></div></section>
   <!-- ============ SERVICES ============ -->
   <section class="services" id="services"><div class="container"><div class="services__header"><p class="section-label">What we do</p><h2 class="section-title">Help for the problem in front of you.</h2><p class="section-sub" style="margin:0 auto">Repair plans depend on the vehicle, the fault and parts. Tony confirms the work before your shop appointment.</p></div><div class="services__grid"><article class="service-card"><h3 class="service-card__title">No-start diagnosis</h3><p class="service-card__desc">Clicking, slow cranking or an engine that turns over without starting. Tell us what happens; Tony confirms the next step.</p><a class="service-card__action" href="/no-start-diagnosis-fort-myers">About this service →</a></article>
 <article class="service-card"><h3 class="service-card__title">Warning lights & diagnostics</h3><p class="service-card__desc">Check-engine lights, rough running and intermittent faults. Testing helps narrow the cause before a repair is recommended.</p><a class="service-card__action" href="/auto-diagnostics-fort-myers">About this service →</a></article>
@@ -425,69 +347,6 @@
 <article class="service-card"><h3 class="service-card__title">A/C repair</h3><p class="service-card__desc">Warm air, cooling that fades at idle or weak airflow. We check the system rather than assume it only needs refrigerant.</p><a class="service-card__action" href="/ac-repair-fort-myers">About this service →</a></article>
 <article class="service-card"><h3 class="service-card__title">Overheating & cooling</h3><p class="service-card__desc">Temperature warnings, coolant leaks and fan problems. Stop driving an overheating vehicle and call from a safe location.</p><a class="service-card__action" href="/cooling-system-repair-fort-myers">About this service →</a></article>
 <article class="service-card"><h3 class="service-card__title">Brake repair</h3><p class="service-card__desc">Grinding, pulling or a change in pedal feel. Tell Tony the symptoms so he can discuss inspection and repair options.</p><a class="service-card__action" href="/brake-repair-fort-myers">About this service →</a></article></div><p class="service-more"><a href="#service-pages">Diesel, programming, engine work and all other services →</a></p></div></section>
-
-  <!-- ============ SIGNATURE SERVICE VISUALS ============ -->
-
-
-  <!-- ============ SLOGAN BANNER ============ -->
-  <div class="slogan-banner">
-    <div class="container">
-      <p class="slogan-banner__text">For Your Vehicle — Timing Is Everything.</p>
-    </div>
-  </div>
-
-  <!-- ============ HOW IT WORKS ============ -->
-  <section class="mobile-section" id="mobile">
-    <div class="mobile-section__bg-text" aria-hidden="true">APPOINTMENT</div>
-    <div class="container">
-      <div class="mobile-section__grid">
-        <div>
-          <p class="section-label reveal">How It Works</p>
-          <h2 class="section-title reveal reveal-delay-1">Book it. Bring it.<br>We fix it.</h2>
-          <p class="section-sub reveal reveal-delay-2">
-            Bring your vehicle to Tony's fully equipped shop. From diagnostics to engine assembly, tolerance and timing checks, transmission work and walnut blasting, Tony explains the findings and confirms the plan with you before work starts.
-          </p>
-
-          <div class="mobile-section__features">
-            <div class="feature-item reveal reveal-delay-1">
-              <div class="feature-item__icon">
-                <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42a2 2 0 0 1 1.99-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.06-.78a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-              </div>
-              <div>
-                <div class="feature-item__title">Call or Text Our Team</div>
-                <div class="feature-item__desc">Share the vehicle, symptoms and city. Tony will discuss availability and the next step with you.</div>
-              </div>
-            </div>
-            <div class="feature-item reveal reveal-delay-2">
-              <div class="feature-item__icon">
-                <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              </div>
-              <div>
-                <div class="feature-item__title">Book Your Appointment</div>
-                <div class="feature-item__desc">Share your vehicle and symptoms. We confirm a shop appointment and drop-off time, or whether the vehicle needs a tow.</div>
-              </div>
-            </div>
-            <div class="feature-item reveal reveal-delay-3">
-              <div class="feature-item__icon">
-                <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              </div>
-              <div>
-                <div class="feature-item__title">Shop Repair. A Final Check.</div>
-                <div class="feature-item__desc">Tony explains the agreed work and checks the repair before the appointment is complete.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="mobile-section__image reveal reveal-delay-2">
-          <img src="./assets/perfect-timing-mobile-workshop.webp" width="1536" height="864" alt="Illustration of an auto repair workshop with organized tools" loading="lazy" decoding="async">
-          <p class="mobile-image-caption">Shop service by appointment. Illustrative workshop setup.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="accent-divider"></div>
-
 
 <section class="mobile-faq" aria-labelledby="mobile-faq-title"><div class="container"><p class="section-label">Before you book</p><h2 class="section-title" id="mobile-faq-title">Shop repair questions</h2><div class="faq-grid"><div class="faq-item"><h3>Do I bring my vehicle to your shop?</h3><p>Yes. Perfect Timing is a fully equipped repair shop serving Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers and nearby Southwest Florida. Call or text (239) 397-2048 to book a drop-off time.</p></div><div class="faq-item"><h3>What kind of work does the shop handle?</h3><p>Tony's workshop handles diagnostics, battery, brake, A/C and electrical jobs, plus engine assembly, tolerance and timing checks, transmission work and walnut blasting. What your vehicle needs depends on the fault and parts, which we discuss before booking.</p></div><div class="faq-item"><h3>What should I send when booking shop service?</h3><p>Send your vehicle year, make and model, the symptoms and whether it starts or drives, so we know if it needs a tow. Call or text (239) 397-2048, or use the repair request form. Your appointment is confirmed after our team replies.</p></div></div></div></section>
 
@@ -497,7 +356,7 @@
       <div class="areas__header">
         <p class="section-label reveal">Where We Serve</p>
         <h2 class="section-title reveal reveal-delay-1">Service Area</h2>
-        <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto;">Serving drivers across Fort Myers and Southwest Florida, including Cape Coral, Lehigh Acres and North Fort Myers. Shop service is by appointment. Call or text (239) 397-2048 to book a drop-off time and confirm the work needed.</p>
+        <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto;">Serving drivers from Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers and nearby Southwest Florida. Repairs take place at the shop by confirmed appointment.</p>
       </div>
       <div class="areas__tags reveal reveal-delay-3">
         <span class="area-tag">Fort Myers</span>
@@ -525,6 +384,9 @@
 <a href="/ac-repair-fort-myers">AC Repair</a>
 <a href="/brake-repair-fort-myers">Brake Repair</a>
 <a href="/engine-repair-fort-myers">Engine Repair</a>
+<a href="/engine-rebuild-vs-replacement-fort-myers">Engine Rebuild or Replacement</a>
+<a href="/engine-knocking-noise-fort-myers">Engine Knocking</a>
+<a href="/blue-smoke-burning-oil-fort-myers">Blue Smoke &amp; Burning Oil</a>
 <a href="/diesel-repair-fort-myers">Diesel Repair</a>
 <a href="/auto-electrical-repair-fort-myers">Auto Electrical Repair</a>
 <a href="/module-programming-fort-myers">Module Programming</a>
@@ -553,9 +415,9 @@
       <div class="home-proof__heading">
         <div>
           <p class="proof-kicker">Real Repair Proof</p>
-          <h2 id="repair-proof-title">Receipts Beat Promises.</h2>
+          <h2 id="repair-proof-title">Repair stories from our customers.</h2>
         </div>
-        <p>Real vehicles, real customer outcomes, and zero made-up technical details. Full testing notes and customer-safe photo sets will be added as each repair file is documented.</p>
+        <p>Customer reviews describe the work and communication. Each repair record identifies the details available today.</p>
       </div>
       <div class="home-proof__cases">
         <article class="home-proof__case" data-stamp="Public review verified">
@@ -577,7 +439,7 @@
       <div class="proof-heading" style="margin-top:var(--space-14);margin-bottom:var(--space-6)">
         <div>
           <p class="proof-kicker">Outside Confirmation</p>
-          <h2 style="font-size:clamp(2.2rem,5vw,3.8rem)">Check Us Somewhere Else.</h2>
+          <h2 style="font-size:clamp(2.2rem,5vw,3.8rem)">Find us online.</h2>
         </div>
         <p>These are matching public profiles for the same Perfect Timing Auto Repair LLC.</p>
       </div>
@@ -709,5 +571,5 @@
 
 
 
-<div class="mobile-contact-bar" role="navigation" aria-label="Quick contact"><a href="tel:+12393972048">Call (239) 397-2048</a><a href="sms:+12393972048">Text Tony</a></div><script src="/contact-config.js?v=20260927-bay-one-v3" defer></script><script src="/site.js?v=20260927-bay-one-v3" defer></script><script src="/bay-one-config.js?v=20260927-bay-one-v3" defer></script><script src="/bay-one-widget.js?v=20260927-bay-one-v3" defer></script></body>
+<div class="mobile-contact-bar" role="navigation" aria-label="Quick contact"><a href="#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/contact-config.js?v=20260929-clean-flow" defer></script><script src="/site.js?v=20260929-clean-flow" defer></script><script src="/bay-one-config.js?v=20260929-clean-flow" defer></script><script src="/bay-one-widget.js?v=20260929-clean-flow" defer></script></body>
 </html>

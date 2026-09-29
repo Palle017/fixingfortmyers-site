@@ -52,7 +52,7 @@
     const customAvatar = config.avatar || script?.dataset.avatar;
     const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
     const css = document.createElement('link');
-    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260927-bay-one-v3', script?.src || location.href).href;
+    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20260929-clean-flow', script?.src || location.href).href;
     document.head.append(css);
     const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
     widget.setAttribute('aria-label', 'Bay One repair assistant');
@@ -158,19 +158,16 @@
     }
     function close() { panel.hidden = true; launcher.hidden = false; entryButtons.forEach(button => button.setAttribute('aria-expanded','false')); (opener?.isConnected ? opener : launcher).focus({preventScroll:true}); viewport(); }
     launcher.addEventListener('click', open); $('.b1-close').addEventListener('click', close);
-    // Owner request: Bay One opens by itself on page load, until the visitor closes it this visit.
+    // Auto-opening is opt-in; the short repair form is the main contact path.
     $('.b1-close').addEventListener('click', () => { try { sessionStorage.setItem('pt-bayone-closed', '1'); } catch (_) { /* reopening is harmless */ } });
     let closedThisVisit = false;
     try { closedThisVisit = sessionStorage.getItem('pt-bayone-closed') === '1'; } catch (_) { /* treat as not closed */ }
-    if (!closedThisVisit && config.autoOpen !== false) setTimeout(() => { if (panel.hidden) open(); }, 800);
+    if (!closedThisVisit && config.autoOpen === true) setTimeout(() => { if (panel.hidden) open(); }, 800);
     $('.b1-contact').addEventListener('click',event => handoff(event));
     const formLauncher = document.getElementById('request-bay-one');
     if (formLauncher) { formLauncher.hidden = false; formLauncher.setAttribute('aria-controls','b1-panel'); formLauncher.setAttribute('aria-expanded','false'); entryButtons.push(formLauncher); formLauncher.addEventListener('click',open); }
     const contactBar = document.querySelector('.mobile-contact-bar');
-    if (contactBar) {
-      const barLauncher = document.createElement('button'); barLauncher.type = 'button'; barLauncher.className = 'b1-bar-launcher'; barLauncher.textContent = 'Ask Bay One'; barLauncher.setAttribute('aria-controls','b1-panel'); barLauncher.setAttribute('aria-expanded','false');
-      barLauncher.addEventListener('click',open); entryButtons.push(barLauncher); contactBar.append(barLauncher); contactBar.classList.add('has-bay-one'); widget.classList.add('b1-has-contact-bar');
-    }
+    if (contactBar) widget.classList.add('b1-has-contact-bar');
     widget.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); close(); } });
     input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('.b1-composer').requestSubmit(); } });
     widget.querySelectorAll('[data-b1-suggestion]').forEach(button => button.addEventListener('click', () => input.focus()));
