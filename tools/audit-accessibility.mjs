@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {JSDOM} from 'jsdom';
 import axe from 'axe-core';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const pages=['index.html','repair-guides.html',...fs.readdirSync(root).filter(name=>name.startsWith('repair-guide-')&&name.endsWith('.html')),'request-received.html'];
+const pages=['index.html','repair-guides.html',...fs.readdirSync(root).filter(name=>name.startsWith('repair-guide-')&&name.endsWith('.html')),'request-received.html','auto-diagnostics-fort-myers.html','ac-repair-fort-myers.html','engine-rebuild-vs-replacement-fort-myers.html','case-studies.html','about-perfect-timing.html','careers.html','404.html'];
 const results=[];
 for(const file of pages){
   const dom=new JSDOM(fs.readFileSync(path.join(root,file),'utf8'),{url:'https://fixingfortmyers.com/'+file,runScripts:'outside-only'});

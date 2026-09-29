@@ -148,14 +148,26 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
   const valid=render({id,confirmed:true,receivedAt:new Date().toISOString(),smsConsent:true,name:'Private identity',vehicle:'Private vehicle'});assert.equal(valid.getElementById('receipt-title').textContent,'Request received');assert.equal(valid.getElementById('receipt-detail').hidden,false);assert.equal(valid.getElementById('receipt-ref').textContent,id);assert.doesNotMatch(valid.body.textContent,/Private identity|Private vehicle/);
 });
 
-test('mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry',async t=>{
-  const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar'),entry=bar.querySelector('.b1-bar-launcher');
-  assert.equal(bar.children.length,3);assert.equal(bar.children[0].getAttribute('href'),'tel:+12393972048');assert.equal(bar.children[1].getAttribute('href'),'sms:+12393972048');
-  assert.equal(entry.textContent,'Ask Bay One');assert.ok(d.getElementById('bay-one-widget').classList.contains('b1-has-contact-bar'));
+test('mobile bar keeps request and call actions while the separate Bay One entry restores focus',async t=>{
+  const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar'),entry=d.querySelector('.b1-launcher');
+  assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'#contact');assert.equal(bar.children[1].getAttribute('href'),'tel:+12393972048');
+  assert.deepEqual([...bar.children].map(node=>node.textContent),['Request a repair','Call']);
+  assert.equal(bar.querySelector('.b1-bar-launcher'),null);assert.ok(d.getElementById('bay-one-widget').classList.contains('b1-has-contact-bar'));
+  assert.equal(d.getElementById('b1-panel').hidden,true);
   entry.click();await settle();assert.equal(d.getElementById('b1-panel').hidden,false);assert.equal(entry.getAttribute('aria-expanded'),'true');
   d.querySelector('.b1-close').click();assert.equal(d.getElementById('b1-panel').hidden,true);assert.equal(d.activeElement,entry);assert.equal(entry.getAttribute('aria-expanded'),'false');
+  d.getElementById('request-options').open=true;
   const inline=d.getElementById('request-bay-one');inline.click();await settle();d.querySelector('.b1-close').click();assert.equal(d.activeElement,inline);
   assert.ok(d.querySelector('.b1-launcher'));
+});
+
+test('careers preserves the applicant-specific mobile introduction action',t=>{
+  const html=fs.readFileSync(new URL('careers.html',root),'utf8');
+  const dom=new JSDOM(html,{url:'https://preview.invalid/careers',runScripts:'outside-only'}),w=dom.window;
+  t.after(()=>w.close());w.eval(site);
+  const actions=[...w.document.querySelectorAll('.mobile-contact-bar a')];
+  assert.deepEqual(actions.map(link=>[link.textContent,link.getAttribute('href')]),[['Call the shop','tel:+12393972048'],['Introduce yourself','#apply']]);
+  assert.ok(w.document.querySelector('#apply #careers-form'));
 });
 
 test('an unreachable Bay One server shows no launcher, loads no assets and still restores carried notes',async t=>{

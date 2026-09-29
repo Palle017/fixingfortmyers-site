@@ -54,6 +54,8 @@
   }
   const nav = byId('nav');
   if (nav) { const update = () => nav.classList.toggle('nav--scrolled', window.scrollY > 60); update(); window.addEventListener('scroll', update, { passive: true }); }
+  const quickCall = document.querySelector('.mobile-contact-bar[aria-label="Quick contact"] a[href="tel:+12393972048"]');
+  if (quickCall) { quickCall.textContent = 'Call'; quickCall.setAttribute('aria-label', 'Call Perfect Timing Auto Repair at (239) 397-2048'); }
   const brandVideo = document.querySelector('.bang-video-wrap video');
   if (brandVideo) {
     brandVideo.removeAttribute('autoplay');
@@ -85,8 +87,9 @@
   byId('request-direct-consent').hidden = Boolean(endpoint);
   const media = byId('request-media'); if (media) media.closest('label').hidden = !(endpoint && mediaReady);
   const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = !endpoint;
-  submit.textContent = endpoint ? 'Send repair request' : 'Prepare text to Tony';
-  byId('request-instructions').textContent = endpoint ? 'Send your repair details or contact Tony directly. Your request is received only after the inquiry system confirms it has saved your details. An appointment is confirmed after Tony replies.' : 'Fill in what you know, then review a text draft for Tony. Open it in your texting app, add photos or a short video of the problem if you can, and tap Send yourself. Preparing a draft does not send an inquiry or book an appointment.';
+  const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'Request a repair' : 'Prepare a repair message';
+  if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Send repair request' : 'Prepare text to Tony';
+  byId('request-instructions').textContent = endpoint ? 'Tell us about your car and the problem. Tony will call to discuss the next step. Your appointment is confirmed after he replies.' : 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
   };
   let mediaReady = false;
   // Messages uses a different body separator on Apple mobile devices. Keep copy/email
@@ -101,6 +104,7 @@
   const uid = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   let requestKey = uid();
   let sentRequestId = '';
+  let sending = false;
   let requestPayload = null, voicePayload = null;
   // Stored as consent evidence, so it must be the exact wording shown beside the checkbox in index.html.
   const consentDisclosure = 'Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates. Optional; consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help.';
@@ -111,9 +115,10 @@
     const starts = ['yes','no'].includes(data.get('starts')) ? data.get('starts') : 'unknown';
     const stranded = ['yes','no'].includes(data.get('stranded')) ? data.get('stranded') : 'unknown';
     const symptoms = String(data.get('details') || '').trim();
+    const callbackTime = String(data.get('timing') || '').trim();
     // Keep these details useful to the existing receiver during a staged rollout.
-    const context = [city ? `City / ZIP: ${city}` : '',`Vehicle starts: ${starts}`,`Stranded: ${stranded}`].filter(Boolean).join('\n');
-    return { name: String(data.get('name')).trim(), phone: String(data.get('phone')).replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service')), details: symptoms ? `${symptoms}\n\n${context}` : '', city, starts, stranded, website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    const context = [city ? `City / ZIP: ${city}` : '',`Vehicle starts: ${starts}`,`Stranded: ${stranded}`,callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
+    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', city, starts, stranded, callbackTime, source:'form', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
@@ -162,16 +167,22 @@
   form.addEventListener('input', () => { requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = ''; });
   form.addEventListener('submit', async event => {
     event.preventDefault();
+    if (sending) return;
+    // Browser autofill can insert invisible characters without an input event.
+    phoneField.value = phoneField.value.replace(/[^\d+()\s.-]/g, '').trim();
     if (!form.reportValidity()) return;
-    const data = requestPayload || readRequest();
+    const currentData = readRequest();
+    const sameContent = data => JSON.stringify({...data,smsConsentTimestamp:''});
+    if (requestPayload && sameContent(currentData) !== sameContent(requestPayload)) { requestKey = uid(); requestPayload = null; sentRequestId = ''; }
+    const data = requestPayload || currentData;
     if (data.website) return;
-    if ((endpoint || data.phone) && data.phone.replace(/\D/g, '').length < 10) { status.textContent = endpoint ? 'Please include your area code and phone number.' : 'Please include your area code and phone number, or leave the optional callback field blank when texting.'; phoneField.focus(); return; }
+    if ((endpoint || data.phone) && (!/^\+?[\d\s().-]+$/.test(data.phone) || !/^\d{10,15}$/.test(data.phone.replace(/\D/g, '')))) { status.textContent = endpoint ? 'Please include a valid phone number with its area code.' : 'Please include a valid phone number with its area code, or leave the optional callback field blank when texting.'; phoneField.focus(); return; }
     if (!data.name || !data.details) { status.textContent = 'Please enter your name and a description of the problem. Incomplete vehicle details are okay.'; return; }
     makeBackup(data);
     requestPayload = data;
     if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app, attach photos or a short video of the problem if you have them, and tap Send. Nothing has been sent yet. You can also copy the text, email it or call Tony.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
     const submittedKey = requestKey;
-    submit.disabled = true; submit.textContent = 'Sending…'; status.textContent = 'Sending your repair request…';
+    sending = true; submit.disabled = true; submit.textContent = 'Sending…'; status.textContent = 'Sending your repair request…';
     try {
       const result = await send('/hooks/lead/webform', data, submittedKey);
       if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
@@ -187,8 +198,10 @@
     } catch (_) {
       status.textContent = 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the text/email draft and send it yourself.';
       submit.textContent = 'Retry repair request';
-    } finally { submit.disabled = false; }
+    } finally { sending = false; submit.disabled = false; }
   });
+  // With scripts unavailable the disabled control cannot navigate away with an unsent form.
+  submit.disabled = false;
   byId('request-copy').addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(preview.value); status.textContent = 'Request copied. Paste it into your email or text message and send it to the shop.'; }
     catch (_) { preview.focus(); preview.select(); status.textContent = 'Select and copy the message above, then paste it into your email or text.'; }
@@ -223,7 +236,7 @@
   });
   stop.addEventListener('click', () => { if (recorder?.state === 'recording') recorder.stop(); });
   voiceSend.addEventListener('click', async () => {
-    const data = voicePayload || { ...readRequest(), requestId: sentRequestId };
+    const data = voicePayload || { ...readRequest(), source:'voice', requestId: sentRequestId };
     if (!data.name || data.phone.replace(/\D/g, '').length < 10 || !data.vehicle) { voiceStatus.textContent = 'Enter your name, phone number, and vehicle in the form above so we can respond to your recording.'; byId('request-name').focus(); return; }
     if (!recording) return;
     voicePayload = data;

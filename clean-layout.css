@@ -1,0 +1,45 @@
+/* Clear, compact introductions across service, guide and company pages. */
+.service-hero.compact-hero{min-height:0;padding:130px 0 42px;background:#0d151e;overflow:visible}
+.compact-hero .service-hero__content{grid-template-columns:minmax(0,1.35fr) minmax(280px,.85fr);gap:48px;align-items:center}
+.compact-hero .service-hero__eyebrow{font-size:12px;letter-spacing:.08em;margin-bottom:14px;color:#a5c9e2}
+.compact-hero .service-hero__title{font-family:var(--font-body);font-size:clamp(30px,3.2vw,46px);font-weight:700;line-height:1.12;letter-spacing:-.025em;text-transform:none;max-width:22ch;margin-bottom:18px}
+.compact-hero .service-hero__desc{font-size:18px;line-height:1.6;max-width:58ch;color:#cedae5}
+.compact-hero .service-hero__actions{margin-top:24px;gap:12px}
+.compact-hero .service-hero__aside{padding:25px 28px;border:1px solid #2e4557;background:#111f2b;box-shadow:none;backdrop-filter:none}
+.compact-hero .service-hero__card-label{font:700 17px/1.4 var(--font-body);text-transform:none;letter-spacing:0;color:#e9f4fc;margin:0 0 16px}
+.service-proof-list{list-style:none;padding:0;margin:0;display:grid;gap:13px}
+.service-proof-list li{position:relative;padding-left:17px;font-size:15px;line-height:1.5;color:#cedae5}
+.service-proof-list li::before{content:'';width:5px;height:5px;border-radius:50%;background:#71cfff;position:absolute;left:0;top:.6em}
+.service-layout>section{padding:44px 0}
+.service-layout .section-title{font-family:var(--font-body);font-size:clamp(25px,3vw,34px);line-height:1.2;text-transform:none;letter-spacing:-.015em}
+.service-layout .service-panel h3{font-family:var(--font-body);font-size:20px;line-height:1.35;text-transform:none;letter-spacing:0}
+.service-panel{box-shadow:none}
+.service-list li{padding-left:20px}.service-list li::before{content:'•';font-family:var(--font-body)}
+.btn{box-shadow:none;text-transform:none;letter-spacing:.015em}
+.btn--outline{background:transparent}
+.nav__cta{box-shadow:none!important;text-transform:none!important;letter-spacing:.02em!important}
+.guides-page .guide-hero{padding:126px 0 32px}
+.guides-page .guide-breadcrumb{margin-bottom:16px}
+.guides-page .guide-hero h1{font-family:var(--font-body);font-size:clamp(30px,3.4vw,48px);font-weight:700;line-height:1.15;letter-spacing:-.025em;margin-bottom:18px}
+.guides-page .guide-lead{font-size:18px;line-height:1.6}
+.guides-page .guide-actions{gap:12px}
+.proof-hero{padding:126px 0 38px}
+.proof-hero h1{font-family:var(--font-body);font-size:clamp(32px,3.5vw,50px);font-weight:700;line-height:1.12;max-width:25ch;letter-spacing:-.025em;text-transform:none}
+.proof-hero h1 span{color:#75ccfa;-webkit-text-stroke:0;text-shadow:none}
+.proof-hero__lead{font-size:18px;line-height:1.6}
+.proof-hero::before{display:none}
+.careers-hero{padding-top:126px}
+@media(max-width:800px){
+ .service-hero.compact-hero{padding:108px 0 30px}
+ .compact-hero .service-hero__content{grid-template-columns:minmax(0,1fr);gap:26px}
+ .compact-hero .service-hero__title{font-size:clamp(29px,7.5vw,40px);max-width:25ch}
+ .compact-hero .service-hero__desc{font-size:17px}
+ .compact-hero .service-hero__aside{padding:20px}
+ .compact-hero .service-hero__actions{flex-direction:row}
+ .compact-hero .service-hero__actions .btn{padding:13px 20px;min-height:48px}
+ .service-layout>section{padding:32px 0}
+ .guides-page .guide-hero,.proof-hero{padding:108px 0 30px}
+ .guides-page .guide-actions{flex-direction:row;align-items:center}
+ .guides-page .guide-actions .btn{width:auto;min-height:48px}
+ .mobile-contact-bar a{font-size:14px}
+}
