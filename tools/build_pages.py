@@ -65,15 +65,15 @@ def build(slug,title,h1name,desc,body_file,faqs,service_key,svc_type,hero_img,he
     open(slug+'.html','w').write(head+'\n'+n+'\n\n'+body+'\n\n'+f)
 
 ws_faq=[
- ("Can I just drop my car off?","Yes, by appointment. The workshop is based at Bayshore Ranch and has no walk-in counter, so call or text <a href=\"tel:+12393972048\">(239) 397-2048</a> to book a drop-off time. The drop-off details come with your booking."),
+ ("Can I just drop my car off?","Yes, by appointment. The workshop is based at Bayshore Ranch and has no walk-in counter, so call Tony at <a href=\"tel:+12393972048\">(239) 397-2048</a> to coordinate drop-off or pick-up. The drop-off details come with your booking."),
  ("What if my car won’t drive?","Tow it in at the booked drop-off time. Concierge pickup and return is also available as a paid add-on; ask when you book."),
  ("Do you rebuild engines and transmissions?","Yes. Engines and transmissions are rebuilt or replaced in the workshop. For engines, Tony tears it down and measures it first, so the rebuild-or-replace decision is based on what the parts show."),
  ("What is walnut blasting?","Walnut blasting cleans carbon deposits off the intake valves using crushed walnut shell media. It is most often needed on direct-injection engines, where fuel no longer washes over the valves and carbon builds up over time."),
  ("Do you work on diesels, hot rods and restorations?","Yes. Diesel repair, hot rod work and restoration projects are all done in the workshop."),
- ("Where is the workshop?","17686 Saddleback Loop, North Fort Myers, FL 33917, at Bayshore Ranch. You can come to the workshop or drop the car off and leave it. Call or text first so Tony knows it is coming. <a href=\"https://www.google.com/maps/search/?api=1&amp;query=17686+Saddleback+Loop%2C+North+Fort+Myers%2C+FL+33917\">Get directions</a>."),
+ ("Where is the workshop?","The workshop is based at Bayshore Ranch in the Fort Myers area. Call Tony at (239) 397-2048 to coordinate drop-off or pick-up."),
 ]
 build('workshop',"Tony’s Workshop | Engine, Transmission &amp; Major Repair | Perfect Timing Auto Repair LLC","Tony’s Workshop",
- "Tony’s fully equipped repair workshop at Bayshore Ranch, Fort Myers: engine and transmission rebuilds, walnut blasting, diesel, hot rods, restoration and paint correction. Drop-off by appointment.",
+ "Tony’s fully equipped repair workshop at Bayshore Ranch, Fort Myers: engine and transmission rebuilds, walnut blasting, diesel, hot rods, restoration and paint correction. Drop-off or pick-up by appointment.",
  'workshop_body.html',ws_faq,'engine','Engine, transmission and major repair workshop','workshop-wide.webp')
 
 paint_faq=[

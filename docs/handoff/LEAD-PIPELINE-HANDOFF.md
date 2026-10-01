@@ -2,7 +2,7 @@
 
 You are picking this up on the shop laptop from a cloud Claude session (1 Oct 2026). That session could only see GitHub. You can see the laptop: the running services, OpenClaw, local-only commits and the real config. **Your first job is to design the architecture and get the owner's approval. Do not write pipeline code until the owner approves your design.** Read this whole document before you run anything.
 
-Business: Perfect Timing Auto Repair LLC (owner/mechanic Tony; the owner's family runs the tech). Website fixingfortmyers.com (GitHub Pages, repo `Palle017/fixingfortmyers-site`, **public**). Business line (239) 397-2048, the Beside "Tony's Box" line. (239) 271-4854 is Tony's personal Beside sign-in phone and must never be published. Shop address: 17686 Saddleback Loop, North Fort Myers, FL 33917 (Bayshore Ranch). It's shown on the website but hidden on Google.
+Business: Perfect Timing Auto Repair LLC (owner/mechanic Tony; the owner's family runs the tech). Website fixingfortmyers.com (GitHub Pages, repo `Palle017/fixingfortmyers-site`, **public**). Business line (239) 397-2048, the Beside "Tony's Box" line. (239) 271-4854 is Tony's personal Beside sign-in phone and must never be published. The street address is hidden on the website and on Google (owner, Oct 1); the workshop is named only as based at Bayshore Ranch. Tony is described as a mobile repair shop, and customers call Tony to coordinate drop-off or pick-up.
 
 ---
 

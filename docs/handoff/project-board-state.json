@@ -138,8 +138,8 @@
   {
    "id": "address-site",
    "lane": "claude",
-   "title": "Address on the site",
-   "detail": "17686 Saddleback Loop, North Fort Myers, FL 33917 in every footer, in the business data Google reads on every page, and on the Workshop page.",
+   "title": "Street address hidden on the site",
+   "detail": "Owner, Oct 1: the street address is hidden. It was removed from every footer, the business data on every page, the Workshop page and Bay One. The workshop is named only as based at Bayshore Ranch.",
    "done": true
   },
   {

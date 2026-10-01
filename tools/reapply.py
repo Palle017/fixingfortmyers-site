@@ -56,12 +56,12 @@ print('E/F text links',L,'mini',M,'footer workshop',F1,'footer paint',F2)
 # G areaServed + H schema address
 ADD=[('City','Tice'),('City','Estero'),('City','Bonita Springs'),('Place','Alva'),('Place','Buckingham'),('City','Fort Myers Beach'),('City','Sanibel'),('Place','Pine Island')]
 BASE=['Fort Myers','Cape Coral','Lehigh Acres','North Fort Myers']
-ADDR={'@type':'PostalAddress','streetAddress':'17686 Saddleback Loop','addressLocality':'North Fort Myers','addressRegion':'FL','postalCode':'33917','addressCountry':'US'}
+# The street address is hidden (owner, Oct 1), so no address is added to the schema or footer.
+ADDR=None
 G=A=FN=0
 for f in H:
     if f in NEW: continue
     s=rd(f); o=s
-    s,k=re.subn(r'(<p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> (?:·|&middot;) )Fort Myers &amp; Southwest Florida',r'\g<1>17686 Saddleback Loop, North Fort Myers, FL 33917',s); FN+=k
     def fb(m):
         global G,A
         try: data=json.loads(m.group(2))
@@ -71,7 +71,7 @@ for f in H:
             global G,A
             if isinstance(x,dict):
                 t=x.get('@type'); t=t if isinstance(t,list) else [t]
-                if ('AutoRepair' in t or str(x.get('@id','')).endswith('/#business')) and 'address' not in x and ('name' in x or 'telephone' in x):
+                if ('AutoRepair' in t or str(x.get('@id','')).endswith('/#business')) and ADDR and 'address' not in x and ('name' in x or 'telephone' in x):
                     items=list(x.items()); x.clear()
                     for kk,vv in items:
                         x[kk]=vv
@@ -101,7 +101,6 @@ wr('sitemap.xml',s)
 # J Bay One
 f='_website-intake/public-chat.mjs'
 rep1(f,"exhaust, diesel, car audio, performance and hot rods.","exhaust, diesel, car audio, performance, hot rods and restoration, engine and transmission rebuilds and replacements, walnut blasting, welding, paint work, buffing, paint correction and detailing. Workshop details: fixingfortmyers.com/workshop.",False)
-rep1(f,"Customers book an appointment and bring or tow the vehicle to Tony\\'s shop;","The shop is at 17686 Saddleback Loop, North Fort Myers, FL 33917 (Bayshore Ranch). Customers book an appointment and bring or tow the vehicle to Tony\\'s shop;",False)
 # K link style
 s=rd('site-updates.css')
 if '/workshop"]' not in s:
