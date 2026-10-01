@@ -2,7 +2,7 @@
 
 **Owner's current release decision, 2026-09-24:** Bay One is off until the rest of the website is in production. The immediate contact path prepares a text to Tony's regular number for the customer to send; it is not a confirmed backend submission. The existing Beside subscription will be assessed before adding a paid notification provider. See [ROUTING.md](ROUTING.md) for Beside findings and the prepared ordered IF/ELSE rules. Twilio call/text delivery is optional, parked and disabled. The historical deployment notes below are not proof of the current REDLINE endpoint or running data path; REDLINE is currently reported offline from this workstation. No backend production cutover or real alert has been verified.
 
-This service receives repair requests and voice recordings on the shop computer. It saves them before acknowledging receipt. The owner reads them at **http://127.0.0.1:18798/**. It does not invoke Bay One, OpenClaw, Zoho, an LLM, email, or automated texts.
+This service receives repair requests and voice recordings on the shop computer. It saves them before acknowledging receipt. The owner reads them at **http://127.0.0.1:18798/**. It never writes to Zoho; when configured it only reads the status of Zoho estimates Tony links to a request (see **Zoho estimate status**).
 
 The current Bay One phone service on Tailscale port 8443 returns 404 for the old website endpoints. It provides authenticated employee assistant requests, not customer lead intake. This receiver therefore uses its own loopback port and its own public Tailscale port. The existing private 443 and 8443 mappings remain untouched.
 
@@ -80,6 +80,32 @@ A webform receipt includes a `mediaToken` (valid 2 hours; resending the same req
 ### Customer confirmation text
 
 When a customer ticks text permission, the receiver can text them within seconds: "Perfect Timing Auto Repair: Hi Maria, Tony got your repair request for your 2012 F-150. He'll call or text you from (239) 397-2048… Reply STOP to opt out, HELP for help." It is **off** until both are true: `LEAD_CUSTOMER_TEXTS=true` and the Twilio variables (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `LEAD_ALERT_FROM`) are set. US carriers also require the sending number to be A2P 10DLC registered first. At most one text per phone number per day and 60 per day overall. An uncertain send is never repeated (Twilio has no idempotency key); it shows as "may not have gone out" in the inbox. Replies go to the Twilio number, so the text points customers to (239) 397-2048.
+
+### Zoho estimate status
+
+Tony makes and sends estimates in Zoho as he does now. To track one, type its number (for example `EST-000123`) under the request in the inbox and press **Link Zoho estimate**. The receiver then reads that estimate from Zoho every 15 minutes and moves the request:
+
+| Zoho status | Lead Desk |
+| --- | --- |
+| draft | No change until it is sent |
+| sent | Estimate sent. The Zoho total becomes the approved price if none was entered, and the 3-day follow-up timer starts from the Zoho date |
+| accepted or invoiced | Booked |
+| declined | Lost, "Zoho: customer declined the estimate" (a later acceptance reopens it as booked) |
+| expired | Stays open and shows in Needs action as "Zoho estimate expired: follow up or close" |
+
+Zoho only moves a request forward. It never changes a request marked won or spam, or one Tony closed as lost himself. Declined and invoiced estimates, and links older than 60 days, are no longer checked. Customers can only accept or decline from the estimate link if Zoho's public accept/decline setting is on; otherwise mark the estimate accepted or declined in Zoho and the request follows.
+
+The receiver **only reads** from Zoho; it never creates, sends or edits an estimate. It is off until all four settings exist in the receiver's environment (never in Git or `runtime.json`):
+
+| Variable | Meaning |
+| --- | --- |
+| `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET` | A Zoho API Console **Self Client** |
+| `ZOHO_REFRESH_TOKEN` | Generated from that Self Client with only the scope `ZohoInvoice.estimates.READ` (`ZohoBooks.estimates.READ` for Books), so the key itself cannot write |
+| `ZOHO_ORG_ID` | The Zoho Invoice organization ID |
+| `ZOHO_PRODUCT` | Optional: `invoice` (default) or `books` |
+| `ZOHO_DC` | Optional data center: `com` (default), `eu`, `in`, `au`, `jp`, `ca`, `sa` |
+
+At startup the receiver logs `zoho_sync` with `enabled`, or `zoho_sync_disabled` with what is missing. Tests use a synthetic Zoho: `node --test zoho.test.mjs`.
 
 ### Request contract
 

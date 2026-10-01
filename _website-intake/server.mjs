@@ -4,6 +4,7 @@ import {createRuleEvaluator,loadRules} from './lead-routing.mjs';
 import {createUrgentAlerts} from './urgent-alerts.mjs';
 import {createLeadNotifier,channelsFromEnv,isBigJob} from './lead-notify.mjs';
 import {createLeadDesk} from './lead-desk.mjs';
+import {createZohoEstimateSync, createZohoReader, zohoConfigFromEnv} from './zoho-estimates.mjs';
 import {createLeadMedia} from './lead-media.mjs';
 import {createCustomerTexts,createTwilioCustomerAdapter} from './customer-texts.mjs';
 import { DatabaseSync } from 'node:sqlite';
@@ -147,6 +148,8 @@ export function createLeadServers(options = {}) {
   const customerTexts=createCustomerTexts(db,{adapter:options.customerTextAdapter||null,reviewUrl:options.reviewUrl||''});
   const media=createLeadMedia(db,{dataDir,diskFree:options.recordingDiskFreeBytes??(()=>{const space=fs.statfsSync(dataDir,{bigint:true});return space.bavail*space.bsize;})});
   const desk=createLeadDesk(db,{digest:options.deskDigest||null,besideToken:options.besideToken??process.env.BESIDE_WEBHOOK_TOKEN??''});
+  // Factory callers (tests/previews) never reach Zoho unless they pass a reader in.
+  const zoho=createZohoEstimateSync(db,{reader:options.zohoReader||null,desk});
   const origins = new Set(options.origins ?? ['https://fixingfortmyers.com', 'https://www.fixingfortmyers.com', ...(process.env.LEAD_DEV_ORIGINS ?? '').split(',').map(x => x.trim()).filter(Boolean)]);
   let publicChat = null;
   try { publicChat = createPublicChat({dataDir:path.join(dataDir,'public-chat'),...(options.chat||{})}); }
@@ -425,6 +428,13 @@ export function createLeadServers(options = {}) {
         await alerts.tick();return json(res,200,{ok:true});
       }
       if (req.method === 'GET' && url.pathname === '/api/desk/metrics') return json(res, 200, desk.metrics());
+      const zohoMatch = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/zoho-estimate$/);
+      if (req.method === 'POST' && zohoMatch) {
+        if (req.headers['content-type']?.split(';')[0] !== 'application/json' || !req.headers.origin) throw error(403, 'Use the local inbox to link an estimate.');
+        let input;
+        try { input = JSON.parse((await readBody(req, 1024)).toString()); } catch { throw error(400, 'Invalid estimate number.'); }
+        return json(res, 200, await zoho.link(zohoMatch[1], input?.estimateNumber));
+      }
       const stageMatch = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/stage$/);
       if (req.method === 'POST' && (stageMatch || url.pathname === '/api/desk/leads')) {
         if (req.headers['content-type']?.split(';')[0] !== 'application/json' || !req.headers.origin) throw error(403, 'Use the local inbox to update a request.');
@@ -467,7 +477,7 @@ export function createLeadServers(options = {}) {
         const page = rows.slice(0, limit);
         const last = page.at(-1);
         const nextCursor = hasMore && last ? Buffer.from(JSON.stringify({ v: 1, received_at: last.received_at, id: last.id })).toString('base64url') : null;
-        return json(res, 200, { ok: true, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id),media:media.list(row.id),customerText:customerTexts.inspect(row.id),reviewText:customerTexts.inspectReview(row.id),bigJob:isBigJob(JSON.parse(payload_json)) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
+        return json(res, 200, { ok: true, zohoEnabled: zoho.enabled, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id),media:media.list(row.id),customerText:customerTexts.inspect(row.id),reviewText:customerTexts.inspectReview(row.id),zohoEstimate:zoho.inspect(row.id),bigJob:isBigJob(JSON.parse(payload_json)) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
       }
       const mediaFile = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/media\/([1-9]\d{0,2})$/);
       if (req.method === 'GET' && mediaFile) {
@@ -527,11 +537,11 @@ export function createLeadServers(options = {}) {
   adminServer.requestTimeout = 10000;
   adminServer.headersTimeout = 5000;
   return {
-    publicServer, adminServer, db, dataDir, alerts, notifier, desk, media, customerTexts,
+    publicServer, adminServer, db, dataDir, alerts, notifier, desk, media, customerTexts, zoho,
     async start(publicPort = Number(process.env.LEAD_PUBLIC_PORT || 18795), adminPort = Number(process.env.LEAD_INBOX_PORT || 18798)) {
       await new Promise((resolve, reject) => { publicServer.once('error', reject); publicServer.listen(publicPort, '127.0.0.1', resolve); });
       try { await new Promise((resolve, reject) => { adminServer.once('error', reject); adminServer.listen(adminPort, '127.0.0.1', resolve); }); } catch (err) { await new Promise(resolve => publicServer.close(resolve)); throw err; }
-      if(options.alertWorker!==false){alerts.start();notifier.start();desk.start();customerTexts.start();}
+      if(options.alertWorker!==false){alerts.start();notifier.start();desk.start();customerTexts.start();zoho.start();}
       return { publicPort: publicServer.address().port, adminPort: adminServer.address().port };
     },
     async close() {
@@ -539,6 +549,7 @@ export function createLeadServers(options = {}) {
       await notifier.close();
       await customerTexts.close();
       desk.close();
+      zoho.close();
       await Promise.all([publicServer, adminServer].map(server => new Promise(resolve => { server.close(resolve); server.closeIdleConnections(); })));
       publicChat?.close();
       db.close();
@@ -561,7 +572,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     catch (err) { console.error(JSON.stringify({ event: 'customer_texts_disabled', reason: err.message })); }
   }
   console.log(JSON.stringify({ event: 'customer_texts', enabled: Boolean(customerTextAdapter) }));
-  const service = createLeadServers({notifyChannels:notify.channels,deskDigest,customerTextAdapter,reviewUrl:process.env.GOOGLE_REVIEW_URL||'',routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
+  // Zoho estimate status sync: read-only, off until all four ZOHO_ settings exist.
+  const zohoEnv = zohoConfigFromEnv();
+  if (zohoEnv.problem) console.error(JSON.stringify({ event: 'zoho_sync_disabled', reason: zohoEnv.problem }));
+  const zohoReader = zohoEnv.config ? createZohoReader(zohoEnv.config) : null;
+  console.log(JSON.stringify({ event: 'zoho_sync', enabled: Boolean(zohoReader), product: zohoEnv.config?.product }));
+  const service = createLeadServers({notifyChannels:notify.channels,deskDigest,customerTextAdapter,zohoReader,reviewUrl:process.env.GOOGLE_REVIEW_URL||'',routingRulesFile:process.env.LEAD_ROUTING_RULES_FILE||undefined,alerts:{enabled:process.env.LEAD_ALERTS_ENABLED==='true',cooldownMinutes:Number(process.env.LEAD_ALERT_COOLDOWN_MINUTES||15),maxDailyPairs:Number(process.env.LEAD_ALERT_MAX_DAILY_PAIRS||20)}});
   service.start().then(ports => console.log(JSON.stringify({ event: 'listening', public: `127.0.0.1:${ports.publicPort}`, inbox: `http://127.0.0.1:${ports.adminPort}/` }))).catch(err => { console.error(JSON.stringify({ event: 'startup_failed', code: err.code ?? 'internal' })); process.exit(1); });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => service.close().then(() => process.exit(0)));
 }

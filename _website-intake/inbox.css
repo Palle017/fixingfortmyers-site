@@ -18,3 +18,4 @@
 .badge.hot{background:#5a2a12;color:#ffc58a}.badge.big{background:#3d2f10;color:#ffd27a}.badge.good{background:#15402a;color:#8ff0b5}
 button.done{margin-top:10px;border-color:#2f7a52;background:#173626}
 @media(max-width:780px){.summary{grid-template-columns:1fr}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.zoho-link{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.zoho-link input{min-width:0;flex:1 1 140px;max-width:220px;padding:8px 10px;border-radius:8px;border:1px solid #3e5b6d;background:#0d1118;color:#edf3fa;font:inherit}
