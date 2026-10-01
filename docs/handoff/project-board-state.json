@@ -1,0 +1,189 @@
+{
+ "updated": "1 Oct 2026, 02:35 ET",
+ "pr": "https://github.com/Palle017/fixingfortmyers-site/pull/11",
+ "items": [
+  {
+   "id": "photos",
+   "lane": "you",
+   "title": "Send the before/after and equipment photos",
+   "detail": "They are already on the Google profile: download them there (or from your phone) and drop them in this chat. Walnut-blasting and paint before/after pairs switch on the hidden before/after sections; engine, transmission and tool shots fill the hidden capability photos.",
+   "done": false
+  },
+  {
+   "id": "gbp-content",
+   "lane": "you",
+   "title": "Google profile: safe edits only",
+   "detail": "Paste the description (plan 1.5) and services (1.4), add photos and a weekly post. Do NOT change the name, address, address visibility or categories: those can trigger re-verification.",
+   "done": false
+  },
+  {
+   "id": "shopmonkey",
+   "lane": "you",
+   "title": "Google profile: remove the Shopmonkey link",
+   "detail": "Edit profile → Contact → Appointment links. Delete it if it is still there, save, reload to confirm. Not checked yet: Claude cannot reach your Chrome.",
+   "done": false
+  },
+  {
+   "id": "signage",
+   "lane": "you",
+   "title": "Entrance sign and drop-off instructions",
+   "detail": "The address is on the website now, so customers can find the shop. A sign and posted drop-off instructions (key drop) cover times when Tony is busy or it is after hours.",
+   "done": false
+  },
+  {
+   "id": "bbb-yahoo",
+   "lane": "you",
+   "title": "Fix the phone on BBB and Yahoo Local",
+   "detail": "Both show (239) 271-4854, Tony's personal Beside sign-in phone. Change to the business line, (239) 397-2048.",
+   "done": false
+  },
+  {
+   "id": "detailing",
+   "lane": "you",
+   "title": "Tell Claude which detailing services Tony offers",
+   "detail": "Needed to finish the Google service descriptions and the Paint & Detailing page. No prices.",
+   "done": false
+  },
+  {
+   "id": "indexing",
+   "done": false,
+   "lane": "you",
+   "title": "Search Console: request indexing",
+   "detail": "URL Inspection → Request indexing for /workshop and /paint-correction-detailing-fort-myers. The sitemap already lists both; this only speeds it up. Needs your Google login."
+  },
+  {
+   "id": "funnel",
+   "done": false,
+   "lane": "claude",
+   "title": "Lead funnel review (needs your go-ahead)",
+   "detail": "Walk every path from an ad click to Tony: the repair form to the shop laptop, call or text to 397-2048, Bay One. Add job-type and vehicle questions so Tony can pick the profitable jobs, and make sure ad leads are tagged. PRs #19–#21 from another session touched this, so it gets coordinated first."
+  },
+  {
+   "id": "citations",
+   "lane": "claude",
+   "title": "Directory clean-up list",
+   "detail": "One list of every listing to update with 397-2048 and the shop wording: BBB, Yahoo, Yelp, Nextdoor, MapQuest, and fortmyersdirections.com, which shows an old address (13037 Second St). No Google profile changes.",
+   "done": false
+  },
+  {
+   "id": "risk-reverify",
+   "done": false,
+   "lane": "risk",
+   "title": "Google re-verification",
+   "detail": "Editing the name, address, address visibility or categories on the Google profile can trigger it. Leave those alone until you decide otherwise."
+  },
+  {
+   "id": "risk-24h",
+   "lane": "risk",
+   "title": "Customers can now find the shop",
+   "detail": "The address is on the website and the hours say 24/7. Posted drop-off instructions avoid a \"closed when I arrived\" review.",
+   "done": false
+  },
+  {
+   "id": "risk-branch",
+   "lane": "risk",
+   "title": "Other sessions edit every page",
+   "detail": "PR #21 rewrote all pages today; the merge was redone on top of it. The tests do not check the footer address or Workshop links, so recheck them after big template changes.",
+   "done": false
+  },
+  {
+   "id": "swap-photos",
+   "lane": "claude",
+   "title": "Your photos on the site, PR #11 merged",
+   "detail": "Three welding photos: page header, Workshop page, Careers. Cropped to 3:2, no location data. Slots still waiting on photos are hidden, not deleted.",
+   "done": true
+  },
+  {
+   "id": "old-images",
+   "lane": "claude",
+   "title": "Old driveway and van images deleted",
+   "detail": "tony-mobile-*.webp and perfect-timing-mobile-workshop.webp are no longer used anywhere. Remove them in the same push as the photos.",
+   "done": true
+  },
+  {
+   "id": "ad-docs",
+   "lane": "claude",
+   "title": "Ad plans fixed (PR #22)",
+   "detail": "'Mobile mechanic' is now a negative keyword; headline 'Auto Repair Shop Fort Myers'; targeting starts from the 12 towns.",
+   "done": true
+  },
+  {
+   "id": "after-merge",
+   "lane": "claude",
+   "title": "Live check, 1 Oct",
+   "detail": "/workshop and /paint-correction-detailing-fort-myers return 200, the address shows in the footer and the Workshop links appear on the 7 pages checked, the new photos load, the sitemap lists both pages. 103 of 103 tests pass.",
+   "done": true
+  },
+  {
+   "id": "plan",
+   "lane": "claude",
+   "title": "Google profile plan written",
+   "detail": "docs/google-business-profile-plan.md on PR #11: categories, services, description, photos, posts, FAQs, reviews, photo checklist and tool-list template.",
+   "done": true
+  },
+  {
+   "id": "workshop-page",
+   "lane": "claude",
+   "title": "Workshop page built",
+   "detail": "/workshop: how a job works, engines, transmissions, timing checks, walnut blasting, diesel, hot rods, paint, gallery, FAQ, directions link. Placeholder photos.",
+   "done": true
+  },
+  {
+   "id": "paint-page",
+   "lane": "claude",
+   "title": "Paint & Detailing page built",
+   "detail": "/paint-correction-detailing-fort-myers: paint work, buffing, paint correction and detailing.",
+   "done": true
+  },
+  {
+   "id": "address-site",
+   "lane": "claude",
+   "title": "Address on the site",
+   "detail": "17686 Saddleback Loop, North Fort Myers, FL 33917 in every footer, in the business data Google reads on every page, and on the Workshop page.",
+   "done": true
+  },
+  {
+   "id": "towns",
+   "lane": "claude",
+   "title": "All 12 towns on the site",
+   "detail": "Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel, Pine Island.",
+   "done": true
+  },
+  {
+   "id": "links",
+   "lane": "claude",
+   "title": "Workshop linked across the site",
+   "detail": "'Tony's fully equipped workshop' links to /workshop on every page; every footer links the Workshop and Paint & Detailing.",
+   "done": true
+  },
+  {
+   "id": "phone",
+   "lane": "you",
+   "title": "Business phone confirmed",
+   "detail": "(239) 397-2048 is the Beside business line ('Tony's Box').",
+   "done": true
+  },
+  {
+   "id": "decisions",
+   "lane": "you",
+   "title": "Profile decisions made",
+   "detail": "Address on the website, not on Google (no re-verification). Keep 24 hours, keep the name, all 12 towns, priority jobs: engines, transmissions, no-start.",
+   "done": true
+  },
+  {
+   "id": "audit",
+   "lane": "claude",
+   "title": "Audit, 28 Sep",
+   "detail": "Branch merged with main (PRs #19, #20), 95 of 95 tests pass, asset versions clean, stale 'Tony confirms dispatch' wording fixed on the new pages. PR #11 is the only open PR; no CI runs on it.",
+   "done": true
+  },
+  {
+   "id": "welding-photos",
+   "done": true,
+   "lane": "you",
+   "title": "Welding photos sent",
+   "detail": "Three photos of Tony welding an exhaust flange."
+  }
+ ],
+ "note": "PR #11 (Workshop and Paint pages, address, 12 towns, your photos) and PR #22 (ad plans) are merged and live."
+}
