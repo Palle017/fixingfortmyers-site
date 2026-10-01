@@ -29,20 +29,20 @@ Use one Search campaign with two or three tightly related ad groups. Start with 
 
 | Ad group | Draft intent examples, not verified search volumes | Relevant existing destination |
 | --- | --- | --- |
-| No-start / stranded | `[mobile mechanic fort myers]`, `"car won't start mechanic"`, `"no start diagnosis near me"` | `/no-start-diagnosis-fort-myers`; link the no-start guide as supporting education |
+| No-start / tow-in | `"car won't start fort myers"`, `"car won't start mechanic"`, `"no start diagnosis near me"` | `/no-start-diagnosis-fort-myers`; link the no-start guide as supporting education |
 | Electrical diagnosis | `"auto electrical repair fort myers"`, `"battery keeps dying mechanic"` | `/auto-electrical-repair-fort-myers`; related battery-drain guide |
 | A/C diagnosis | `"car ac repair fort myers"`, `"car ac warm at idle repair"` | `/ac-repair-fort-myers`; related idle A/C guide |
 
 Urgent symptom pages can earn organic visits from broader questions. Paid keywords should initially include repair/mechanic intent so the budget does not primarily buy nationwide DIY research. Add cooling, diesel or programming campaigns later only when Tony confirms the exact job, tooling, service area and profitable capacity; a frightening symptom does not prove a high-value repair.
 
-**Local controls:** target the owner-approved cities/ZIPs, initially narrower than the tentative 75–100-mile maximum travel range. Select Google's **Presence: people in or regularly in** included locations. Exclude unserviceable areas and verify the customer's city before promising dispatch. Location targeting is an estimate, so review geographic results and out-of-area inquiries. [Google location targeting](https://support.google.com/google-ads/answer/2453995?hl=en)
+**Local controls:** target the owner-approved cities/ZIPs, starting with the 12 owner-confirmed towns around the North Fort Myers shop (listed in docs/google-business-profile-plan.md). Select Google's **Presence: people in or regularly in** included locations. Exclude unserviceable areas and verify the customer's city before promising dispatch. Location targeting is an estimate, so review geographic results and out-of-area inquiries. [Google location targeting](https://support.google.com/google-ads/answer/2453995?hl=en)
 
-**Starter negatives:** mechanic jobs, mechanic salary, mechanic school, training, repair manual, wiring diagram PDF, tool rental, parts wholesale. Add towing-only, bodywork, motorcycles or other exclusions only after Tony says those services are not offered. Avoid broad negatives such as `cost`, `price`, `battery`, `diagnosis`, or `dealer`; they can remove valuable prospects. Check singular/plural variants and actual search terms; negative keywords do not cover close variants. [Google negative keywords](https://support.google.com/google-ads/answer/2453972?hl=en-GB)
+**Starter negatives:** mobile mechanic, mechanic that comes to you (Perfect Timing is a shop customers bring or tow the car to), mechanic jobs, mechanic salary, mechanic school, training, repair manual, wiring diagram PDF, tool rental, parts wholesale. Add towing-only, bodywork, motorcycles or other exclusions only after Tony says those services are not offered. Avoid broad negatives such as `cost`, `price`, `battery`, `diagnosis`, or `dealer`; they can remove valuable prospects. Check singular/plural variants and actual search terms; negative keywords do not cover close variants. [Google negative keywords](https://support.google.com/google-ads/answer/2453972?hl=en-GB)
 
 **Draft responsive ad assets** (headlines under 30 characters; descriptions under 90):
 
-- Headlines: `Mobile Mechanic Fort Myers` / `Car Won't Start? Call Tony` / `Discuss Your Repair Timeline`
-- Descriptions: `Tell Tony the symptoms and location. He confirms availability and next steps.`
+- Headlines: `Auto Repair Shop Fort Myers` / `Car Won't Start? Call Tony` / `Discuss Your Repair Timeline`
+- Descriptions: `Tell Tony the symptoms. He confirms the job and a drop-off time.`
 - Alternative: `Need your vehicle back? Ask what timing is realistic for your repair.`
 - Supporting sitelinks: No-Start Help, Electrical Diagnosis, A/C Repair, Repair Guides.
 
