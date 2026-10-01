@@ -2,9 +2,19 @@
 
 Prepared September 28, 2026. **This is a plan for review, not a set of applied changes.** It makes no website edits, no Google Business Profile edits and no publication. Any customer-facing wording below is a **draft** until Tony approves it.
 
-## Update, October 1, 2026 (read first)
+## Owner decisions, October 1, 2026 (latest: these win over anything below)
 
-- **No Google re-verification.** The owner does not want to trigger a re-verification, so **do not change the business name, address, address visibility or categories on the Google profile** for now. Those are the edits most likely to trigger one. The address decision below ("show it") applies to the **website only**, where it is live in every footer and in the business data. Edits that are safe to make on Google: photos, posts, the description, services, attributes, replying to reviews, and removing the Shopmonkey appointment link.
+- **Positioning: a mobile repair shop.** Tony has all the tools: he is mobile equipped and also has a fully equipped workshop at Bayshore Ranch. Use "mobile repair shop" (not "mobile mechanic", which is also not a Google category). This replaces the workshop-only wording from September 28.
+- **Address: hidden.** No street address on Google or on the site. The workshop is named only as "based at Bayshore Ranch". The street address was removed from every page footer, the `AutoRepair` schema, the Workshop page and Bay One's shop details (October 1). The Google profile stays a service-area business, which also means no re-verification.
+- **Hours: Open 24 hours.** After normal business hours customers get Bay One (the AI assistant). If it's an emergency and Tony can manage it, he takes it.
+- **Booking line: "Call Tony to coordinate drop-off or pick-up."**
+- **Facebook: ignore it.** No action on either page.
+
+Where a section below still says "workshop only", "address shown" or "bring or tow it in", these decisions win.
+
+## Update, October 1, 2026 (earlier the same day)
+
+- **No Google re-verification.** The owner does not want to trigger a re-verification, so **do not change the business name, address, address visibility or categories on the Google profile** for now. Those are the edits most likely to trigger one. *(Superseded: the address is now hidden on the website too.)* Edits that are safe to make on Google: photos, posts, the description, services, attributes, replying to reviews, and removing the Shopmonkey appointment link.
 - **Photos.** The owner chose his photos; the others are already on the Google profile. Three welding photos are on the site: `tony-at-work.webp` (welding an exhaust flange: the page header image and the Workshop gallery), `workshop-wide.webp` (Tony in the workshop: the Workshop page header and "How a workshop job works") and `workshop-fabrication.webp` (stick welding, also used on Careers). Slots without a photo yet are **kept in the page but hidden** (`hidden` attribute, `data-photo` names the shot): the capability photos, the extra gallery shots, and both before/after sections (walnut blasting, paint correction). To turn one on, save the photo under its filename and remove `hidden`.
 - **Merged to main** with PR #11. The old driveway and van images were deleted.
 
@@ -12,10 +22,10 @@ Prepared September 28, 2026. **This is a plan for review, not a set of applied c
 
 | Question | Decision |
 | --- | --- |
-| Address | **Updated Sept 28: show the address (option B, hybrid).** Customers can come to the base or drop the car off and leave. The Google profile shows the Bayshore Ranch address with a map pin **and** keeps the 12-town service area. *(Earlier the same day: hidden.)* **Address: 17686 Saddleback Loop, North Fort Myers, FL 33917** (owner, Sept 28). |
+| Address | **Hidden (owner, Oct 1).** No street address on Google or the site; the workshop is named only as based at Bayshore Ranch. *(Sept 28 history: hidden, then briefly "show it"; the street address that went on the site was removed Oct 1.)* |
 | Verification | The Google profile **is verified**. The edits in 1.0 step 2 can go ahead. |
 | Business name | **Keep it exactly as it appears now.** It matches the signage. No change. |
-| Hours | **Keep Open 24 hours**, also with the address shown (owner's choice, Sept 28). See the risk note under "Positioning update". |
+| Hours | **Keep Open 24 hours.** After normal business hours Bay One answers; Tony takes emergencies when he can manage them (owner, Oct 1). |
 | Service towns | **All 12 confirmed:** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel, Pine Island. |
 | Categories | **Add all of them**, A/C and electrical included, plus detailing and paint (see 1.2). |
 | Priority jobs | **Engine jobs, transmission jobs and no-start problems.** |
@@ -24,26 +34,16 @@ Prepared September 28, 2026. **This is a plan for review, not a set of applied c
 | Facebook | **Leave both pages as they are.** |
 | Shopmonkey booking link | **Not confirmed removed.** The website has no Shopmonkey link (checked across all pages and scripts). Google's public Maps page can't be read without a browser session, and there's no owner access from here, so the owner needs to check it in the editor (Edit profile → Booking / appointment links). |
 
-## Positioning update (September 28, 2026, after PR #12)
+## Positioning update (September 28, 2026): superseded
 
-The site now describes Perfect Timing as a **fully equipped repair workshop**: customers book a time and bring or tow the vehicle in, and Tony confirms the job and the drop-off time. The workshop has walnut blasting, engine assembly, tolerance and timing checks, and transmission work. This plan was first written for a mobile model, so its drafts (profile model, description, services, attributes, photos, posts, Q&A and the workshop page) have been rewritten to match. Tony is never described as mobile.
-
-The owner decisions above are kept exactly as recorded. Three of them now pull against the workshop model, so they are flagged here for the owner to recheck rather than changed:
-
-| Decision | Why it conflicts now | Trade-off |
-| --- | --- | --- |
-| ~~Address hidden~~ | **Resolved Sept 28:** the owner chose to show the address (option B). This matches Google's rule for a shop that customers visit. | Expect Google to ask for re-verification after the address is added. Put permanent signage with the business name at the entrance first. |
-| **Open 24 hours** (kept with the address shown) | With a public address, Google and customers read the hours as the times someone is there to receive them. | **Owner's choice: keep 24 hours.** This is only safe if someone really can receive a customer or a drop-off at any hour (e.g. a secure after-hours drop-off with key drop and posted instructions). If a report or a Google review says "closed when I arrived", change to real drop-off hours and move the 24/7 contact line into the description. |
-| **Leave both Facebook pages as they are** | One of them (`100084118269910`) is titled **"Mobile Mechanic"**, which contradicts the site and the no-mobile rule. | **Leave it:** no work, but searchers see two pages and the wrong model. **Rename or retire it:** one consistent name; Facebook may limit how often a page name changes. |
-
-The 12 service towns and the business name do not conflict. The towns stay as the areas customers come from (see 1.3 for how Google treats a service area on a shop that customers visit).
+On September 28 the plan was rewritten for a workshop-only model and three decisions were flagged as conflicting with it. The owner's October 1 decisions above replace that: Tony is a mobile repair shop, the address stays hidden, the hours stay 24, and the Facebook pages are ignored. No flags remain open.
 
 ## Starting facts
 
 These facts come from the owner and the current `main` branch (after PR #12):
 
 - **Business:** Perfect Timing Auto Repair LLC, (239) 397-2048, fixingfortmyers.com, fixingfortmyers@gmail.com.
-- **Model:** a **fully equipped repair workshop**, based at Bayshore Ranch in the Fort Myers area. Customers book a time and bring or tow the vehicle in; Tony confirms the job and the drop-off time. The business is never described as mobile.
+- **Model:** a **mobile repair shop** (owner, Oct 1). Tony is mobile equipped and has a fully equipped workshop based at Bayshore Ranch in the Fort Myers area. Customers call Tony to coordinate drop-off or pick-up. Available 24 hours: after normal business hours Bay One answers, and Tony takes emergencies when he can manage them.
 - **Workshop capabilities (owner-stated):** engine assembly, tolerance and timing checks, transmissions, walnut blasting (carbon cleaning), "and more". The full tool list has not been supplied yet.
 - **The site shows no street address.** The footer and schema say "Fort Myers & Southwest Florida". The `AutoRepair` schema in every page has `areaServed` (Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice) and no `address`. Bay One's shop profile says "Customers book an appointment and bring or tow the vehicle to Tony's shop; call or text (239) 397-2048 to book a drop-off time" (`_website-intake/public-chat.mjs`).
 - **The profile already exists.** According to `docs/COMPANY-UPDATE.md`: profile ID `15150482990043040433`; all seven days saved as **Open 24 hours**; verification was **processing**; an old Shopmonkey quote link is still in Booking and must be removed once the controls unlock. `tools/CONTACT-AND-SEO-UPDATE.md` also says: "Do not add the future address there until it is ready for customer traffic."
@@ -117,9 +117,9 @@ Google distinguishes three setups:
 | | **Re-verification.** Changing the address or visibility usually triggers another round of verification, and the profile is only just getting through the first one. |
 | | **Ranking radius.** A shown address anchors local ranking to that point. Bayshore is on the north-east side of the area, so Cape Coral and South Fort Myers searches may rank the pin lower than a clean service-area profile does. |
 
-**Decision (owner, Sept 28, updated): option B, hybrid.** Show the Bayshore Ranch address with a map pin and keep the 12-town service area. The owner confirmed customers can come to the base or drop the car off and leave. *(The first decision that day was option A, hidden.)*
+**Decision (owner, Oct 1): option A, address hidden.** The profile stays a service-area business with the 12 towns, and the workshop is named only as based at Bayshore Ranch. This fits a mobile repair shop and needs no re-verification. *(On Sept 28 the decision briefly moved to option B; that is reversed.)*
 
-**On hold (Oct 1: no re-verification), website part done.** Earlier steps for Google, kept for later: (1) ~~get the exact street address~~ **done: 17686 Saddleback Loop, North Fort Myers, FL 33917**; (2) put permanent signage with the business name at the entrance; (3) set up a clear drop-off spot and key drop, since the hours stay at 24; (4) in the Google profile, go to **Edit profile → Location → Business location**, turn on showing the address to customers, enter it, and keep the service areas; (5) expect a re-verification request, and complete it before making other edits; (6) add the same address to the website footer, the `AutoRepair` schema (`address`) and the workshop page, so the name, address and phone match everywhere.
+**Not doing (Oct 1):** showing the address on Google. The street address has been taken off the website again.
 
 **When to revisit option B:** only if **all** of these hold: (1) the workshop is a lawful place to receive customers (zoning, lease, HOA), (2) someone is there during fixed, published drop-off hours, (3) the owner accepts people arriving without an appointment, and (4) there is signage at the entrance. Then show the address with **real** drop-off hours, and cover 24/7 phone and Bay One availability in the description and in posts rather than in the hours field.
 
@@ -157,9 +157,9 @@ Do not add a service the site doesn't back up or Tony doesn't want to do.
 
 ### 1.5 Business description (draft, 750-character limit)
 
-> Perfect Timing Auto Repair is a fully equipped repair workshop based at Bayshore Ranch, serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Customers book a time and bring or tow the vehicle in. Tony handles no-start problems, diagnostics, A/C, electrical and brakes, and the bigger jobs: engine and transmission rebuilds and replacements, engine assembly with tolerance and timing checks, walnut blasting to clean carbon from intake valves, diesel repair, hot rods and restoration. Paint work, buffing, paint correction and detailing are available too. Tell us your vehicle, the symptoms and whether it starts or drives, so we know if it needs a tow. Tony confirms the job and the drop-off time before work starts.
+> Perfect Timing Auto Repair is a mobile repair shop serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Tony is mobile equipped and has a fully equipped workshop at Bayshore Ranch for the bigger jobs: engine and transmission rebuilds and replacements, engine assembly with tolerance and timing checks, walnut blasting to clean carbon from intake valves, diesel repair, hot rods and restoration. He also handles no-start problems, diagnostics, A/C, electrical and brakes, plus paint work, buffing, paint correction and detailing. Call Tony to coordinate drop-off or pick-up. Available 24 hours: after normal business hours our AI assistant answers, and Tony takes emergencies when he can.
 
-About 740 characters, under the 750 limit. It has no URL, no price, no promotional language and no phone number (the phone has its own field). All the services named are owner-confirmed.
+About 710 characters, under the 750 limit (owner's Oct 1 positioning). It has no URL, no price, no promotional language and no phone number (the phone has its own field). All the services named are owner-confirmed.
 
 ### 1.6 Other profile fields
 
@@ -176,7 +176,7 @@ Set **only** those the owner confirms. The ones likely to apply:
 
 | Attribute | Default until confirmed |
 | --- | --- |
-| Onsite services (serves customers at their location) | **No / leave off.** Customers bring or tow the vehicle to the workshop. |
+| Onsite services (serves customers at their location) | **Yes, for emergencies** Tony can manage (owner, Oct 1). Confirm with Tony before turning it on. |
 | Online appointments / requests | Yes, if the website request path is kept as the booking link |
 | Payments: credit cards, debit cards, NFC/mobile pay, cash, checks | Ask. Set only the methods Tony accepts. |
 | Self-identified attributes (veteran-owned, family-owned, Black-owned, women-owned, Latino-owned, etc.) | **Only** if the owner chooses to self-identify |
@@ -226,16 +226,16 @@ Rules: real photos only. **No stock images, no AI-generated images** and no illu
 
 **Google has retired Business Profile Q&A.** It stopped taking new questions from late 2025 (industry reports put the API shutdown at November 3, 2025), and existing Q&A is frozen and being phased out. In its place, an AI "Ask" feature in Maps answers visitors' questions from the profile fields, reviews, photos and website content. The owner can't seed it directly, so these questions and answers go where that feature reads them: the **description** (1.5), the **service descriptions** (1.4), **posts** (1.9) and the website's **FAQ sections** (where answers 1, 3, 5 and 6 should be added, on the workshop page in 3.1 and the relevant service pages). If a Q&A box does still appear on the profile, post these there too.
 
-1. **Do I bring my car to you?** Yes. Perfect Timing is a fully equipped repair workshop. Book a time, then bring or tow the vehicle in. Tony confirms the job and the drop-off time.
-2. **Do you come to my house or the roadside?** No. All work is done in Tony's workshop. If the car can't be driven, tell us and we'll say whether it needs a tow.
-3. **Can I drop my car off at the workshop?** Yes, by appointment. The workshop is based at Bayshore Ranch. Call or text (239) 397-2048 to book a drop-off time; the drop-off details come with your booking.
+1. **How do I get my car to you?** Call Tony at (239) 397-2048 to coordinate drop-off or pick-up. Perfect Timing is a mobile repair shop with a fully equipped workshop for the bigger jobs.
+2. **Is it really 24 hours?** Yes. After normal business hours our AI assistant, Bay One, answers. If it's an emergency and Tony can manage it, he takes it.
+3. **Can I drop my car off at the workshop?** Yes. The workshop is based at Bayshore Ranch. Call Tony to coordinate the drop-off; the details come when you book.
 4. **Do you rebuild engines or replace them?** Both, depending on the engine and what the teardown shows. Tony explains rebuild vs. replacement before work starts.
 5. **What is walnut blasting?** Walnut blasting cleans carbon build-up off intake valves using crushed walnut shells. It is common on direct-injection engines, which can build up carbon on the valves.
 6. **Do you work on transmissions?** Yes, rebuilds and replacements, diagnosed and done in the workshop.
 7. **Do you work on diesels?** Yes. Tell us the year, make, model and engine, and what it's doing.
 8. **Do you work on hot rods and classic cars?** Yes. Hot rods and restoration projects are done in the workshop.
 8a. **Do you do paint or detailing?** Yes: paint work, buffing, paint correction and detailing. Send photos of the vehicle and the area of concern.
-8b. **My car won't start. What should I do?** Call or text any hour and tell us what happens when you turn the key (clicks, cranks, or nothing). We'll confirm a time to tow it in.
+8b. **My car won't start. What should I do?** Call Tony any hour and say what happens when you turn the key (clicks, cranks, or nothing). He'll coordinate a pick-up or drop-off, or take it as an emergency if he can.
 9. **Where do your customers come from?** Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers, Tice, Estero, Bonita Springs, Alva, Buckingham, Fort Myers Beach, Sanibel and Pine Island.
 10. **What should I send when I contact you?** Your vehicle year, make and model, the symptoms and whether it starts or drives, so we know if it needs a tow.
 11. **Are you available after hours?** Available 24/7. Outside 8 a.m.–8 p.m. Eastern, Tony is assisted by Bay One AI. After-hours repairs depend on the job, location and availability; Tony confirms all appointments.
@@ -437,7 +437,7 @@ Part 3 is now **built on top of the workshop wording on `main` (PRs #12–#18), 
 | P3 paint work | `assets/paint-work.webp` | Paint page |
 | P4 detailed interior | `assets/detailing-interior.webp` | Paint page |
 
-W18 (drop-off area) is for Google only for now. **Address shown (Sept 28 update): done on the site.** 17686 Saddleback Loop, North Fort Myers, FL 33917 is in the footer of every page, the `AutoRepair` schema `address` on every page, the Workshop page (hero box, drop-off section, FAQ, directions link) and Bay One's profile. Enter it on Google in exactly this form.
+W18 (drop-off area) is for Google only for now. **Address hidden again (Oct 1).** The street address that went on the site with PR #11 has been removed from every footer, the `AutoRepair` schema, the Workshop page and Bay One's profile. Don't enter it on Google.
 
 **What was built:** `workshop.html`, `paint-correction-detailing-fort-myers.html`, the image swaps in 3.2, the workshop links in 3.3 (every visible "Tony's fully equipped workshop" now links to `/workshop`), footer links on every page, all 12 towns in `areaServed`, Sanibel and Pine Island on the home service area, the sitemap, the About page, Bay One's service list, and the asset version bumped to `20260928-workshop`. Neither page describes Tony as mobile. Drop-off is by appointment, and the workshop is named only as "based at Bayshore Ranch".
 
@@ -477,17 +477,13 @@ Checked September 28, 2026. Confirm the live category names, character limits an
 
 **Decisions**
 
-1. ~~Address~~: **show it** (option B). Address: **17686 Saddleback Loop, North Fort Myers, FL 33917**. Still needed: confirmation that there is signage at the entrance.
+1. ~~Address~~: **hidden** (Oct 1). Bayshore Ranch named in text only.
 2. ~~Verified~~: yes. **Still open:** check in the profile editor that the Shopmonkey booking link is gone, and remove it if not.
 3. ~~Business name~~: keep as is.
-4. ~~24/7 hours~~: keep, also with the address shown. Needs a secure after-hours drop-off.
+4. ~~24/7 hours~~: keep. Bay One after normal hours; Tony takes emergencies when he can.
 5. ~~Service towns~~: all 12 confirmed.
 6. ~~Top jobs~~: engines, transmissions and no-start.
-6a. ~~Business phone~~: **(239) 397-2048** (Beside). **To do:** change BBB and Yahoo Local from 271-4854 (Tony's personal phone) to 397-2048. ~~Facebook~~: leave both pages.
-6b. **Address, after the workshop change:** keep it hidden (option A), or show it with drop-off hours (option B)? See "Positioning update" at the top.
-6c. **Hours, after the workshop change:** keep Open 24 hours, or set real drop-off hours? Required if the address is shown.
-6d. **The "Mobile Mechanic" Facebook page:** leave it as decided, or rename or retire it?
-6e. **Drop-off details:** where customers park, where a tow truck unloads, and whether after-hours key drop is possible.
+6a. ~~Business phone~~: **(239) 397-2048** (Beside). **To do:** change BBB and Yahoo Local from 271-4854 (Tony's personal phone) to 397-2048. ~~Facebook~~: ignore.
 
 **Scope confirmations** (yes/no, with details)
 
