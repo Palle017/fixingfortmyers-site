@@ -1,660 +1,178 @@
-Synthetic test run 2026-09-28T06:41:21.285Z
-Node v22.22.2
-TAP version 13
-# (node:496) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# Subtest: Beside call creates a manual lead (source beside_call) and queues its notification
-ok 1 - Beside call creates a manual lead (source beside_call) and queues its notification
-  ---
-  duration_ms: 138.163395
-  type: 'test'
-  ...
-# Subtest: provider event retries deduplicate while distinct jobs from the same phone are retained for review
-ok 2 - provider event retries deduplicate while distinct jobs from the same phone are retained for review
-  ---
-  duration_ms: 94.346765
-  type: 'test'
-  ...
-# Subtest: withheld-number replay is deduplicated by event ID; changed content returns conflict
-ok 3 - withheld-number replay is deduplicated by event ID; changed content returns conflict
-  ---
-  duration_ms: 26.913742
-  type: 'test'
-  ...
-# Subtest: outbound events stay in the event ledger and provider time is preserved for incoming candidates
-ok 4 - outbound events stay in the event ledger and provider time is preserved for incoming candidates
-  ---
-  duration_ms: 33.350252
-  type: 'test'
-  ...
-# Subtest: missing provider identity stays captured and flagged, with no invented event identity claim
-ok 5 - missing provider identity stays captured and flagged, with no invented event identity claim
-  ---
-  duration_ms: 23.501505
-  type: 'test'
-  ...
-# {"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
-# Subtest: manual lead notifications and Beside event records share the lead transaction
-ok 6 - manual lead notifications and Beside event records share the lead transaction
-  ---
-  duration_ms: 36.911729
-  type: 'test'
-  ...
-# Subtest: form-encoded Beside events work and message events become beside_text
-ok 7 - form-encoded Beside events work and message events become beside_text
-  ---
-  duration_ms: 36.258255
-  type: 'test'
-  ...
-# Subtest: Beside hook: wrong token 404, bad method 405, invalid JSON 400, nothing saved
-ok 8 - Beside hook: wrong token 404, bad method 405, invalid JSON 400, nothing saved
-  ---
-  duration_ms: 27.021412
-  type: 'test'
-  ...
-# {"event":"beside_hook_disabled","reason":"BESIDE_WEBHOOK_TOKEN must be 24-256 characters with no / ? \# % or spaces"}
-# Subtest: Beside hook is closed (404) when no token, or a token under 24 characters, is configured
-ok 9 - Beside hook is closed (404) when no token, or a token under 24 characters, is configured
-  ---
-  duration_ms: 44.996673
-  type: 'test'
-  ...
-# Subtest: Beside notification says where the lead came from
-ok 10 - Beside notification says where the lead came from
-  ---
-  duration_ms: 19.25782
-  type: 'test'
-  ...
-# Subtest: desk.addManual requires a name or phone, a valid phone, and a real, non-future date
-ok 11 - desk.addManual requires a name or phone, a valid phone, and a real, non-future date
-  ---
-  duration_ms: 19.959892
-  type: 'test'
-  ...
-# Subtest: setStage estimate_sent requires a Tony-approved price (estimateLow + tonyApproved === true)
-ok 12 - setStage estimate_sent requires a Tony-approved price (estimateLow + tonyApproved === true)
-  ---
-  duration_ms: 21.450624
-  type: 'test'
-  ...
-# Subtest: addManual with an unapproved estimate_sent stage is rejected without saving a lead
-ok 13 - addManual with an unapproved estimate_sent stage is rejected without saving a lead
-  ---
-  duration_ms: 19.566631
-  type: 'test'
-  ...
-# Subtest: wrong Beside tokens cannot use up the rate limit that real Beside events rely on
-ok 14 - wrong Beside tokens cannot use up the rate limit that real Beside events rely on
-  ---
-  duration_ms: 150.381269
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"20bc3d11-013c-4c73-88fe-9d6db27d0a0b","kind":"webform","receivedAt":"2026-09-28T06:41:18.379Z"}
-# Subtest: inbox status buttons move the desk pipeline; lost never counts as contacted
-ok 15 - inbox status buttons move the desk pipeline; lost never counts as contacted
-  ---
-  duration_ms: 52.126483
-  type: 'test'
-  ...
-# (node:497) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# {"event":"lead_received","id":"8c5417b4-eecc-4629-8534-655eaf654e3b","kind":"webform","receivedAt":"2026-09-28T06:41:17.710Z"}
-# Subtest: a customer who ticked text permission gets one confirmation text right away
-ok 16 - a customer who ticked text permission gets one confirmation text right away
-  ---
-  duration_ms: 162.202359
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"97d68895-a11e-4eb0-bb72-efd10ced0af9","kind":"webform","receivedAt":"2026-09-28T06:41:17.848Z"}
-# {"event":"lead_received","id":"2c01d10b-1d20-40fb-a0eb-14cd68d29c06","kind":"webform","receivedAt":"2026-09-28T06:41:17.863Z"}
-# {"event":"lead_received","id":"9f5da4e2-d7f5-4c06-b44f-edf8109940ec","kind":"webform","receivedAt":"2026-09-28T06:41:17.879Z"}
-# Subtest: no text without permission, and at most one per phone number per day
-ok 17 - no text without permission, and at most one per phone number per day
-  ---
-  duration_ms: 165.948804
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"c5167078-3e80-4a20-ad89-0b380c94a0a6","kind":"webform","receivedAt":"2026-09-28T06:41:17.996Z"}
-# Subtest: customer texts are off unless an adapter is configured
-ok 18 - customer texts are off unless an adapter is configured
-  ---
-  duration_ms: 33.973253
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"51b95b9a-034a-4a4d-9d2b-f79f38dc622a","kind":"webform","receivedAt":"2026-09-28T06:41:18.027Z"}
-# {"event":"lead_received","id":"8d5c2b0f-b2ad-4a9b-8e52-251045285891","kind":"webform","receivedAt":"2026-09-28T06:41:18.112Z"}
-# Subtest: an uncertain send is never repeated; a rate limit is retried
-ok 19 - an uncertain send is never repeated; a rate limit is retried
-  ---
-  duration_ms: 168.944112
-  type: 'test'
-  ...
-# Subtest: message wording, phone normalization and adapter guard rails
-ok 20 - message wording, phone normalization and adapter guard rails
-  ---
-  duration_ms: 0.879366
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"67e86dd3-5050-4fe4-abbf-b40d3d12ecf6","kind":"webform","receivedAt":"2026-09-28T06:41:18.198Z"}
-# {"event":"lead_received","id":"1317849d-d72d-4bf6-9ec4-c921968ce1e3","kind":"webform","receivedAt":"2026-09-28T06:41:18.210Z"}
-# Subtest: marking a job won schedules one Google review text two hours later, only with text permission
-ok 21 - marking a job won schedules one Google review text two hours later, only with text permission
-  ---
-  duration_ms: 75.320694
-  type: 'test'
-  ...
-# {"event":"public_chat_scripted","reason":"provider_error"}
-# {"event":"public_chat_scripted","reason":"provider_error"}
-# {"event":"public_chat_scripted","reason":"provider_error"}
-# {"event":"public_chat_scripted","reason":"provider_error"}
-# {"event":"public_chat_scripted","reason":"provider_error"}
-# (node:503) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# Subtest: golden cases are well formed
-ok 22 - golden cases are well formed
-  ---
-  duration_ms: 1.549235
-  type: 'test'
-  ...
-# Subtest: scoring matches keywords, exact statuses, absent fields and who answered
-ok 23 - scoring matches keywords, exact statuses, absent fields and who answered
-  ---
-  duration_ms: 2.139519
-  type: 'test'
-  ...
-# Subtest: a model that never answers fails the check even though the script keeps collecting
-ok 24 - a model that never answers fails the check even though the script keeps collecting
-  ---
-  duration_ms: 141.088453
-  type: 'test'
-  ...
-# Subtest: a model that copies the customer words passes the matching cases
-ok 25 - a model that copies the customer words passes the matching cases
-  ---
-  duration_ms: 36.540358
-  type: 'test'
-  ...
-# (node:520) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# {"event":"lead_received","id":"ff51b316-9366-4f7b-9cf4-8e035def2709","kind":"webform","receivedAt":"2026-09-28T06:41:17.993Z"}
-# {"event":"lead_media_received","id":"ff51b316-9366-4f7b-9cf4-8e035def2709","index":1,"duplicate":false}
-# {"event":"lead_media_received","id":"ff51b316-9366-4f7b-9cf4-8e035def2709","index":1,"duplicate":true}
-# {"event":"lead_media_received","id":"ff51b316-9366-4f7b-9cf4-8e035def2709","index":2,"duplicate":false}
-# {"event":"lead_media_received","id":"ff51b316-9366-4f7b-9cf4-8e035def2709","index":3,"duplicate":false}
-# Subtest: a saved request returns an upload key; photos and video attach to it and show in the inbox
-ok 26 - a saved request returns an upload key; photos and video attach to it and show in the inbox
-  ---
-  duration_ms: 142.583847
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"bb895f40-67d2-4e7f-9a3b-ccef67cf1483","kind":"webform","receivedAt":"2026-09-28T06:41:18.109Z"}
-# Subtest: uploads are refused without the right key, origin, type or content
-ok 27 - uploads are refused without the right key, origin, type or content
-  ---
-  duration_ms: 53.347549
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"8fbdb0b1-8f15-48c1-9e92-154f202ba92e","kind":"webform","receivedAt":"2026-09-28T06:41:18.152Z"}
-# {"event":"lead_media_received","id":"8fbdb0b1-8f15-48c1-9e92-154f202ba92e","index":1,"duplicate":false}
-# {"event":"lead_media_received","id":"8fbdb0b1-8f15-48c1-9e92-154f202ba92e","index":2,"duplicate":false}
-# {"event":"lead_media_received","id":"8fbdb0b1-8f15-48c1-9e92-154f202ba92e","index":3,"duplicate":false}
-# {"event":"lead_media_received","id":"8fbdb0b1-8f15-48c1-9e92-154f202ba92e","index":4,"duplicate":false}
-# {"event":"lead_media_received","id":"8fbdb0b1-8f15-48c1-9e92-154f202ba92e","index":5,"duplicate":false}
-# {"event":"lead_media_received","id":"8fbdb0b1-8f15-48c1-9e92-154f202ba92e","index":6,"duplicate":false}
-# Subtest: one request holds at most six attachments, and Tony gets one grouped follow-up alert
-ok 28 - one request holds at most six attachments, and Tony gets one grouped follow-up alert
-  ---
-  duration_ms: 49.376686
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"6aa68aa0-24cc-4d3b-b59d-80669429ab48","kind":"webform","receivedAt":"2026-09-28T06:41:18.204Z"}
-# {"event":"lead_media_received","id":"6aa68aa0-24cc-4d3b-b59d-80669429ab48","index":1,"duplicate":false}
-# Subtest: a resent request gets a fresh upload key, and the old one stops working
-ok 29 - a resent request gets a fresh upload key, and the old one stops working
-  ---
-  duration_ms: 49.609211
-  type: 'test'
-  ...
-# Subtest: media module: expiry, size caps, full disk and leftover partial uploads
-ok 30 - media module: expiry, size caps, full disk and leftover partial uploads
-  ---
-  duration_ms: 6.400985
-  type: 'test'
-  ...
-# (node:532) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# {"event":"public_chat_scripted","reason":"provider_error"}
-# Subtest: visitor events deduplicate, distinguish unique browsers, enforce origin, and persist
-ok 31 - visitor events deduplicate, distinguish unique browsers, enforce origin, and persist
-  ---
-  duration_ms: 109.284071
-  type: 'test'
-  ...
-# Subtest: completed AI counts survive retries, midnight, restart, and seven-day cleanup
-ok 32 - completed AI counts survive retries, midnight, restart, and seven-day cleanup
-  ---
-  duration_ms: 33.897916
-  type: 'test'
-  ...
-# (node:539) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# Subtest: summarize: urgent title, callback permission, source label, 3000-char details cap, no stray blank lines
-ok 33 - summarize: urgent title, callback permission, source label, 3000-char details cap, no stray blank lines
-  ---
-  duration_ms: 2.89635
-  type: 'test'
-  ...
-# Subtest: enqueue: one pending row per channel; SMS channel skipped only when urgent alerts really queued a text to Tony
-ok 34 - enqueue: one pending row per channel; SMS channel skipped only when urgent alerts really queued a text to Tony
-  ---
-  duration_ms: 4.163689
-  type: 'test'
-  ...
-# Subtest: tick: sends due rows; a failing channel backs off 30s/2m/10m/30m/1h, becomes failed after 5 retries, and never blocks the others
-ok 35 - tick: sends due rows; a failing channel backs off 30s/2m/10m/30m/1h, becomes failed after 5 retries, and never blocks the others
-  ---
-  duration_ms: 3.26387
-  type: 'test'
-  ...
-# Subtest: a row left in sending by a crash is reset to pending on startup and delivered again
-ok 36 - a row left in sending by a crash is reset to pending on startup and delivered again
-  ---
-  duration_ms: 1.098034
-  type: 'test'
-  ...
-# Subtest: overlapping ticks share one run; rows for unconfigured channels wait; nothing is sent after close
-ok 37 - overlapping ticks share one run; rows for unconfigured channels wait; nothing is sent after close
-  ---
-  duration_ms: 1.57843
-  type: 'test'
-  ...
-# Subtest: SMTP adapter: EHLO, AUTH PLAIN, one RCPT per recipient, UTF-8 subject and base64 body
-ok 38 - SMTP adapter: EHLO, AUTH PLAIN, one RCPT per recipient, UTF-8 subject and base64 body
-  ---
-  duration_ms: 335.653228
-  type: 'test'
-  ...
-# Subtest: SMTP adapter rejects on a 535 auth reply, a non-220 greeting, or a dropped connection
-ok 39 - SMTP adapter rejects on a 535 auth reply, a non-220 greeting, or a dropped connection
-  ---
-  duration_ms: 7.744412
-  type: 'test'
-  ...
-# Subtest: SMTP adapter refuses incomplete or malformed configuration
-ok 40 - SMTP adapter refuses incomplete or malformed configuration
-  ---
-  duration_ms: 0.705111
-  type: 'test'
-  ...
-# Subtest: ntfy adapter: POST /<topic>, urgent vs high priority, tel: call action, rejects bad responses and short topics
-ok 41 - ntfy adapter: POST /<topic>, urgent vs high priority, tel: call action, rejects bad responses and short topics
-  ---
-  duration_ms: 1.608162
-  type: 'test'
-  ...
-# Subtest: ntfy Title header carries the real plain-ASCII title (URGENT + vehicle)
-ok 42 - ntfy Title header carries the real plain-ASCII title (URGENT + vehicle)
-  ---
-  duration_ms: 0.455753
-  type: 'test'
-  ...
-# Subtest: desktop adapter runs an encoded PowerShell toast and maps exit 0 / exit 1 / spawn error
-ok 43 - desktop adapter runs an encoded PowerShell toast and maps exit 0 / exit 1 / spawn error
-  ---
-  duration_ms: 4.221264
-  type: 'test'
-  ...
-# Subtest: sms adapter texts the fixed Tony number, is marked skipUrgent, and caps the body
-ok 44 - sms adapter texts the fixed Tony number, is marked skipUrgent, and caps the body
-  ---
-  duration_ms: 0.469776
-  type: 'test'
-  ...
-# Subtest: channelsFromEnv enables only configured channels and reports bad settings
-ok 45 - channelsFromEnv enables only configured channels and reports bad settings
-  ---
-  duration_ms: 1.223521
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"e48738cb-7af1-4066-907c-2eeddc6dec6a","kind":"webform","receivedAt":"2026-09-28T06:41:18.808Z"}
-# Subtest: receiver: a web-form lead queues one notification per channel; a same-key retry does not queue again; inbox shows them
-ok 46 - receiver: a web-form lead queues one notification per channel; a same-key retry does not queue again; inbox shows them
-  ---
-  duration_ms: 94.516324
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"c51c053a-5106-4597-a8a4-e7359bebc57e","kind":"webform","receivedAt":"2026-09-28T06:41:18.883Z"}
-# {"event":"lead_received","id":"1a988e88-60f9-42dc-b660-562d21e9d7e7","kind":"webform","receivedAt":"2026-09-28T06:41:18.900Z"}
-# Subtest: receiver: urgent lead skips the SMS channel only when urgent alerts queued a text; one failing channel stays pending
-ok 47 - receiver: urgent lead skips the SMS channel only when urgent alerts queued a text; one failing channel stays pending
-  ---
-  duration_ms: 59.499207
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"34c466a3-a86e-489c-8575-d2566ee5ad42","kind":"webform","receivedAt":"2026-09-28T06:41:18.940Z"}
-# Subtest: receiver: the notification row is written in the lead transaction (a queue failure rolls the lead back)
-ok 48 - receiver: the notification row is written in the lead transaction (a queue failure rolls the lead back)
-  ---
-  duration_ms: 29.912348
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"8fbd345e-25a4-473f-a267-b41774951673","kind":"webform","receivedAt":"2026-09-28T06:41:18.965Z"}
-# {"event":"lead_notification_failed","channel":"sms","code":"fake_down:503"}
-# Subtest: receiver: with urgent alerts disabled an urgent lead still texts Tony through the SMS channel
-ok 49 - receiver: with urgent alerts disabled an urgent lead still texts Tony through the SMS channel
-  ---
-  duration_ms: 25.674792
-  type: 'test'
-  ...
-# Subtest: run: rows for a channel that is no longer configured never block configured channels
-ok 50 - run: rows for a channel that is no longer configured never block configured channels
-  ---
-  duration_ms: 1.623172
-  type: 'test'
-  ...
-# Subtest: run: a text that may have gone out is never resent (Twilio cannot dedupe)
-ok 51 - run: a text that may have gone out is never resent (Twilio cannot dedupe)
-  ---
-  duration_ms: 1.40574
-  type: 'test'
-  ...
-# Subtest: big jobs (engine, transmission, rebuild) are tagged so Tony calls them back first; small jobs are not
-ok 52 - big jobs (engine, transmission, rebuild) are tagged so Tony calls them back first; small jobs are not
-  ---
-  duration_ms: 0.522342
-  type: 'test'
-  ...
-# (node:549) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# Subtest: Ollama provider posts a JSON-mode chat to loopback and returns parsed intake with usage
-ok 53 - Ollama provider posts a JSON-mode chat to loopback and returns parsed intake with usage
-  ---
-  duration_ms: 2.677444
-  type: 'test'
-  ...
-# Subtest: Ollama provider fails closed with customer-safe errors
-ok 54 - Ollama provider fails closed with customer-safe errors
-  ---
-  duration_ms: 1.631064
-  type: 'test'
-  ...
-# Subtest: provider selection defaults to DeepSeek and switches to Ollama only when named
-ok 55 - provider selection defaults to DeepSeek and switches to Ollama only when named
-  ---
-  duration_ms: 2.282883
-  type: 'test'
-  ...
-# Subtest: paraphrased free-text fields are dropped and asked again instead of failing the chat
-ok 56 - paraphrased free-text fields are dropped and asked again instead of failing the chat
-  ---
-  duration_ms: 35.439701
-  type: 'test'
-  ...
-# (node:556) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# Subtest: ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions
-ok 57 - ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions
-  ---
-  duration_ms: 16.391954
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"9a21b217-dffe-4a40-9ddf-276f93c4252d","kind":"webform","receivedAt":"2026-09-28T06:41:18.705Z"}
-# {"event":"lead_received","id":"aecc44de-2e97-4841-8b3a-6b93dfe677eb","kind":"webform","receivedAt":"2026-09-28T06:41:18.725Z"}
-# {"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
-# Subtest: lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts
-ok 58 - lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts
-  ---
-  duration_ms: 80.971528
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"916c909a-f2b4-4c1c-9220-6cbffdbc6b60","kind":"webform","receivedAt":"2026-09-28T06:41:18.776Z"}
-# {"event":"lead_received","id":"2e5af312-d2e4-47de-a6d3-258f4b8d343c","kind":"webform","receivedAt":"2026-09-28T06:41:18.781Z"}
-# {"event":"lead_received","id":"ecc23aba-10e1-4feb-813b-4ce97da8a994","kind":"webform","receivedAt":"2026-09-28T06:41:18.785Z"}
-# Subtest: persistent callback/global caps suppress repeated alert pairs without losing saved leads
-ok 59 - persistent callback/global caps suppress repeated alert pairs without losing saved leads
-  ---
-  duration_ms: 55.364511
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"02a41a4d-30c1-436b-b460-1ac449e7298a","kind":"webform","receivedAt":"2026-09-28T06:41:18.819Z"}
-# {"event":"public_chat_scripted","reason":"invalid_answer"}
-# Subtest: definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token
-ok 60 - definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token
-  ---
-  duration_ms: 53.152827
-  type: 'test'
-  ...
-# Subtest: Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered
-ok 61 - Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered
-  ---
-  duration_ms: 4.036665
-  type: 'test'
-  ...
-# Subtest: Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider
-ok 62 - Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider
-  ---
-  duration_ms: 44.24165
-  type: 'test'
-  ...
-# {"event":"public_chat_scripted","reason":"chat_unavailable"}
-# {"event":"public_chat_scripted","reason":"chat_unavailable"}
-# {"event":"public_chat_scripted","reason":"chat_unavailable"}
-# {"event":"public_chat_scripted","reason":"chat_unavailable"}
-# {"event":"public_chat_scripted","reason":"chat_unavailable"}
-# {"event":"public_chat_scripted","reason":"chat_unavailable"}
-# {"event":"public_chat_scripted","reason":"invalid_answer"}
-# {"event":"public_chat_scripted","reason":"provider_error"}
-# (node:563) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# Subtest: a model outage still walks the customer through every question using their own words
-ok 63 - a model outage still walks the customer through every question using their own words
-  ---
-  duration_ms: 61.136097
-  type: 'test'
-  ...
-# Subtest: bad model output falls back to the scripted answer instead of an error
-ok 64 - bad model output falls back to the scripted answer instead of an error
-  ---
-  duration_ms: 12.008233
-  type: 'test'
-  ...
-# Subtest: scripted answers never store markup and still show the hazard warning
-ok 65 - scripted answers never store markup and still show the hazard warning
-  ---
-  duration_ms: 17.697442
-  type: 'test'
-  ...
-# {"event":"public_chat_scripted","reason":"capacity"}
-# {"event":"public_chat_scripted","reason":"capacity"}
-# Subtest: when the one GPU slot is busy, a second customer gets the scripted flow without waiting
-ok 66 - when the one GPU slot is busy, a second customer gets the scripted flow without waiting
-  ---
-  duration_ms: 24.419043
-  type: 'test'
-  ...
-# Subtest: past the daily model budget, chats keep working in scripted mode at no token cost
-ok 67 - past the daily model budget, chats keep working in scripted mode at no token cost
-  ---
-  duration_ms: 23.336218
-  type: 'test'
-  ...
-# Subtest: the Ollama schema covers exactly the intake fields and can be switched back to plain JSON
-ok 68 - the Ollama schema covers exactly the intake fields and can be switched back to plain JSON
-  ---
-  duration_ms: 2.322691
-  type: 'test'
-  ...
-# Subtest: urgency backstop: clear wording fills starts/stranded, negations and look-alikes never do
-ok 69 - urgency backstop: clear wording fills starts/stranded, negations and look-alikes never do
-  ---
-  duration_ms: 74.613924
-  type: 'test'
-  ...
-# (node:572) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-# (Use `node --trace-warnings ...` to show where the warning was created)
-# {"event":"lead_received","id":"272d628a-4100-4f65-9e31-f1964e659ae0","kind":"webform","receivedAt":"2026-09-28T06:41:19.060Z"}
-# Subtest: receives a real HTTP request, commits it, shows it privately, and deduplicates retries
-ok 70 - receives a real HTTP request, commits it, shows it privately, and deduplicates retries
-  ---
-  duration_ms: 121.846531
-  type: 'test'
-  ...
-# Subtest: public API has strict origin checks, preflight, and no unauthenticated owner inbox
-ok 71 - public API has strict origin checks, preflight, and no unauthenticated owner inbox
-  ---
-  duration_ms: 43.010225
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"2c3d7988-13f9-4957-93b5-7dde56f4801a","kind":"webform","receivedAt":"2026-09-28T06:41:19.197Z"}
-# Subtest: validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON
-ok 72 - validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON
-  ---
-  duration_ms: 38.850265
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"6fc47f2e-330f-480e-88de-8c565dd4f831","kind":"webform","receivedAt":"2026-09-28T06:41:19.229Z"}
-# {"event":"lead_received","id":"f8252946-67f5-463b-a4cc-f5bfd25fe188","kind":"webform","receivedAt":"2026-09-28T06:41:19.233Z"}
-# Subtest: rate limits apply before accepting more uploads
-ok 73 - rate limits apply before accepting more uploads
-  ---
-  duration_ms: 35.994356
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"d4a87954-6c5a-49fe-9ede-66f5ffaf189a","kind":"webform","receivedAt":"2026-09-28T06:41:19.261Z"}
-# {"event":"lead_received","id":"3664c8d9-e4ca-4cfe-811b-0148458c77b3","kind":"voicenote","receivedAt":"2026-09-28T06:41:19.277Z"}
-# Subtest: multipart recording is durable, privately playable with byte ranges, and requires name
-ok 74 - multipart recording is durable, privately playable with byte ranges, and requires name
-  ---
-  duration_ms: 54.01067
-  type: 'test'
-  ...
-# {"event":"lead_received","id":"5c4d114c-695c-4d4c-a7a7-947d167e76f2","kind":"voicenote","receivedAt":"2026-09-28T06:41:19.312Z"}
-# Subtest: legacy raw recording works and MIME-spoofed uploads fail
-ok 75 - legacy raw recording works and MIME-spoofed uploads fail
-  ---
-  duration_ms: 19.810186
-  type: 'test'
-  ...
-# Subtest: chat collects the problem, then its contact card sends one lead with the whole chat straight to Tony
-ok 76 - chat collects the problem, then its contact card sends one lead with the whole chat straight to Tony
-  ---
-  duration_ms: 349.789241
-  type: 'test'
-  ...
-# Subtest: a failed lead send keeps the card and details, and never claims Tony has them
-ok 77 - a failed lead send keeps the card and details, and never claims Tony has them
-  ---
-  duration_ms: 86.421916
-  type: 'test'
-  ...
-# Subtest: a lost contact-card response retries the exact saved payload and key, including consent time
-ok 78 - a lost contact-card response retries the exact saved payload and key, including consent time
-  ---
-  duration_ms: 68.760478
-  type: 'test'
-  ...
-# Subtest: initial AI connection failure stays truthful and unsent notes still hand off to the normal form
-ok 79 - initial AI connection failure stays truthful and unsent notes still hand off to the normal form
-  ---
-  duration_ms: 64.569507
-  type: 'test'
-  ...
-# Subtest: service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable
-ok 80 - service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable
-  ---
-  duration_ms: 125.482016
-  type: 'test'
-  ...
-# Subtest: after-hours wording uses Eastern time and untrusted text is displayed as text
-ok 81 - after-hours wording uses Eastern time and untrusted text is displayed as text
-  ---
-  duration_ms: 82.857719
-  type: 'test'
-  ...
-# Subtest: long conversation preserves all customer words and blocks sending until the customer shortens it
-ok 82 - long conversation preserves all customer words and blocks sending until the customer shortens it
-  ---
-  duration_ms: 89.724181
-  type: 'test'
-  ...
-# Subtest: receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity
-ok 83 - receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity
-  ---
-  duration_ms: 186.577286
-  type: 'test'
-  ...
-# Subtest: mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry
-ok 84 - mobile bar retains call and text actions, adds Bay One in the mocked preview, and restores focus to the actual entry
-  ---
-  duration_ms: 55.746566
-  type: 'test'
-  ...
-# Subtest: an unreachable Bay One server shows no launcher, loads no assets and still restores carried notes
-ok 85 - an unreachable Bay One server shows no launcher, loads no assets and still restores carried notes
-  ---
-  duration_ms: 47.058756
-  type: 'test'
-  ...
-# Subtest: a server whose chat failed to start is treated as unavailable
-ok 86 - a server whose chat failed to start is treated as unavailable
-  ---
-  duration_ms: 42.448026
-  type: 'test'
-  ...
-# Subtest: shipped config enables public Bay One against the p15g2 receiver
-ok 87 - shipped config enables public Bay One against the p15g2 receiver
-  ---
-  duration_ms: 15.146398
-  type: 'test'
-  ...
-# Subtest: public Bay One is disabled before UI/assets/network while normal contact remains available
-ok 88 - public Bay One is disabled before UI/assets/network while normal contact remains available
-  ---
-  duration_ms: 46.543818
-  type: 'test'
-  ...
-# Subtest: public form prepares an editable native text intent with no HTTP delivery or receipt claim
-ok 89 - public form prepares an editable native text intent with no HTTP delivery or receipt claim
-  ---
-  duration_ms: 43.788632
-  type: 'test'
-  ...
-# Subtest: iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient
-ok 90 - iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient
-  ---
-  duration_ms: 32.385508
-  type: 'test'
-  ...
-# Subtest: draft source carries only known page categories, never URL or session-injected personal data
-ok 91 - draft source carries only known page categories, never URL or session-injected personal data
-  ---
-  duration_ms: 174.799708
-  type: 'test'
-  ...
-# Subtest: the site form and Bay One store the exact SMS consent wording shown beside the site checkbox
-ok 92 - the site form and Bay One store the exact SMS consent wording shown beside the site checkbox
-  ---
-  duration_ms: 26.038158
-  type: 'test'
-  ...
-# Subtest: Bay One card sends photos and video to Tony after the request is saved, only when the receiver supports it
-ok 93 - Bay One card sends photos and video to Tony after the request is saved, only when the receiver supports it
-  ---
-  duration_ms: 95.870226
-  type: 'test'
-  ...
-# Subtest: without receiver support the photo picker stays hidden and nothing is uploaded
-ok 94 - without receiver support the photo picker stays hidden and nothing is uploaded
-  ---
-  duration_ms: 57.36292
-  type: 'test'
-  ...
-1..94
-# tests 94
-# suites 0
-# pass 94
-# fail 0
-# cancelled 0
-# skipped 0
-# todo 0
-# duration_ms 3863.042831
+Synthetic test run 2026-09-29T21:19:11.833Z
+Node v24.18.1
+✔ Beside call creates a manual lead (source beside_call) and queues its notification (588.8577ms)
+✔ provider event retries deduplicate while distinct jobs from the same phone are retained for review (405.9796ms)
+✔ withheld-number replay is deduplicated by event ID; changed content returns conflict (386.1869ms)
+✔ outbound events stay in the event ledger and provider time is preserved for incoming candidates (345.045ms)
+✔ missing provider identity stays captured and flagged, with no invented event identity claim (400.2567ms)
+{"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
+✔ manual lead notifications and Beside event records share the lead transaction (243.1804ms)
+✔ form-encoded Beside events work and message events become beside_text (210.8727ms)
+✔ Beside hook: wrong token 404, bad method 405, invalid JSON 400, nothing saved (213.532ms)
+{"event":"beside_hook_disabled","reason":"BESIDE_WEBHOOK_TOKEN must be 24-256 characters with no / ? # % or spaces"}
+✔ Beside hook is closed (404) when no token, or a token under 24 characters, is configured (232.1252ms)
+✔ Beside notification says where the lead came from (108.3145ms)
+✔ desk.addManual requires a name or phone, a valid phone, and a real, non-future date (112.1633ms)
+✔ setStage estimate_sent requires a Tony-approved price (estimateLow + tonyApproved === true) (105.7959ms)
+✔ addManual with an unapproved estimate_sent stage is rejected without saving a lead (101.1853ms)
+✔ wrong Beside tokens cannot use up the rate limit that real Beside events rely on (1465.5969ms)
+{"event":"lead_received","id":"77fb691e-7999-4466-bc7d-80586ef511d8","kind":"webform","receivedAt":"2026-09-29T21:19:11.740Z"}
+✔ inbox status buttons move the desk pipeline; lost never counts as contacted (146.9891ms)
+{"event":"lead_received","id":"2106ff58-513d-434a-a3ae-fc5fec8f71ce","kind":"webform","receivedAt":"2026-09-29T21:19:07.087Z"}
+✔ a customer who ticked text permission gets one confirmation text right away (639.3956ms)
+{"event":"lead_received","id":"41c4e8e8-1515-4c75-9a17-fe580d874a04","kind":"webform","receivedAt":"2026-09-29T21:19:07.787Z"}
+{"event":"lead_received","id":"42bb2473-4fe9-4d47-a7d3-afaa6cee0247","kind":"webform","receivedAt":"2026-09-29T21:19:07.821Z"}
+{"event":"lead_received","id":"d6f0e28d-a7dd-43c2-9c6c-575651435898","kind":"webform","receivedAt":"2026-09-29T21:19:07.867Z"}
+✔ no text without permission, and at most one per phone number per day (675.7418ms)
+{"event":"lead_received","id":"8b517f9f-8096-49e8-9904-45964dff08f4","kind":"webform","receivedAt":"2026-09-29T21:19:08.319Z"}
+✔ customer texts are off unless an adapter is configured (350.1515ms)
+{"event":"lead_received","id":"fcfd2727-1e50-429b-a0f3-a8bfa1f6db1a","kind":"webform","receivedAt":"2026-09-29T21:19:08.605Z"}
+{"event":"lead_received","id":"9b7739c8-bed4-4b4d-b1d3-f83d07ed1a04","kind":"webform","receivedAt":"2026-09-29T21:19:08.986Z"}
+✔ an uncertain send is never repeated; a rate limit is retried (754.4023ms)
+✔ message wording, phone normalization and adapter guard rails (1.3593ms)
+{"event":"lead_received","id":"f2245aca-1bef-4924-87da-68131a72ef44","kind":"webform","receivedAt":"2026-09-29T21:19:09.306Z"}
+{"event":"lead_received","id":"8e224502-5a2e-49cf-9d7e-7c01ac6b500b","kind":"webform","receivedAt":"2026-09-29T21:19:09.326Z"}
+✔ marking a job won schedules one Google review text two hours later, only with text permission (290.5257ms)
+{"event":"public_chat_scripted","reason":"provider_error"}
+{"event":"public_chat_scripted","reason":"provider_error"}
+{"event":"public_chat_scripted","reason":"provider_error"}
+{"event":"public_chat_scripted","reason":"provider_error"}
+{"event":"public_chat_scripted","reason":"provider_error"}
+✔ golden cases are well formed (4.5563ms)
+✔ scoring matches keywords, exact statuses, absent fields and who answered (2.0032ms)
+✔ a model that never answers fails the check even though the script keeps collecting (329.082ms)
+✔ a model that copies the customer words passes the matching cases (141.0515ms)
+{"event":"lead_received","id":"0fed743a-5b7c-4ebd-9862-99a1b5442fdb","kind":"webform","receivedAt":"2026-09-29T21:19:07.143Z"}
+{"event":"lead_media_received","id":"0fed743a-5b7c-4ebd-9862-99a1b5442fdb","index":1,"duplicate":false}
+{"event":"lead_media_received","id":"0fed743a-5b7c-4ebd-9862-99a1b5442fdb","index":1,"duplicate":true}
+{"event":"lead_media_received","id":"0fed743a-5b7c-4ebd-9862-99a1b5442fdb","index":2,"duplicate":false}
+{"event":"lead_media_received","id":"0fed743a-5b7c-4ebd-9862-99a1b5442fdb","index":3,"duplicate":false}
+✔ a saved request returns an upload key; photos and video attach to it and show in the inbox (838.2788ms)
+{"event":"lead_received","id":"69422b3d-39ee-4b7b-8943-4c3d8ddda2b1","kind":"webform","receivedAt":"2026-09-29T21:19:07.948Z"}
+✔ uploads are refused without the right key, origin, type or content (500.5725ms)
+{"event":"lead_received","id":"47985079-fd7e-4008-8184-e03d33077a39","kind":"webform","receivedAt":"2026-09-29T21:19:08.365Z"}
+{"event":"lead_media_received","id":"47985079-fd7e-4008-8184-e03d33077a39","index":1,"duplicate":false}
+{"event":"lead_media_received","id":"47985079-fd7e-4008-8184-e03d33077a39","index":2,"duplicate":false}
+{"event":"lead_media_received","id":"47985079-fd7e-4008-8184-e03d33077a39","index":3,"duplicate":false}
+{"event":"lead_media_received","id":"47985079-fd7e-4008-8184-e03d33077a39","index":4,"duplicate":false}
+{"event":"lead_media_received","id":"47985079-fd7e-4008-8184-e03d33077a39","index":5,"duplicate":false}
+{"event":"lead_media_received","id":"47985079-fd7e-4008-8184-e03d33077a39","index":6,"duplicate":false}
+✔ one request holds at most six attachments, and Tony gets one grouped follow-up alert (513.0806ms)
+{"event":"lead_received","id":"1e645137-e575-447f-b077-868d753ccffb","kind":"webform","receivedAt":"2026-09-29T21:19:08.925Z"}
+{"event":"lead_media_received","id":"1e645137-e575-447f-b077-868d753ccffb","index":1,"duplicate":false}
+✔ a resent request gets a fresh upload key, and the old one stops working (433.1896ms)
+✔ media module: expiry, size caps, full disk and leftover partial uploads (19.2943ms)
+{"event":"public_chat_scripted","reason":"provider_error"}
+✔ visitor events deduplicate, distinguish unique browsers, enforce origin, and persist (575.8654ms)
+✔ completed AI counts survive retries, midnight, restart, and seven-day cleanup (312.9287ms)
+✔ summarize: urgent title, callback permission, source label, 3000-char details cap, no stray blank lines (4.286ms)
+✔ enqueue: one pending row per channel; SMS channel skipped only when urgent alerts really queued a text to Tony (10.1251ms)
+✔ tick: sends due rows; a failing channel backs off 30s/2m/10m/30m/1h, becomes failed after 5 retries, and never blocks the others (8.2544ms)
+✔ a row left in sending by a crash is reset to pending on startup and delivered again (2.8943ms)
+✔ overlapping ticks share one run; rows for unconfigured channels wait; nothing is sent after close (2.4728ms)
+✔ SMTP adapter: EHLO, AUTH PLAIN, one RCPT per recipient, UTF-8 subject and base64 body (156.3236ms)
+✔ SMTP adapter rejects on a 535 auth reply, a non-220 greeting, or a dropped connection (16.1977ms)
+✔ SMTP adapter refuses incomplete or malformed configuration (0.7454ms)
+✔ ntfy adapter: POST /<topic>, urgent vs high priority, tel: call action, rejects bad responses and short topics (1.0274ms)
+✔ ntfy Title header carries the real plain-ASCII title (URGENT + vehicle) (0.3815ms)
+✔ desktop adapter runs an encoded PowerShell toast and maps exit 0 / exit 1 / spawn error (4.0177ms)
+✔ sms adapter texts the fixed Tony number, is marked skipUrgent, and caps the body (0.4705ms)
+✔ channelsFromEnv enables only configured channels and reports bad settings (1.0305ms)
+{"event":"lead_received","id":"5e490986-55ef-40a2-9b70-4f4ba530ae1b","kind":"webform","receivedAt":"2026-09-29T21:19:07.281Z"}
+✔ receiver: a web-form lead queues one notification per channel; a same-key retry does not queue again; inbox shows them (399.3176ms)
+{"event":"lead_received","id":"a8a760f2-247a-4c58-82be-f70fad77e250","kind":"webform","receivedAt":"2026-09-29T21:19:07.787Z"}
+{"event":"lead_received","id":"20d1cad4-8469-49c4-9c71-263951eda71a","kind":"webform","receivedAt":"2026-09-29T21:19:07.856Z"}
+✔ receiver: urgent lead skips the SMS channel only when urgent alerts queued a text; one failing channel stays pending (555.8603ms)
+{"event":"lead_received","id":"373adf7f-35ae-4a61-8d43-deda73d8c1c3","kind":"webform","receivedAt":"2026-09-29T21:19:08.285Z"}
+✔ receiver: the notification row is written in the lead transaction (a queue failure rolls the lead back) (365.5876ms)
+{"event":"lead_received","id":"bdd755a6-0b6f-49a7-9b0b-04ab1e2c034e","kind":"webform","receivedAt":"2026-09-29T21:19:08.593Z"}
+{"event":"lead_notification_failed","channel":"sms","code":"fake_down:503"}
+✔ receiver: with urgent alerts disabled an urgent lead still texts Tony through the SMS channel (321.8055ms)
+✔ run: rows for a channel that is no longer configured never block configured channels (2.8903ms)
+✔ run: a text that may have gone out is never resent (Twilio cannot dedupe) (3.0874ms)
+✔ big jobs (engine, transmission, rebuild) are tagged so Tony calls them back first; small jobs are not (0.5829ms)
+✔ Ollama provider posts a JSON-mode chat to loopback and returns parsed intake with usage (9.5247ms)
+✔ Ollama provider fails closed with customer-safe errors (3.8023ms)
+✔ provider selection defaults to DeepSeek and switches to Ollama only when named (1.8695ms)
+✔ paraphrased free-text fields are dropped and asked again instead of failing the chat (202.0821ms)
+✔ ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions (55.3156ms)
+{"event":"lead_received","id":"fd1438a2-1e70-4429-a458-4e846a8bc6c4","kind":"webform","receivedAt":"2026-09-29T21:19:07.291Z"}
+{"event":"lead_received","id":"6e80236a-e737-4265-9ea6-2a8e463f9f1a","kind":"webform","receivedAt":"2026-09-29T21:19:07.394Z"}
+{"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
+✔ lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts (596.4799ms)
+{"event":"lead_received","id":"8740c99d-6d51-45cb-bf12-d363f35bd2a5","kind":"webform","receivedAt":"2026-09-29T21:19:07.893Z"}
+{"event":"lead_received","id":"3d427bf5-09e3-40a1-968c-0f042214af11","kind":"webform","receivedAt":"2026-09-29T21:19:07.929Z"}
+{"event":"lead_received","id":"8c40f623-f1dc-4737-aba0-234d13656bcd","kind":"webform","receivedAt":"2026-09-29T21:19:07.972Z"}
+✔ persistent callback/global caps suppress repeated alert pairs without losing saved leads (570.4086ms)
+{"event":"lead_received","id":"c44e8afd-4f12-4d91-9cd3-35366ce260ef","kind":"webform","receivedAt":"2026-09-29T21:19:08.360Z"}
+{"event":"public_chat_scripted","reason":"invalid_answer"}
+✔ definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token (399.9217ms)
+✔ Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered (1.778ms)
+✔ Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider (176.6822ms)
+{"event":"public_chat_scripted","reason":"chat_unavailable"}
+{"event":"public_chat_scripted","reason":"chat_unavailable"}
+{"event":"public_chat_scripted","reason":"chat_unavailable"}
+{"event":"public_chat_scripted","reason":"chat_unavailable"}
+{"event":"public_chat_scripted","reason":"chat_unavailable"}
+{"event":"public_chat_scripted","reason":"chat_unavailable"}
+{"event":"public_chat_scripted","reason":"invalid_answer"}
+{"event":"public_chat_scripted","reason":"provider_error"}
+✔ a model outage still walks the customer through every question using their own words (280.1096ms)
+✔ bad model output falls back to the scripted answer instead of an error (116.7725ms)
+✔ scripted answers never store markup and still show the hazard warning (96.0038ms)
+{"event":"public_chat_scripted","reason":"capacity"}
+{"event":"public_chat_scripted","reason":"capacity"}
+✔ when the one GPU slot is busy, a second customer gets the scripted flow without waiting (131.6032ms)
+✔ past the daily model budget, chats keep working in scripted mode at no token cost (142.6623ms)
+✔ the Ollama schema covers exactly the intake fields and can be switched back to plain JSON (2.9648ms)
+✔ urgency backstop: clear wording fills starts/stranded, negations and look-alikes never do (682.9177ms)
+{"event":"lead_received","id":"abe25c12-2722-46a6-8bd2-14a288b78b70","kind":"webform","receivedAt":"2026-09-29T21:19:07.287Z"}
+✔ receives a real HTTP request, commits it, shows it privately, and deduplicates retries (707.6321ms)
+✔ public API has strict origin checks, preflight, and no unauthenticated owner inbox (477.8592ms)
+{"event":"lead_received","id":"2bdb1891-5752-49b3-a57f-47c3e1a47023","kind":"webform","receivedAt":"2026-09-29T21:19:08.391Z"}
+✔ validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON (396.7993ms)
+{"event":"lead_received","id":"69c0fb6d-42c6-4c8b-95d9-9fa81134d1ae","kind":"webform","receivedAt":"2026-09-29T21:19:08.826Z"}
+{"event":"lead_received","id":"7ade546e-7806-4e1a-a443-463a2a0f4c38","kind":"webform","receivedAt":"2026-09-29T21:19:08.849Z"}
+✔ rate limits apply before accepting more uploads (430.2108ms)
+{"event":"lead_received","id":"7e57dc71-3a03-4c61-afe4-7211ad75200a","kind":"webform","receivedAt":"2026-09-29T21:19:09.088Z"}
+{"event":"lead_received","id":"2ed1142f-4dc1-4bcc-8932-1b819b8a48bb","kind":"voicenote","receivedAt":"2026-09-29T21:19:09.120Z"}
+✔ multipart recording is durable, privately playable with byte ranges, and requires name (296.6651ms)
+{"event":"lead_received","id":"c1b8628e-b25e-4fcc-84de-4628db2fd907","kind":"voicenote","receivedAt":"2026-09-29T21:19:09.380Z"}
+✔ legacy raw recording works and MIME-spoofed uploads fail (213.8308ms)
+{"event":"lead_received","id":"8d3ebd1a-a3fd-4018-813a-60f9db22de29","kind":"webform","receivedAt":"2026-09-29T21:19:09.544Z"}
+✔ phone numbers with invisible autofill characters are accepted, and the Google channel is kept (173.3303ms)
+✔ chat collects the problem, then its contact card sends one lead with the whole chat straight to Tony (503.2887ms)
+✔ a failed lead send keeps the card and details, and never claims Tony has them (279.9166ms)
+✔ a lost contact-card response retries the exact saved payload and key, including consent time (174.2525ms)
+✔ initial AI connection failure stays truthful and unsent notes still hand off to the normal form (75.1687ms)
+✔ service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable (95.646ms)
+✔ after-hours wording uses Eastern time and untrusted text is displayed as text (60.0957ms)
+✔ long conversation preserves all customer words and blocks sending until the customer shortens it (83.744ms)
+✔ receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity (133.1526ms)
+✔ mobile bar keeps request and call actions while the separate Bay One entry restores focus (48.7073ms)
+✔ careers preserves the applicant-specific mobile introduction action (23.9117ms)
+✔ an unreachable Bay One server shows no launcher, loads no assets and still restores carried notes (53.5369ms)
+✔ a server whose chat failed to start is treated as unavailable (34.0182ms)
+✔ shipped config enables public Bay One against the p15g2 receiver (7.6775ms)
+✔ public Bay One is disabled before UI/assets/network while normal contact remains available (32.8578ms)
+✔ with the shop receiver offline, the public form falls back to an editable native text intent with no receipt claim (29.7475ms)
+✔ iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient (46.1091ms)
+✔ draft source carries only known page categories, never URL or session-injected personal data (122.5601ms)
+✔ the site form and Bay One store the exact SMS consent wording shown beside the site checkbox (23.2538ms)
+✔ Bay One card sends photos and video to Tony after the request is saved, only when the receiver supports it (71.3237ms)
+✔ without receiver support the photo picker stays hidden and nothing is uploaded (44.0955ms)
+✔ online form initializes the short request flow and enables the safe submit control (347.8155ms)
+✔ core fields send without city; service, source and channel survive; receipt waits for saved confirmation (93.6406ms)
+✔ unconfirmed receiver response preserves entries and exposes manual contact without creating a receipt (105.0649ms)
+✔ uncertain retries keep the same payload and key, while browser autofill edits create an updated request (262.0601ms)
+✔ optional timing and text permission use the existing receiver contract and exact displayed disclosure (118.0136ms)
+✔ missing required details and invalid phone numbers never reach the receiver (64.4001ms)
+✔ offline mode prepares an editable manual draft with optional city and callback, without claiming receipt (42.0066ms)
+ℹ tests 103
+ℹ suites 0
+ℹ pass 103
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5304.7814

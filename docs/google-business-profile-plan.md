@@ -2,6 +2,12 @@
 
 Prepared September 28, 2026. **This is a plan for review, not a set of applied changes.** It makes no website edits, no Google Business Profile edits and no publication. Any customer-facing wording below is a **draft** until Tony approves it.
 
+## Update, October 1, 2026 (read first)
+
+- **No Google re-verification.** The owner does not want to trigger a re-verification, so **do not change the business name, address, address visibility or categories on the Google profile** for now. Those are the edits most likely to trigger one. The address decision below ("show it") applies to the **website only**, where it is live in every footer and in the business data. Edits that are safe to make on Google: photos, posts, the description, services, attributes, replying to reviews, and removing the Shopmonkey appointment link.
+- **Photos.** The owner chose his photos; the others are already on the Google profile. Three welding photos are on the site: `tony-at-work.webp` (welding an exhaust flange: the page header image and the Workshop gallery), `workshop-wide.webp` (Tony in the workshop: the Workshop page header and "How a workshop job works") and `workshop-fabrication.webp` (stick welding, also used on Careers). Slots without a photo yet are **kept in the page but hidden** (`hidden` attribute, `data-photo` names the shot): the capability photos, the extra gallery shots, and both before/after sections (walnut blasting, paint correction). To turn one on, save the photo under its filename and remove `hidden`.
+- **Merged to main** with PR #11. The old driveway and van images were deleted.
+
 ## Owner decisions (September 28, 2026)
 
 | Question | Decision |
@@ -113,7 +119,7 @@ Google distinguishes three setups:
 
 **Decision (owner, Sept 28, updated): option B, hybrid.** Show the Bayshore Ranch address with a map pin and keep the 12-town service area. The owner confirmed customers can come to the base or drop the car off and leave. *(The first decision that day was option A, hidden.)*
 
-**To do before switching:** (1) ~~get the exact street address~~ **done: 17686 Saddleback Loop, North Fort Myers, FL 33917**; (2) put permanent signage with the business name at the entrance; (3) set up a clear drop-off spot and key drop, since the hours stay at 24; (4) in the Google profile, go to **Edit profile → Location → Business location**, turn on showing the address to customers, enter it, and keep the service areas; (5) expect a re-verification request, and complete it before making other edits; (6) add the same address to the website footer, the `AutoRepair` schema (`address`) and the workshop page, so the name, address and phone match everywhere.
+**On hold (Oct 1: no re-verification), website part done.** Earlier steps for Google, kept for later: (1) ~~get the exact street address~~ **done: 17686 Saddleback Loop, North Fort Myers, FL 33917**; (2) put permanent signage with the business name at the entrance; (3) set up a clear drop-off spot and key drop, since the hours stay at 24; (4) in the Google profile, go to **Edit profile → Location → Business location**, turn on showing the address to customers, enter it, and keep the service areas; (5) expect a re-verification request, and complete it before making other edits; (6) add the same address to the website footer, the `AutoRepair` schema (`address`) and the workshop page, so the name, address and phone match everywhere.
 
 **When to revisit option B:** only if **all** of these hold: (1) the workshop is a lawful place to receive customers (zoning, lease, HOA), (2) someone is there during fixed, published drop-off hours, (3) the owner accepts people arriving without an appointment, and (4) there is signage at the entrance. Then show the address with **real** drop-off hours, and cover 24/7 phone and Bay One availability in the description and in posts rather than in the hours field.
 

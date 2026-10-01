@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
+<!DOCTYPE html><html lang="en" data-theme="dark"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/favicon.ico" sizes="32x32">
@@ -25,12 +23,12 @@
   <link rel="canonical" href="https://fixingfortmyers.com/workshop">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Barlow:wght@400;600;700;800&amp;family=Russo+One&amp;display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="./assets/workshop-wide.webp" fetchpriority="high">
-  <link rel="stylesheet" href="./base.css?v=20260928-workshop">
-  <link rel="stylesheet" href="./style.css?v=20260928-workshop">
-  <link rel="stylesheet" href="./service-pages.css?v=20260928-workshop">
+  <link rel="stylesheet" href="./base.css?v=20261001-workshop">
+  <link rel="stylesheet" href="./style.css?v=20261001-workshop">
+  <link rel="stylesheet" href="./service-pages.css?v=20261001-workshop">
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -280,19 +278,22 @@
   ]
 }
 </script>
-<link rel="stylesheet" href="/site-updates.css?v=20260928-workshop"><style>
+<link rel="stylesheet" href="/site-updates.css?v=20261001-workshop"><link rel="stylesheet" href="/clean-layout.css?v=20261001-workshop"><style>
 .ws-figure{margin:0}.ws-figure img,.ws-cap img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#12161d}
 .ws-figure figcaption{margin-top:.6rem;font-size:.95rem;opacity:.8}
 .ws-capabilities{display:grid;gap:2.5rem;margin-top:2rem}
 .ws-cap{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:2rem;align-items:center}
 .ws-cap:nth-child(even){grid-template-columns:minmax(0,7fr) minmax(0,5fr)}.ws-cap:nth-child(even) img{order:2}
 .ws-cap h3{margin:0 0 .6rem}.ws-cap p{margin:0 0 .8rem;line-height:1.6}
+.ws-cap.no-photo{grid-template-columns:1fr;max-width:62ch}
+.ws-gallery.ws-gallery--2{grid-template-columns:repeat(2,minmax(0,1fr))}
+main [hidden]{display:none!important}
 .ws-pair{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2rem}
 .ws-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.25rem;margin-top:2rem}
 .ws-cap a,.ws-figure a,.service-hero__aside a,.faq-item a,.service-quote a{color:var(--color-accent);text-decoration:underline;text-underline-offset:3px}
 @media (max-width:800px){.ws-cap,.ws-cap:nth-child(even){grid-template-columns:1fr}.ws-cap:nth-child(even) img{order:0}.ws-pair{grid-template-columns:1fr}.ws-gallery{grid-template-columns:1fr 1fr}}
 @media (max-width:640px){.service-hero__content{grid-template-columns:minmax(0,1fr)}.service-hero__content>*,.service-hero__stat{min-width:0}.service-hero__stat strong{font-size:1.2rem;overflow-wrap:anywhere}}
-@media (max-width:480px){.ws-gallery{grid-template-columns:1fr}}
+@media (max-width:480px){.ws-gallery,.ws-gallery.ws-gallery--2{grid-template-columns:1fr}}
 </style></head>
 <body>
 
@@ -315,7 +316,7 @@
           <li><a href="/#services">Services</a></li><li><a href="/repair-guides">Repair Guides</a></li>
           <li><a href="/#about">About</a></li>
           <li><a href="/careers">Careers</a></li>
-          <li><a href="/?service=engine#contact" class="nav__cta">Request a Repair</a></li>
+          <li><a href="/?service=engine#contact" class="nav__cta">Request a repair</a></li>
         </ul>
 
         <button class="nav__mobile-toggle" id="mobileToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu" type="button">
@@ -329,7 +330,7 @@
         <a href="/#services">Services</a><a href="/repair-guides">Repair Guides</a>
         <a href="/#about">About</a>
         <a href="/careers">Careers</a>
-        <a href="/?service=engine#contact" class="nav__cta">Request a Repair</a>
+        <a href="/?service=engine#contact" class="nav__cta">Request a repair</a>
       </div>
     </div>
   </nav>
@@ -390,7 +391,7 @@
             </ol>
           </div>
           <figure class="ws-figure reveal reveal-delay-2">
-            <img src="/assets/tony-workshop-portrait.webp" width="1536" height="1024" alt="Tony in his workshop at Bayshore Ranch" loading="lazy" decoding="async" data-photo="W19">
+            <img src="/assets/workshop-wide.webp" width="1536" height="1024" alt="Tony at work in his workshop at Bayshore Ranch" loading="lazy" decoding="async">
             <figcaption>Tony in the workshop. The same person who diagnoses your car does the work.</figcaption>
           </figure>
         </div>
@@ -402,56 +403,56 @@
         <p class="section-label reveal">Inside the Workshop</p>
         <h2 class="section-title reveal reveal-delay-1">What Gets Done Here</h2>
         <div class="ws-capabilities">
-          <article class="ws-cap reveal">
-            <img src="/assets/workshop-engine-assembly.webp" width="1536" height="1024" alt="Engine on a stand during assembly in Tony’s workshop" loading="lazy" decoding="async" data-photo="W4">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/workshop-engine-assembly.webp" width="1536" height="1024" alt="Engine on a stand during assembly in Tony’s workshop" loading="lazy" decoding="async" data-photo="W4">
             <div>
               <h3>Engine Rebuilds and Replacements</h3>
               <p>Engines come apart here, get cleaned and inspected, and are measured before anyone recommends a path. Tolerance checks (bearing clearances, bore and crankshaft measurements) show whether the block is worth rebuilding or whether a replacement engine makes more sense. Rebuilt or replaced, the assembly and installation happen in this workshop.</p>
               <p><a href="/engine-rebuild-vs-replacement-fort-myers">Rebuild or replace? How Tony decides →</a></p>
             </div>
           </article>
-          <article class="ws-cap reveal">
-            <img src="/assets/workshop-measuring.webp" width="1536" height="1024" alt="Precision measuring tools on an engine part" loading="lazy" decoding="async" data-photo="W5">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/workshop-measuring.webp" width="1536" height="1024" alt="Precision measuring tools on an engine part" loading="lazy" decoding="async" data-photo="W5">
             <div>
               <h3>Tolerance and Timing Checks</h3>
               <p>An engine is only as good as its clearances and its timing. Parts are measured against the manufacturer’s specifications during assembly, and timing chains and belts are set up and verified before the engine runs. That is the difference between an engine that was put together and one that was built to spec.</p>
               <p><a href="/engine-repair-fort-myers">Engine repair →</a></p>
             </div>
           </article>
-          <article class="ws-cap reveal">
-            <img src="/assets/workshop-transmission.webp" width="1536" height="1024" alt="Transmission on a jack in Tony’s workshop" loading="lazy" decoding="async" data-photo="W8">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/workshop-transmission.webp" width="1536" height="1024" alt="Transmission on a jack in Tony’s workshop" loading="lazy" decoding="async" data-photo="W8">
             <div>
               <h3>Transmission Rebuilds and Replacements</h3>
               <p>Transmission work starts with a diagnosis: shifting, slipping, fluid condition and codes. If the transmission has to come out, the removal, rebuild or replacement and the reinstall are all done here.</p>
               <p><a href="/transmission-repair-fort-myers">Transmission repair →</a></p>
             </div>
           </article>
-          <article class="ws-cap reveal">
-            <img src="/assets/workshop-walnut-blaster.webp" width="1536" height="1024" alt="Walnut blasting equipment in Tony’s workshop" loading="lazy" decoding="async" data-photo="W9">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/workshop-walnut-blaster.webp" width="1536" height="1024" alt="Walnut blasting equipment in Tony’s workshop" loading="lazy" decoding="async" data-photo="W9">
             <div>
               <h3>Walnut Blasting (Intake Carbon Cleaning)</h3>
               <p>On direct-injection engines, fuel no longer washes over the backs of the intake valves, so carbon can build up there over time. Heavy deposits can cause rough idle, misfires and lost power. Walnut blasting uses crushed walnut shell media to clean the valves back to metal with the intake off.</p>
               <p><a href="/engine-repair-fort-myers">Ask about intake carbon cleaning →</a></p>
             </div>
           </article>
-          <article class="ws-cap reveal">
-            <img src="/assets/workshop-project.webp" width="1536" height="1024" alt="Project vehicle in a bay at Tony’s workshop" loading="lazy" decoding="async" data-photo="W17">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/workshop-project.webp" width="1536" height="1024" alt="Project vehicle in a bay at Tony’s workshop" loading="lazy" decoding="async" data-photo="W17">
             <div>
               <h3>Diesel, Hot Rods and Restoration</h3>
               <p>Diesel diagnosis and repair, hot rod builds and restoration projects all need time on a lift and space to work. That is what the workshop is for.</p>
               <p><a href="/diesel-repair-fort-myers">Diesel repair →</a> · <a href="/hot-rod-restoration-fort-myers">Hot rods and restoration →</a></p>
             </div>
           </article>
-          <article class="ws-cap reveal">
-            <img src="/assets/paint-correction-after.webp" width="1536" height="1024" alt="Paint after correction and buffing" loading="lazy" decoding="async" data-photo="P2">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/paint-correction-after.webp" width="1536" height="1024" alt="Paint after correction and buffing" loading="lazy" decoding="async" data-photo="P2">
             <div>
               <h3>Paint Work, Paint Correction and Detailing</h3>
               <p>Paint work, buffing, paint correction and detailing, from swirl marks and oxidized paint to a full interior and exterior detail.</p>
               <p><a href="/paint-correction-detailing-fort-myers">Paint correction and detailing →</a></p>
             </div>
           </article>
-          <article class="ws-cap reveal">
-            <img src="/assets/workshop-diagnostics.webp" width="1536" height="1024" alt="Diagnostic scan tool showing live data" loading="lazy" decoding="async" data-photo="W12">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/workshop-diagnostics.webp" width="1536" height="1024" alt="Diagnostic scan tool showing live data" loading="lazy" decoding="async" data-photo="W12">
             <div>
               <h3>Diagnostics First</h3>
               <p>Every job starts with finding the cause: scan tools, live data and targeted tests, not guesses. That includes no-start problems, warning lights and electrical faults.</p>
@@ -462,7 +463,7 @@
       </div>
     </section>
 
-    <section>
+    <section hidden data-waiting="walnut before/after photos (W10, W11)">
       <div class="container">
         <p class="section-label reveal">Walnut Blasting</p>
         <h2 class="section-title reveal reveal-delay-1">Before and After</h2>
@@ -483,13 +484,13 @@
       <div class="container">
         <p class="section-label reveal">Gallery</p>
         <h2 class="section-title reveal reveal-delay-1">Around the Shop</h2>
-        <div class="ws-gallery">
-          <figure class="ws-figure reveal"><img src="/assets/workshop-wide.webp" width="1536" height="1024" alt="Inside Tony’s workshop at Bayshore Ranch" loading="lazy" decoding="async" data-photo="W1"><figcaption>The workshop.</figcaption></figure>
-          <figure class="ws-figure reveal"><img src="/assets/workshop-lift.webp" width="1536" height="1024" alt="Vehicle raised on the lift in Tony’s workshop" loading="lazy" decoding="async" data-photo="W3"><figcaption>On the lift.</figcaption></figure>
-          <figure class="ws-figure reveal"><img src="/assets/workshop-timing.webp" width="1536" height="1024" alt="Engine timing tools installed with the timing marks aligned" loading="lazy" decoding="async" data-photo="W7"><figcaption>Timing set-up.</figcaption></figure>
-          <figure class="ws-figure reveal"><img src="/assets/workshop-tool-storage.webp" width="1536" height="1024" alt="Tool storage in Tony’s workshop" loading="lazy" decoding="async" data-photo="W13"><figcaption>The tools for the job.</figcaption></figure>
-          <figure class="ws-figure reveal"><img src="/assets/workshop-fabrication.webp" width="1536" height="1024" alt="Fabrication and welding area" loading="lazy" decoding="async" data-photo="W14"><figcaption>Fabrication area.</figcaption></figure>
-          <figure class="ws-figure reveal"><img src="/assets/tony-at-work.webp" width="1536" height="1024" alt="Tony working on a vehicle in the workshop bay" loading="lazy" decoding="async" data-photo="W20"><figcaption>Tony at work in the bay.</figcaption></figure>
+        <div class="ws-gallery ws-gallery--2">
+          <figure class="ws-figure reveal" hidden><img src="/assets/workshop-wide.webp" width="1536" height="1024" alt="Inside Tony’s workshop at Bayshore Ranch" loading="lazy" decoding="async"><figcaption>The workshop.</figcaption></figure>
+          <figure class="ws-figure reveal" hidden><img src="/assets/workshop-lift.webp" width="1536" height="1024" alt="Vehicle raised on the lift in Tony’s workshop" loading="lazy" decoding="async" data-photo="W3"><figcaption>On the lift.</figcaption></figure>
+          <figure class="ws-figure reveal" hidden><img src="/assets/workshop-timing.webp" width="1536" height="1024" alt="Engine timing tools installed with the timing marks aligned" loading="lazy" decoding="async" data-photo="W7"><figcaption>Timing set-up.</figcaption></figure>
+          <figure class="ws-figure reveal" hidden><img src="/assets/workshop-tool-storage.webp" width="1536" height="1024" alt="Tool storage in Tony’s workshop" loading="lazy" decoding="async" data-photo="W13"><figcaption>The tools for the job.</figcaption></figure>
+          <figure class="ws-figure reveal"><img src="/assets/workshop-fabrication.webp" width="1536" height="1024" alt="Tony stick welding in the workshop" loading="lazy" decoding="async"><figcaption>Stick welding in the workshop.</figcaption></figure>
+          <figure class="ws-figure reveal"><img src="/assets/tony-at-work.webp" width="1536" height="1024" alt="Tony welding an exhaust flange in the workshop" loading="lazy" decoding="async"><figcaption>Welding an exhaust flange.</figcaption></figure>
         </div>
       </div>
     </section>
@@ -625,7 +626,7 @@
           </p>
           <div class="footer__social">
             <a href="https://www.facebook.com/PerfectTimingAutoRepair" aria-label="Facebook">
-              <svg width="18" height="18" viewbox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
             </a>
 
           </div>
@@ -654,7 +655,7 @@
             <li><a href="/case-studies">Repair Case Studies</a></li>
             <li><a href="/#areas">Service Area</a></li>
             <li><a href="/#testimonials">Reviews</a></li>
-            <li><a href="/?service=engine#contact">Contact</a></li>
+            <li><a href="/?service=engine#contact">Request a repair</a></li>
           </ul>
         </div>
       </div>
@@ -676,5 +677,5 @@
 
 
 
-<div class="mobile-contact-bar" role="navigation" aria-label="Quick contact"><a href="tel:+12393972048">Call (239) 397-2048</a><a href="/?service=engine#contact">Request a repair</a></div><script src="/site.js?v=20260928-workshop" defer></script><script src="/bay-one-config.js?v=20260928-workshop" defer></script><script src="/bay-one-widget.js?v=20260928-workshop" defer></script></body>
-</html>
+<div class="mobile-contact-bar" role="navigation" aria-label="Quick contact"><a href="/?service=engine#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/site.js?v=20261001-workshop" defer=""></script><script src="/bay-one-config.js?v=20261001-workshop" defer=""></script><script src="/bay-one-widget.js?v=20261001-workshop" defer=""></script>
+</body></html>

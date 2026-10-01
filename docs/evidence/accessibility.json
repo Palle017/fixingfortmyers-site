@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-28T06:41:25.932Z",
+  "at": "2026-09-29T21:04:45.969Z",
   "engine": "axe-core 4.13.0",
   "environment": "jsdom; site scripts and external resources do not execute",
   "limitations": [
@@ -11,10 +11,6 @@
       "file": "index.html",
       "passes": 41,
       "incomplete": [
-        {
-          "id": "aria-prohibited-attr",
-          "impact": "serious"
-        },
         {
           "id": "landmark-one-main",
           "impact": "moderate"
@@ -119,6 +115,111 @@
     {
       "file": "request-received.html",
       "passes": 34,
+      "incomplete": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate"
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate"
+        }
+      ],
+      "violations": []
+    },
+    {
+      "file": "auto-diagnostics-fort-myers.html",
+      "passes": 34,
+      "incomplete": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate"
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate"
+        }
+      ],
+      "violations": []
+    },
+    {
+      "file": "ac-repair-fort-myers.html",
+      "passes": 34,
+      "incomplete": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate"
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate"
+        }
+      ],
+      "violations": []
+    },
+    {
+      "file": "engine-rebuild-vs-replacement-fort-myers.html",
+      "passes": 34,
+      "incomplete": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate"
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate"
+        }
+      ],
+      "violations": []
+    },
+    {
+      "file": "case-studies.html",
+      "passes": 36,
+      "incomplete": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate"
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate"
+        }
+      ],
+      "violations": []
+    },
+    {
+      "file": "about-perfect-timing.html",
+      "passes": 34,
+      "incomplete": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate"
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate"
+        }
+      ],
+      "violations": []
+    },
+    {
+      "file": "careers.html",
+      "passes": 39,
+      "incomplete": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate"
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate"
+        }
+      ],
+      "violations": []
+    },
+    {
+      "file": "404.html",
+      "passes": 24,
       "incomplete": [
         {
           "id": "landmark-one-main",

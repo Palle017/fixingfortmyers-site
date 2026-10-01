@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
+<!DOCTYPE html><html lang="en" data-theme="dark"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/favicon.ico" sizes="32x32">
@@ -25,12 +23,12 @@
   <link rel="canonical" href="https://fixingfortmyers.com/paint-correction-detailing-fort-myers">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Barlow:wght@400;600;700;800&amp;family=Russo+One&amp;display=swap" rel="stylesheet">
-  <link rel="preload" as="image" href="./assets/paint-correction-after.webp" fetchpriority="high">
-  <link rel="stylesheet" href="./base.css?v=20260928-workshop">
-  <link rel="stylesheet" href="./style.css?v=20260928-workshop">
-  <link rel="stylesheet" href="./service-pages.css?v=20260928-workshop">
+  <link rel="preload" as="image" href="./assets/tony-at-work.webp" fetchpriority="high">
+  <link rel="stylesheet" href="./base.css?v=20261001-workshop">
+  <link rel="stylesheet" href="./style.css?v=20261001-workshop">
+  <link rel="stylesheet" href="./service-pages.css?v=20261001-workshop">
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -189,7 +187,7 @@
       },
       "primaryImageOfPage": {
         "@type": "ImageObject",
-        "url": "https://fixingfortmyers.com/assets/paint-correction-after.webp"
+        "url": "https://fixingfortmyers.com/assets/tony-at-work.webp"
       }
     },
     {
@@ -272,19 +270,22 @@
   ]
 }
 </script>
-<link rel="stylesheet" href="/site-updates.css?v=20260928-workshop"><style>
+<link rel="stylesheet" href="/site-updates.css?v=20261001-workshop"><link rel="stylesheet" href="/clean-layout.css?v=20261001-workshop"><style>
 .ws-figure{margin:0}.ws-figure img,.ws-cap img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#12161d}
 .ws-figure figcaption{margin-top:.6rem;font-size:.95rem;opacity:.8}
 .ws-capabilities{display:grid;gap:2.5rem;margin-top:2rem}
 .ws-cap{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:2rem;align-items:center}
 .ws-cap:nth-child(even){grid-template-columns:minmax(0,7fr) minmax(0,5fr)}.ws-cap:nth-child(even) img{order:2}
 .ws-cap h3{margin:0 0 .6rem}.ws-cap p{margin:0 0 .8rem;line-height:1.6}
+.ws-cap.no-photo{grid-template-columns:1fr;max-width:62ch}
+.ws-gallery.ws-gallery--2{grid-template-columns:repeat(2,minmax(0,1fr))}
+main [hidden]{display:none!important}
 .ws-pair{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2rem}
 .ws-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.25rem;margin-top:2rem}
 .ws-cap a,.ws-figure a,.service-hero__aside a,.faq-item a,.service-quote a{color:var(--color-accent);text-decoration:underline;text-underline-offset:3px}
 @media (max-width:800px){.ws-cap,.ws-cap:nth-child(even){grid-template-columns:1fr}.ws-cap:nth-child(even) img{order:0}.ws-pair{grid-template-columns:1fr}.ws-gallery{grid-template-columns:1fr 1fr}}
 @media (max-width:640px){.service-hero__content{grid-template-columns:minmax(0,1fr)}.service-hero__content>*,.service-hero__stat{min-width:0}.service-hero__stat strong{font-size:1.2rem;overflow-wrap:anywhere}}
-@media (max-width:480px){.ws-gallery{grid-template-columns:1fr}}
+@media (max-width:480px){.ws-gallery,.ws-gallery.ws-gallery--2{grid-template-columns:1fr}}
 </style></head>
 <body>
 
@@ -307,7 +308,7 @@
           <li><a href="/#services">Services</a></li><li><a href="/repair-guides">Repair Guides</a></li>
           <li><a href="/#about">About</a></li>
           <li><a href="/careers">Careers</a></li>
-          <li><a href="/?service=maintenance#contact" class="nav__cta">Request a Repair</a></li>
+          <li><a href="/?service=maintenance#contact" class="nav__cta">Request a repair</a></li>
         </ul>
 
         <button class="nav__mobile-toggle" id="mobileToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu" type="button">
@@ -321,13 +322,13 @@
         <a href="/#services">Services</a><a href="/repair-guides">Repair Guides</a>
         <a href="/#about">About</a>
         <a href="/careers">Careers</a>
-        <a href="/?service=maintenance#contact" class="nav__cta">Request a Repair</a>
+        <a href="/?service=maintenance#contact" class="nav__cta">Request a repair</a>
       </div>
     </div>
   </nav>
 
   <section class="service-hero">
-    <div class="service-hero__bg" style="background-image: linear-gradient(rgba(5,10,17,.83), rgba(5,10,17,.95)), url('/assets/paint-correction-after.webp');"></div>
+    <div class="service-hero__bg"></div>
     <div class="service-hero__overlay"></div>
     <div class="container service-hero__content">
       <div class="reveal">
@@ -397,22 +398,22 @@
         <p class="section-label reveal">The Work</p>
         <h2 class="section-title reveal reveal-delay-1">What We Do</h2>
         <div class="ws-capabilities">
-          <article class="ws-cap reveal">
-            <img src="/assets/paint-correction-before.webp" width="1536" height="1024" alt="Paint with swirl marks before correction" loading="lazy" decoding="async" data-photo="P1">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/paint-correction-before.webp" width="1536" height="1024" alt="Paint with swirl marks before correction" loading="lazy" decoding="async" data-photo="P1">
             <div>
               <h3>Buffing and Paint Correction</h3>
               <p>The paint is washed and decontaminated, then machine polished to take out swirls, haze, light scratches and oxidation. How far correction can go depends on how much clear coat is left, so Tony checks that first.</p>
             </div>
           </article>
-          <article class="ws-cap reveal">
-            <img src="/assets/paint-work.webp" width="1536" height="1024" alt="Automotive paint work in progress" loading="lazy" decoding="async" data-photo="P3">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/paint-work.webp" width="1536" height="1024" alt="Automotive paint work in progress" loading="lazy" decoding="async" data-photo="P3">
             <div>
               <h3>Paint Work</h3>
               <p>When correction is not enough, the area needs paint. Send photos of the damage and the vehicle, and Tony will confirm what the job involves and quote it before work starts.</p>
             </div>
           </article>
-          <article class="ws-cap reveal">
-            <img src="/assets/detailing-interior.webp" width="1536" height="1024" alt="A detailed vehicle interior" loading="lazy" decoding="async" data-photo="P4">
+          <article class="ws-cap no-photo reveal">
+            <img hidden src="/assets/detailing-interior.webp" width="1536" height="1024" alt="A detailed vehicle interior" loading="lazy" decoding="async" data-photo="P4">
             <div>
               <h3>Detailing</h3>
               <p>Interior and exterior detailing, whether you are getting a car ready to sell, bringing back one you have neglected or finishing a restoration.</p>
@@ -422,7 +423,7 @@
       </div>
     </section>
 
-    <section>
+    <section hidden data-waiting="paint before/after photos (P1, P2)">
       <div class="container">
         <p class="section-label reveal">Paint Correction</p>
         <h2 class="section-title reveal reveal-delay-1">Before and After</h2>
@@ -572,7 +573,7 @@
           </p>
           <div class="footer__social">
             <a href="https://www.facebook.com/PerfectTimingAutoRepair" aria-label="Facebook">
-              <svg width="18" height="18" viewbox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
             </a>
 
           </div>
@@ -601,7 +602,7 @@
             <li><a href="/case-studies">Repair Case Studies</a></li>
             <li><a href="/#areas">Service Area</a></li>
             <li><a href="/#testimonials">Reviews</a></li>
-            <li><a href="/?service=maintenance#contact">Contact</a></li>
+            <li><a href="/?service=maintenance#contact">Request a repair</a></li>
           </ul>
         </div>
       </div>
@@ -623,5 +624,5 @@
 
 
 
-<div class="mobile-contact-bar" role="navigation" aria-label="Quick contact"><a href="tel:+12393972048">Call (239) 397-2048</a><a href="/?service=maintenance#contact">Request a repair</a></div><script src="/site.js?v=20260928-workshop" defer></script><script src="/bay-one-config.js?v=20260928-workshop" defer></script><script src="/bay-one-widget.js?v=20260928-workshop" defer></script></body>
-</html>
+<div class="mobile-contact-bar" role="navigation" aria-label="Quick contact"><a href="/?service=maintenance#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/site.js?v=20261001-workshop" defer=""></script><script src="/bay-one-config.js?v=20261001-workshop" defer=""></script><script src="/bay-one-widget.js?v=20261001-workshop" defer=""></script>
+</body></html>
