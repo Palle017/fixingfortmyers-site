@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {checkCleanPage} from './check-clean-structure.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const expected=process.argv[2],version='20260929-clean-flow';
+const expected=process.argv[2],version='20261001-workshop';
 const build=JSON.parse(execFileSync('gh',['api','repos/Palle017/fixingfortmyers-site/pages/builds/latest'],{encoding:'utf8'}));
 assert.equal(build.status,'built','Pages build is not complete');
 if(expected)assert.equal(build.commit,expected,'Pages has not published expected commit');

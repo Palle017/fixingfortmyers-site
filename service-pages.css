@@ -18,7 +18,7 @@
   inset: 0;
   background-image:
     linear-gradient(rgba(10,10,11,0.45), rgba(10,10,11,0.88)),
-    url('./assets/tony-mobile-diagnostics.webp');
+    url('./assets/tony-at-work.webp');
   background-size: cover;
   background-position: center center;
   z-index: 0;
@@ -559,6 +559,6 @@
   .service-hero__bg {
     background-image:
       linear-gradient(rgba(10,10,11,0.45), rgba(10,10,11,0.88)),
-      url('./assets/tony-mobile-diagnostics-small.webp');
+      url('./assets/tony-at-work-small.webp');
   }
 }
