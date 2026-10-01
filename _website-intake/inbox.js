@@ -2,6 +2,7 @@ let initial = true;
 let known = new Set();
 let loading = false;
 let fingerprint = '';
+let zohoEnabled = false;
 const el = (tag, text, className) => { const item = document.createElement(tag); if (text !== undefined) item.textContent = text; if (className) item.className = className; return item; };
 const date = value => new Date(value).toLocaleString();
 const operatorToken=el('input');operatorToken.type='password';operatorToken.autocomplete='off';operatorToken.placeholder='Operator token for alert recovery';operatorToken.setAttribute('aria-label','Operator token for alert recovery');operatorToken.maxLength=256;
@@ -83,6 +84,21 @@ function render(lead) {
     done.addEventListener('click', async () => { done.disabled = true; try { const r = await fetch('/api/leads/' + lead.id + '/stage', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({stage:'won'})}); const out = await r.json(); if (!r.ok) throw Error(out.error || 'Not saved.'); document.getElementById('status').textContent = out.reviewQueued ? 'Marked won. A Google review request will be texted in 2 hours.' : 'Marked won. No review text queued (needs text permission, Twilio and GOOGLE_REVIEW_URL).'; fingerprint = ''; await refresh(); } catch (err) { document.getElementById('status').textContent = err.message; done.disabled = false; } });
     card.append(done);
   }
+  if (lead.zohoEstimate) {
+    const z = lead.zohoEstimate, label = {draft:'draft, not sent yet', sent:'sent, waiting on the customer', accepted:'accepted', invoiced:'invoiced', declined:'declined', expired:'expired, follow up'}[z.status] || z.status;
+    card.append(el('p', 'Zoho estimate ' + z.number + ': ' + label + (z.total !== null ? ' · $' + z.total.toLocaleString() : '') + (z.last_error ? ' · last check failed: ' + z.last_error : ''), 'tag'));
+  }
+  if (zohoEnabled && !['won', 'spam'].includes(lead.pipeline?.stage)) {
+    const form = el('form', undefined, 'zoho-link'), input = el('input'), button = el('button', lead.zohoEstimate ? 'Change estimate' : 'Link Zoho estimate');
+    input.name = 'estimate'; input.maxLength = 40; input.placeholder = 'EST-000123'; input.value = lead.zohoEstimate?.number || ''; input.setAttribute('aria-label', 'Zoho estimate number for ' + (lead.name || lead.phone));
+    button.type = 'submit';
+    form.addEventListener('submit', async event => {
+      event.preventDefault(); button.disabled = true;
+      try { const r = await fetch('/api/leads/' + lead.id + '/zoho-estimate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({estimateNumber:input.value})}); const out = await r.json(); if (!r.ok) throw Error(out.error || 'Not linked.'); document.getElementById('status').textContent = out.unlinked ? 'Zoho estimate unlinked.' : 'Linked Zoho estimate ' + out.estimate.number + ' (' + out.estimate.status + ').'; fingerprint = ''; await refresh(); }
+      catch (err) { document.getElementById('status').textContent = err.message; button.disabled = false; }
+    });
+    form.append(input, button); card.append(form);
+  }
   if (lead.reviewText) card.append(el('p', 'Review request text: ' + ({pending:'scheduled', sending:'sending', sent:'sent', failed:'rejected by the carrier', needs_review:'may not have gone out'}[lead.reviewText.state] || lead.reviewText.state), 'tag'));
   if (lead.customerText) card.append(el('p', 'Confirmation text to customer: ' + ({sent:'sent', pending:'sending', sending:'sending', skipped:'not sent (' + (lead.customerText.last_error === 'already_texted_today' ? 'already texted today' : 'daily limit') + ')', failed:'rejected by the carrier', needs_review:'may not have gone out; check Twilio before resending'}[lead.customerText.state] || lead.customerText.state), 'tag'));
   const detail = el('details'); detail.append(el('summary','Request and consent record'));
@@ -92,12 +108,12 @@ function render(lead) {
 async function refresh() {
   if (loading) return; loading = true;
   try {
-    const r = await fetch('/api/leads', {cache:'no-store'}); if (!r.ok) throw new Error(); const data = await r.json();
+    const r = await fetch('/api/leads', {cache:'no-store'}); if (!r.ok) throw new Error(); const data = await r.json(); zohoEnabled = Boolean(data.zohoEnabled);
     const fresh = data.leads.filter(item => !known.has(item.id));
     if (!initial && fresh.length && 'Notification' in window && Notification.permission === 'granted') new Notification('Perfect Timing: new website request', {body: fresh.length + ' new request(s). Open your website inbox to review them.'});
     known = new Set(data.leads.map(item => item.id)); initial = false;
     renderSummary(data.leads);
-    const signature = data.leads.map(item => item.id + ':' + item.updated_at+':'+JSON.stringify(item.alerts||[])+':'+(item.media||[]).length+':'+(item.pipeline?.stage||'')+':'+(item.reviewText?.state||'')).join('|');
+    const signature = data.leads.map(item => item.id + ':' + item.updated_at+':'+JSON.stringify(item.alerts||[])+':'+(item.media||[]).length+':'+(item.pipeline?.stage||'')+':'+(item.reviewText?.state||'')+':'+(item.zohoEstimate?.status||'')+(item.zohoEstimate?.last_error||'')).join('|');
     if (signature !== fingerprint || !document.getElementById('leads').children.length) { const list = document.getElementById('leads'); list.replaceChildren(...(data.leads.length ? data.leads.map(render) : [el('div','No requests yet. New website messages will appear here automatically.','empty')])); fingerprint = signature; }
     const count = data.leads.filter(item => item.status === 'new').length;
     document.title = (count ? '(' + count + ') ' : '') + 'Website Requests · Perfect Timing';

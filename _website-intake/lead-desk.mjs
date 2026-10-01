@@ -37,7 +37,9 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
   CREATE INDEX IF NOT EXISTS lead_touches_lead ON lead_touches(lead_id);
   CREATE TABLE IF NOT EXISTS desk_digests(week TEXT PRIMARY KEY, sent_at TEXT NOT NULL);
   CREATE TABLE IF NOT EXISTS beside_events(event_key TEXT PRIMARY KEY,lead_id TEXT,event_id TEXT,direction TEXT NOT NULL,
-    occurred_at TEXT NOT NULL,received_at TEXT NOT NULL,payload_hash TEXT NOT NULL,payload_json TEXT NOT NULL);`);
+    occurred_at TEXT NOT NULL,received_at TEXT NOT NULL,payload_hash TEXT NOT NULL,payload_json TEXT NOT NULL);
+  CREATE TABLE IF NOT EXISTS zoho_estimates(lead_id TEXT PRIMARY KEY,estimate_id TEXT NOT NULL UNIQUE,estimate_number TEXT NOT NULL,status TEXT NOT NULL,
+    total REAL,customer_name TEXT,linked_at TEXT NOT NULL,checked_at TEXT,last_error TEXT);`);
   const stamp = () => new Date(now()).toISOString();
   // The token is a URL path segment; one that cannot sit in a path would silently never match.
   if (besideToken && (besideToken.length < 24 || besideToken.length > 256 || /[\/?#%\s]/.test(besideToken))) console.error(JSON.stringify({event: 'beside_hook_disabled', reason: 'BESIDE_WEBHOOK_TOKEN must be 24-256 characters with no / ? # % or spaces'}));
@@ -117,6 +119,33 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     db.prepare('UPDATE leads SET status=?,updated_at=? WHERE id=?').run(LEGACY_STATUS[stage], stamp(), id);
     db.prepare('INSERT INTO lead_touches(lead_id,at,channel,note) VALUES(?,?,?,?)').run(id, stamp(), 'stage', stage);
     return {ok: true, stage};
+  }
+
+  // Zoho's estimate status moves a lead forward only; it never reopens a won lead or undoes Tony's own choice.
+  // Sending from Zoho is the approval, so the Zoho total becomes the approved price when none was entered.
+  const ZOHO_LOST = 'Zoho: customer declined the estimate';
+  function advanceFromZoho(id, {status, total = null, number = '', at}) {
+    sync();
+    const row = db.prepare('SELECT stage,lost_reason,estimate_low FROM lead_pipeline WHERE lead_id=?').get(id);
+    if (!row) throw fail(404, 'Lead not found.');
+    const open = ['new', 'contacted'].includes(row.stage), quoted = open || row.stage === 'estimate_sent';
+    const price = row.estimate_low === null && total !== null ? {estimateLow: total, estimateNote: `Zoho estimate ${number}`.trim()} : {estimateLow: row.estimate_low};
+    const move = (stage, extra = {}) => {
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        if (stage !== 'estimate_sent' && open && price.estimateLow !== null) applyStage(id, {stage: 'estimate_sent', at, tonyApproved: true, ...price});
+        const result = applyStage(id, {stage, at, tonyApproved: true, ...price, ...extra});
+        if (stage === 'booked' && row.stage === 'lost') db.prepare('UPDATE lead_pipeline SET closed_at=NULL,lost_reason=NULL WHERE lead_id=?').run(id);
+        db.prepare("UPDATE lead_pipeline SET estimate_approved_by='Sent from Zoho' WHERE lead_id=? AND estimate_approved_by='Tony' AND ? IS NULL").run(id, row.estimate_low);
+        db.prepare('INSERT INTO lead_touches(lead_id,at,channel,note) VALUES(?,?,?,?)').run(id, stamp(), 'zoho', `Estimate ${number} ${status}`.slice(0, 200));
+        db.exec('COMMIT');
+        return result;
+      } catch (err) { db.exec('ROLLBACK'); throw err; }
+    };
+    if (status === 'sent' && open && price.estimateLow !== null) return move('estimate_sent');
+    if (['accepted', 'invoiced'].includes(status) && (quoted || row.stage === 'lost' && row.lost_reason === ZOHO_LOST) && price.estimateLow !== null) return move('booked');
+    if (status === 'declined' && quoted) return move('lost', {lostReason: ZOHO_LOST});
+    return {ok: true, stage: row.stage, unchanged: true};
   }
 
   function besideTokenMatches(token) {
@@ -205,11 +234,12 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
     const reached = n => real.filter(row => [row.contacted_at, row.estimate_sent_at, row.booked_at][n - 1]).length;
     const won = real.filter(row => row.stage === 'won');
     const revenue = won.reduce((sum, row) => sum + (row.job_value || 0), 0);
-    const need = [];
+    const need = [], zohoStatus = new Map(db.prepare('SELECT lead_id,status FROM zoho_estimates').all().map(z => [z.lead_id, z.status]));
     for (const row of real) {
       const p = JSON.parse(row.payload_json), age = (nowMs - Date.parse(row.received_at)) / 60000, label = `${p.name || 'Unknown'} · ${p.vehicle || 'vehicle?'} · ${p.phone || 'no phone'}`;
       if (row.stage === 'new' && age > TARGETS.firstContactMinutes) need.push({id: row.id, label, why: `No contact yet (${Math.round(age / 60 * 10) / 10} h)`, age});
       else if (row.stage === 'contacted' && minutes(row.contacted_at, new Date(nowMs).toISOString()) / 60 > TARGETS.estimateHours) need.push({id: row.id, label, why: 'Contacted but no Tony-approved estimate yet', age});
+      else if (row.stage === 'estimate_sent' && zohoStatus.get(row.id) === 'expired') need.push({id: row.id, label, why: 'Zoho estimate expired: follow up or close', age});
       else if (row.stage === 'estimate_sent' && minutes(row.estimate_sent_at, new Date(nowMs).toISOString()) / 1440 > TARGETS.followUpDays) need.push({id: row.id, label, why: 'Estimate sent, no answer: follow up', age});
     }
     // Newest first: a lead that came in 20 minutes ago matters more than one left untouched for months.
@@ -250,7 +280,7 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
   }
   let timer = null;
   return {
-    sync, syncStatus, addManual, setStage, besideHook, besideTokenMatches, digestEnabled: Boolean(digest), metrics, digestText, maybeDigest,
+    sync, syncStatus, addManual, setStage, advanceFromZoho, besideHook, besideTokenMatches, digestEnabled: Boolean(digest), metrics, digestText, maybeDigest,
     pipeline: id => db.prepare('SELECT * FROM lead_pipeline WHERE lead_id=?').get(id) || null,
     touches: id => db.prepare('SELECT at,channel,note FROM lead_touches WHERE lead_id=? ORDER BY at DESC LIMIT 20').all(id),
     start() { if (!timer) { timer = setInterval(() => { maybeDigest().catch(() => {}); }, 15 * 60000); timer.unref(); } },
