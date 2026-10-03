@@ -8,6 +8,11 @@ const text = (value, max) => {
 
 // Additive for older form/chat clients: provided location records are always validated.
 export function normalizeCarLocation(value) {
+  // Multipart recording fields arrive as text; keep the same validated record as JSON requests.
+  if (typeof value === 'string') {
+    if (value.length > 4096) invalid('The car location is too long.');
+    try { value = JSON.parse(value); } catch { invalid('Choose the car location or shop drop-off.'); }
+  }
   if (!value || typeof value !== 'object' || Array.isArray(value)) invalid('Choose the car location or shop drop-off.');
   if (value.type === 'dropoff') return {type:'dropoff',preferredTime:text(value.preferredTime ?? '',160)};
   if (value.type === 'address') {

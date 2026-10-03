@@ -27,6 +27,32 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   const say=async text=>{enter('b1-message',text);w.document.querySelector('.b1-composer').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await settle();};
   return {w,requests,enter,say};
 }
+
+test('voice send requires a car location and serializes its selected address as multipart JSON',async t=>{
+  const x=setup(t,{enabled:false,handler:async route=>({ok:true,status:route==='/healthz'?200:201,json:async()=>route==='/healthz'?{ok:true,media:'ready'}:{ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'}}),beforeScripts:w=>{
+    Object.defineProperty(w.navigator,'mediaDevices',{value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})},configurable:true});
+    w.URL.createObjectURL=()=> 'blob:synthetic-recording';w.URL.revokeObjectURL=()=>{};
+    w.MediaRecorder=class extends w.EventTarget {
+      static isTypeSupported(){return true;}
+      constructor(_stream,options){super();this.mimeType=options.mimeType;this.state='inactive';}
+      start(){this.state='recording';}
+      stop(){this.state='inactive';const event=new w.Event('dataavailable');event.data=new w.Blob([new Uint8Array([0x1a,0x45,0xdf,0xa3])],{type:this.mimeType});this.dispatchEvent(event);this.dispatchEvent(new w.Event('stop'));}
+    };
+  }});
+  const d=x.w.document;await settle();
+  x.enter('request-name','Synthetic Voice Customer');x.enter('request-phone','2395550100');x.enter('request-vehicle','Synthetic car');
+  d.getElementById('voice-start').click();await settle();d.getElementById('voice-stop').click();
+  d.getElementById('voice-send').click();await settle();assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/voicenote').length,0);
+  x.enter('request-location-choice','location');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+  x.enter('request-car-address','   ');d.getElementById('voice-send').click();await settle();assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/voicenote').length,0);
+  x.enter('request-car-address','123 Example St, Fort Myers');d.getElementById('voice-send').click();await settle();
+  const sent=x.requests.filter(r=>r.route==='/hooks/lead/voicenote');assert.equal(sent.length,1);
+  assert.ok(sent[0].body instanceof x.w.FormData);assert.ok(sent[0].body.get('audio').size>0);
+  assert.deepEqual(JSON.parse(sent[0].body.get('carLocation')),{type:'address',address:'123 Example St, Fort Myers'});
+  assert.equal(sent[0].body.get('source'),'voice');assert.match(sent[0].body.get('details'),/^$/);
+  assert.match(d.getElementById('voice-status').textContent,/Recording received/);
+});
+
 test('chat collects the problem, then its contact card sends one lead with the whole chat straight to Tony',async t=>{
   let turn=0;
   const x=setup(t,{handler:async(route,body)=>{
