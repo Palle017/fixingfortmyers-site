@@ -1,3 +1,5 @@
-// Owner-approved 2026-09-28: the repair form sends requests to Tony's shop receiver (the laptop that serves Bay One).
-// The form checks the receiver first and falls back to a customer-sent text draft when it is offline.
-window.PT_CONTACT_CONFIG = { endpoint: 'https://p15g2.tail68bd87.ts.net:10000' };
+// Owner-approved 2026-10-03: repair requests are saved in durable cloud intake before receipt is confirmed.
+// Keep local previews from sending production inquiries; the preview server supplies its own mock endpoint.
+window.PT_CONTACT_CONFIG = /^(www\.)?fixingfortmyers\.com$/.test(location.hostname)
+  ? { endpoint: 'https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site' }
+  : { endpoint: '' };

@@ -37,7 +37,7 @@ for(const file of assets){
     assert.match(body,/enabled:\s*true/);assert.match(body,/autoOpen:\s*false/);
     assert.match(body,/p15g2\.tail68bd87\.ts\.net:10000/);
   }
-  if(file==='contact-config.js')assert.match(body,/endpoint:\s*'https:\/\/p15g2\.tail68bd87\.ts\.net:10000'/);
+  if(file==='contact-config.js')assert.match(body,/endpoint:\s*'https:\/\/perfect-timing-cloud-intake\.prudhvi-pallempati\.chatgpt\.site'/);
 }
 const sitemap=await read('/sitemap.xml');
 assert.match(sitemap,/repair-guide-battery-keeps-dying/);assert.match(sitemap,/repair-guide-car-overheating/);

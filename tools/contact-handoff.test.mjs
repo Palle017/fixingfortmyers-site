@@ -19,7 +19,7 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   // Tests set the Bay One flag explicitly; the shipped flag is checked separately below.
   w.PT_BAYONE_CONFIG={enabled};
   const NativeDate=w.Date;w.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[at]));}static now(){return NativeDate.parse(at);}};
-  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=typeof options.body==='string'||options.body===undefined?JSON.parse(options.body||'{}'):options.body;requests.push({route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
+  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=typeof options.body==='string'||options.body===undefined?JSON.parse(options.body||'{}'):options.body;requests.push({url:String(url),route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
   if(savedSource)w.sessionStorage.setItem('pt-repair-source',savedSource);
   beforeScripts?.(w);
   w.eval(site);w.eval(widget);
@@ -27,6 +27,22 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   const say=async text=>{enter('b1-message',text);w.document.querySelector('.b1-composer').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await settle();};
   return {w,requests,enter,say};
 }
+
+test('published contact configuration sends a repair to cloud intake and keeps previews off production',async t=>{
+  const cloud='https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site';
+  for(const url of ['https://fixingfortmyers.com/','https://www.fixingfortmyers.com/']){
+    const x=setup(t,{url,enabled:false,publicContact:true,handler:async route=>({ok:true,status:route==='/healthz'?200:201,json:async()=>route==='/healthz'?{ok:true,storage:'cloud',media:'ready'}:{ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'}})}),d=x.w.document;
+    await settle();
+    x.enter('request-name','Synthetic Customer');x.enter('request-phone','2395550100');x.enter('request-details','Synthetic concern.');
+    x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+    d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+    const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,1);assert.equal(sent[0].url,cloud+'/hooks/lead/webform');
+    assert.deepEqual(sent[0].body.carLocation,{type:'dropoff',preferredTime:''});assert.match(d.getElementById('request-status').textContent,/received/i);
+  }
+  for(const url of ['http://127.0.0.1/','http://localhost/','https://preview.invalid/']){
+    const x=setup(t,{url,enabled:false,publicContact:true});await settle();assert.equal(x.w.PT_CONTACT_CONFIG.endpoint,'');assert.equal(x.requests.length,0);
+  }
+});
 
 test('voice send requires a car location and serializes its selected address as multipart JSON',async t=>{
   const x=setup(t,{enabled:false,handler:async route=>({ok:true,status:route==='/healthz'?200:201,json:async()=>route==='/healthz'?{ok:true,media:'ready'}:{ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'}}),beforeScripts:w=>{
@@ -227,10 +243,10 @@ test('public Bay One is disabled before UI/assets/network while normal contact r
   delete x.w.PT_BAYONE_CONFIG;x.w.eval(widget);assert.equal(d.getElementById('bay-one-widget'),null);assert.equal(x.requests.length,0);
 });
 
-test('with the shop receiver offline, the public form falls back to an editable native text intent with no receipt claim',async t=>{
+test('with cloud intake offline, the public form falls back to an editable native text intent with no receipt claim',async t=>{
   const x=setup(t,{enabled:false,publicContact:true,url:'https://fixingfortmyers.com/',handler:async()=>{throw new TypeError('offline');}}),d=x.w.document;
   await settle();
-  assert.equal(x.w.PT_CONTACT_CONFIG.endpoint,'https://p15g2.tail68bd87.ts.net:10000');assert.ok(x.requests.some(r=>r.route==='/healthz'));x.requests.length=0;
+  assert.equal(x.w.PT_CONTACT_CONFIG.endpoint,'https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site');assert.ok(x.requests.some(r=>r.route==='/healthz'));x.requests.length=0;
   assert.equal(d.getElementById('request-submit').textContent,'Prepare text to Tony');assert.equal(d.querySelector('.request-voice').hidden,true);
   assert.equal(d.getElementById('request-phone').required,false);
   assert.equal(d.querySelector('.request-consent').hidden,true);assert.equal(d.getElementById('request-direct-consent').hidden,false);
