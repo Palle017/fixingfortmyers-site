@@ -110,6 +110,7 @@ test('service preselection is whitelisted, optional vehicle submits with explici
   assert.equal(d.querySelector('.request-consent').hidden,false);assert.equal(d.getElementById('request-direct-consent').hidden,true);
   x.enter('request-name','Synthetic Customer');x.enter('request-phone','2395550100');x.enter('request-details','Only warm air at idle.');x.enter('request-city','33901');x.enter('request-starts','no');x.enter('request-stranded','yes');
   const consent=d.getElementById('request-sms-consent');consent.checked=true;consent.dispatchEvent(new x.w.Event('input',{bubbles:true}));
+  x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
   const form=d.getElementById('bookingForm');
   form.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();form.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
   const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,2);
@@ -208,6 +209,7 @@ test('with the shop receiver offline, the public form falls back to an editable 
   assert.equal(d.getElementById('request-phone').required,false);
   assert.equal(d.querySelector('.request-consent').hidden,true);assert.equal(d.getElementById('request-direct-consent').hidden,false);
   x.enter('request-name','Synthetic Customer');x.enter('request-details','Synthetic vehicle will not start.');x.enter('request-city','33901');x.enter('request-starts','no');x.enter('request-stranded','yes');
+  x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
   d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
   assert.equal(x.requests.length,0);assert.equal(d.getElementById('request-backup').hidden,false);assert.equal(d.getElementById('request-preview').readOnly,false);
   const link=d.getElementById('request-text');assert.ok(link.getAttribute('href').startsWith('sms:+12393972048?body='));
@@ -242,6 +244,7 @@ test('draft source carries only known page categories, never URL or session-inje
     const x=setup(t,{...input,enabled:false,publicContact:true,handler:async()=>{throw new TypeError('offline');}}),d=x.w.document;
     await settle();x.requests.length=0;
     x.enter('request-name','Synthetic Customer');x.enter('request-details','Synthetic symptoms');
+    x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
     d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));
     const draft=d.getElementById('request-preview').value;
     assert.ok(draft.endsWith('Website page context: /'+input.source+(input.source?' (last guide or service viewed)':'')));

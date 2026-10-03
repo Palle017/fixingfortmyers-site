@@ -52,6 +52,13 @@ function render(lead) {
   if (lead.vehicle) facts.append(el('span', lead.vehicle));
   if (lead.service) facts.append(el('span', lead.service));
   card.append(facts, el('p', lead.details || 'No written details supplied.', 'details'));
+  const locationLine = (lead.details || '').match(/^Car location: (.+)$/m)?.[1];
+  if (locationLine) {
+    const location = el('div'); location.append(el('p', 'Car location: ' + locationLine, 'tag'));
+    const mapQuery = (lead.details || '').match(/^Map: https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=([^\s]+)$/m)?.[1];
+    if (mapQuery) { const map = el('a', 'Open car location in Maps'); map.href = 'https://www.google.com/maps/search/?api=1&query=' + mapQuery; map.target='_blank'; map.rel='noreferrer'; location.append(map); }
+    card.append(location);
+  }
   if(lead.routing){
     card.append(el('p',lead.routing.priority==='first'?'FIRST PRIORITY — stranded and no start, any hour':'Normal follow-up','tag'));
     if(lead.routing.needsReview)card.append(el('p','Urgency needs review: an answer is unknown. The inquiry is saved.','tag'));

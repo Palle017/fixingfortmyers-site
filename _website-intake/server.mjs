@@ -6,6 +6,7 @@ import {createLeadNotifier,channelsFromEnv,isBigJob} from './lead-notify.mjs';
 import {createLeadDesk} from './lead-desk.mjs';
 import {createZohoEstimateSync, createZohoReader, zohoConfigFromEnv} from './zoho-estimates.mjs';
 import {createLeadMedia} from './lead-media.mjs';
+import {normalizeCarLocation} from './car-location.mjs';
 import {createCustomerTexts,createTwilioCustomerAdapter} from './customer-texts.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
@@ -74,6 +75,7 @@ function normalize(input, kind) {
     smsConsentPage: clean(input.smsConsentPage, 500),
     smsConsentDisclosure: clean(input.smsConsentDisclosure, 3000),
     ...routing,
+    ...(Object.hasOwn(input,'carLocation') ? {carLocation:normalizeCarLocation(input.carLocation)} : {}),
     // Where the visitor came from (e.g. 'google' from the Business Profile link). Only added when present.
     ...(typeof input.channel === 'string' && /^[a-z0-9_-]{2,30}$/.test(input.channel) ? { channel: input.channel } : {}),
   };

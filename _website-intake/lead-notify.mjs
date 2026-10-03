@@ -9,6 +9,7 @@ import os from 'node:os';
 import {TONY_ALERT_NUMBER} from './lead-routing.mjs';
 import {createTwilioAlertAdapter} from './urgent-alerts.mjs';
 import {SOURCES} from './lead-desk.mjs';
+import {carLocationLabel,carLocationMap} from './car-location.mjs';
 
 export const DEFAULT_ALERT_EMAILS = ['prudhvi.pallempati@gmail.com'];
 const DELAYS = [30000, 120000, 600000, 1800000, 3600000];
@@ -29,7 +30,8 @@ export function summarize(lead, id, decision) {
     `Name: ${lead.name}`,
     lead.phone ? `Callback: ${lead.phone} (${lead.smsConsent ? 'text OK' : 'call only, no text permission'})` : 'Callback: no number given',
     `Vehicle: ${lead.vehicle || 'Not provided'}`,
-    `Location: ${lead.city || 'Not provided'}`,
+    `Location: ${lead.carLocation ? carLocationLabel(lead.carLocation) : lead.city || 'Not provided'}`,
+    lead.carLocation && carLocationMap(lead.carLocation) ? `Map: ${carLocationMap(lead.carLocation)}` : null,
     `Starts: ${yesNo(lead.starts)} · Stranded: ${yesNo(lead.stranded)}`,
     lead.callbackTime ? `Best time / notes: ${lead.callbackTime}` : null,
     `Came from: ${SOURCES[source]}${lead.channel ? ' (via ' + (lead.channel === 'google' ? 'Google' : lead.channel) + ')' : ''}`,

@@ -242,7 +242,7 @@
   ]
 }
 </script>
-  <link rel="stylesheet" href="/home-clean.css?v=20261001-workshop">
+  <link rel="stylesheet" href="/home-clean.css?v=20261003-car-location">
 </head>
 <body class="home-clean">
 
@@ -310,6 +310,17 @@
           <div class="request-fields request-fields--core">
             <label class="request-full" for="request-vehicle">Year, make &amp; model <span class="field-note">(if known)</span><input id="request-vehicle" name="vehicle" placeholder="e.g. 2018 Ford F-150" maxlength="160"></label>
             <label class="request-full" for="request-details">What’s happening?<textarea id="request-details" name="details" rows="3" maxlength="4000" placeholder="Describe the problem in your own words." required></textarea></label>
+            <label class="request-full" for="request-location-choice">Car location or shop drop-off <span class="field-note">(required)</span><select id="request-location-choice" name="locationChoice" required aria-controls="request-car-location request-dropoff"><option value="">Choose one</option><option value="location">Car is at an address</option><option value="dropoff">Arrange a shop drop-off</option></select></label>
+            <div class="request-full request-car-location" id="request-car-location" hidden>
+              <label for="request-car-address">Car address or current location <span class="field-note">(required)</span><input id="request-car-address" name="carAddress" autocomplete="street-address" maxlength="500" placeholder="Street address, city and any parking details" disabled aria-describedby="request-location-help request-location-status"></label>
+              <button class="btn btn--outline" id="request-use-location" type="button">Use current location</button>
+              <p class="request-fineprint" id="request-location-help">Use current location only when you’re with the car. Your location is shared with the request when you send it.</p>
+              <p class="request-status" id="request-location-status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="request-full" id="request-dropoff" hidden>
+              <label for="request-dropoff-time">Preferred drop-off time <span class="field-note">(optional)</span><input id="request-dropoff-time" name="dropoffTime" maxlength="160" placeholder="e.g. Friday morning or sometime this week" disabled></label>
+              <p class="request-fineprint">Tony will contact you to arrange a drop-off time. Your appointment is confirmed after he replies.</p>
+            </div>
             <label for="request-name">Your name<input id="request-name" name="name" autocomplete="name" maxlength="100" required></label>
             <label for="request-phone"><span id="request-phone-label">Phone number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required></label>
           </div>
@@ -317,7 +328,7 @@
             <summary>More details &amp; contact preferences <span>(optional)</span></summary>
             <div class="request-fields">
               <label class="request-full" for="request-service">Service, if known<select id="request-service" name="service"><option>Diagnosis / not sure yet</option><option>A/C repair</option><option>Brakes</option><option>Electrical / no-start</option><option>Engine / transmission</option><option>Module programming</option><option>Diesel service</option><option>Maintenance / other repair</option></select></label>
-              <label class="request-full" for="request-city">City or ZIP code<input id="request-city" name="city" autocomplete="address-level2" maxlength="100" placeholder="No street address needed"></label>
+              <label class="request-full" for="request-city">City or ZIP code <span class="field-note">(optional)</span><input id="request-city" name="city" autocomplete="address-level2" maxlength="100" placeholder="e.g. Fort Myers or 33901"></label>
               <label for="request-starts">Does it start?<select id="request-starts" name="starts"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
               <label for="request-stranded">Are you stranded?<select id="request-stranded" name="stranded"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
               <label class="request-full" for="request-timing">Preferred timing <span class="field-note">(optional)</span><input id="request-timing" name="timing" maxlength="160" placeholder="e.g. This week; best callback after 3 pm"></label>
@@ -606,5 +617,5 @@
 
 
 
-<div class="mobile-contact-bar" role="navigation" aria-label="Quick contact"><a href="#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/contact-config.js?v=20261001-workshop" defer></script><script src="/site.js?v=20261001-workshop" defer></script><script src="/bay-one-config.js?v=20261001-workshop" defer></script><script src="/bay-one-widget.js?v=20261001-workshop" defer></script></body>
+<div class="mobile-contact-bar" role="navigation" aria-label="Quick contact"><a href="#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/contact-config.js?v=20261001-workshop" defer></script><script src="/site.js?v=20261003-car-location" defer></script><script src="/bay-one-config.js?v=20261001-workshop" defer></script><script src="/bay-one-widget.js?v=20261001-workshop" defer></script></body>
 </html>
