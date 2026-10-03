@@ -11,7 +11,7 @@ const id = '12345678-1234-4234-8234-123456789012';
 const settle = async () => { for (let n = 0; n < 4; n++) await new Promise(setImmediate); };
 const response = (body, status = 200) => ({ok:status >= 200 && status < 300, status, json:async () => body});
 
-function setup(t, {handler, offline = false, url = 'https://preview.invalid/?service=brakes&utm_source=google'} = {}) {
+function setup(t, {handler, offline = false, geolocation, url = 'https://preview.invalid/?service=brakes&utm_source=google'} = {}) {
   const errors = [], virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', error => { if (!/Not implemented: navigation/.test(error.message)) errors.push(error); });
   const dom = new JSDOM(html, {url, runScripts:'outside-only', pretendToBeVisual:true, virtualConsole});
@@ -20,6 +20,7 @@ function setup(t, {handler, offline = false, url = 'https://preview.invalid/?ser
   w.matchMedia = () => ({matches:false});
   w.HTMLElement.prototype.scrollIntoView = function () {};
   w.PT_CONTACT_CONFIG = {endpoint:'https://receiver.invalid'};
+  if (geolocation) Object.defineProperty(w.navigator,'geolocation',{value:geolocation,configurable:true});
   w.fetch = async (target, options = {}) => {
     const address = new URL(target);
     assert.equal(address.origin, 'https://receiver.invalid', 'every request stays inside the mock');
@@ -44,11 +45,77 @@ function setup(t, {handler, offline = false, url = 'https://preview.invalid/?ser
     enter('request-phone', '2395550100');
     enter('request-vehicle', '2018 Honda Civic');
     enter('request-details', 'The brakes grind when slowing down.');
+    enter('request-location-choice','dropoff');
+    d.getElementById('request-location-choice').dispatchEvent(new w.Event('change',{bubbles:true}));
   };
   const send = () => d.getElementById('bookingForm').dispatchEvent(new w.Event('submit', {bubbles:true, cancelable:true}));
   const leads = () => requests.filter(request => request.path === '/hooks/lead/webform');
   return {w, d, requests, enter, fill, send, leads};
 }
+
+test('repair request requires a location choice and a nonblank address unless drop-off is selected',async t=>{
+  const x=setup(t);await settle();x.fill();
+  x.enter('request-location-choice','');x.send();await settle();assert.equal(x.leads().length,0);
+  x.enter('request-location-choice','location');x.d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+  assert.equal(x.d.getElementById('request-car-address').required,true);
+  x.enter('request-car-address','   ');x.send();await settle();assert.equal(x.leads().length,0);
+  x.enter('request-car-address','123 Example St, Fort Myers');x.send();await settle();
+  const lead=x.leads()[0].body;assert.deepEqual(lead.carLocation,{type:'address',address:'123 Example St, Fort Myers'});
+  assert.match(lead.details,/Car location: 123 Example St, Fort Myers/);assert.match(lead.details,/Map: https:\/\/www\.google\.com\/maps\/search/);
+});
+
+test('device location is requested only on click, saved with permission evidence and sent with its map',async t=>{
+  let lookups=0;
+  const x=setup(t,{geolocation:{getCurrentPosition(ok,_fail,options){lookups++;assert.equal(options.maximumAge,0);ok({coords:{latitude:26.6406,longitude:-81.8723,accuracy:12},timestamp:Date.now()});}}});
+  await settle();x.fill();assert.equal(lookups,0);
+  x.enter('request-location-choice','location');x.d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+  x.d.getElementById('request-use-location').click();x.send();await settle();
+  const lead=x.leads()[0].body;assert.equal(lookups,1);assert.equal(lead.carLocation.type,'device');assert.equal(lead.carLocation.carAtDevice,true);
+  assert.equal(lead.carLocation.latitude,26.6406);assert.equal(lead.carLocation.accuracyMeters,12);assert.ok(lead.carLocation.capturedAt);
+  assert.match(lead.details,/query=26.6406%2C-81.8723/);
+});
+
+test('denied device location still permits a typed address and does not send coordinates',async t=>{
+  const x=setup(t,{geolocation:{getCurrentPosition(_ok,fail){fail({code:1});}}});await settle();x.fill();
+  x.enter('request-location-choice','location');x.d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+  x.d.getElementById('request-use-location').click();assert.match(x.d.getElementById('request-location-status').textContent,/type the car/);
+  x.enter('request-car-address','123 Example St');x.send();await settle();
+  assert.deepEqual(x.leads()[0].body.carLocation,{type:'address',address:'123 Example St'});
+});
+
+test('drop-off needs no address and carries the requested time without confirming a booking',async t=>{
+  const x=setup(t);await settle();x.fill();x.enter('request-dropoff-time','Friday morning');x.send();await settle();
+  assert.equal(x.d.getElementById('request-car-address').disabled,true);
+  assert.deepEqual(x.leads()[0].body.carLocation,{type:'dropoff',preferredTime:'Friday morning'});
+  assert.match(x.leads()[0].body.details,/Shop drop-off requested; preferred time: Friday morning\. Tony to confirm/);
+  assert.doesNotMatch(x.leads()[0].body.details,/Map:/);
+});
+
+test('late GPS result cannot replace a selected drop-off or an address typed while waiting',async t=>{
+  let finish;
+  const x=setup(t,{geolocation:{getCurrentPosition(ok){finish=ok;}}});await settle();x.fill();
+  const choice=x.d.getElementById('request-location-choice');choice.value='location';choice.dispatchEvent(new x.w.Event('change'));
+  x.d.getElementById('request-use-location').click();choice.value='dropoff';choice.dispatchEvent(new x.w.Event('change'));
+  finish({coords:{latitude:26.64,longitude:-81.87,accuracy:5},timestamp:Date.now()});x.send();await settle();
+  assert.equal(x.leads()[0].body.carLocation.type,'dropoff');
+  choice.value='location';choice.dispatchEvent(new x.w.Event('change'));x.d.getElementById('request-use-location').click();
+  x.enter('request-car-address','321 Example St');finish({coords:{latitude:26.64,longitude:-81.87,accuracy:5},timestamp:Date.now()});
+  x.send();await settle();assert.equal(x.leads()[1].body.carLocation.address,'321 Example St');
+});
+
+test('autofilled address supersedes an earlier GPS pin even without an input event',async t=>{
+  const x=setup(t,{geolocation:{getCurrentPosition(ok){ok({coords:{latitude:26.64,longitude:-81.87,accuracy:5},timestamp:Date.now()});}}});await settle();x.fill();
+  x.enter('request-location-choice','location');x.d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+  x.d.getElementById('request-use-location').click();x.enter('request-car-address','456 Example St',false);x.send();await settle();
+  assert.deepEqual(x.leads()[0].body.carLocation,{type:'address',address:'456 Example St'});
+});
+
+test('offline text and email drafts carry the required car location and map',async t=>{
+  const x=setup(t,{offline:true});await settle();x.fill();x.enter('request-location-choice','location');x.d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+  x.enter('request-car-address','123 Example St');x.send();await settle();assert.equal(x.leads().length,0);
+  assert.match(x.d.getElementById('request-preview').value,/Car location: 123 Example St/);
+  assert.match(decodeURIComponent(x.d.getElementById('request-email').href),/Map: https:\/\/www\.google\.com/);
+});
 
 test('online form initializes the short request flow and enables the safe submit control', async t => {
   const x = setup(t); await settle();

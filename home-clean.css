@@ -18,6 +18,10 @@
 .home-clean .request-panel input:not([type=checkbox]),.home-clean .request-panel textarea,.home-clean .request-panel select{padding:10px 11px;margin-top:5px;background:#0a131e}
 .home-clean .request-panel textarea{min-height:90px}
 .home-clean .field-note{color:#b3c4d5;font-weight:400;font-size:13px}
+.home-clean .request-car-location>.btn{min-height:48px;margin-top:10px}
+.home-clean .request-car-location .request-fineprint,.home-clean #request-dropoff .request-fineprint{margin:8px 0 0;line-height:1.5}
+.home-clean .request-panel [hidden]{display:none!important}
+.home-clean .request-panel #request-location-choice{font-size:16px;min-height:48px}
 .home-clean .request-options{border-top:1px solid #2f475a;margin:8px 0 18px}
 .home-clean .request-options>summary{min-height:44px;padding:12px 0 0;cursor:pointer;color:#a4dfff;font-size:14px;font-weight:600;line-height:1.5}
 .home-clean .request-options>summary span{font-weight:400;color:#b3c4d5}

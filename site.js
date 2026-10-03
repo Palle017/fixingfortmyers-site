@@ -80,6 +80,70 @@
   const preview = byId('request-preview');
   const textDraft = byId('request-text');
   const phoneField = byId('request-phone');
+  const locationChoice = byId('request-location-choice');
+  const carAddress = byId('request-car-address');
+  const locationButton = byId('request-use-location');
+  const locationStatus = byId('request-location-status');
+  let deviceLocation = null, locationAttempt = 0;
+  const updateCarLocation = () => {
+    if (!locationChoice) return;
+    const atLocation = locationChoice.value === 'location';
+    byId('request-car-location').hidden = !atLocation;
+    carAddress.disabled = !atLocation;
+    carAddress.required = atLocation;
+    const dropoff = locationChoice.value === 'dropoff';
+    byId('request-dropoff').hidden = !dropoff;
+    byId('request-dropoff-time').disabled = !dropoff;
+  };
+  locationChoice?.addEventListener('change', () => {
+    locationAttempt++;
+    deviceLocation = null;
+    if (carAddress.value.startsWith('Current location: ')) carAddress.value = '';
+    locationStatus.textContent = '';
+    locationButton.disabled = false;
+    locationButton.textContent = 'Use current location';
+    updateCarLocation();
+  });
+  carAddress?.addEventListener('input', () => {
+    locationAttempt++;
+    deviceLocation = null;
+    locationStatus.textContent = '';
+    locationButton.disabled = false;
+    locationButton.textContent = 'Use current location';
+    carAddress.setCustomValidity('');
+  });
+  locationButton?.addEventListener('click', () => {
+    if (locationChoice.value !== 'location') return;
+    if (!navigator.geolocation) {
+      locationStatus.textContent = 'Current location is unavailable. Please type the car’s address.';
+      carAddress.focus();
+      return;
+    }
+    const attempt = ++locationAttempt;
+    locationButton.disabled = true;
+    locationButton.textContent = 'Finding location…';
+    locationStatus.textContent = 'Allow location access when your browser asks, or type the car’s address.';
+    const finish = () => { locationButton.disabled = false; locationButton.textContent = 'Use current location'; };
+    const fail = () => {
+      if (attempt !== locationAttempt) return;
+      finish();
+      locationStatus.textContent = 'Could not get your location. Please type the car’s address instead.';
+      carAddress.focus();
+    };
+    try {
+      navigator.geolocation.getCurrentPosition(position => {
+        if (attempt !== locationAttempt || locationChoice.value !== 'location') return;
+        const {latitude, longitude, accuracy} = position.coords;
+        if (![latitude,longitude,accuracy].every(Number.isFinite) || Math.abs(latitude)>90 || Math.abs(longitude)>180 || accuracy<0 || !Number.isFinite(position.timestamp)) { fail(); return; }
+        deviceLocation = {type:'device',latitude,longitude,accuracyMeters:accuracy,capturedAt:new Date(position.timestamp).toISOString(),carAtDevice:true};
+        carAddress.value = `Current location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+        carAddress.setCustomValidity('');
+        finish();
+        locationStatus.textContent = `Location added (within about ${Math.max(1,Math.round(accuracy))} metres). Check that your car is here before sending.`;
+      }, fail, {enableHighAccuracy:true,timeout:15000,maximumAge:0});
+    } catch (_) { fail(); }
+  });
+  updateCarLocation();
   const applyMode = () => {
   phoneField.required = Boolean(endpoint);
   byId('request-phone-label').textContent = endpoint ? 'Phone number' : 'Callback number, if different (optional)';
@@ -116,9 +180,18 @@
     const stranded = ['yes','no'].includes(data.get('stranded')) ? data.get('stranded') : 'unknown';
     const symptoms = String(data.get('details') || '').trim();
     const callbackTime = String(data.get('timing') || '').trim();
+    if (deviceLocation && carAddress.value !== `Current location: ${deviceLocation.latitude.toFixed(6)}, ${deviceLocation.longitude.toFixed(6)}`) deviceLocation = null;
+    const carLocation = locationChoice?.value === 'dropoff'
+      ? {type:'dropoff',preferredTime:String(data.get('dropoffTime') || '').trim()}
+      : deviceLocation || {type:'address',address:String(data.get('carAddress') || '').trim()};
+    const carLocationText = carLocation.type === 'dropoff'
+      ? `Car location: Shop drop-off requested${carLocation.preferredTime ? '; preferred time: ' + carLocation.preferredTime : ''}. Tony to confirm.`
+      : carLocation.type === 'device'
+        ? `Car location: Current device location (${carLocation.latitude.toFixed(6)}, ${carLocation.longitude.toFixed(6)}; accuracy about ${Math.max(1,Math.round(carLocation.accuracyMeters))} metres)\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.latitude + ',' + carLocation.longitude)}`
+        : `Car location: ${carLocation.address}\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.address)}`;
     // Keep these details useful to the existing receiver during a staged rollout.
-    const context = [city ? `City / ZIP: ${city}` : '',`Vehicle starts: ${starts}`,`Stranded: ${stranded}`,callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
-    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', city, starts, stranded, callbackTime, source:'form', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    const context = [carLocationText,city ? `City / ZIP: ${city}` : '',`Vehicle starts: ${starts}`,`Stranded: ${stranded}`,callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
+    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(locationChoice ? {carLocation} : {}), city, starts, stranded, callbackTime, source:'form', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
@@ -170,6 +243,7 @@
     if (sending) return;
     // Browser autofill can insert invisible characters without an input event.
     phoneField.value = phoneField.value.replace(/[^\d+()\s.-]/g, '').trim();
+    if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
     if (!form.reportValidity()) return;
     const currentData = readRequest();
     const sameContent = data => JSON.stringify({...data,smsConsentTimestamp:''});
