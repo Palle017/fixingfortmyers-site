@@ -310,6 +310,8 @@
   });
   stop.addEventListener('click', () => { if (recorder?.state === 'recording') recorder.stop(); });
   voiceSend.addEventListener('click', async () => {
+    if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
+    if ((locationChoice && !locationChoice.reportValidity()) || (carAddress && !carAddress.disabled && !carAddress.reportValidity())) { voiceStatus.textContent = 'Choose the car location or shop drop-off above before sending your recording.'; return; }
     const data = voicePayload || { ...readRequest(), source:'voice', requestId: sentRequestId };
     if (!data.name || data.phone.replace(/\D/g, '').length < 10 || !data.vehicle) { voiceStatus.textContent = 'Enter your name, phone number, and vehicle in the form above so we can respond to your recording.'; byId('request-name').focus(); return; }
     if (!recording) return;
@@ -317,7 +319,7 @@
     voiceSend.disabled = true; start.disabled = true; voiceStatus.textContent = 'Sending recording…';
     const upload = new FormData();
     upload.append('audio', recording, byId('voice-download').download);
-    Object.entries(data).forEach(([key, value]) => upload.append(key, String(value)));
+    Object.entries(data).forEach(([key, value]) => upload.append(key, key === 'carLocation' ? JSON.stringify(value) : String(value)));
     try { const result = await send('/hooks/lead/voicenote', upload, voiceKey, false); voiceStatus.textContent = `Recording received. Reference: ${result.id}. Our team will follow up; your appointment is not confirmed yet.`; }
     catch (_) { voiceStatus.textContent = 'We could not confirm receipt. Retry, or download the recording and attach it to your email or text. You can also call (239) 397-2048.'; }
     finally { voiceSend.disabled = false; start.disabled = false; }
