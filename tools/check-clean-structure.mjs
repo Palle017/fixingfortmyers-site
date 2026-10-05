@@ -8,7 +8,7 @@ import {JSDOM} from 'jsdom';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const text=node=>node?.textContent.replace(/\s+/g,' ').trim()||'';
-const coreIds=['request-vehicle','request-details','request-name','request-phone'];
+const coreIds=['request-vehicle','request-details','request-city','request-name','request-phone'];
 
 export function checkCleanPage(name,html){
   const dom=new JSDOM(html),d=dom.window.document;
@@ -68,7 +68,13 @@ export function checkCleanPage(name,html){
       } else {
         assert.ok(service&&(service.type==='hidden'||service.closest('[hidden],details')),`${name}: infer service without another required customer question`);
       }
-      for(const id of ['request-city','request-stranded','request-media']){
+      const city=d.getElementById('request-city');
+      assert.ok(city&&form.contains(city)&&!city.closest('details'),`${name}: city/ZIP is a core required field`);
+      assert.ok(city.required,`${name}: city/ZIP is required`);
+      assert.match(text(d.querySelector('label[for="request-city"]')),/city or ZIP/i,`${name}: city/ZIP label`);
+      assert.ok(d.getElementById('request-use-my-location'),`${name}: optional Use my location control`);
+      assert.ok(d.getElementById('request-latitude')?.type==='hidden'&&d.getElementById('request-longitude')?.type==='hidden'&&d.getElementById('request-maps-link')?.type==='hidden',`${name}: sender pin uses hidden fields`);
+      for(const id of ['request-stranded','request-media']){
         const field=d.getElementById(id);
         assert.ok(field&&field.closest('details'),`${name}: ${id} belongs in optional details`);
         assert.ok(!field.required,`${name}: ${id} is optional`);
@@ -78,7 +84,7 @@ export function checkCleanPage(name,html){
         const starts=d.getElementById('request-starts');
         assert.ok(starts&&starts.closest('details'),`${name}: request-starts belongs in optional details`);
       }
-      const optional=d.getElementById('request-city').closest('details');
+      const optional=d.getElementById('request-stranded').closest('details');
       assert.match(text(optional.querySelector('summary')),/More details.*optional/i,`${name}: optional expansion label`);
       assert.match(text(d.getElementById('request-submit')),/^(?:Request a repair|Send repair request|Get My Repair Plan)$/,`${name}: clear submit label`);
       assert.equal(d.querySelectorAll('section#new-shop,section#big-jobs,section#same-day-service').length,0,`${name}: consolidate repeated homepage callout sections`);

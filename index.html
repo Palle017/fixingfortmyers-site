@@ -331,14 +331,21 @@
               <label for="request-dropoff-time">Preferred drop-off time <span class="field-note">(optional)</span><input id="request-dropoff-time" name="dropoffTime" maxlength="160" placeholder="e.g. Friday morning or sometime this week" disabled></label>
               <p class="request-fineprint">Tony will contact you to arrange a drop-off time. Your appointment is confirmed after he replies.</p>
             </div>
+            <label class="request-full" for="request-city">Your city or ZIP <span class="field-note">(required)</span><input id="request-city" name="city" autocomplete="address-level2" maxlength="100" placeholder="e.g. Fort Myers or 33901" required aria-describedby="request-sender-location-help request-sender-location-status"></label>
+            <div class="request-full request-sender-location">
+              <button class="btn btn--outline" id="request-use-my-location" type="button">Use my location</button>
+              <p class="request-fineprint" id="request-sender-location-help">Optional. Adds a map pin to your request. Your city or ZIP is still required if location access is denied.</p>
+              <p class="request-status" id="request-sender-location-status" role="status" aria-live="polite"></p>
+              <input type="hidden" id="request-latitude" name="latitude" value="">
+              <input type="hidden" id="request-longitude" name="longitude" value="">
+              <input type="hidden" id="request-maps-link" name="mapsLink" value="">
+            </div>
             <label for="request-name">Your name<input id="request-name" name="name" autocomplete="name" maxlength="100" required></label>
             <label for="request-phone"><span id="request-phone-label">Phone number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required></label>
           </div>
           <details class="request-options" id="request-options">
             <summary>More details &amp; contact preferences <span>(optional)</span></summary>
             <div class="request-fields">
-              
-              <label class="request-full" for="request-city">City or ZIP code <span class="field-note">(optional)</span><input id="request-city" name="city" autocomplete="address-level2" maxlength="100" placeholder="e.g. Fort Myers or 33901"></label>
               <label for="request-stranded">Are you stranded?<select id="request-stranded" name="stranded"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
               <label class="request-full" for="request-timing">Preferred timing <span class="field-note">(optional)</span><input id="request-timing" name="timing" maxlength="160" placeholder="e.g. This week; best callback after 3 pm"></label>
             </div>

@@ -218,6 +218,7 @@
       <p class="b1-lead-title">Send this to Tony</p>
       <label>First name<input name="name" autocomplete="given-name" maxlength="100" required></label>
       <label>Mobile number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" required></label>
+      <label>Your city or ZIP<input name="city" autocomplete="address-level2" maxlength="100" placeholder="e.g. Fort Myers or 33901" required></label>
       <label>Best time to reach you or anything else <small>(optional)</small><input name="callbackTime" maxlength="160"></label>
       ${choice('starts', 'Does the vehicle start?')}
       ${choice('stranded', 'Are you stranded right now?')}
@@ -284,8 +285,10 @@
     function lockLeadFields(locked) { leadForm.querySelectorAll('input,select').forEach(field => { field.disabled = locked; }); }
     function showLead() {
       if (leadSent) return;
-      // The customer confirms the two answers that decide urgency; the chat only prefills them.
-      if (!leadForm.isConnected) for (const name of ['starts', 'stranded']) leadForm.querySelector(`[name=${name}]`).value = ['yes', 'no'].includes(state.intake[name]) ? state.intake[name] : 'unknown';
+      if (!leadForm.isConnected) {
+        for (const name of ['starts', 'stranded']) leadForm.querySelector(`[name=${name}]`).value = ['yes', 'no'].includes(state.intake[name]) ? state.intake[name] : 'unknown';
+        if (state.intake.city) leadForm.querySelector('[name=city]').value = String(state.intake.city).slice(0, 100);
+      }
       sendNow.hidden = true; messages.append(leadForm); messages.scrollTop = messages.scrollHeight;
       leadForm.querySelector('[name=name]').focus({preventScroll:true});
     }
@@ -306,7 +309,7 @@
         name:String(data.get('name') || '').trim(), phone:String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}),
         vehicle:String(state.intake.vehicle || '').slice(0,160), service:String(window.PT_REPAIR_CONTEXT?.service || '').slice(0,160),
         details:('Bay One chat on '+location.pathname+':\n'+state.customerMessages.join('\n')).slice(0,6000),
-        city:String(state.intake.city || '').slice(0,100), starts:String(data.get('starts') || 'unknown'), stranded:String(data.get('stranded') || 'unknown'),
+        city:String(data.get('city') || state.intake.city || '').trim().slice(0,100), starts:String(data.get('starts') || 'unknown'), stranded:String(data.get('stranded') || 'unknown'),
         callbackTime:String(data.get('callbackTime') || '').trim().slice(0,160), source:'ai', website:'',
         smsConsent:sms, smsConsentTimestamp:sms ? new Date().toISOString() : '', smsConsentVersion:'2026-09-06-v1',
         smsConsentSource:'bay-one-chat', smsConsentPage:location.origin+location.pathname, smsConsentDisclosure:sms ? CONSENT : '',

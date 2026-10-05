@@ -33,7 +33,7 @@ test('published contact configuration sends a repair to cloud intake and keeps p
   for(const url of ['https://fixingfortmyers.com/','https://www.fixingfortmyers.com/']){
     const x=setup(t,{url,enabled:false,publicContact:true,handler:async route=>({ok:true,status:route==='/healthz'?200:201,json:async()=>route==='/healthz'?{ok:true,storage:'cloud',media:'ready'}:{ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'}})}),d=x.w.document;
     await settle();
-    x.enter('request-name','Synthetic Customer');x.enter('request-phone','2395550100');x.enter('request-details','Synthetic concern.');
+    x.enter('request-name','Synthetic Customer');x.enter('request-phone','2395550100');x.enter('request-details','Synthetic concern.');x.enter('request-city','Fort Myers');
     x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
     d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
     const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,1);assert.equal(sent[0].url,cloud+'/hooks/lead/webform');
@@ -285,7 +285,7 @@ test('draft source carries only known page categories, never URL or session-inje
   for(const input of cases){
     const x=setup(t,{...input,enabled:false,publicContact:true,handler:async()=>{throw new TypeError('offline');}}),d=x.w.document;
     await settle();x.requests.length=0;
-    x.enter('request-name','Synthetic Customer');x.enter('request-details','Synthetic symptoms');
+    x.enter('request-name','Synthetic Customer');x.enter('request-details','Synthetic symptoms');x.enter('request-city','Fort Myers');
     x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
     d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));
     const draft=d.getElementById('request-preview').value;

@@ -31,7 +31,16 @@ export function summarize(lead, id, decision) {
     lead.phone ? `Callback: ${lead.phone} (${lead.smsConsent ? 'text OK' : 'call only, no text permission'})` : 'Callback: no number given',
     `Vehicle: ${lead.vehicle || 'Not provided'}`,
     `Location: ${lead.carLocation ? carLocationLabel(lead.carLocation) : lead.city || 'Not provided'}`,
-    lead.carLocation && carLocationMap(lead.carLocation) ? `Map: ${carLocationMap(lead.carLocation)}` : null,
+    lead.city && lead.carLocation ? `City / ZIP: ${lead.city}` : null,
+    (() => {
+      const carMap = lead.carLocation && carLocationMap(lead.carLocation);
+      if (carMap) return `Map: ${carMap}`;
+      if (typeof lead.mapsLink === 'string' && lead.mapsLink.startsWith('https://www.google.com/maps/')) return `Map: ${lead.mapsLink}`;
+      if (Number.isFinite(lead.latitude) && Number.isFinite(lead.longitude)) {
+        return `Map: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.latitude + ',' + lead.longitude)}`;
+      }
+      return null;
+    })(),
     `Starts: ${yesNo(lead.starts)} · Stranded: ${yesNo(lead.stranded)}`,
     lead.callbackTime ? `Best time / notes: ${lead.callbackTime}` : null,
     `Came from: ${SOURCES[source]}${lead.channel ? ' (via ' + (lead.channel === 'google' ? 'Google' : lead.channel) + ')' : ''}`,
