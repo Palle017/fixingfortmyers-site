@@ -109,3 +109,8 @@ the project so the next session can continue without re-reading everything.
 Copy one existing source folder into the private `inbox`, then say: **“Index the new source material and show me the three strongest verified assets for repair inquiries.”** Stop after the copy. Codex should perform the inventory and review, not ask you to manually sort everything.
 
 The inventory tool is prepared locally. Source-specific rankings require actual material; campaign drafts do not mean ads are live. Indexing and rankings remain Google decisions, and useful educational content is not a guarantee of high-value jobs.
+
+
+## Oct 2026 conversion note (homepage pass)
+
+Homepage/workshop repositioned shop-first (engine, transmission, diesel by appointment). City pages (Cape Coral, Lehigh Acres, North Fort Myers, etc.) were **not** mass-deleted in this pass — plan a later merge/consolidation so they do not compete with the shop-first homepage. Schema hours are Mon–Sat daytime, not 00:00–23:59. Domain email still Gmail until Raj provisions one.

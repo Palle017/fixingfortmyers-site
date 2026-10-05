@@ -24,7 +24,7 @@
     window.PT_LEAD_CHANNEL = sessionStorage.getItem('pt-lead-channel') || '';
   } catch (_) { window.PT_LEAD_CHANNEL = ''; }
   // Service attribution is a fixed category, never arbitrary query text.
-  const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine / transmission',engine:'Engine / transmission',programming:'Module programming',diesel:'Diesel service',maintenance:'Maintenance / other repair'});
+  const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine',engine:'Engine',transmission:'Transmission',programming:'Module programming',diesel:'Diesel',maintenance:'Other'});
   const servicePages = {'auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'engine','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
   Object.assign(servicePages,{'cooling-system-repair-fort-myers':'cooling','repair-guide-car-overheating':'cooling','repair-guide-flashing-check-engine-light':'diagnostics'});
   const validService = key => typeof key === 'string' && Object.hasOwn(services,key);
@@ -54,7 +54,7 @@
   }
   const nav = byId('nav');
   if (nav) { const update = () => nav.classList.toggle('nav--scrolled', window.scrollY > 60); update(); window.addEventListener('scroll', update, { passive: true }); }
-  const quickCall = document.querySelector('.mobile-contact-bar[aria-label="Quick contact"] a[href="tel:+12393972048"]');
+  const quickCall = document.querySelector('.mobile-contact-bar[aria-label="Quick contact"] a[href="tel:+12393972048"], .mobile-contact-bar[aria-label^="Engine or transmission"] a[href="tel:+12393972048"]');
   if (quickCall) { quickCall.textContent = 'Call'; quickCall.setAttribute('aria-label', 'Call Perfect Timing Auto Repair at (239) 397-2048'); }
   const brandVideo = document.querySelector('.bang-video-wrap video');
   if (brandVideo) {
@@ -151,9 +151,9 @@
   byId('request-direct-consent').hidden = Boolean(endpoint);
   const media = byId('request-media'); if (media) media.closest('label').hidden = !(endpoint && mediaReady);
   const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = !endpoint;
-  const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'Request a repair' : 'Prepare a repair message';
-  if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Send repair request' : 'Prepare text to Tony';
-  byId('request-instructions').textContent = endpoint ? 'Tell us about your car and the problem. Tony will call to discuss the next step. Your appointment is confirmed after he replies.' : 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
+  const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'Tell Tony what’s going on' : 'Prepare a repair message';
+  if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Get My Repair Plan' : 'Prepare text to Tony';
+  byId('request-instructions').textContent = endpoint ? 'Share the vehicle, what’s wrong, and whether it drives. Tony confirms every appointment before work starts.' : 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
   };
   let mediaReady = false;
   // Messages uses a different body separator on Apple mobile devices. Keep copy/email
@@ -190,7 +190,7 @@
         ? `Car location: Current device location (${carLocation.latitude.toFixed(6)}, ${carLocation.longitude.toFixed(6)}; accuracy about ${Math.max(1,Math.round(carLocation.accuracyMeters))} metres)\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.latitude + ',' + carLocation.longitude)}`
         : `Car location: ${carLocation.address}\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.address)}`;
     // Keep these details useful to the existing receiver during a staged rollout.
-    const context = [carLocationText,city ? `City / ZIP: ${city}` : '',`Vehicle starts: ${starts}`,`Stranded: ${stranded}`,callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
+    const context = [carLocationText,city ? `City / ZIP: ${city}` : '',`Does it drive: ${starts}`,`Stranded: ${stranded}`,callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
     return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(locationChoice ? {carLocation} : {}), city, starts, stranded, callbackTime, source:'form', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {

@@ -29,3 +29,19 @@ The computer must be awake and online for website submissions to reach it. The r
 ## Search follow-up
 
 Check the site's property in Google Search Console after publication and request indexing of the homepage and priority service pages. Update the Google Business Profile phone and location visibility separately in its owner account. Do not add the future address there until it is ready for customer traffic. Search ranking and traffic changes require actual Search Console data; this update does not claim a measured ranking increase.
+
+
+## Positioning (Oct 2026 conversion pass)
+
+Public offer sentence:
+**Perfect Timing Auto Repair: engine, transmission and diesel repair in Fort Myers, by appointment at Tony's workshop.**
+
+Hours line (not 24/7 open-shop hours in schema): **Request a repair anytime. Tony confirms every appointment.**
+
+### NAP sync still needed (directories)
+Old personal/sign-in phone **(239) 271-4854** still appears on some listings and must be updated to business line **(239) 397-2048**:
+- Yahoo Local
+- Nextdoor (verify phone + description)
+- BBB category/phone if still showing 271-4854 / "Mobile Auto Repair"
+
+Owner confirmed (2026-10-05): public location is Bayshore Ranch, by appointment. Do not publish 13037 Second St. Listings that still show Second St should be updated to Bayshore Ranch, Fort Myers, (239) 397-2048.

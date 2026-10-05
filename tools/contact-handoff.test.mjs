@@ -158,7 +158,7 @@ test('service preselection is whitelisted, optional vehicle submits with explici
   const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,2);
   assert.equal(sent[0].headers['Idempotency-Key'],sent[1].headers['Idempotency-Key']);assert.deepEqual(sent[0].body,sent[1].body);
   assert.equal(sent[0].body.starts,'no');assert.equal(sent[0].body.stranded,'yes');assert.equal(sent[0].body.city,'33901');assert.equal(sent[0].body.smsConsent,true);
-  assert.match(sent[0].body.details,/City \/ ZIP: 33901/);assert.match(sent[0].body.details,/Vehicle starts: no/);assert.ok(sent[0].body.vehicle);
+  assert.match(sent[0].body.details,/City \/ ZIP: 33901/);assert.match(sent[0].body.details,/Does it drive: no/);assert.ok(sent[0].body.vehicle);
   assert.equal(form.method,'post');assert.match(d.getElementById('request-status').textContent,/could not confirm receipt/);
   const rejected=setup(t,{url:'https://preview.invalid/?service=%3Cscript%3Ebad%3C%2Fscript%3E'});assert.equal(rejected.w.document.getElementById('request-service').selectedIndex,0);
 });
@@ -193,8 +193,8 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
 
 test('mobile bar keeps request and call actions while the separate Bay One entry restores focus',async t=>{
   const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar'),entry=d.querySelector('.b1-launcher');
-  assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'#contact');assert.equal(bar.children[1].getAttribute('href'),'tel:+12393972048');
-  assert.deepEqual([...bar.children].map(node=>node.textContent),['Request a repair','Call']);
+  assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'tel:+12393972048');assert.equal(bar.children[1].getAttribute('href'),'sms:+12393972048');
+  assert.deepEqual([...bar.children].map(node=>node.textContent),['Call','Text']);
   assert.equal(bar.querySelector('.b1-bar-launcher'),null);assert.ok(d.getElementById('bay-one-widget').classList.contains('b1-has-contact-bar'));
   assert.equal(d.getElementById('b1-panel').hidden,true);
   entry.click();await settle();assert.equal(d.getElementById('b1-panel').hidden,false);assert.equal(entry.getAttribute('aria-expanded'),'true');
@@ -291,7 +291,7 @@ test('draft source carries only known page categories, never URL or session-inje
     const draft=d.getElementById('request-preview').value;
     assert.ok(draft.endsWith('Website page context: /'+input.source+(input.source?' (last guide or service viewed)':'')));
     assert.doesNotMatch(draft,/PrivatePerson|2395550199/);assert.equal(x.requests.length,0);
-    if(input.url.includes('service=cooling'))assert.equal(d.getElementById('request-service').value,'Engine / transmission');
+    if(input.url.includes('service=cooling'))assert.equal(d.getElementById('request-service').value,'Engine');
     assert.ok(d.getElementById('request-text').getAttribute('href').startsWith('sms:+12393972048?body='));
   }
 });
