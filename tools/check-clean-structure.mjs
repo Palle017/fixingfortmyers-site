@@ -14,7 +14,7 @@ export function checkCleanPage(name,html){
   const dom=new JSDOM(html),d=dom.window.document;
   try {
     const hero=d.querySelector('.service-hero');
-    if(hero){
+    if(hero&&name!=='workshop.html'){
       assert.equal(hero.querySelectorAll('h1').length,1,`${name}: one service heading`);
       assert.ok(hero.classList.contains('compact-hero'),`${name}: use the compact service opening`);
       assert.equal(hero.querySelectorAll('.service-hero__stats').length,0,`${name}: remove repetitive service sales stats`);
@@ -26,13 +26,29 @@ export function checkCleanPage(name,html){
       assert.equal(text(actions[1]),'Call',`${name}: simple alternative call label`);
       assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: published call number`);
     }
+    if(hero&&name==='workshop.html'){
+      assert.equal(hero.querySelectorAll('h1').length,1,`${name}: one workshop heading`);
+      assert.ok(text(hero.querySelector('.service-hero__desc')),`${name}: keep a useful workshop description`);
+      assert.doesNotMatch(text(hero.querySelector('.service-hero__desc')),/mobile repair shop/i,`${name}: shop-first positioning`);
+      const actions=[...hero.querySelectorAll('.service-hero__actions a')];
+      assert.ok(actions.length>=2,`${name}: Call/Text CTAs present`);
+      assert.ok(actions.some(a=>a.getAttribute('href')==='tel:+12393972048'),`${name}: published call number`);
+      assert.ok(actions.some(a=>a.getAttribute('href')==='sms:+12393972048'),`${name}: published text number`);
+    }
     const bar=d.querySelector('.mobile-contact-bar');
     if(bar&&name!=='careers.html'){
       const actions=[...bar.querySelectorAll('a,button')];
       assert.equal(actions.length,2,`${name}: two mobile contact actions`);
-      assert.deepEqual(actions.map(text),['Request a repair','Call'],`${name}: consistent mobile actions`);
-      assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
-      assert.ok(actions[0].getAttribute('href').endsWith('#contact'),`${name}: request opens the form`);
+      const labels=actions.map(text);
+      if(name==='index.html'||name==='workshop.html'){
+        assert.deepEqual(labels,['Call','Text'],`${name}: Call/Text sticky for engine-transmission positioning`);
+        assert.equal(actions[0].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
+        assert.equal(actions[1].getAttribute('href'),'sms:+12393972048',`${name}: mobile text number`);
+      } else {
+        assert.deepEqual(labels,['Request a repair','Call'],`${name}: consistent mobile actions`);
+        assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
+        assert.ok(actions[0].getAttribute('href').endsWith('#contact'),`${name}: request opens the form`);
+      }
     }
     const form=d.getElementById('bookingForm');
     if(form){
@@ -46,16 +62,25 @@ export function checkCleanPage(name,html){
       assert.ok(d.getElementById('request-phone').required,`${name}: collect a callback number`);
       assert.ok(d.getElementById('request-details').required,`${name}: collect the problem`);
       const service=d.getElementById('request-service');
-      assert.ok(service&&(service.type==='hidden'||service.closest('[hidden],details')),`${name}: infer service without another required customer question`);
-      for(const id of ['request-city','request-starts','request-stranded','request-media']){
+      if(name==='index.html'){
+        assert.ok(service&&form.contains(service)&&!service.closest('details'),`${name}: type of repair is a core Lead Mechanic field`);
+        assert.ok(d.getElementById('request-starts')&&!d.getElementById('request-starts').closest('details'),`${name}: does-it-drive is a core field`);
+      } else {
+        assert.ok(service&&(service.type==='hidden'||service.closest('[hidden],details')),`${name}: infer service without another required customer question`);
+      }
+      for(const id of ['request-city','request-stranded','request-media']){
         const field=d.getElementById(id);
         assert.ok(field&&field.closest('details'),`${name}: ${id} belongs in optional details`);
         assert.ok(!field.required,`${name}: ${id} is optional`);
         assert.equal(field.closest('details').open,false,`${name}: optional details start collapsed`);
       }
+      if(name!=='index.html'){
+        const starts=d.getElementById('request-starts');
+        assert.ok(starts&&starts.closest('details'),`${name}: request-starts belongs in optional details`);
+      }
       const optional=d.getElementById('request-city').closest('details');
       assert.match(text(optional.querySelector('summary')),/More details.*optional/i,`${name}: optional expansion label`);
-      assert.match(text(d.getElementById('request-submit')),/^(?:Request a repair|Send repair request)$/,`${name}: clear submit label`);
+      assert.match(text(d.getElementById('request-submit')),/^(?:Request a repair|Send repair request|Get My Repair Plan)$/,`${name}: clear submit label`);
       assert.equal(d.querySelectorAll('section#new-shop,section#big-jobs,section#same-day-service').length,0,`${name}: consolidate repeated homepage callout sections`);
     }
     return {file:name,serviceHero:Boolean(hero),repairForm:Boolean(form),mobileActions:bar?bar.querySelectorAll('a,button').length:0};

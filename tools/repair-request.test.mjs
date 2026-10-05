@@ -119,13 +119,14 @@ test('offline text and email drafts carry the required car location and map',asy
 
 test('online form initializes the short request flow and enables the safe submit control', async t => {
   const x = setup(t); await settle();
-  assert.equal(x.d.getElementById('request-heading').textContent, 'Request a repair');
-  assert.equal(x.d.getElementById('request-submit').textContent, 'Send repair request');
+  assert.equal(x.d.getElementById('request-heading').textContent, 'Tell Tony what’s going on');
+  assert.equal(x.d.getElementById('request-submit').textContent, 'Get My Repair Plan');
   assert.equal(x.d.getElementById('request-submit').disabled, false);
   assert.doesNotMatch(x.d.getElementById('request-instructions').textContent, /prepare|text draft/i);
   for (const field of ['name', 'phone', 'details']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
   for (const field of ['city', 'vehicle', 'timing']) assert.equal(x.d.getElementById(`request-${field}`).required, false);
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="tel:"]').textContent, 'Call');
+  assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="sms:"]').textContent, 'Text');
   assert.equal(x.leads().length, 0);
 });
 
