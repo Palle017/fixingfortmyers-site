@@ -82,6 +82,12 @@
   .nav__mobile-toggle { display: flex; }
   .nav__mobile-menu.open { display: flex; }
 }
+/* Six-link navigation (home, guides, proof, careers): tighten links so the CTA never clips at desktop widths. */
+@media (min-width: 1121px) {
+  :is(.home-clean, .careers-page, .guides-page, .proof-page) .nav__links { gap: 4px; }
+  :is(.home-clean, .careers-page, .guides-page, .proof-page) .nav__links a { font-size: 14px; letter-spacing: .04em; padding: .55rem .6rem; }
+  :is(.home-clean, .careers-page, .guides-page, .proof-page) .nav__links .nav__cta { text-transform: none; letter-spacing: .02em; padding: .6rem 1rem !important; }
+}
 
 /* Mobile service imagery keeps Tony visible and reserves space while images load. */
 .home-hero__grid{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:36px}
