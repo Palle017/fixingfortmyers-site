@@ -351,6 +351,6 @@
     const contact = document.getElementById('bookingForm');
     if (contact && 'IntersectionObserver' in window) new IntersectionObserver(entries => widget.classList.toggle('b1-near-contact', entries[0].isIntersecting), {threshold:.05}).observe(contact);
     const easternHour = Number(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'numeric',hourCycle:'h23'}).format(new Date()));
-    addMessage('assistant', (easternHour >= 20 || easternHour < 8 ? 'Hi, I’m Bay One. Tony is available around the clock and I help him overnight. ' : 'Hi, I’m Bay One, Tony’s repair assistant. ') + 'Tell me what’s going on and I’ll get the details straight to Tony so he can plan the job. What is happening with your vehicle?');
+    addMessage('assistant', (easternHour >= 20 || easternHour < 8 ? 'Hi, I’m Bay One, Tony’s overnight assistant. Leave your details and Tony will confirm first thing. ' : 'Hi, I’m Bay One, Tony’s repair assistant. ') + 'Tell me what’s going on and I’ll get the details straight to Tony so he can plan the job. What is happening with your vehicle?');
   }
 })();
