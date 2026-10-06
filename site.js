@@ -144,6 +144,54 @@
     } catch (_) { fail(); }
   });
   updateCarLocation();
+  const cityField = byId('request-city');
+  const senderLocationButton = byId('request-use-my-location');
+  const senderLocationStatus = byId('request-sender-location-status');
+  const latitudeField = byId('request-latitude');
+  const longitudeField = byId('request-longitude');
+  const mapsLinkField = byId('request-maps-link');
+  let senderLocationAttempt = 0;
+  const clearSenderPin = () => {
+    if (latitudeField) latitudeField.value = '';
+    if (longitudeField) longitudeField.value = '';
+    if (mapsLinkField) mapsLinkField.value = '';
+  };
+  cityField?.addEventListener('input', () => {
+    // Keep typed city as the required value; do not clear a pin the customer already approved.
+    cityField.setCustomValidity('');
+  });
+  senderLocationButton?.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      if (senderLocationStatus) senderLocationStatus.textContent = 'Location is unavailable in this browser. Enter your city or ZIP instead.';
+      cityField?.focus();
+      return;
+    }
+    const attempt = ++senderLocationAttempt;
+    senderLocationButton.disabled = true;
+    senderLocationButton.textContent = 'Finding location…';
+    if (senderLocationStatus) senderLocationStatus.textContent = 'Allow location access when your browser asks, or type your city or ZIP.';
+    const finish = () => { senderLocationButton.disabled = false; senderLocationButton.textContent = 'Use my location'; };
+    const fail = () => {
+      if (attempt !== senderLocationAttempt) return;
+      finish();
+      clearSenderPin();
+      if (senderLocationStatus) senderLocationStatus.textContent = 'Could not get your location. Your city or ZIP still works.';
+      cityField?.focus();
+    };
+    try {
+      navigator.geolocation.getCurrentPosition(position => {
+        if (attempt !== senderLocationAttempt) return;
+        const {latitude, longitude, accuracy} = position.coords;
+        if (![latitude,longitude,accuracy].every(Number.isFinite) || Math.abs(latitude)>90 || Math.abs(longitude)>180 || accuracy<0) { fail(); return; }
+        const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(latitude + ',' + longitude)}`;
+        latitudeField.value = String(latitude);
+        longitudeField.value = String(longitude);
+        mapsLinkField.value = mapsLink;
+        finish();
+        if (senderLocationStatus) senderLocationStatus.textContent = `Map pin added (within about ${Math.max(1,Math.round(accuracy))} metres). City or ZIP is still required.`;
+      }, fail, {enableHighAccuracy:true,timeout:15000,maximumAge:0});
+    } catch (_) { fail(); }
+  });
   const applyMode = () => {
   phoneField.required = Boolean(endpoint);
   byId('request-phone-label').textContent = endpoint ? 'Phone number' : 'Callback number, if different (optional)';
@@ -180,6 +228,13 @@
     const stranded = ['yes','no'].includes(data.get('stranded')) ? data.get('stranded') : 'unknown';
     const symptoms = String(data.get('details') || '').trim();
     const callbackTime = String(data.get('timing') || '').trim();
+    const latitude = Number(data.get('latitude'));
+    const longitude = Number(data.get('longitude'));
+    const mapsLink = String(data.get('mapsLink') || '').trim();
+    const senderPin = Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
+      && mapsLink.startsWith('https://www.google.com/maps/')
+      ? {latitude, longitude, mapsLink}
+      : null;
     if (deviceLocation && carAddress.value !== `Current location: ${deviceLocation.latitude.toFixed(6)}, ${deviceLocation.longitude.toFixed(6)}`) deviceLocation = null;
     const carLocation = locationChoice?.value === 'dropoff'
       ? {type:'dropoff',preferredTime:String(data.get('dropoffTime') || '').trim()}
@@ -189,9 +244,12 @@
       : carLocation.type === 'device'
         ? `Car location: Current device location (${carLocation.latitude.toFixed(6)}, ${carLocation.longitude.toFixed(6)}; accuracy about ${Math.max(1,Math.round(carLocation.accuracyMeters))} metres)\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.latitude + ',' + carLocation.longitude)}`
         : `Car location: ${carLocation.address}\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.address)}`;
+    const senderPinText = senderPin
+      ? `Sender map pin: ${senderPin.latitude.toFixed(6)}, ${senderPin.longitude.toFixed(6)}\nSender map: ${senderPin.mapsLink}`
+      : '';
     // Keep these details useful to the existing receiver during a staged rollout.
-    const context = [carLocationText,city ? `City / ZIP: ${city}` : '',`Does it drive: ${starts}`,`Stranded: ${stranded}`,callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
-    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(locationChoice ? {carLocation} : {}), city, starts, stranded, callbackTime, source:'form', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
+    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(locationChoice ? {carLocation} : {}), city, ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink} : {}), starts, stranded, callbackTime, source:'form', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
@@ -244,6 +302,7 @@
     // Browser autofill can insert invisible characters without an input event.
     phoneField.value = phoneField.value.replace(/[^\d+()\s.-]/g, '').trim();
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
+    if (cityField) cityField.setCustomValidity(cityField.value.trim() ? '' : 'Enter your city or ZIP.');
     if (!form.reportValidity()) return;
     const currentData = readRequest();
     const sameContent = data => JSON.stringify({...data,smsConsentTimestamp:''});

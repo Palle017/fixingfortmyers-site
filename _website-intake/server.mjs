@@ -58,11 +58,23 @@ function normalize(input, kind) {
   if (consent && !['smsConsentVersion', 'smsConsentSource', 'smsConsentPage', 'smsConsentDisclosure'].every(key => typeof input[key] === 'string' && input[key].trim())) throw error(400, 'Please confirm your text message preference again.');
   const routing={};
   // Keep legacy payload hashes stable. New confirmed fields are additive.
-  if(['starts','stranded','city','drivable','source','callbackTime'].some(key=>Object.hasOwn(input,key))){
+  if(['starts','stranded','city','drivable','source','callbackTime','latitude','longitude','mapsLink'].some(key=>Object.hasOwn(input,key))){
     for(const key of ['starts','stranded','drivable']){const value=input[key]||'unknown';if(!['yes','no','unknown'].includes(value))throw error(400,'Select yes, no, or unknown for vehicle status.');routing[key]=value;}
     routing.city=clean(input.city,100);routing.callbackTime=clean(input.callbackTime,160);
     routing.source=input.source||(kind==='voicenote'?'voice':'form');
     if(!['form','ai','voice','unknown'].includes(routing.source))throw error(400,'Invalid inquiry source.');
+    const lat = input.latitude, lng = input.longitude;
+    const hasPin = (lat !== undefined && lat !== null && lat !== '') || (lng !== undefined && lng !== null && lng !== '') || (Object.hasOwn(input,'mapsLink') && input.mapsLink);
+    if (hasPin) {
+      const latitude = typeof lat === 'number' ? lat : Number(lat);
+      const longitude = typeof lng === 'number' ? lng : Number(lng);
+      const mapsLink = clean(input.mapsLink, 500);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) throw error(400, 'Please share your location again or type your city or ZIP.');
+      if (mapsLink && !mapsLink.startsWith('https://www.google.com/maps/')) throw error(400, 'Please share your location again or type your city or ZIP.');
+      routing.latitude = latitude;
+      routing.longitude = longitude;
+      routing.mapsLink = mapsLink || ('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(latitude + ',' + longitude));
+    }
   }
   return {
     kind, name: clean(input.name, 100, true), phone,

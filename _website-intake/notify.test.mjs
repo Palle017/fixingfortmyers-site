@@ -392,3 +392,22 @@ test('big jobs (engine, transmission, rebuild) are tagged so Tony calls them bac
   const both=summarize({name:'Synthetic',phone:'2395550100',vehicle:'Civic',details:'Spun bearing, stranded',starts:'no',stranded:'yes'},'L3',{priority:'first',actions:['notify_sms']});
   assert.match(both.title,/^URGENT BIG JOB New repair request/);
 });
+
+test('summarize: City / ZIP and sender or car map appear in Tony alerts', () => {
+  const withCar = summarize(lead({
+    city: 'Cape Coral',
+    carLocation: {type:'address', address:'123 Example St, Fort Myers'},
+  }), 'L-loc', NORMAL);
+  assert.ok(withCar.text.split('\n').includes('Location: 123 Example St, Fort Myers'));
+  assert.ok(withCar.text.split('\n').includes('City / ZIP: Cape Coral'));
+  assert.ok(withCar.text.split('\n').includes('Map: https://www.google.com/maps/search/?api=1&query=123%20Example%20St%2C%20Fort%20Myers'));
+
+  const withSender = summarize(lead({
+    city: 'Lehigh Acres',
+    latitude: 26.625,
+    longitude: -81.625,
+    mapsLink: 'https://www.google.com/maps/search/?api=1&query=26.625%2C-81.625',
+  }), 'L-pin', NORMAL);
+  assert.ok(withSender.text.split('\n').includes('Location: Lehigh Acres'));
+  assert.ok(withSender.text.split('\n').includes('Map: https://www.google.com/maps/search/?api=1&query=26.625%2C-81.625'));
+});
