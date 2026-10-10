@@ -1,21 +1,48 @@
 (() => {
   'use strict';
-  // Anonymous browser counts; never include form values or URL query strings.
+  // Bounded anonymous events: no persistent browser identifier or customer data.
   const metricsEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
-  if (metricsEndpoint && /^(www\.)?fixingfortmyers\.com$/.test(location.hostname)) {
-    const makeId = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
-    let visitor = makeId();
+  const metricsEnabled = Boolean(metricsEndpoint && /^(www\.)?fixingfortmyers\.com$/.test(location.hostname));
+  const metricSources = new Set(['direct','google','bing','facebook','instagram','chatgpt','perplexity','gemini','claude','qr','other']);
+  const metricSource = (() => {
+    const campaign = new URLSearchParams(location.search).get('utm_source');
+    if (campaign) return metricSources.has(campaign.toLowerCase()) ? campaign.toLowerCase() : 'other';
     try {
-      const saved = localStorage.getItem('pt-website-visitor-v1');
-      if (saved && /^[A-Za-z0-9_-]{16,80}$/.test(saved)) visitor = saved;
-      else localStorage.setItem('pt-website-visitor-v1', visitor);
-    } catch (_) { /* A blocked storage browser can still record this visit. */ }
-    const event = JSON.stringify({visitor_id:visitor,event_id:makeId(),page:location.pathname.slice(0,500)});
-    const reportVisit = () => fetch(metricsEndpoint + '/hooks/analytics/visit', {
-      method:'POST',headers:{'Content-Type':'application/json'},body:event,credentials:'omit',keepalive:true
-    }).then(response => { if (response.status >= 500) throw new Error('retry'); });
-    reportVisit().catch(() => setTimeout(() => reportVisit().catch(() => {}), 3000));
-  }
+      const host = new URL(document.referrer).hostname.toLowerCase();
+      if (host === location.hostname) return 'direct';
+      const domains = [['gemini.google.com','gemini'],['chatgpt.com','chatgpt'],['chat.openai.com','chatgpt'],['perplexity.ai','perplexity'],['claude.ai','claude'],['google.com','google'],['bing.com','bing'],['facebook.com','facebook'],['instagram.com','instagram']];
+      return domains.find(([domain]) => host === domain || host.endsWith('.' + domain))?.[1] || 'other';
+    } catch (_) { return 'direct'; }
+  })();
+  const metricPath = location.pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/';
+  const metricPage = metricPath === '/index' ? '/' : new Set(['/','/module-programming-fort-myers','/repair-guide-ecu-tcm-programming','/parts','/parts-quote']).has(metricPath) ? metricPath : '/other';
+  const recordedMetrics = new Set();
+  const reportMetric = (eventName, once = true) => {
+    if (!metricsEnabled || (once && recordedMetrics.has(eventName))) return;
+    if (once) recordedMetrics.add(eventName);
+    const eventId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
+    const body = JSON.stringify({event:eventName,event_id:eventId,page:metricPage,source:metricSource});
+    const deliver = () => {
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 5000);
+      return Promise.resolve().then(() => fetch(metricsEndpoint + '/hooks/analytics/event', {
+        method:'POST',headers:{'Content-Type':'application/json'},body,credentials:'omit',keepalive:true,signal:controller.signal
+      })).then(response => { if (response.status >= 500) throw new Error('retry'); }).finally(() => clearTimeout(timer));
+    };
+    deliver().catch(() => setTimeout(() => deliver().catch(() => {}), 1500));
+  };
+  reportMetric('visit');
+  document.addEventListener('click', event => {
+    const link = event.target.closest?.('a[href]');
+    if (!link) return;
+    const href = link.getAttribute('href');
+    if (/^tel:/i.test(href)) reportMetric('call_clicked');
+    else if (/^sms:/i.test(href)) reportMetric('text_clicked');
+    else if (/^mailto:/i.test(href)) reportMetric('email_clicked');
+    else {
+      try { if (new URL(href, location.href).origin === location.origin && /^\/parts(?:-quote)?(?:\.html)?\/?$/.test(new URL(href, location.href).pathname)) reportMetric('parts_quote_started'); }
+      catch (_) { /* Invalid links cannot produce analytics data. */ }
+    }
+  });
   const byId = id => document.getElementById(id);
   // Keep the existing lead-channel contract; only known campaign codes enter message drafts.
   const validChannel = value => typeof value === 'string' && /^[a-z0-9_-]{2,30}$/.test(value);
@@ -161,8 +188,8 @@
   byId('request-direct-consent').hidden = Boolean(endpoint);
   const media = byId('request-media'); if (media) media.closest('label').hidden = !(endpoint && mediaReady);
   const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = !endpoint;
-  const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'Tell the shop what’s going on' : 'Prepare a repair message';
-  if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Send repair request' : 'Prepare text to the shop';
+  const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'Send your repair details' : 'Prepare a repair message';
+  if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Send repair details' : 'Prepare text to the shop';
   // Preserve the current page's guidance (and any Bay One handoff) while online.
   if (!endpoint) byId('request-instructions').textContent = 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
   };
@@ -248,10 +275,13 @@
     }
     return {sent, total: items.length};
   };
-  form.addEventListener('input', () => { requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = ''; });
+  let preparingWithWebMcp = false;
+  form.addEventListener('input', () => { if (!preparingWithWebMcp) reportMetric('form_started'); requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = ''; });
+  document.querySelector('.request-ai-help')?.addEventListener('toggle', event => { if (event.currentTarget.open) reportMetric('ai_help_opened'); });
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (sending) return;
+    reportMetric('form_started');
     // Browser autofill can insert invisible characters without an input event.
     phoneField.value = cleanPhone(phoneField.value);
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
@@ -268,6 +298,7 @@
     if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app, attach photos or a short video of the problem if you have them, and tap Send. Nothing has been sent yet. You can also copy the text, email it or call the shop.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
     const submittedKey = requestKey;
     sending = true; submit.disabled = true; submit.textContent = 'Sending…'; status.textContent = 'Sending your repair request…';
+    reportMetric('submit_attempted', false);
     try {
       const result = await send('/hooks/lead/webform', data, submittedKey);
       if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
@@ -281,6 +312,7 @@
       try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id: result.id, receivedAt: result.receivedAt || new Date().toISOString(), confirmed:true,smsConsent:data.smsConsent })); } catch (_) { status.textContent = `Repair request received and saved. Reference: ${result.id}. Keep this reference; no appointment is confirmed yet.`; return; }
       location.assign('/request-received.html');
     } catch (_) {
+      reportMetric('submit_unconfirmed', false);
       status.textContent = 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the text/email draft and send it yourself.';
       submit.textContent = 'Retry repair request';
     } finally { sending = false; submit.disabled = false; }
@@ -315,7 +347,7 @@
         const download = byId('voice-download'); download.href = recordingUrl; download.download = 'perfect-timing-repair-note.' + (recording.type.includes('mp4') ? 'm4a' : recording.type.includes('ogg') ? 'ogg' : 'webm'); download.hidden = false;
         voiceSend.hidden = !endpoint; voiceStatus.textContent = 'Recording ready. Listen to it before sending, or download it to attach to an email or text.';
       });
-      recorder.start(); stop.disabled = false; voiceStatus.textContent = 'Recording… stops automatically after 60 seconds.';
+      recorder.start(); reportMetric('voice_started'); stop.disabled = false; voiceStatus.textContent = 'Recording… stops automatically after 60 seconds.';
       stopTimer = setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, 60000);
     } catch (_) { releaseMic(); start.disabled = false; voiceStatus.textContent = 'Microphone access was unavailable. You can type your request above or use your phone recorder.'; }
   });
@@ -373,6 +405,8 @@
     const chosenLocation = input.locationChoice ?? locationChoice.value;
     if (Object.hasOwn(input, 'carAddress') && chosenLocation !== 'location') return failure('invalid_input', 'Choose location when providing the car’s address.', ['locationChoice']);
     if (Object.hasOwn(input, 'dropoffTime') && chosenLocation !== 'dropoff') return failure('invalid_input', 'Choose dropoff when providing a preferred drop-off time.', ['locationChoice']);
+    preparingWithWebMcp = true;
+    try {
     if (Object.hasOwn(input, 'locationChoice') && locationChoice.value !== input.locationChoice) {
       locationChoice.value = input.locationChoice;
       locationChoice.dispatchEvent(new Event('input', {bubbles:true}));
@@ -390,6 +424,8 @@
       const options = field.closest('details');
       if (options) options.open = true;
     }
+    } finally { preparingWithWebMcp = false; }
+    reportMetric('webmcp_prepared');
     // Native constraints plus the same phone/address rules used on human submit.
     if (!carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
     const incomplete = Object.entries(repairToolFields).filter(([, [id]]) => {
@@ -399,7 +435,7 @@
     if ((endpoint || phoneField.value.trim()) && !validPhone(cleanPhone(phoneField.value)) && !incomplete.includes('phone')) incomplete.push('phone');
     const ready = incomplete.length === 0;
     const message = ready
-      ? endpoint ? 'Review the form and choose Send repair request. The shop must confirm appointments.' : 'Review the form and choose Prepare text to the shop, then send the draft yourself.'
+      ? endpoint ? 'Review the form and choose Send repair details. The shop must confirm appointments.' : 'Review the form and choose Prepare text to the shop, then send the draft yourself.'
       : 'Complete the listed fields, then review the form before sending.';
     status.textContent = `${message} Nothing has been sent by the agent.`;
     form.scrollIntoView({behavior:'auto', block:'nearest'});

@@ -43,7 +43,12 @@ export function checkCleanPage(name,html){
       const actions=[...bar.querySelectorAll('a,button')];
       assert.equal(actions.length,2,`${name}: two mobile contact actions`);
       const labels=actions.map(text);
-      if(name==='index.html'||name==='workshop.html'){
+      if(name==='index.html'){
+        assert.deepEqual(labels,['Send details','Call'],`${name}: intake is the first mobile action`);
+        assert.equal(actions[0].getAttribute('href'),'#contact',`${name}: mobile intake opens the form`);
+        assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
+        assert.ok(d.querySelector('.home-start__intro a[href="sms:+12393972048"]'),`${name}: direct text-app option remains in the introduction`);
+      } else if(name==='workshop.html'){
         assert.deepEqual(labels,['Call','Text'],`${name}: Call/Text sticky for engine-transmission positioning`);
         assert.equal(actions[0].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
         assert.equal(actions[1].getAttribute('href'),'sms:+12393972048',`${name}: mobile text number`);
@@ -84,7 +89,17 @@ export function checkCleanPage(name,html){
       }
       const optional=d.getElementById('request-city').closest('details');
       assert.match(text(optional.querySelector('summary')),/More details.*optional/i,`${name}: optional expansion label`);
-      assert.match(text(d.getElementById('request-submit')),/^(?:Request a repair|Send repair request|Get My Repair Plan)$/,`${name}: clear submit label`);
+      assert.match(text(d.getElementById('request-submit')),/^(?:Request a repair|Send repair request|Send repair details|Get My Repair Plan)$/,`${name}: clear submit label`);
+      if(name==='index.html'){
+        const primary=d.querySelector('.home-start__actions .btn--primary');
+        assert.equal(primary?.getAttribute('href'),'#contact',`${name}: primary introduction action opens the intake`);
+        assert.equal(text(primary),'Send repair details',`${name}: describe the intake action`);
+        assert.equal(text(d.querySelector('.home-start__urgent')),'Send your repair details so the shop can review the problem and be better prepared when calling you back.',`${name}: explain the preparation benefit`);
+        const aiHelp=d.querySelector('.request-ai-help');
+        assert.ok(aiHelp&&aiHelp.tagName==='DETAILS'&&!aiHelp.open,`${name}: optional AI help stays discreet`);
+        assert.match(text(aiHelp),/If your browser’s AI assistant supports this form/,`${name}: AI assistance is conditional on browser support`);
+        assert.match(text(aiHelp),/Review the details[\s\S]*Nothing is sent automatically/,`${name}: customer reviews and sends`);
+      }
       assert.equal(d.querySelectorAll('section#new-shop,section#big-jobs,section#same-day-service').length,0,`${name}: consolidate repeated homepage callout sections`);
     }
     return {file:name,serviceHero:Boolean(hero),repairForm:Boolean(form),mobileActions:bar?bar.querySelectorAll('a,button').length:0};
