@@ -131,14 +131,16 @@ test('online form initializes the short request flow and enables the safe submit
   assert.equal(x.d.getElementById('request-instructions').textContent,x.initialInstructions,'script startup preserves the page guidance');
   await settle();
   assert.equal(x.d.getElementById('request-instructions').textContent,x.initialInstructions,'a successful health check preserves the page guidance');
-  assert.equal(x.d.getElementById('request-heading').textContent, 'Tell the shop what’s going on');
-  assert.equal(x.d.getElementById('request-submit').textContent, 'Send repair request');
+  assert.equal(x.d.getElementById('request-heading').textContent, 'Send your repair details');
+  assert.equal(x.d.getElementById('request-submit').textContent, 'Send repair details');
+  assert.ok(x.d.getElementById('request-instructions').textContent.includes('Send your repair details so the shop can review the problem and be better prepared when calling you back.'));
   assert.equal(x.d.getElementById('request-submit').disabled, false);
   assert.doesNotMatch(x.d.getElementById('request-instructions').textContent, /prepare (?:a )?(?:text|message)|text draft/i);
   for (const field of ['name', 'phone', 'details']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
   for (const field of ['city', 'vehicle', 'timing']) assert.equal(x.d.getElementById(`request-${field}`).required, false);
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="tel:"]').textContent, 'Call');
-  assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="sms:"]').textContent, 'Text');
+  assert.equal(x.d.querySelector('.mobile-contact-bar a[href="#contact"]').textContent, 'Send details');
+  assert.ok(x.d.querySelector('a[href^="sms:"]'), 'texting remains available in the page');
   assert.equal(x.leads().length, 0);
 });
 

@@ -25,7 +25,7 @@ function browser(t, {file = 'index.html', url = 'https://preview.invalid/', endp
     assert.equal(address.origin, 'https://receiver.invalid', 'all traffic stays in the synthetic receiver');
     const body = options.body ? JSON.parse(options.body) : null;
     requests.push({path:address.pathname,body});
-    if (address.pathname === '/healthz' || address.pathname === '/hooks/analytics/visit') return response({ok:true});
+    if (address.pathname === '/healthz' || address.pathname === '/hooks/analytics/event') return response({ok:true});
     assert.equal(address.pathname, '/hooks/lead/webform');
     return response({ok:false},503);
   };
@@ -90,15 +90,21 @@ test('unapproved URL and stored values cannot enter draft labels; generic lead c
   }
 });
 
-test('blocked browser storage keeps current-link attribution and contacting the shop available without changing analytics fields', async t => {
+test('blocked browser storage keeps current-link attribution and contacting the shop available with private anonymous analytics', async t => {
   const x = browser(t,{url:'https://fixingfortmyers.com/?utm_source=nextdoor_no_start&utm_content=PrivatePerson&phone=2395550199',endpoint:'https://receiver.invalid',blockedStorage:true});
   await settle();await x.submit();
   const lead = x.requests.find(r=>r.path==='/hooks/lead/webform');
   assert.equal(lead.body.channel,'nextdoor_no_start');
   assert.match(draftMessages(x),/\nWebsite source: nextdoor_no_start\n/);
-  const visits = x.requests.filter(r=>r.path==='/hooks/analytics/visit');
+  const events = x.requests.filter(r=>r.path==='/hooks/analytics/event');
+  const visits = events.filter(r=>r.body.event==='visit');
   assert.equal(visits.length,1);
-  assert.deepEqual(Object.keys(visits[0].body).sort(),['event_id','page','visitor_id']);
-  assert.equal(visits[0].body.page,'/');
-  assert.doesNotMatch(JSON.stringify(visits[0].body),/PrivatePerson|2395550199|nextdoor|utm_/);
+  for (const event of events) {
+    assert.deepEqual(Object.keys(event.body).sort(),['event','event_id','page','source']);
+    assert.equal(event.body.page,'/');
+    assert.equal(event.body.source,'other','unlisted campaign labels never enter analytics');
+    assert.match(event.body.event_id,/^[A-Za-z0-9_-]{8,100}$/);
+    assert.doesNotMatch(JSON.stringify(event.body),/PrivatePerson|2395550199|nextdoor|utm_|visitor_id|Synthetic|2395550100/);
+  }
+  assert.deepEqual(events.map(r=>r.body.event),['visit','form_started','submit_attempted','submit_unconfirmed']);
 });

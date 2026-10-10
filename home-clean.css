@@ -66,6 +66,9 @@
 .home-start__rating strong{color:#ffd56a}
 .home-start__tertiary{margin:0 0 8px;font-size:14px}
 .home-start__tertiary a{color:#91dbff;text-decoration:underline;text-underline-offset:3px}
+.home-clean .request-ai-help{margin-top:16px;color:#b8c7d7;font-size:13px;line-height:1.55}
+.home-clean .request-ai-help summary{cursor:pointer;min-height:32px;padding:6px 0;color:#91dbff}
+.home-clean .request-ai-help p{margin:8px 0 0;font-size:13px;line-height:1.55}
 .home-clean .request-trust{margin:10px 0 0;font-size:13px;color:#b8c7d7;line-height:1.5}
 .home-start h1{font-size:clamp(44px,4.3vw,62px)}
 .home-start__photo{margin:24px 0;border:1px solid #35536c;border-radius:8px;overflow:hidden;background:#101b27}

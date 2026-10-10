@@ -19,7 +19,7 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   // Tests set the Bay One flag explicitly; the shipped flag is checked separately below.
   w.PT_BAYONE_CONFIG={enabled};
   const NativeDate=w.Date;w.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[at]));}static now(){return NativeDate.parse(at);}};
-  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=typeof options.body==='string'||options.body===undefined?JSON.parse(options.body||'{}'):options.body;requests.push({url:String(url),route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
+  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=typeof options.body==='string'||options.body===undefined?JSON.parse(options.body||'{}'):options.body;if(route.startsWith('/hooks/analytics/'))return {ok:true,status:200,json:async()=>({ok:true})};requests.push({url:String(url),route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
   if(savedSource)w.sessionStorage.setItem('pt-repair-source',savedSource);
   beforeScripts?.(w);
   w.eval(site);w.eval(widget);
@@ -195,8 +195,8 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
 
 test('mobile bar keeps request and call actions while the separate Bay One entry restores focus',async t=>{
   const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar'),entry=d.querySelector('.b1-launcher');
-  assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'tel:+12393972048');assert.equal(bar.children[1].getAttribute('href'),'sms:+12393972048');
-  assert.deepEqual([...bar.children].map(node=>node.textContent),['Call','Text']);
+  assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'#contact');assert.equal(bar.children[1].getAttribute('href'),'tel:+12393972048');
+  assert.deepEqual([...bar.children].map(node=>node.textContent),['Send details','Call']);
   assert.equal(bar.querySelector('.b1-bar-launcher'),null);assert.ok(d.getElementById('bay-one-widget').classList.contains('b1-has-contact-bar'));
   assert.equal(d.getElementById('b1-panel').hidden,true);
   entry.click();await settle();assert.equal(d.getElementById('b1-panel').hidden,false);assert.equal(entry.getAttribute('aria-expanded'),'true');

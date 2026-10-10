@@ -116,7 +116,7 @@
 
           <section>
             <h2>Website usage counts</h2>
-            <p>The website sends a randomly generated browser identifier, a random identifier for each visit event and the page path to our website usage endpoint. When browser storage is available, the browser identifier is kept in local storage to distinguish returning browsers. These requests do not include names, phone numbers, repair details, URL query strings or message-link contents. Preparing a draft or opening a call or text app does not prove that a call completed or a message was delivered.</p>
+            <p>The website records page visits and interactions such as starting the repair form, preparing it with an AI assistant, trying to send it, or opening a call or text app. Each event has a random retry identifier, a fixed page category and a broad source label such as search, social, AI assistant or direct. We do not use a persistent browser identifier for these usage counts. These requests do not include names, phone numbers, repair details, full referral URLs, URL query strings or message-link contents. The private owner report shows up to 90 days of activity; older event records are removed as new activity is recorded. Saved repair requests are counted separately from clicks. Opening a call or text app does not prove that a call completed or a message was delivered.</p>
             <p>During your browser session, we may remember a referral or campaign source code from a website link and include it with a repair request you submit. We may also remember which repair guide or service page you visited. Editable text and email drafts include only known source codes and known guide or service page names; you can edit or remove those labels before sending. Arbitrary URL values, search terms and other advertising parameters are not copied into these draft labels or website usage requests.</p>
           </section>
 
@@ -181,5 +181,5 @@
 </footer>
 
 
-<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: request a repair or call AI intake"><a href="/#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/site.js?v=20261010-programming" defer=""></script><script src="/bay-one-config.js?v=20261001-workshop" defer=""></script><script src="/bay-one-widget.js?v=20261009-photo-contact" defer=""></script>
+<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: request a repair or call AI intake"><a href="/#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/site.js?v=20261010-intake-metrics" defer=""></script><script src="/bay-one-config.js?v=20261001-workshop" defer=""></script><script src="/bay-one-widget.js?v=20261009-photo-contact" defer=""></script>
 </body></html>
