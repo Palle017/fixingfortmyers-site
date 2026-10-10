@@ -88,6 +88,8 @@
   const preview = byId('request-preview');
   const textDraft = byId('request-text');
   const phoneField = byId('request-phone');
+  const cleanPhone = value => value.replace(/[^\d+()\s.-]/g, '').trim();
+  const validPhone = value => /^\+?[\d\s().-]+$/.test(value) && /^\d{10,15}$/.test(value.replace(/\D/g, ''));
   const locationChoice = byId('request-location-choice');
   const carAddress = byId('request-car-address');
   const locationButton = byId('request-use-location');
@@ -251,7 +253,7 @@
     event.preventDefault();
     if (sending) return;
     // Browser autofill can insert invisible characters without an input event.
-    phoneField.value = phoneField.value.replace(/[^\d+()\s.-]/g, '').trim();
+    phoneField.value = cleanPhone(phoneField.value);
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
     if (!form.reportValidity()) return;
     const currentData = readRequest();
@@ -259,7 +261,7 @@
     if (requestPayload && sameContent(currentData) !== sameContent(requestPayload)) { requestKey = uid(); requestPayload = null; sentRequestId = ''; }
     const data = requestPayload || currentData;
     if (data.website) return;
-    if ((endpoint || data.phone) && (!/^\+?[\d\s().-]+$/.test(data.phone) || !/^\d{10,15}$/.test(data.phone.replace(/\D/g, '')))) { status.textContent = endpoint ? 'Please include a valid phone number with its area code.' : 'Please include a valid phone number with its area code, or leave the optional callback field blank when texting.'; phoneField.focus(); return; }
+    if ((endpoint || data.phone) && !validPhone(data.phone)) { status.textContent = endpoint ? 'Please include a valid phone number with its area code.' : 'Please include a valid phone number with its area code, or leave the optional callback field blank when texting.'; phoneField.focus(); return; }
     if (!data.name || !data.details) { status.textContent = 'Please enter your name and a description of the problem. Incomplete vehicle details are okay.'; return; }
     makeBackup(data);
     requestPayload = data;
@@ -334,4 +336,93 @@
     finally { voiceSend.disabled = false; start.disabled = false; }
   });
   window.addEventListener('pagehide', () => { if (recorder?.state === 'recording') recorder.stop(); releaseMic(); if (recordingUrl) URL.revokeObjectURL(recordingUrl); });
+
+  // Agent assistance fills the visible form. The customer reviews and submits it
+  // through the same handler above; this tool never contacts the receiver.
+  const repairToolFields = {
+    details: ['request-details', 'The repair problem in the customer’s own words. Required before sending.'],
+    service: ['request-service', 'The type of repair, or Diagnosis / not sure yet.'],
+    starts: ['request-starts', 'Whether the vehicle can be driven: yes, no, or unknown.'],
+    vehicle: ['request-vehicle', 'Vehicle year, make and model, if known.'],
+    locationChoice: ['request-location-choice', 'location means the car is at an address; dropoff means asking the shop to arrange a drop-off.'],
+    carAddress: ['request-car-address', 'Street address, city and parking details when locationChoice is location.'],
+    dropoffTime: ['request-dropoff-time', 'Preferred time when locationChoice is dropoff; the shop must confirm it.'],
+    name: ['request-name', 'The customer’s name. Required before sending.'],
+    phone: ['request-phone', 'The customer’s callback number, including area code. Required for online requests.'],
+    city: ['request-city', 'City or ZIP code, if known.'],
+    stranded: ['request-stranded', 'Whether the customer is stranded: yes, no, or unknown.'],
+    timing: ['request-timing', 'Preferred repair timing or callback time, in the customer’s words.']
+  };
+  const repairToolProperties = Object.fromEntries(Object.entries(repairToolFields).map(([name, [id, description]]) => {
+    const field = byId(id), property = {type:'string', description};
+    if (field.tagName === 'SELECT') property.enum = [...field.options].filter(option => option.value && !option.hidden).map(option => option.value);
+    else if (field.maxLength > 0) property.maxLength = field.maxLength;
+    return [name, property];
+  }));
+  const prepareRepairRequest = input => {
+    const failure = (code, message, fields = []) => ({status:code, submitted:false, reviewRequired:true, message, fields});
+    if (sending) return failure('busy', 'A request is being sent. Wait for its result before editing.');
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return failure('invalid_input', 'Provide an object containing repair form fields.');
+    // Validate the entire update before changing the customer’s existing entries.
+    for (const [name, value] of Object.entries(input)) {
+      if (!Object.hasOwn(repairToolFields, name)) return failure('invalid_input', 'Use only the listed repair form fields.', [name]);
+      const property = repairToolProperties[name];
+      if (typeof value !== 'string' || (property.maxLength && value.length > property.maxLength) || (property.enum && !property.enum.includes(value))) return failure('invalid_input', `Provide a valid value for ${name}.`, [name]);
+      if (name === 'phone' && value.trim() && !validPhone(cleanPhone(value))) return failure('invalid_input', 'Include a valid callback number with its area code.', [name]);
+    }
+    const chosenLocation = input.locationChoice ?? locationChoice.value;
+    if (Object.hasOwn(input, 'carAddress') && chosenLocation !== 'location') return failure('invalid_input', 'Choose location when providing the car’s address.', ['locationChoice']);
+    if (Object.hasOwn(input, 'dropoffTime') && chosenLocation !== 'dropoff') return failure('invalid_input', 'Choose dropoff when providing a preferred drop-off time.', ['locationChoice']);
+    if (Object.hasOwn(input, 'locationChoice') && locationChoice.value !== input.locationChoice) {
+      locationChoice.value = input.locationChoice;
+      locationChoice.dispatchEvent(new Event('input', {bubbles:true}));
+      locationChoice.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+    for (const [name, value] of Object.entries(input)) {
+      if (name === 'locationChoice') continue;
+      const field = byId(repairToolFields[name][0]);
+      const nextValue = name === 'phone' ? cleanPhone(value) : value;
+      // Repeating a preparation must retain an uncertain submission’s retry key.
+      if (field.value === nextValue) continue;
+      field.value = nextValue;
+      field.dispatchEvent(new Event('input', {bubbles:true}));
+      field.dispatchEvent(new Event('change', {bubbles:true}));
+      const options = field.closest('details');
+      if (options) options.open = true;
+    }
+    // Native constraints plus the same phone/address rules used on human submit.
+    if (!carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
+    const incomplete = Object.entries(repairToolFields).filter(([, [id]]) => {
+      const field = byId(id);
+      return !field.disabled && ((!field.value.trim() && field.required) || !field.checkValidity());
+    }).map(([name]) => name);
+    if ((endpoint || phoneField.value.trim()) && !validPhone(cleanPhone(phoneField.value)) && !incomplete.includes('phone')) incomplete.push('phone');
+    const ready = incomplete.length === 0;
+    const message = ready
+      ? endpoint ? 'Review the form and choose Send repair request. The shop must confirm appointments.' : 'Review the form and choose Prepare text to the shop, then send the draft yourself.'
+      : 'Complete the listed fields, then review the form before sending.';
+    status.textContent = `${message} Nothing has been sent by the agent.`;
+    form.scrollIntoView({behavior:'auto', block:'nearest'});
+    (ready ? submit : byId(repairToolFields[incomplete[0]][0])).focus();
+    return {status:ready ? 'ready_for_review' : 'needs_details', submitted:false, reviewRequired:true, message, fields:incomplete};
+  };
+  let repairToolRegistration;
+  const registerRepairTool = () => {
+    const context = document.modelContext;
+    if (repairToolRegistration || typeof context?.registerTool !== 'function') return;
+    const controller = new AbortController();
+    repairToolRegistration = controller;
+    try {
+      Promise.resolve(context.registerTool({
+        name:'prepare_repair_request',
+        description:'Fill the visible Perfect Timing Auto Repair intake form with customer-provided repair and contact details. Preserves omitted fields and returns missing fields or readiness for customer review and manual submission.',
+        inputSchema:{type:'object', properties:repairToolProperties, additionalProperties:false},
+        execute:prepareRepairRequest,
+        annotations:{readOnlyHint:false, consequentialHint:false, untrustedContentHint:false}
+      }, {signal:controller.signal})).catch(() => { if (repairToolRegistration === controller) repairToolRegistration = null; });
+    } catch (_) { repairToolRegistration = null; /* Ordinary form use remains available. */ }
+  };
+  registerRepairTool();
+  window.addEventListener('pagehide', () => { repairToolRegistration?.abort(); repairToolRegistration = null; });
+  window.addEventListener('pageshow', event => { if (event.persisted) registerRepairTool(); });
 })();
