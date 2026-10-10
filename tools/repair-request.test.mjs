@@ -33,6 +33,7 @@ function setup(t, {handler, offline = false, geolocation, url = 'https://preview
     assert.equal(address.pathname, '/hooks/lead/webform');
     return handler ? handler(request, w) : response({ok:false}, 503);
   };
+  const initialInstructions = d.getElementById('request-instructions').textContent;
   w.eval(script);
   const enter = (fieldId, value, dispatch = true) => {
     const field = d.getElementById(fieldId);
@@ -50,7 +51,7 @@ function setup(t, {handler, offline = false, geolocation, url = 'https://preview
   };
   const send = () => d.getElementById('bookingForm').dispatchEvent(new w.Event('submit', {bubbles:true, cancelable:true}));
   const leads = () => requests.filter(request => request.path === '/hooks/lead/webform');
-  return {w, d, requests, enter, fill, send, leads};
+  return {w, d, requests, enter, fill, send, leads, initialInstructions};
 }
 
 test('specialty service links carry the right category into the submitted repair request',async t=>{
@@ -126,7 +127,10 @@ test('offline text and email drafts carry the required car location and map',asy
 });
 
 test('online form initializes the short request flow and enables the safe submit control', async t => {
-  const x = setup(t); await settle();
+  const x = setup(t);
+  assert.equal(x.d.getElementById('request-instructions').textContent,x.initialInstructions,'script startup preserves the page guidance');
+  await settle();
+  assert.equal(x.d.getElementById('request-instructions').textContent,x.initialInstructions,'a successful health check preserves the page guidance');
   assert.equal(x.d.getElementById('request-heading').textContent, 'Tell the shop what’s going on');
   assert.equal(x.d.getElementById('request-submit').textContent, 'Send repair request');
   assert.equal(x.d.getElementById('request-submit').disabled, false);

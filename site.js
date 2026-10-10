@@ -161,7 +161,8 @@
   const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = !endpoint;
   const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'Tell the shop what’s going on' : 'Prepare a repair message';
   if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Send repair request' : 'Prepare text to the shop';
-  byId('request-instructions').textContent = endpoint ? 'Share the vehicle, the problem and where the car is. Those details help your mechanic call back or plan the next step prepared. We confirm every appointment.' : 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
+  // Preserve the current page's guidance (and any Bay One handoff) while online.
+  if (!endpoint) byId('request-instructions').textContent = 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
   };
   let mediaReady = false;
   // Messages uses a different body separator on Apple mobile devices. Keep copy/email
