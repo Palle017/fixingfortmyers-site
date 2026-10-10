@@ -5,7 +5,7 @@ October 9, 2026. The starting production commit was `4581bcbbf3ed62643d72982fa92
 ## What changed
 
 - Retained the homepage section order, two-column introduction/form, navigation, existing service URLs, request endpoint and Bay One provider configuration.
-- Restored visible authentic photography. The homepage now shows the Mustang engine bay, engine on a stand, opened transmission and workshop welding. Engine, rebuild, transmission, brake and workshop pages use the corresponding recovered work photos.
+- Restored visible authentic photography. The homepage now shows the Mustang no-start repair in a customer's own garage, engine on a stand, opened transmission and workshop welding. On October 9, 2026, the owner confirmed the Mustang job context and that the necessary tools were brought to the customer. Engine, rebuild, transmission, brake and workshop pages use the corresponding recovered work photos.
 - Added `/walnut-blasting-fort-myers`, its sitemap entry, service links, structured data and inquiry category. Put walnut blasting, engines and transmissions first in the featured grid; retained oil changes, no-starts and diagnosis prominently. Walnut cleaning is described as vehicle-dependent, not a guaranteed misfire cure.
 - Preserved all existing services in the directory. Oil-change copy invites customers to mention leaks, noises or warning lights without presuming unnecessary repairs.
 - Per the owner, calls use AI intake, texts go directly to the shop with supplied details, and responses are best effort at any hour. Removed the engine/transmission-only sticky message and the obsolete claim that AI only assists outside daytime hours. Reduced repeated owner-name branding while preserving biographies and customer quotations.

@@ -1,0 +1,88 @@
+CLAUDE CONTINUATION PROMPT — FIXINGFORTMYERS.COM
+Prepared October 9, 2026 for the owner's associate. This is a handoff of completed work and a concrete continuation plan, not evidence that the marketing campaign has already run.
+
+You are continuing work for Tony / Perfect Timing Auto Repair LLC. Work in the existing repository https://github.com/Palle017/fixingfortmyers-site and preserve the site's current layout, established service URLs, authentic photography, and functioning intake. The live site is https://fixingfortmyers.com/ . The objective is more qualified local repair inquiries and booked work with $0 advertising spend before deciding whether paid advertising is worthwhile. Execute useful, reversible work, verify the actual user path, and report evidence rather than only a plan.
+
+1. SOURCE AND DEPLOYMENT
+
+GitHub Pages publishes main at the repository root. The production photo/service release is c75ecd9dd21cce7ca2a1597f4ee9de94ee8cac09; its successful Pages run is 38008979453. The subsequent handoff/caption commit contains this file and the free traffic plan; pull current main and inspect its latest deployment rather than resetting to the earlier release. Starting production before the photo release was 4581bcbbf3ed62643d72982fa9275506212a85b2.
+
+On Tony's Windows PC the checkout is C:\Users\pf1\Projects\fixingfortmyers-site and the editor workspace is C:\Users\pf1\Projects\FixingFortMyers.code-workspace. These local paths do not exist automatically on the associate's computer. Clone the same GitHub repo using the associate's own authorized access. Do not copy credentials or create a competing repository/site.
+
+Read README.md, any applicable AGENTS.md, docs/COMPANY-UPDATE.md, docs/PHOTO-SERVICE-RELEASE-20261009.md, docs/PHOTO-AND-SERVICE-RESEARCH.md, docs/PHOTO-PROVENANCE-20261009.json, and docs/FREE-LOCAL-TRAFFIC-TEST-20261009.md first. Historical docs can be stale; the current owner clarifications below and current code take precedence.
+
+2. COMPLETED WEBSITE WORK
+
+- Restored eight authentic owner work photos while preserving homepage section order and its two-column introduction/request-form structure. Three welding photos survived in Git; five more were recovered from the business's own Google Maps gallery. Originals were visually reviewed and provenance recorded.
+- The homepage now displays the Mustang engine bay, an engine on a stand, an open transmission and welding work. Related service pages use the relevant real photos.
+- Added /walnut-blasting-fort-myers with title, canonical, schema, sitemap and inquiry category. Walnut blasting, engine work and transmissions are prominent, with oil changes, diagnosis and urgent no-starts retained. Existing service directory and URLs remain intact.
+- Corrected walnut/oil-change/transmission service-link categories through to the form. Vehicle details, symptoms, drivability, location/drop-off details, media and contact preferences remain intact.
+- Rewrote shared contact copy to explain AI phone intake, direct texts to the shop, and best-effort responses at any hour. Replaced the engine/transmission-only sticky message with general repair wording. Reduced repetitive 'Tony' branding in favor of 'the shop' while retaining relevant biography and authentic quotations.
+- The follow-up caption correction identifies the Mustang as mobile no-start work at the customer's own garage, and corrects four stale sitemap dates to October 9.
+
+LATEST OWNER FACT — IMPORTANT: The Mustang photo is NOT inside Perfect Timing's shop. Tony directly confirmed this was a customer's own garage, where he brought the tools needed to repair a no-start. Use that real mobile-service story. The corrected caption reads: 'No-start repair in a customer's own garage. We brought the tools to get the job done.' Do not invent the failed component or specific repair procedure.
+
+3. PHOTO RECOVERY AND LIMITS
+
+Available authentic assets:
+assets/tony-at-work.webp
+assets/workshop-wide.webp
+assets/workshop-fabrication.webp
+assets/owner-engine-stand.jpg
+assets/owner-engine-assembly.jpg
+assets/owner-transmission-open.jpg
+assets/owner-mustang-engine-bay.jpg
+assets/owner-drum-brake.jpg
+
+No verified walnut-blasting or valve before/after photo was recovered. Existing walnut/tool/before-after placeholder cards must remain hidden; never describe an ordinary engine photo as evidence of walnut blasting. Obtain a real photograph on an appropriate future job with customer permission.
+
+The historical homepage photos disappeared during a September 29 layout simplification (dbfe26d); three welding assets arrived in e10dc3d on October 1. Five additional photos came from the business's own Google gallery. A rebuilt Perfect PC VMDK was inspected read-only without booting or altering it; ordinary personal-media folders yielded no additional repair photos.
+
+On Tony's PC, recovery originals/inventory are under C:\Users\pf1\Projects\fixingfortmyers-recovery and the photo ZIP is C:\Users\pf1\Projects\fixingfortmyers-recovered-photos-20261009.zip. Necessary website images are already in the repository; the associate does not need the VMDK to continue. Do not publish raw recovery inventories, backups, customer data or credentials.
+
+4. CURRENT INTAKE CONTRACT AND OWNER PREFERENCES
+
+Calls are answered by AI intake, which gathers information and forwards it to the shop. Texts go straight to the shop with the supplied vehicle/problem/location details so the mechanic can call back or arrive better prepared. Responses are best effort at any hour; do not promise immediate dispatch, a fixed callback time, or an unconfirmed appointment. Phone routing was described by the owner, not independently verified through a real test call.
+
+Keep mobile capability and workshop capability accurate. Workshop visits/drop-off arrangements require confirmation. The public business phone is (239) 397-2048. Do not publish private addresses or personal phone numbers. Use straightforward garage language and real photos, not a literal comic-book theme. Prioritize people with real vehicle problems who are ready to discuss repair; oil-change customers remain welcome. Do not use insulting customer labels or make assumptions about income.
+
+Production form requests use contact-config.js and the cloud endpoint https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site . Public Bay One has separate configuration in bay-one-config.js. Neither backend/provider was switched in this release. Confirm the live code before changing any endpoint.
+
+GitHub Pages only serves static files. _config.yml excludes backend, tools, tests, docs, node_modules and source-materials. Pushing backend source does not start a receiver. Do not expose the private inbox/database. When the receiver is unavailable, the form offers an editable text/email draft that the customer must actually send. Preparing a draft is not successful delivery.
+
+5. VALIDATION ALREADY PERFORMED
+
+The photo/service release passed 126 synthetic tests, schema/local-reference checks across 49 HTML pages, and structural accessibility checks on 15 representative pages with zero reported violations. The accessibility run excluded color contrast. Browser review at desktop and 390px mobile verified loaded photos and no horizontal overflow. A synthetic walnut inquiry reached a saved-request receipt in the isolated local mock receiver with external notifications disabled. No real production lead or customer message was sent as a test. Sixty-two deployed files/images were checked against Git blob bytes after Pages deployment.
+
+Use Node 24, npm ci, npm test, and npm run preview. The default isolated preview is http://127.0.0.1:18909 and uses .preview-data with mocked AI and disabled alerts. On Tony's machine only, the existing OLLAMA_HOST environment value lacks its URL scheme; the successful test command set $env:OLLAMA_HOST='http://127.0.0.1:11434' for that subprocess. Do not change system/provider configuration to run website tests. Useful focused checks are node tools/check-clean-structure.mjs and node tools/audit-accessibility.mjs. Inspect package.json and tools before running. After publication verify the live rendered path and corresponding Pages commit. Revert a specific bad commit to roll back; do not reset unrelated work.
+
+6. FREE PROMOTION WORK PREPARED / SET IN MOTION
+
+Current primary-source research and a complete 14-day $0 test are saved in docs/FREE-LOCAL-TRAFFIC-TEST-20261009.md. It includes exactly three drafted posts, photo choices, tagged service URLs, Google service descriptions, honest-review/referral scripts, measurement fields and a day-by-day schedule. Lead with the real mobile no-start photo, then walnut blasting, then major engine/transmission work. It also keeps oil changes visible.
+
+Owner access to the VERIFIED Perfect Timing Auto Repair LLC Google Business Profile was confirmed in the signed-in Chrome business account fixingfortmyers@gmail.com. Profile ID: 15150482990043040433. Business Manager: https://business.google.com/locations . That account also contains an unrelated business; do not change it. This confirms access only: no promotion post or profile-service change was published during this work.
+
+Nextdoor's current Business Page documentation says free unlimited posts; access to an existing business account/page has NOT yet been verified. Google supports photo updates with a Learn more link and service descriptions. Genuine, unincentivized reviews and useful trade referrals are proposed. Current sources and platform links are in the plan. No new account, paid boost, ad campaign, outbound referral solicitation or recurring automation was activated. No new viewers, leads or bookings are claimed from this campaign yet.
+
+Historical owner decisions in docs/google-business-profile-plan.md say leave Facebook untouched and avoid Google name/address/visibility/category changes that may trigger verification. Preserve those constraints unless the owner changes them. Profile posting/service descriptions can be pursued within current scope; do not quietly change identity fields or buy anything.
+
+7. IMPORTANT OPEN TECHNICAL FINDINGS
+
+- Discovery audit found 46 unique sitemap URLs, matching canonical URLs for intended indexable pages, public robots/sitemap and a matching public IndexNow key. Four meaningful-update dates were corrected with this handoff.
+- site.js currently records utm_source in sessionStorage and sends lead.channel in form/widget payloads. Allowed values match /^[a-z0-9_-]{2,30}$/. It does NOT persist utm_campaign or utm_content. The plan's extra UTM fields do not themselves create a reporting dashboard.
+- Native SMS/email fallback drafts preserve a validated service-page context but omit the campaign/source channel. Direct call/text taps also do not prove connected calls or delivered texts.
+- Anonymous visit POSTs currently include IDs and pathname, not campaign attribution. Actual production storage/reporting was not independently verified.
+- privacy-policy.html around line 118 incorrectly says the custom analytics receiver is disabled while production site.js sends visit events. Reconcile the real behavior and disclosure before adding measurement. This issue is identified but NOT fixed in the handoff release.
+- tools/submit-indexnow.ps1 verifies the published ownership key and can submit all sitemap URLs using -Submit. A new IndexNow submission has NOT yet been made during this handoff. HTTP 200 means URLs received; 202 means pending key validation, neither means indexed or ranked. Google Search Console owner access and URL Inspection have NOT been checked in this phase.
+
+8. NEXT ACTIONS AND ITERATIVE LOOP
+
+First pull latest main, confirm the caption and deployment, and inspect outstanding issues without overwriting others' work. Reconcile the analytics/privacy mismatch and implement minimal, fixed, non-personal attribution labels that survive navigation and SMS/email drafts. Validate locally that recipients, vehicle details, consent behavior and truthful success/fallback states stay intact. Do not inject fake production leads or upload private data to public Git.
+
+Then capture a real baseline of Google profile performance and search visibility, check the current website/booking link, add missing accurate service descriptions, and publish the prepared mobile no-start post with its matching tagged landing page and real photo. Record the actual public URL and Live/Pending/Rejected status. Verify access and rules before using Nextdoor. Submit the freshly deployed sitemap URLs to IndexNow and use Search Console if accessible. Do not promise Google ranking or request indexing repeatedly.
+
+Run the plan in measured batches: publish one useful item, verify it, record received inquiries, review their quality, and revise the next message. Track views/clicks -> received inquiries -> reached/qualified -> booked -> completed repair value, with time spent by source. Call-button clicks are not completed calls. Use source unknown when evidence is absent. Keep customer-level outcome records private. Separate quoted value from earned revenue.
+
+The owner asked for autonomous iterative awareness-building. Continue authorized implementation and owned-channel publishing within available access and platform rules. For unsolicited individual outreach or new account/access/financial commitments, obtain the relevant explicit authorization; do not treat a research draft as permission to send it. Do not claim an ongoing background loop unless an actual approved scheduler exists. The current state has no recurring campaign automation. Agree the cadence/permissions if future scheduled runs are wanted.
+
+End each iteration with what actually changed, public links/status, validation, useful results and the next actionable step. Preserve the authentic-photo layout and honest AI-intake expectations throughout.
