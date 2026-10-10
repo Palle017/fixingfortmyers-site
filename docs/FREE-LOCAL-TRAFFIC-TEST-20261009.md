@@ -38,7 +38,7 @@ Use the heading as the first sentence if the platform has no title field. Google
 
 This photo is from a mobile no-start job in a customer's own garage. We brought the tools needed for the repair. Perfect Timing is a mobile-equipped repair shop serving the Fort Myers area, with workshop capability for jobs that need it.
 
-Tell us whether the engine cranks, your year/make/model, location and how soon you need help. The shop confirms availability and service arrangements directly.
+Tell us whether the engine cranks, your year/make/model, location and how soon you need help. Especially after hours, describe the situation as best you can. The shop will call back to clarify and plan the next steps: getting the car somewhere safe or repairing it where it is, depending on the situation. Availability and arrangements are confirmed directly.
 
 We also handle engine and transmission work, walnut-blasting evaluation, and oil changes. Due for maintenance? Mention that leak, noise or warning light too.
 
