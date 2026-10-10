@@ -17,12 +17,20 @@
     reportVisit().catch(() => setTimeout(() => reportVisit().catch(() => {}), 3000));
   }
   const byId = id => document.getElementById(id);
-  // Remember where this visit started (e.g. ?utm_source=google from the Google Business Profile) for the lead.
+  // Keep the existing lead-channel contract; only known campaign codes enter message drafts.
+  const validChannel = value => typeof value === 'string' && /^[a-z0-9_-]{2,30}$/.test(value);
+  const draftChannels = new Set(['google','nextdoor','referral','trade_referral','gbp_no_start','gbp_walnut','gbp_major','nextdoor_no_start','nextdoor_walnut','nextdoor_major']);
+  const landedChannel = (new URLSearchParams(location.search).get('utm_source') || '').toLowerCase();
+  let leadChannel = validChannel(landedChannel) ? landedChannel : '';
   try {
-    const landed = (new URLSearchParams(location.search).get('utm_source') || '').toLowerCase();
-    if (/^[a-z0-9_-]{2,30}$/.test(landed)) sessionStorage.setItem('pt-lead-channel', landed);
-    window.PT_LEAD_CHANNEL = sessionStorage.getItem('pt-lead-channel') || '';
-  } catch (_) { window.PT_LEAD_CHANNEL = ''; }
+    if (leadChannel) sessionStorage.setItem('pt-lead-channel', leadChannel);
+    else {
+      const saved = sessionStorage.getItem('pt-lead-channel');
+      if (validChannel(saved)) leadChannel = saved;
+    }
+  } catch (_) { /* A blocked session store still permits attribution from this page's URL. */ }
+  window.PT_LEAD_CHANNEL = leadChannel;
+  const draftChannel = draftChannels.has(leadChannel) ? leadChannel : '';
   // Service attribution is a fixed category, never arbitrary query text.
   const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine',engine:'Engine',transmission:'Transmission',programming:'Module programming',diesel:'Diesel',maintenance:'Oil change / maintenance',walnut:'Walnut blasting / carbon cleaning'});
   const servicePages = {'auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'engine','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
@@ -196,7 +204,7 @@
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
     const consent = !endpoint ? 'Please reply about this repair inquiry.' : data.smsConsent ? `Text-message consent: Yes\n${consentDisclosure}` : 'Text-message consent: No; please call';
-    const message = `Repair inquiry for Perfect Timing Auto Repair\n\nName: ${data.name}\nCallback: ${callback}\nVehicle: ${data.vehicle}\nService: ${data.service}\n\n${data.details}\n\n${consent}\nWebsite page context: /${sourcePage}${sourcePage ? ' (last guide or service viewed)' : ''}`;
+    const message = `Repair inquiry for Perfect Timing Auto Repair\n\nName: ${data.name}\nCallback: ${callback}\nVehicle: ${data.vehicle}\nService: ${data.service}\n\n${data.details}\n\n${consent}${draftChannel ? '\nWebsite source: ' + draftChannel : ''}\nWebsite page context: /${sourcePage}${sourcePage ? ' (last guide or service viewed)' : ''}`;
     preview.value = message;
     refreshDraftLinks();
     backup.hidden = false;
