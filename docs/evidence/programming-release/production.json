@@ -1,0 +1,53 @@
+{
+  "at": "2026-10-10T04:48:33.267Z",
+  "routes": [
+    {
+      "url": "https://fixingfortmyers.com/",
+      "status": 200,
+      "exactNormalizedMatch": true,
+      "sha256": "4216e414efe2512c772fbeb6dbc84b3dfc8ee0b92707d59664aae6970e3878a8"
+    },
+    {
+      "url": "https://fixingfortmyers.com/repair-guide-ecu-tcm-programming",
+      "status": 200,
+      "exactNormalizedMatch": true,
+      "sha256": "c54dc1ea28e1e8b661c92e5b464ed7e12fa77c2fc5d97305fb8f6011b802c174"
+    },
+    {
+      "url": "https://fixingfortmyers.com/module-programming-fort-myers",
+      "status": 200,
+      "exactNormalizedMatch": true,
+      "sha256": "a93dd38d3e3253db89b6df9b3133ce8aa59bee7c8012a9faf4a02d2c4f1d1e72"
+    },
+    {
+      "url": "https://fixingfortmyers.com/repair-guides",
+      "status": 200,
+      "exactNormalizedMatch": true,
+      "sha256": "f875bb10e1b23a5a7c27808fbc6bf5c7a6dfb5154a18d6ef9aac76f34fe083de"
+    },
+    {
+      "url": "https://fixingfortmyers.com/auto-electrical-repair-fort-myers",
+      "status": 200,
+      "exactNormalizedMatch": true,
+      "sha256": "fcaf615f9199787a9bc4fc322b7c3b229a9da8691b47ac63667757e8d5396c80"
+    },
+    {
+      "url": "https://fixingfortmyers.com/transmission-repair-fort-myers",
+      "status": 200,
+      "exactNormalizedMatch": true,
+      "sha256": "9022bfc36d17e08e7198e62c5e975a36d47af0a023518f7ace5636e7940994a4"
+    },
+    {
+      "url": "https://fixingfortmyers.com/site.js",
+      "status": 200,
+      "exactNormalizedMatch": true,
+      "sha256": "3c6eb805f6cd0eeaf05eaae8a2ced75449d3cc86769d793c9c0c6bf4ef2c1ad2"
+    },
+    {
+      "url": "https://fixingfortmyers.com/sitemap.xml",
+      "status": 200,
+      "exactNormalizedMatch": true,
+      "sha256": "12f440e553ae8a5f45a3444bedf13aa7c8877e59f07ce37f31387c6654778d89"
+    }
+  ]
+}
