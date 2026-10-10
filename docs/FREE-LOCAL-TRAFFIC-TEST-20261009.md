@@ -42,7 +42,7 @@ Tell us whether the engine cranks, your year/make/model, location and how soon y
 
 We also handle engine and transmission work, walnut-blasting evaluation, and oil changes. Due for maintenance? Mention that leak, noise or warning light too.
 
-Calls go to AI intake, which collects your details for the shop. Texts are forwarded with the information you send, so your mechanic can call back better prepared. After-hours replies are best effort.
+Our AI assistant answers calls and gathers the details about your vehicle and the problem. This helps the shop call you back as soon as possible, better prepared to help. Texts go straight to the shop with the information you send. After-hours replies are best effort.
 
 - **Photo:** `assets/owner-mustang-engine-bay.jpg` — caption: “Mobile no-start repair at a customer's garage. We brought the tools needed for the job.” The owner directly confirmed this context on October 9, 2026; it supersedes the earlier workshop assumption. Do not call this the shop interior or infer a specific replaced part.
 - **Google button:** https://fixingfortmyers.com/no-start-diagnosis-fort-myers?utm_source=google&utm_medium=organic&utm_campaign=local_free_202610&utm_content=mobile_no_start_a
@@ -57,7 +57,7 @@ Perfect Timing offers walnut blasting and intake-valve carbon-cleaning evaluatio
 
 Send the year, make, model, mileage and any codes or diagnosis you already have. The shop can review the details and discuss what needs checking before you book.
 
-Calls reach AI intake, which collects your details for the shop. Texts are forwarded with the information you send. Your mechanic makes every effort to get back to you, including after hours. Availability is confirmed directly.
+Our AI assistant gathers your vehicle and problem details so the shop can call you back as soon as possible, better prepared to help. Texts go straight to the shop with the information you send. After-hours replies are best effort; availability is confirmed directly.
 
 - **Photo:** `assets/owner-engine-stand.jpg` — archived shop photo of an engine on a stand. Caption: “Engine work at Perfect Timing.” This is not a walnut-blasting demonstration or before/after image.
 - **Google button:** https://fixingfortmyers.com/walnut-blasting-fort-myers?utm_source=google&utm_medium=organic&utm_campaign=local_free_202610&utm_content=walnut_a
@@ -71,7 +71,7 @@ Some repairs take more than a quick parts swap. Perfect Timing handles engine an
 
 Tell us what the car is doing, whether it still drives, and what has already been checked. Have another shop's diagnosis or estimate? Include it so we can start with useful information.
 
-Calls reach AI intake. Texts and the details you send are forwarded to the shop so your mechanic can call back better prepared. After-hours replies are best effort; appointments and arrival times are confirmed directly.
+Our AI assistant answers calls and gathers the details so the shop can call you back as soon as possible, better prepared to help. Texts go straight to the shop with the information you send. After-hours replies are best effort; appointments and arrival times are confirmed directly.
 
 - **Photo:** `assets/owner-transmission-open.jpg` — caption: “Inside a transmission during disassembly at Perfect Timing.” Do not claim a specific successful rebuild or current job from this historical photo.
 - **Google button:** https://fixingfortmyers.com/transmission-repair-fort-myers?utm_source=google&utm_medium=organic&utm_campaign=local_free_202610&utm_content=major_b

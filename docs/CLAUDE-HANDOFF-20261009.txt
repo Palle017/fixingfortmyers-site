@@ -44,6 +44,8 @@ On Tony's PC, recovery originals/inventory are under C:\Users\pf1\Projects\fixin
 
 Calls are answered by AI intake, which gathers information and forwards it to the shop. Texts go straight to the shop with the supplied vehicle/problem/location details so the mechanic can call back or arrive better prepared. Responses are best effort at any hour; do not promise immediate dispatch, a fixed callback time, or an unconfirmed appointment. Phone routing was described by the owner, not independently verified through a real test call.
 
+Latest owner wording clarification after the initial handoff: emphasize WHY AI answers. The homepage now says: 'Our AI assistant answers calls and gathers the details about your vehicle and the problem. This helps the shop call you back as soon as possible, better prepared to help.' Keep this benefit clear in future posts and copy; it is not a guaranteed callback deadline.
+
 Keep mobile capability and workshop capability accurate. Workshop visits/drop-off arrangements require confirmation. The public business phone is (239) 397-2048. Do not publish private addresses or personal phone numbers. Use straightforward garage language and real photos, not a literal comic-book theme. Prioritize people with real vehicle problems who are ready to discuss repair; oil-change customers remain welcome. Do not use insulting customer labels or make assumptions about income.
 
 Production form requests use contact-config.js and the cloud endpoint https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site . Public Bay One has separate configuration in bay-one-config.js. Neither backend/provider was switched in this release. Confirm the live code before changing any endpoint.
