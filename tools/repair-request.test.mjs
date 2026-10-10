@@ -53,6 +53,14 @@ function setup(t, {handler, offline = false, geolocation, url = 'https://preview
   return {w, d, requests, enter, fill, send, leads};
 }
 
+test('specialty service links carry the right category into the submitted repair request',async t=>{
+  for(const [key,label] of [['walnut','Walnut blasting / carbon cleaning'],['maintenance','Oil change / maintenance'],['transmission','Transmission'],['no-start','Electrical / no-start']]){
+    const x=setup(t,{url:`https://preview.invalid/?service=${key}#contact`});await settle();x.fill();x.send();await settle();
+    assert.equal(x.leads().length,1);assert.equal(x.leads()[0].body.service,label);
+    assert.equal(x.leads()[0].body.vehicle,'2018 Honda Civic');assert.equal(x.leads()[0].body.carLocation.type,'dropoff');
+  }
+});
+
 test('repair request requires a location choice and a nonblank address unless drop-off is selected',async t=>{
   const x=setup(t);await settle();x.fill();
   x.enter('request-location-choice','');x.send();await settle();assert.equal(x.leads().length,0);
@@ -87,7 +95,7 @@ test('drop-off needs no address and carries the requested time without confirmin
   const x=setup(t);await settle();x.fill();x.enter('request-dropoff-time','Friday morning');x.send();await settle();
   assert.equal(x.d.getElementById('request-car-address').disabled,true);
   assert.deepEqual(x.leads()[0].body.carLocation,{type:'dropoff',preferredTime:'Friday morning'});
-  assert.match(x.leads()[0].body.details,/Shop drop-off requested; preferred time: Friday morning\. Tony to confirm/);
+  assert.match(x.leads()[0].body.details,/Shop drop-off requested; preferred time: Friday morning\. Shop to confirm/);
   assert.doesNotMatch(x.leads()[0].body.details,/Map:/);
 });
 
@@ -119,10 +127,10 @@ test('offline text and email drafts carry the required car location and map',asy
 
 test('online form initializes the short request flow and enables the safe submit control', async t => {
   const x = setup(t); await settle();
-  assert.equal(x.d.getElementById('request-heading').textContent, 'Tell Tony what’s going on');
-  assert.equal(x.d.getElementById('request-submit').textContent, 'Get My Repair Plan');
+  assert.equal(x.d.getElementById('request-heading').textContent, 'Tell the shop what’s going on');
+  assert.equal(x.d.getElementById('request-submit').textContent, 'Send repair request');
   assert.equal(x.d.getElementById('request-submit').disabled, false);
-  assert.doesNotMatch(x.d.getElementById('request-instructions').textContent, /prepare|text draft/i);
+  assert.doesNotMatch(x.d.getElementById('request-instructions').textContent, /prepare (?:a )?(?:text|message)|text draft/i);
   for (const field of ['name', 'phone', 'details']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
   for (const field of ['city', 'vehicle', 'timing']) assert.equal(x.d.getElementById(`request-${field}`).required, false);
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="tel:"]').textContent, 'Call');
@@ -219,7 +227,7 @@ test('offline mode prepares an editable manual draft with optional city and call
   x.enter('request-phone', ''); x.send(); await settle();
   assert.equal(x.leads().length, 0);
   assert.equal(x.d.getElementById('request-phone').required, false);
-  assert.equal(x.d.getElementById('request-submit').textContent, 'Prepare text to Tony');
+  assert.equal(x.d.getElementById('request-submit').textContent, 'Prepare text to the shop');
   assert.equal(x.d.getElementById('request-backup').hidden, false);
   assert.equal(x.d.getElementById('request-preview').readOnly, false);
   assert.match(x.d.getElementById('request-status').textContent, /Nothing has been sent yet/);

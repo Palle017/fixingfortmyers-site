@@ -1,0 +1,57 @@
+[
+  {
+    "file": "assets/owner-drum-brake.jpg",
+    "caption": "Wheel removed exposing brake drum, May 2024",
+    "dimensions": [
+      768,
+      1024
+    ],
+    "sha256": "d1b07624a001b33d068df4cd3eae93b72284dd73ba5e8e83eb0f0f36994d6e8a",
+    "provenance": "Google Maps Perfect Timing Auto Repair LLC, Workshop category; every selected photograph attributed in viewer to Perfect Timing Auto Repair LLC. Viewed October 9, 2026.",
+    "usage_limit": "Caption only observable work. Do not infer particular vehicle identity, repair result, rebuild specifications or walnut blasting."
+  },
+  {
+    "file": "assets/owner-engine-stand.jpg",
+    "caption": "Red engine assembly on an engine stand, March 2024; image captured February 2024",
+    "dimensions": [
+      768,
+      1024
+    ],
+    "sha256": "527e997ac3a1dde9e0d4941d5580b2d2a6c616f2501073b8bd341277ad5ad223",
+    "provenance": "Google Maps Perfect Timing Auto Repair LLC, Workshop category; every selected photograph attributed in viewer to Perfect Timing Auto Repair LLC. Viewed October 9, 2026.",
+    "usage_limit": "Caption only observable work. Do not infer particular vehicle identity, repair result, rebuild specifications or walnut blasting."
+  },
+  {
+    "file": "assets/owner-mustang-engine-bay.jpg",
+    "caption": "Blue Mustang with hood raised in workshop, January 2025; image captured May 2024",
+    "dimensions": [
+      1024,
+      768
+    ],
+    "sha256": "002371b9da135770d1a0bef45cc22363b533f2352e1d9348712f4dcb13640a52",
+    "provenance": "Google Maps Perfect Timing Auto Repair LLC, Workshop category; every selected photograph attributed in viewer to Perfect Timing Auto Repair LLC. Viewed October 9, 2026.",
+    "usage_limit": "Caption only observable work. Do not infer particular vehicle identity, repair result, rebuild specifications or walnut blasting."
+  },
+  {
+    "file": "assets/owner-transmission-open.jpg",
+    "caption": "Open transmission case showing internal components, November 2023; image captured May 2023",
+    "dimensions": [
+      768,
+      1024
+    ],
+    "sha256": "66327eec95c153b9b1fa442eff42f9641eccd1a8caea4a50c0c4844e3c3a0cfc",
+    "provenance": "Google Maps Perfect Timing Auto Repair LLC, Workshop category; every selected photograph attributed in viewer to Perfect Timing Auto Repair LLC. Viewed October 9, 2026.",
+    "usage_limit": "Caption only observable work. Do not infer particular vehicle identity, repair result, rebuild specifications or walnut blasting."
+  },
+  {
+    "file": "assets/owner-engine-assembly.jpg",
+    "caption": "Red engine assembly on stand with drivetrain components in workshop, March 2024; image captured February 2024",
+    "dimensions": [
+      768,
+      1024
+    ],
+    "sha256": "0005f460a03de9ff658e0631ec76a4e2d97efd1c0cd2b8e897a5cfcb2ba4c14a",
+    "provenance": "Google Maps Perfect Timing Auto Repair LLC, Workshop category; every selected photograph attributed in viewer to Perfect Timing Auto Repair LLC. Viewed October 9, 2026.",
+    "usage_limit": "Caption only observable work. Do not infer particular vehicle identity, repair result, rebuild specifications or walnut blasting."
+  }
+]

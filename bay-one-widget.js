@@ -27,7 +27,7 @@
       field.value = value; field.dispatchEvent(new Event('input',{bubbles:true}));
     }
     const instructions = document.getElementById('request-instructions');
-    if (instructions) instructions.textContent = 'Review your Bay One notes below, add your name and callback number, and submit when ready. You can edit any detail. Nothing has been sent to Tony yet.';
+    if (instructions) instructions.textContent = 'Review your Bay One notes below, add your name and callback number, and submit when ready. You can edit any detail. Nothing has been sent to the shop yet.';
     if (details.value.length > details.maxLength) {
       const note = document.getElementById('request-status');
       details.setCustomValidity('Your notes are preserved, but are longer than this form accepts. Please shorten them before sending.');
@@ -59,20 +59,20 @@
     const portrait = `<span class="b1-avatar${customAvatar ? '' : ' b1-avatar-sheet'}" aria-hidden="true"><span class="b1-monogram">B1</span></span>`;
     widget.innerHTML = `
       <button class="b1-launcher" type="button" aria-label="Ask Bay One, the AI repair assistant" aria-expanded="false" aria-controls="b1-panel">
-        ${portrait}<span class="b1-launcher-copy"><small><i class="b1-dot"></i> Here to help</small><strong><img class="b1-logo" src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">Ask Bay One</strong><span>Describe your problem · Reach Tony</span></span>
+        ${portrait}<span class="b1-launcher-copy"><small><i class="b1-dot"></i> Here to help</small><strong><img class="b1-logo" src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">Ask Bay One</strong><span>Describe your problem · Reach the shop</span></span>
       </button>
       <section class="b1-panel" id="b1-panel" role="dialog" aria-label="Chat with Bay One" hidden>
-        <header class="b1-header">${portrait}<div class="b1-brand"><h2 class="b1-title"><img class="b1-wordmark" src="/assets/bay-one-wordmark-20260908.jpg" alt="Bay One AI" width="1280" height="960"></h2><p class="b1-subtitle">Tony’s automated repair intake</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
-        <div class="b1-allowance">A few quick questions · Your details go straight to Tony</div>
+        <header class="b1-header">${portrait}<div class="b1-brand"><h2 class="b1-title"><img class="b1-wordmark" src="/assets/bay-one-wordmark-20260908.jpg" alt="Bay One AI" width="1280" height="960"></h2><p class="b1-subtitle">The shop’s AI repair intake</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
+        <div class="b1-allowance">A few quick questions · Your details go straight to the shop</div>
         <div class="b1-messages" role="log" aria-label="Conversation with Bay One" aria-live="polite" aria-relevant="additions text"></div>
         <div class="b1-suggestions"><button type="button" data-b1-suggestion="question">Describe the problem</button></div>
         <form class="b1-composer">
-          <button class="b1-send-now" type="button" hidden>Ready? Send this to Tony</button>
+          <button class="b1-send-now" type="button" hidden>Ready? Send this to the shop</button>
           <label class="b1-field-label" for="b1-message">What is happening with your vehicle?</label>
           <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Describe the problem. Partial vehicle details are okay." required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           <div class="b1-status" role="status" aria-live="polite"></div>
         </form>
-        <footer class="b1-footer"><span><a href="/privacy-policy.html">Chat privacy</a> · <a href="tel:+12393972048">Call Tony</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
+        <footer class="b1-footer"><span><a href="/privacy-policy.html">Chat privacy</a> · <a href="tel:+12393972048">Call — AI intake</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
       </section>`;
     document.body.append(widget);
     const $ = selector => widget.querySelector(selector);
@@ -179,7 +179,7 @@
       const retry = state.failed && state.failed.message === text && state.failed.mode === state.mode;
       const pending = retry ? state.failed : { request_id:uuid(), message:text, mode:state.mode };
       if (!retry) { addMessage('user',text); state.customerMessages.push(text); }
-      $('.b1-contact').textContent = 'Review details for Tony ↗';
+      $('.b1-contact').textContent = 'Review details for the shop ↗';
       $('.b1-suggestions').hidden = true; busy(true); status.textContent = 'Bay One is replying…';
       const slow = setTimeout(() => { if (state.busy) status.textContent = 'Still working on it. Thanks for waiting…'; }, 8000);
       try {
@@ -208,14 +208,14 @@
     });
 
 
-    // Contact card: the customer's name and number go with the chat straight to Tony's lead inbox.
+    // Contact card: the customer's name and number go with the chat straight to the shop's lead inbox.
     // The exact words beside the checkbox are what gets stored as consent evidence (same text as the site form).
     const CONSENT = 'Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates. Optional; consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help.';
     const choice = (name, label) => `<label>${label}<select name="${name}"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>`;
     const sendNow = $('.b1-send-now');
     const leadForm = document.createElement('form'); leadForm.className = 'b1-lead'; leadForm.noValidate = false;
     leadForm.innerHTML = `
-      <p class="b1-lead-title">Send this to Tony</p>
+      <p class="b1-lead-title">Send this to the shop</p>
       <label>First name<input name="name" autocomplete="given-name" maxlength="100" required></label>
       <label>Mobile number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" required></label>
       <label>Best time to reach you or anything else <small>(optional)</small><input name="callbackTime" maxlength="160"></label>
@@ -223,7 +223,7 @@
       ${choice('stranded', 'Are you stranded right now?')}
       <label class="b1-lead-media"${mediaReady ? '' : ' hidden'}>Add photos or a short video <small>(optional, up to 6)</small><input type="file" name="media" accept="image/*,video/*" multiple></label>
       <label class="b1-lead-check"><input type="checkbox" name="sms"> <span>${CONSENT} <a href="/sms-terms">SMS terms</a> · <a href="/privacy-policy">Privacy policy</a>.</span></label>
-      <button type="submit">Send to Tony</button>
+      <button type="submit">Send to the shop</button>
       <p class="b1-lead-status" role="status" aria-live="polite"></p>`;
     const leadStatus = leadForm.querySelector('.b1-lead-status');
     // Photos and short videos go up after the request is saved, so a slow upload never loses the lead.
@@ -246,9 +246,9 @@
     }
     mediaInput?.addEventListener('change', () => {
       const {keep, skipped} = pickMedia();
-      leadStatus.textContent = (keep.length ? `${keep.length} file${keep.length > 1 ? 's' : ''} will go to Tony with your request.` : '') + (skipped.length ? ` Not added: ${skipped.join(', ')}.` : '');
+      leadStatus.textContent = (keep.length ? `${keep.length} file${keep.length > 1 ? 's' : ''} will go to the shop with your request.` : '') + (skipped.length ? ` Not added: ${skipped.join(', ')}.` : '');
     });
-    // Large phone photos are resized before upload: much faster on mobile data, still plenty for Tony.
+    // Large phone photos are resized before upload: much faster on mobile data, still plenty for the shop.
     async function shrink(item) {
       if (!/^image\/(jpeg|png|webp)$/.test(item.type) || item.file.size < 2.5*1024*1024 || !window.createImageBitmap) return item;
       try {
@@ -261,11 +261,11 @@
     }
     async function uploadMedia(result, items) {
       if (!items.length) return;
-      const row = addMessage('assistant', `Sending ${items.length} photo/video file${items.length > 1 ? 's' : ''} to Tony…`), text = row.querySelector('p');
-      if (!result.mediaToken) { text.textContent = 'Your request is saved, but photos could not be attached right now. Text them to Tony at (239) 397-2048.'; return; }
+      const row = addMessage('assistant', `Sending ${items.length} photo/video file${items.length > 1 ? 's' : ''} to the shop…`), text = row.querySelector('p');
+      if (!result.mediaToken) { text.textContent = 'Your request is saved, but photos could not be attached right now. Text them to the shop at (239) 397-2048.'; return; }
       let sent = 0; const failed = [];
       for (const [n, original] of items.entries()) {
-        text.textContent = `Sending file ${n + 1} of ${items.length} to Tony… keep this page open.`;
+        text.textContent = `Sending file ${n + 1} of ${items.length} to the shop… keep this page open.`;
         const item = await shrink(original);
         if (!item || (item.type.startsWith('image/') && item.file.size > MEDIA.image)) { failed.push(original.file.name + ' (too large)'); continue; }
         const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 300000);
@@ -277,7 +277,7 @@
         } catch (error) { failed.push(original.file.name + (error.name === 'AbortError' ? ' (timed out)' : '')); }
         finally { clearTimeout(timer); }
       }
-      text.textContent = (sent ? `Tony has your ${sent} file${sent > 1 ? 's' : ''}.` : '') + (failed.length ? ` ${failed.length} did not go through (${failed.join(', ')}). You can text ${failed.length > 1 ? 'them' : 'it'} to Tony at (239) 397-2048.` : '');
+      text.textContent = (sent ? `The shop has your ${sent} file${sent > 1 ? 's' : ''}.` : '') + (failed.length ? ` ${failed.length} did not go through (${failed.join(', ')}). You can text ${failed.length > 1 ? 'them' : 'it'} to the shop at (239) 397-2048.` : '');
     }
     let leadKey = uuid(), leadBusy = false, leadSent = false, pendingLead = null;
     leadForm.addEventListener('input', () => { if (!leadBusy && !pendingLead) leadKey = uuid(); });
@@ -316,7 +316,7 @@
       }
       const {body} = pendingLead, sms = body.smsConsent;
       lockLeadFields(true);
-      leadBusy = true; leadForm.querySelector('button').disabled = true; leadStatus.textContent = 'Sending to Tony…';
+      leadBusy = true; leadForm.querySelector('button').disabled = true; leadStatus.textContent = 'Sending to the shop…';
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
       try {
         const response = await fetch(apiBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':pendingLead.key}, body:JSON.stringify(body), signal:controller.signal });
@@ -329,13 +329,13 @@
         }
         leadSent = true; leadForm.remove(); $('.b1-composer').hidden = true;
         const urgent = body.stranded === 'yes' && body.starts === 'no';
-        const row = addMessage('assistant', `Your request is saved for Tony to review. Your callback number is ${body.phone}; ${sms ? 'text or call' : 'call only'}. Booking is not confirmed.` + (urgent ? ' You said you are stranded, so your request is marked urgent. If you are somewhere unsafe, call 911.' : ' Tony gives every price himself after he looks at the problem.'));
-        const call = document.createElement('a'); call.className = 'b1-request-service'; call.href = 'tel:+12393972048'; call.textContent = urgent ? 'Call Tony now' : 'Call Tony';
+        const row = addMessage('assistant', `Your request is saved for the shop to review. Your callback number is ${body.phone}; ${sms ? 'text or call' : 'call only'}. Booking is not confirmed.` + (urgent ? ' You said you are stranded, so your request is marked urgent. If you are somewhere unsafe, call 911.' : ' Your mechanic confirms pricing after reviewing the problem.'));
+        const call = document.createElement('a'); call.className = 'b1-request-service'; call.href = 'tel:+12393972048'; call.textContent = urgent ? 'Call — AI intake' : 'Call — AI intake';
         row.append(call);
         uploadMedia(result, mediaInput && !mediaInput.closest('label').hidden ? pickMedia().keep : []).catch(() => {});
         try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id:result.id, receivedAt:result.receivedAt, confirmed:true, smsConsent:sms })); } catch (_) { /* Confirmation is already shown in the chat. */ }
       } catch (error) {
-        leadStatus.textContent = (error.name === 'AbortError' ? 'Receipt could not be confirmed.' : error.message) + (pendingLead ? ' Retry to check the same request; its details are preserved.' : ' Correct your details and try again.') + ' You can also call or text Tony at (239) 397-2048.';
+        leadStatus.textContent = (error.name === 'AbortError' ? 'Receipt could not be confirmed.' : error.message) + (pendingLead ? ' Retry to check the same request; its details are preserved.' : ' Correct your details and try again.') + ' You can also call or text the shop at (239) 397-2048.';
       } finally { clearTimeout(timer); leadBusy = false; if (!leadSent) leadForm.querySelector('button').disabled = false; }
     });
 
@@ -350,7 +350,6 @@
     window.addEventListener('resize', viewport, {passive:true}); window.visualViewport?.addEventListener('resize', viewport, {passive:true}); viewport();
     const contact = document.getElementById('bookingForm');
     if (contact && 'IntersectionObserver' in window) new IntersectionObserver(entries => widget.classList.toggle('b1-near-contact', entries[0].isIntersecting), {threshold:.05}).observe(contact);
-    const easternHour = Number(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'numeric',hourCycle:'h23'}).format(new Date()));
-    addMessage('assistant', (easternHour >= 20 || easternHour < 8 ? 'Hi, I’m Bay One, Tony’s overnight assistant. Leave your details and Tony will confirm first thing. ' : 'Hi, I’m Bay One, Tony’s repair assistant. ') + 'Tell me what’s going on and I’ll get the details straight to Tony so he can plan the job. What is happening with your vehicle?');
+    addMessage('assistant', 'Hi, I’m Bay One, the shop’s AI intake assistant. Tell me what’s going on and I’ll help prepare your repair request. Your mechanic makes every effort to get back to you, at any hour. What is happening with your vehicle?');
   }
 })();

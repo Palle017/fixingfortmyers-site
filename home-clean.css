@@ -67,6 +67,23 @@
 .home-start__tertiary{margin:0 0 8px;font-size:14px}
 .home-start__tertiary a{color:#91dbff;text-decoration:underline;text-underline-offset:3px}
 .home-clean .request-trust{margin:10px 0 0;font-size:13px;color:#b8c7d7;line-height:1.5}
+.home-start h1{font-size:clamp(44px,4.3vw,62px)}
+.home-start__photo{margin:24px 0;border:1px solid #35536c;border-radius:8px;overflow:hidden;background:#101b27}
+.home-start__photo img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
+.home-start__photo figcaption{padding:11px 15px;font-size:13px;line-height:1.5;color:#c6d5e3;border-top:2px solid #42bfff}
+.home-start__focus a{color:#a6dfff;text-underline-offset:4px}
+.home-start__urgent{font-size:14px;line-height:1.5;color:#c6d5e3;margin:0 0 12px}
+.home-method__photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin:0 0 30px}
+.home-method__photos figure{margin:0;min-width:0;overflow:hidden;border:1px solid #35536c;border-radius:8px;background:#111c28}
+.home-method__photos img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;object-position:center 35%;display:block}
+.home-method__photos figcaption{padding:12px 16px;color:#c6d5e3;font-size:14px;line-height:1.5}
+.home-clean .services__grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.home-clean .service-card{display:flex;flex-direction:column;border-top:3px solid #3e89b3}
+.home-clean .service-card--specialty{border-top-color:#70d0ff;background:linear-gradient(135deg,#152c3e,#101b27)}
+.home-clean .service-card__action{margin-top:auto;padding-top:16px;min-height:44px}
+.home-clean .request-panel .request-full{grid-column:1/-1}
+@media(max-width:800px){.home-start h1{font-size:clamp(38px,8.8vw,56px)}.home-start__photo{margin:18px 0}.home-method__photos{gap:14px;margin-bottom:24px}.home-clean .services__grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-start__focus{font-size:14px;margin:18px 0}.home-clean #contact{scroll-margin-top:90px}}
+@media(max-width:540px){.home-method__photos,.home-clean .services__grid{grid-template-columns:1fr}.home-method__photos img{aspect-ratio:3/2}}
 .mobile-contact-note{display:none}
 @media(max-width:800px){
   .home-start__actions{margin:16px 0 12px}

@@ -1,5 +1,5 @@
 {
-  "at": "2026-09-29T21:04:45.969Z",
+  "at": "2026-10-10T00:22:55.400Z",
   "engine": "axe-core 4.13.0",
   "environment": "jsdom; site scripts and external resources do not execute",
   "limitations": [
@@ -9,7 +9,7 @@
   "pages": [
     {
       "file": "index.html",
-      "passes": 41,
+      "passes": 43,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -24,7 +24,7 @@
     },
     {
       "file": "repair-guides.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -39,7 +39,7 @@
     },
     {
       "file": "repair-guide-ac-warm-at-idle.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -54,7 +54,7 @@
     },
     {
       "file": "repair-guide-battery-keeps-dying.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -69,7 +69,7 @@
     },
     {
       "file": "repair-guide-car-overheating.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -84,7 +84,7 @@
     },
     {
       "file": "repair-guide-car-wont-start.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -99,7 +99,7 @@
     },
     {
       "file": "repair-guide-flashing-check-engine-light.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -114,7 +114,7 @@
     },
     {
       "file": "request-received.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -129,7 +129,7 @@
     },
     {
       "file": "auto-diagnostics-fort-myers.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -144,7 +144,7 @@
     },
     {
       "file": "ac-repair-fort-myers.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -159,7 +159,7 @@
     },
     {
       "file": "engine-rebuild-vs-replacement-fort-myers.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -174,7 +174,7 @@
     },
     {
       "file": "case-studies.html",
-      "passes": 36,
+      "passes": 37,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -189,7 +189,7 @@
     },
     {
       "file": "about-perfect-timing.html",
-      "passes": 34,
+      "passes": 35,
       "incomplete": [
         {
           "id": "landmark-one-main",
@@ -204,7 +204,7 @@
     },
     {
       "file": "careers.html",
-      "passes": 39,
+      "passes": 40,
       "incomplete": [
         {
           "id": "landmark-one-main",

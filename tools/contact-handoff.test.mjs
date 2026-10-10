@@ -162,9 +162,11 @@ test('service preselection is whitelisted, optional vehicle submits with explici
   assert.equal(form.method,'post');assert.match(d.getElementById('request-status').textContent,/could not confirm receipt/);
   const rejected=setup(t,{url:'https://preview.invalid/?service=%3Cscript%3Ebad%3C%2Fscript%3E'});assert.equal(rejected.w.document.getElementById('request-service').selectedIndex,0);
 });
-test('after-hours wording uses Eastern time and untrusted text is displayed as text',async t=>{
+test('AI intake is disclosed at all hours and untrusted text is displayed as text',async t=>{
   const x=setup(t,{at:'2026-09-25T01:00:00Z'}),d=x.w.document;await settle();
-  assert.match(d.querySelector('.b1-messages').textContent,/overnight/);
+  assert.match(d.querySelector('.b1-messages').textContent,/AI intake assistant/);
+  assert.match(d.querySelector('.b1-messages').textContent,/makes every effort to get back to you, at any hour/);
+  assert.doesNotMatch(d.querySelector('.b1-messages').textContent,/first thing|overnight assistant/);
   await x.say('<img src=x onerror="window.bad=true"> The car will not start.');
   assert.equal(x.w.bad,undefined);assert.equal(d.querySelector('.b1-user img'),null);
   d.querySelector('.b1-contact').click();assert.match(d.getElementById('request-details').value,/<img src=x/);
@@ -247,7 +249,7 @@ test('with cloud intake offline, the public form falls back to an editable nativ
   const x=setup(t,{enabled:false,publicContact:true,url:'https://fixingfortmyers.com/',handler:async()=>{throw new TypeError('offline');}}),d=x.w.document;
   await settle();
   assert.equal(x.w.PT_CONTACT_CONFIG.endpoint,'https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site');assert.ok(x.requests.some(r=>r.route==='/healthz'));x.requests.length=0;
-  assert.equal(d.getElementById('request-submit').textContent,'Prepare text to Tony');assert.equal(d.querySelector('.request-voice').hidden,true);
+  assert.equal(d.getElementById('request-submit').textContent,'Prepare text to the shop');assert.equal(d.querySelector('.request-voice').hidden,true);
   assert.equal(d.getElementById('request-phone').required,false);
   assert.equal(d.querySelector('.request-consent').hidden,true);assert.equal(d.getElementById('request-direct-consent').hidden,false);
   x.enter('request-name','Synthetic Customer');x.enter('request-details','Synthetic vehicle will not start.');x.enter('request-city','33901');x.enter('request-starts','no');x.enter('request-stranded','yes');
@@ -315,13 +317,13 @@ test('Bay One card sends photos and video to Tony after the request is saved, on
   assert.equal(picker.closest('label').hidden,false);assert.equal(picker.accept,'image/*,video/*');assert.equal(picker.multiple,true);
   const files=[new x.w.File([new Uint8Array([255,216,255,224,1,2,3])],'leak.jpg',{type:'image/jpeg'}),new x.w.File([new Uint8Array(20)],'IMG_0001.HEIC',{type:''}),new x.w.File([new Uint8Array(20)],'bad.mov',{type:'video/quicktime'}),new x.w.File(['x'],'notes.pdf',{type:'application/pdf'})];
   Object.defineProperty(picker,'files',{value:files,configurable:true});picker.dispatchEvent(new x.w.Event('change'));
-  assert.match(card.querySelector('.b1-lead-status').textContent,/3 files will go to Tony[\s\S]*Not added: notes\.pdf/);
+  assert.match(card.querySelector('.b1-lead-status').textContent,/3 files will go to the shop[\s\S]*Not added: notes\.pdf/);
   card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='239-555-0100';
   card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();await settle();
   const uploads=x.requests.filter(r=>r.route===`/hooks/lead/media/${id}`);
   assert.deepEqual(uploads.map(r=>[r.headers['Content-Type'],r.headers['X-Media-Token'],r.body.name]),[['image/jpeg','synthetic-media-token-000000000000','leak.jpg'],['image/heic','synthetic-media-token-000000000000','IMG_0001.HEIC'],['video/quicktime','synthetic-media-token-000000000000','bad.mov']]);
   assert.ok(x.requests.findIndex(r=>r.route==='/hooks/lead/webform')<x.requests.findIndex(r=>r.route.startsWith('/hooks/lead/media/')),'the lead is saved before any upload');
-  assert.match(d.querySelector('.b1-messages').textContent,/Tony has your 2 files\. 1 did not go through \(bad\.mov\)\. You can text it to Tony at \(239\) 397-2048\./);
+  assert.match(d.querySelector('.b1-messages').textContent,/The shop has your 2 files\. 1 did not go through \(bad\.mov\)\. You can text it to the shop at \(239\) 397-2048\./);
 });
 test('without receiver support the photo picker stays hidden and nothing is uploaded',async t=>{
   const x=setup(t,{handler:async(route)=>route==='/healthz'?{ok:true,status:200,json:async()=>({ok:true,chat:'ready'})}:{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Thanks.',ready:true,intake:{}}}});

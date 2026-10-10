@@ -24,9 +24,9 @@
     window.PT_LEAD_CHANNEL = sessionStorage.getItem('pt-lead-channel') || '';
   } catch (_) { window.PT_LEAD_CHANNEL = ''; }
   // Service attribution is a fixed category, never arbitrary query text.
-  const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine',engine:'Engine',transmission:'Transmission',programming:'Module programming',diesel:'Diesel',maintenance:'Other'});
+  const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine',engine:'Engine',transmission:'Transmission',programming:'Module programming',diesel:'Diesel',maintenance:'Oil change / maintenance',walnut:'Walnut blasting / carbon cleaning'});
   const servicePages = {'auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'engine','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
-  Object.assign(servicePages,{'cooling-system-repair-fort-myers':'cooling','repair-guide-car-overheating':'cooling','repair-guide-flashing-check-engine-light':'diagnostics'});
+  Object.assign(servicePages,{'cooling-system-repair-fort-myers':'cooling','repair-guide-car-overheating':'cooling','repair-guide-flashing-check-engine-light':'diagnostics','walnut-blasting-fort-myers':'walnut','engine-rebuild-vs-replacement-fort-myers':'engine','transmission-repair-fort-myers':'transmission'});
   const validService = key => typeof key === 'string' && Object.hasOwn(services,key);
   const requestedService = new URLSearchParams(location.search).get('service');
   const pageService = servicePages[location.pathname.replace(/^\//,'').replace(/\.html$/,'')];
@@ -151,9 +151,9 @@
   byId('request-direct-consent').hidden = Boolean(endpoint);
   const media = byId('request-media'); if (media) media.closest('label').hidden = !(endpoint && mediaReady);
   const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = !endpoint;
-  const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'Tell Tony what’s going on' : 'Prepare a repair message';
-  if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Get My Repair Plan' : 'Prepare text to Tony';
-  byId('request-instructions').textContent = endpoint ? 'Share the vehicle, what’s wrong, and whether it drives. Tony confirms every appointment before work starts.' : 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
+  const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'Tell the shop what’s going on' : 'Prepare a repair message';
+  if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Send repair request' : 'Prepare text to the shop';
+  byId('request-instructions').textContent = endpoint ? 'Share the vehicle, the problem and where the car is. Those details help your mechanic call back or plan the next step prepared. We confirm every appointment.' : 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
   };
   let mediaReady = false;
   // Messages uses a different body separator on Apple mobile devices. Keep copy/email
@@ -185,7 +185,7 @@
       ? {type:'dropoff',preferredTime:String(data.get('dropoffTime') || '').trim()}
       : deviceLocation || {type:'address',address:String(data.get('carAddress') || '').trim()};
     const carLocationText = carLocation.type === 'dropoff'
-      ? `Car location: Shop drop-off requested${carLocation.preferredTime ? '; preferred time: ' + carLocation.preferredTime : ''}. Tony to confirm.`
+      ? `Car location: Shop drop-off requested${carLocation.preferredTime ? '; preferred time: ' + carLocation.preferredTime : ''}. Shop to confirm.`
       : carLocation.type === 'device'
         ? `Car location: Current device location (${carLocation.latitude.toFixed(6)}, ${carLocation.longitude.toFixed(6)}; accuracy about ${Math.max(1,Math.round(carLocation.accuracyMeters))} metres)\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.latitude + ',' + carLocation.longitude)}`
         : `Car location: ${carLocation.address}\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.address)}`;
@@ -254,7 +254,7 @@
     if (!data.name || !data.details) { status.textContent = 'Please enter your name and a description of the problem. Incomplete vehicle details are okay.'; return; }
     makeBackup(data);
     requestPayload = data;
-    if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app, attach photos or a short video of the problem if you have them, and tap Send. Nothing has been sent yet. You can also copy the text, email it or call Tony.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
+    if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app, attach photos or a short video of the problem if you have them, and tap Send. Nothing has been sent yet. You can also copy the text, email it or call the shop.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
     const submittedKey = requestKey;
     sending = true; submit.disabled = true; submit.textContent = 'Sending…'; status.textContent = 'Sending your repair request…';
     try {
@@ -262,7 +262,7 @@
       if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
       sentRequestId = result.id;
       const sentMedia = await uploadMedia(result);
-      if (sentMedia.sent < sentMedia.total) { status.textContent = `Repair request received (reference ${result.id}). ${sentMedia.total - sentMedia.sent} photo/video file(s) did not go through; text them to Tony at (239) 397-2048.`; submit.textContent = 'Request received'; backup.hidden = true; return; }
+      if (sentMedia.sent < sentMedia.total) { status.textContent = `Repair request received (reference ${result.id}). ${sentMedia.total - sentMedia.sent} photo/video file(s) did not go through; text them to the shop at (239) 397-2048.`; submit.textContent = 'Request received'; backup.hidden = true; return; }
       status.textContent = `Repair request received. Reference: ${result.id}. Opening your confirmation…`;
       backup.hidden = true;
       submit.textContent = 'Request received';

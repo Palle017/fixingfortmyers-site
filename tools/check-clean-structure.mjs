@@ -14,7 +14,8 @@ export function checkCleanPage(name,html){
   const dom=new JSDOM(html),d=dom.window.document;
   try {
     const hero=d.querySelector('.service-hero');
-    if(hero&&name!=='workshop.html'){
+    const photoGalleryPage=['workshop.html','paint-correction-detailing-fort-myers.html'].includes(name);
+    if(hero&&!photoGalleryPage){
       assert.equal(hero.querySelectorAll('h1').length,1,`${name}: one service heading`);
       assert.ok(hero.classList.contains('compact-hero'),`${name}: use the compact service opening`);
       assert.equal(hero.querySelectorAll('.service-hero__stats').length,0,`${name}: remove repetitive service sales stats`);
@@ -22,18 +23,20 @@ export function checkCleanPage(name,html){
       assert.ok(text(hero.querySelector('.service-hero__desc')),`${name}: keep a useful service description`);
       const actions=[...hero.querySelectorAll('.service-hero__actions a')];
       assert.equal(actions.length,2,`${name}: two service actions`);
-      assert.equal(text(actions[0]),'Request a repair plan',`${name}: request is the first service action`);
-      assert.equal(text(actions[1]),'Call',`${name}: simple alternative call label`);
+      const requestLabel=name==='oil-change-fort-myers.html'?'Request an oil change':name==='walnut-blasting-fort-myers.html'?'Ask about walnut blasting':'Request a repair plan';
+      assert.equal(text(actions[0]),requestLabel,`${name}: service request is the first action`);
+      assert.match(text(actions[1]),/^Call(?: — AI intake)?$/,`${name}: clear alternative call label`);
       assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: published call number`);
     }
-    if(hero&&name==='workshop.html'){
+    if(hero&&photoGalleryPage){
       assert.equal(hero.querySelectorAll('h1').length,1,`${name}: one workshop heading`);
       assert.ok(text(hero.querySelector('.service-hero__desc')),`${name}: keep a useful workshop description`);
       assert.doesNotMatch(text(hero.querySelector('.service-hero__desc')),/mobile repair shop/i,`${name}: shop-first positioning`);
       const actions=[...hero.querySelectorAll('.service-hero__actions a')];
       assert.ok(actions.length>=2,`${name}: Call/Text CTAs present`);
       assert.ok(actions.some(a=>a.getAttribute('href')==='tel:+12393972048'),`${name}: published call number`);
-      assert.ok(actions.some(a=>a.getAttribute('href')==='sms:+12393972048'),`${name}: published text number`);
+      if(name==='workshop.html')assert.ok(actions.some(a=>a.getAttribute('href')==='sms:+12393972048'),`${name}: published text number`);
+      else assert.ok(actions.some(a=>a.getAttribute('href').endsWith('#contact')),`${name}: photo-based service request`);
     }
     const bar=d.querySelector('.mobile-contact-bar');
     if(bar&&name!=='careers.html'){
@@ -45,7 +48,8 @@ export function checkCleanPage(name,html){
         assert.equal(actions[0].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
         assert.equal(actions[1].getAttribute('href'),'sms:+12393972048',`${name}: mobile text number`);
       } else {
-        assert.deepEqual(labels,['Request a repair','Call'],`${name}: consistent mobile actions`);
+        assert.equal(labels[0],'Request a repair',`${name}: consistent mobile request`);
+        assert.match(labels[1],/^Call(?: — AI intake)?$/,`${name}: consistent mobile call`);
         assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
         assert.ok(actions[0].getAttribute('href').endsWith('#contact'),`${name}: request opens the form`);
       }

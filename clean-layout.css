@@ -14,6 +14,10 @@
 .service-layout .section-title{font-family:var(--font-body);font-size:clamp(25px,3vw,34px);line-height:1.2;text-transform:none;letter-spacing:-.015em}
 .service-layout .service-panel h3{font-family:var(--font-body);font-size:20px;line-height:1.35;text-transform:none;letter-spacing:0}
 .service-panel{box-shadow:none}
+.service-hero__photo{margin:24px 0 0;padding:0;border:1px solid #2e4557;border-radius:8px;overflow:hidden;background:#111f2b}
+.service-hero__photo img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
+.service-hero__photo figcaption{padding:12px 18px;color:#cedae5;font-size:14px;line-height:1.5}
+.service-hero__photo--portrait img{aspect-ratio:4/3;object-fit:contain;background:#0a1119}
 .service-list li{padding-left:20px}.service-list li::before{content:'•';font-family:var(--font-body)}
 .btn{box-shadow:none;text-transform:none;letter-spacing:.015em}
 .btn--outline{background:transparent}
