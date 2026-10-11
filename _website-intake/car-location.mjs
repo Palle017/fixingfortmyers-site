@@ -41,3 +41,11 @@ export function carLocationMap(value) {
   const query=value.type==='device' ? value.latitude+','+value.longitude : value.address;
   return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query);
 }
+
+// Device position is never represented as a confirmed vehicle position.
+export function locationMapLines(lead) {
+  const carMap = carLocationMap(lead.carLocation);
+  const senderMap = Number.isFinite(lead.latitude) && Number.isFinite(lead.longitude)
+    ? 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(lead.latitude+','+lead.longitude) : '';
+  return [carMap ? 'Car map: '+carMap : null, senderMap ? 'Sender map (device location, not confirmed vehicle location): '+senderMap : null].filter(Boolean);
+}

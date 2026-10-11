@@ -1,3 +1,4 @@
+import {carLocationLabel,locationMapLines} from './car-location.mjs';
 import {TONY_ALERT_NUMBER} from './lead-routing.mjs';
 import {createHash} from 'node:crypto';
 
@@ -34,13 +35,37 @@ export function createTwilioAlertAdapter({accountSid,authToken,fromNumber,toNumb
     },fromNumber,
   };
 }
+const shortText=(value,max)=>{
+  const text=String(value||'Not provided').replace(/[\u0000-\u001f\u007f]/g,' ').trim();
+  return text.length<=max?text:text.slice(0,max-1).replace(/[\uD800-\uDBFF]$/,'')+'…';
+};
+
+// Budget whole fields and links before symptoms. URL-encoded street addresses
+// can exceed an entire SMS on their own; never send a cut-off Maps URL.
+export function formatOwnerSms(lead,id,{urgent=false,bigJob=false}={}){
+  const maps=locationMapLines(lead),senderMap=maps.find(line=>line.startsWith('Sender map'));
+  const carMap=maps.find(line=>line.startsWith('Car map'));
+  const lines=[
+    urgent?'Perfect Timing: FIRST PRIORITY — customer reports stranded + no start.':'Perfect Timing website lead',
+    bigJob?'BIG JOB: Call back first.':null,
+    `Lead ${shortText(id,36)}`,`Name: ${shortText(lead.name,80)}`,`Callback: ${shortText(lead.phone,40)}`,
+    `Vehicle: ${shortText(lead.vehicle,120)}`,`City/ZIP: ${shortText(lead.city,100)}`,
+    lead.carLocation?`Car location: ${shortText(carLocationLabel(lead.carLocation),200)}`:null,
+    senderMap,
+    `Starts: ${['yes','no'].includes(lead.starts)?lead.starts:'unknown'}; stranded: ${['yes','no'].includes(lead.stranded)?lead.stranded:'unknown'}`,
+    `Contact: ${lead.smsConsent?'text permission recorded':'call only; no text permission'}`,
+    lead.callbackTime?`Best time: ${shortText(lead.callbackTime,80)}`:null,
+  ].filter(Boolean);
+  const footer='Review the saved inquiry; Tony confirms the appointment. Reply STOP to opt out.';
+  // Reserve space for an actionable footer and at least a short symptom excerpt.
+  if(carMap)lines.push(lines.join('\n').length+carMap.length+footer.length+100<=1500
+    ?carMap:'Car map: Open the saved inquiry for the full address and map.');
+  const budget=1500-lines.join('\n').length-footer.length-'\nSymptoms: \n'.length;
+  lines.push(`Symptoms: ${shortText(lead.details,Math.max(1,budget))}`,footer);
+  return lines.join('\n');
+}
 function alertBody(lead,id,channel,fromNumber){
-  if(channel==='notify_sms')return {To:TONY_ALERT_NUMBER,From:fromNumber,Body:[
-    'Perfect Timing: FIRST PRIORITY — customer reports stranded + no start.',`Lead ${id}`,`Name: ${lead.name}`,`Callback: ${lead.phone}`,
-    `Vehicle: ${lead.vehicle||'Unknown'}`,`City/ZIP: ${lead.city||'Not provided'}`,`Symptoms: ${(lead.details||'Not provided').slice(0,1200)}`,
-    `Starts: ${lead.starts||'unknown'}; stranded: ${lead.stranded||'unknown'}`,`Contact: ${lead.smsConsent?'text permission recorded':'call only; no text permission'}`,
-    'Review the saved inquiry; Tony confirms the appointment. Reply STOP to opt out.',
-  ].join('\n')};
+  if(channel==='notify_sms')return {To:TONY_ALERT_NUMBER,From:fromNumber,Body:formatOwnerSms(lead,id,{urgent:true})};
   // Do not speak personal customer data into voicemail or an unknown answerer.
   return {To:TONY_ALERT_NUMBER,From:fromNumber,Twiml:'<Response><Say>Perfect Timing urgent website inquiry. A customer reports being stranded with a vehicle that does not start. Please review your website inbox and the text alert. No appointment has been confirmed.</Say></Response>',Timeout:'25'};
 }

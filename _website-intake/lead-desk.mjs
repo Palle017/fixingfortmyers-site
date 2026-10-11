@@ -282,7 +282,7 @@ export function createLeadDesk(db, {now = Date.now, besideToken = process.env.BE
   return {
     sync, syncStatus, addManual, setStage, advanceFromZoho, besideHook, besideTokenMatches, digestEnabled: Boolean(digest), metrics, digestText, maybeDigest,
     pipeline: id => db.prepare('SELECT * FROM lead_pipeline WHERE lead_id=?').get(id) || null,
-    touches: id => db.prepare('SELECT at,channel,note FROM lead_touches WHERE lead_id=? ORDER BY at DESC LIMIT 20').all(id),
+    touches: id => db.prepare('SELECT at,channel,note FROM lead_touches WHERE lead_id=? ORDER BY at DESC, id DESC LIMIT 20').all(id),
     start() { if (!timer) { timer = setInterval(() => { maybeDigest().catch(() => {}); }, 15 * 60000); timer.unref(); } },
     close() { clearInterval(timer); },
   };

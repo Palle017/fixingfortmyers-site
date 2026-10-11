@@ -9,3 +9,4 @@ exclude:
   - package-lock.json
   - README.md
   - source-materials
+  - SIMPLIFY-PLAN.md

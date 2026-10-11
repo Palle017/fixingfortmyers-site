@@ -141,6 +141,7 @@
 }
 
 .service-panel {
+  min-width: 0;
   background: linear-gradient(180deg, rgba(17,17,20,0.98), rgba(22,22,26,0.98));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -247,6 +248,14 @@
 
 .service-cta-box .contact-detail {
   align-items: flex-start;
+}
+
+.service-cta-box .contact-detail > div:last-child {
+  min-width: 0;
+}
+
+.service-cta-box .contact-detail__value {
+  overflow-wrap: anywhere;
 }
 
 .faq-grid {

@@ -47,7 +47,7 @@ test('public API has strict origin checks, preflight, and no unauthenticated own
   assert.equal((await fetch(x.publicUrl+'/chat/widget.js')).status,200);
   assert.equal((await fetch(x.publicUrl+'/healthz')).status,200);
   const health=await fetch(x.publicUrl+'/healthz',{headers:{Origin:origin}});assert.equal(health.headers.get('access-control-allow-origin'),origin);
-  assert.deepEqual(await health.json(),{ok:true,service:'Perfect Timing website requests',chat:'ready',media:'ready'});
+  assert.deepEqual(await health.json(),{ok:true,service:'Perfect Timing website requests',chat:'ready',media:'ready',contracts:['sender-v1']});
   assert.equal((await fetch(x.publicUrl+'/healthz',{headers:{Origin:'https://evil.example'}})).headers.get('access-control-allow-origin'),null);
 });
 
@@ -100,4 +100,25 @@ test('phone numbers with invisible autofill characters are accepted, and the Goo
   assert.equal(response.status, 201);
   const lead = (await (await fetch(`http://127.0.0.1:${ports.adminPort}/api/leads`)).json()).leads[0];
   assert.equal(lead.phone, '7632737140'); assert.equal(lead.channel, 'google');
+});
+
+
+test('sender pin rejects coercion, canonicalizes maps, requires city for new clients and retains legacy retries', async t => {
+  const x=await setup(t);
+  for (const extra of [
+    {latitude:26.6,longitude:null},{latitude:true,longitude:false},{latitude:[],longitude:0},
+    {latitude:null,longitude:null,mapsLink:'https://www.google.com/maps/search/?api=1&query=Paris'},
+    {latitude:' ',longitude:-81.8},{latitude:91,longitude:0},
+    {locationContract:'sender-v1',city:'   '},
+    {latitude:26.6,longitude:-81.8,senderAccuracyMeters:-1,senderCapturedAt:new Date().toISOString()}
+  ]) assert.equal((await submit(x.publicUrl,body(extra))).status,400,JSON.stringify(extra));
+  assert.equal(x.app.db.prepare('SELECT count(*) AS n FROM leads').get().n,0);
+  const payload=body({locationContract:'sender-v1',city:'Fort Myers',latitude:'26.6',longitude:'-81.8',mapsLink:'https://www.google.com/maps/search/?api=1&query=Paris',senderAccuracyMeters:'12',senderCapturedAt:new Date().toISOString()});
+  const key=randomUUID(), response=await submit(x.publicUrl,payload,key), receipt=await response.json();
+  assert.equal(response.status,201);
+  const saved=JSON.parse(x.app.db.prepare('SELECT payload_json FROM leads WHERE id=?').get(receipt.id).payload_json);
+  assert.equal(saved.longitude,-81.8);assert.equal(saved.senderAccuracyMeters,12);
+  assert.equal(saved.mapsLink,'https://www.google.com/maps/search/?api=1&query=26.6%2C-81.8');
+  assert.equal((await submit(x.publicUrl,payload,key)).status,200);
+  assert.equal((await submit(x.publicUrl,body())).status,201);
 });

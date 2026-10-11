@@ -5,6 +5,19 @@ let fingerprint = '';
 let zohoEnabled = false;
 const el = (tag, text, className) => { const item = document.createElement(tag); if (text !== undefined) item.textContent = text; if (className) item.className = className; return item; };
 const date = value => new Date(value).toLocaleString();
+const notificationChannels = {email: 'Email', push: 'Push notification', sms: 'Text alert', desktop: 'Laptop notification'};
+const notificationStatus = el('p', undefined, 'note'); notificationStatus.id = 'notification-status';
+document.getElementById('leads').before(notificationStatus);
+function renderNotificationStatus(status) {
+  if (!status || !Array.isArray(status.channels)) {
+    notificationStatus.textContent = 'Notification configuration is unavailable from this receiver. Check the inbox for new requests; phone alerts are not verified.';
+    return;
+  }
+  const names = status.channels.filter(channel => Object.hasOwn(notificationChannels, channel)).map(channel => notificationChannels[channel]);
+  notificationStatus.textContent = names.length
+    ? 'Configured request alerts: ' + names.join(', ') + '. Provider acceptance does not confirm that Tony received or read an alert.'
+    : 'No routine request alerts are configured. ' + (status.urgentAlertsEnabled ? 'Urgent alerts are enabled separately. ' : '') + 'Check this inbox for every request until notification delivery is verified.';
+}
 const operatorToken=el('input');operatorToken.type='password';operatorToken.autocomplete='off';operatorToken.placeholder='Operator token for alert recovery';operatorToken.setAttribute('aria-label','Operator token for alert recovery');operatorToken.maxLength=256;
 document.querySelector('.actions').append(operatorToken);
 async function alertAction(route,body={}){
@@ -73,6 +86,16 @@ function render(lead) {
     if(alert.state==='completed')line.append(el('p','Provider reports a completed phone connection; this does not prove Tony heard it.','tag'));
     card.append(line);
   }
+  for (const notification of lead.notifications || []) {
+    const channel = Object.hasOwn(notificationChannels, notification.channel) ? notificationChannels[notification.channel] : 'Request alert';
+    const states = {pending: 'queued for another attempt', sending: 'send in progress', sent: notification.channel === 'desktop' ? 'submitted to this computer; viewing not verified' : 'accepted by provider; receipt not verified', failed: 'failed; follow up and check this channel', needs_review: 'delivery uncertain; check the provider before any new send'};
+    const state = Object.hasOwn(states, notification.state) ? states[notification.state] : 'status unavailable';
+    const attempts = Number.isSafeInteger(notification.attempts) && notification.attempts > 0 ? ' · ' + notification.attempts + ' attempt(s)' : '';
+    // Provider errors can contain secrets or customer details. Keep raw errors in the private
+    // service record and show only an actionable summary in the inbox.
+    const failure = notification.last_error ? ' · Last attempt reported an error.' : '';
+    card.append(el('p', channel + ': ' + state + attempts + failure, 'tag notification-state'));
+  }
   if (lead.requestId) { const related = el('a', 'View related repair request'); related.href = '#lead-' + lead.requestId; card.append(related); }
   if (lead.media?.length) {
     const gallery = el('div', undefined, 'media');
@@ -116,11 +139,12 @@ async function refresh() {
   if (loading) return; loading = true;
   try {
     const r = await fetch('/api/leads', {cache:'no-store'}); if (!r.ok) throw new Error(); const data = await r.json(); zohoEnabled = Boolean(data.zohoEnabled);
+    renderNotificationStatus(data.notificationStatus);
     const fresh = data.leads.filter(item => !known.has(item.id));
     if (!initial && fresh.length && 'Notification' in window && Notification.permission === 'granted') new Notification('Perfect Timing: new website request', {body: fresh.length + ' new request(s). Open your website inbox to review them.'});
     known = new Set(data.leads.map(item => item.id)); initial = false;
     renderSummary(data.leads);
-    const signature = data.leads.map(item => item.id + ':' + item.updated_at+':'+JSON.stringify(item.alerts||[])+':'+(item.media||[]).length+':'+(item.pipeline?.stage||'')+':'+(item.reviewText?.state||'')+':'+(item.zohoEstimate?.status||'')+(item.zohoEstimate?.last_error||'')).join('|');
+    const signature = data.leads.map(item => item.id + ':' + item.updated_at+':'+JSON.stringify(item.alerts||[])+':'+JSON.stringify(item.notifications||[])+':'+(item.media||[]).length+':'+(item.pipeline?.stage||'')+':'+(item.reviewText?.state||'')+':'+(item.zohoEstimate?.status||'')+(item.zohoEstimate?.last_error||'')).join('|');
     if (signature !== fingerprint || !document.getElementById('leads').children.length) { const list = document.getElementById('leads'); list.replaceChildren(...(data.leads.length ? data.leads.map(render) : [el('div','No requests yet. New website messages will appear here automatically.','empty')])); fingerprint = signature; }
     const count = data.leads.filter(item => item.status === 'new').length;
     document.title = (count ? '(' + count + ') ' : '') + 'Website Requests · Perfect Timing';

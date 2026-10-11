@@ -1,0 +1,97 @@
+CLAUDE CONTINUATION PROMPT — FIXINGFORTMYERS.COM
+CONTINUATION UPDATE: Read docs/REVENUE-ITERATION-20261009.txt first. One Google post is published; source tracking/privacy improvements are deployed; IndexNow accepted 46 URLs; a private Google performance baseline is captured; and the Monday weekly learning task is active. A final runtime-guidance follow-up remains pending deployment at this update. Check current main and live evidence before acting; avoid duplicate posts or concurrent associate work.
+Updated October 9, 2026 for the owner's associate. The first organic post is live; no campaign-generated inquiry, booking or revenue outcome is established yet.
+
+You are continuing work for Tony / Perfect Timing Auto Repair LLC. Work in the existing repository https://github.com/Palle017/fixingfortmyers-site and preserve the site's current layout, established service URLs, authentic photography, and functioning intake. The live site is https://fixingfortmyers.com/ . The objective is more qualified local repair inquiries and booked work with $0 advertising spend before deciding whether paid advertising is worthwhile. Execute useful, reversible work, verify the actual user path, and report evidence rather than only a plan.
+
+1. SOURCE AND DEPLOYMENT
+
+GitHub Pages publishes main at the repository root. The latest verified source/privacy release is commit 566ad7be165c645b888e137eaf85ef7680d470ab, successful Pages run 38012839876. A final runtime-guidance follow-up using shared-script cache version 20261009-guidance-fix is pending root deployment at this update; its commit is not yet recorded. Pull current main and inspect the latest Pages result before working. Historical photo/service release: c75ecd9dd21cce7ca2a1597f4ee9de94ee8cac09, Pages run 38008979453; do not reset to it.
+
+On Tony's Windows PC the checkout is C:\Users\pf1\Projects\fixingfortmyers-site and the editor workspace is C:\Users\pf1\Projects\FixingFortMyers.code-workspace. These local paths do not exist automatically on the associate's computer. Clone the same GitHub repo using the associate's own authorized access. Do not copy credentials or create a competing repository/site.
+
+Read README.md, any applicable AGENTS.md, docs/COMPANY-UPDATE.md, docs/PHOTO-SERVICE-RELEASE-20261009.md, docs/PHOTO-AND-SERVICE-RESEARCH.md, docs/PHOTO-PROVENANCE-20261009.json, and docs/FREE-LOCAL-TRAFFIC-TEST-20261009.md first. Historical docs can be stale; the current owner clarifications below and current code take precedence.
+
+2. COMPLETED WEBSITE WORK
+
+- Restored eight authentic owner work photos while preserving homepage section order and its two-column introduction/request-form structure. Three welding photos survived in Git; five more were recovered from the business's own Google Maps gallery. Originals were visually reviewed and provenance recorded.
+- The homepage now displays the Mustang engine bay, an engine on a stand, an open transmission and welding work. Related service pages use the relevant real photos.
+- Added /walnut-blasting-fort-myers with title, canonical, schema, sitemap and inquiry category. Walnut blasting, engine work and transmissions are prominent, with oil changes, diagnosis and urgent no-starts retained. Existing service directory and URLs remain intact.
+- Corrected walnut/oil-change/transmission service-link categories through to the form. Vehicle details, symptoms, drivability, location/drop-off details, media and contact preferences remain intact.
+- Rewrote shared contact copy to explain AI phone intake, direct texts to the mechanic, and best-effort responses at any hour. Replaced the engine/transmission-only sticky message with general repair wording. Reduced repetitive 'Tony' branding in favor of 'the shop' while retaining relevant biography and authentic quotations.
+- The follow-up caption correction identifies the Mustang as mobile no-start work at the customer's own garage, and corrects four stale sitemap dates to October 9.
+
+LATEST OWNER FACT — IMPORTANT: The Mustang photo is NOT inside Perfect Timing's shop. Tony directly confirmed this was a customer's own garage, where he brought the tools needed to repair a no-start. Use that real mobile-service story. The corrected caption reads: 'No-start repair in a customer's own garage. We brought the tools to get the job done.' Do not invent the failed component or specific repair procedure.
+
+3. PHOTO RECOVERY AND LIMITS
+
+Available authentic assets:
+assets/tony-at-work.webp
+assets/workshop-wide.webp
+assets/workshop-fabrication.webp
+assets/owner-engine-stand.jpg
+assets/owner-engine-assembly.jpg
+assets/owner-transmission-open.jpg
+assets/owner-mustang-engine-bay.jpg
+assets/owner-drum-brake.jpg
+
+No verified walnut-blasting or valve before/after photo was recovered. Existing walnut/tool/before-after placeholder cards must remain hidden; never describe an ordinary engine photo as evidence of walnut blasting. Obtain a real photograph on an appropriate future job with customer permission.
+
+The historical homepage photos disappeared during a September 29 layout simplification (dbfe26d); three welding assets arrived in e10dc3d on October 1. Five additional photos came from the business's own Google gallery. A rebuilt Perfect PC VMDK was inspected read-only without booting or altering it; ordinary personal-media folders yielded no additional repair photos.
+
+On Tony's PC, recovery originals/inventory are under C:\Users\pf1\Projects\fixingfortmyers-recovery and the photo ZIP is C:\Users\pf1\Projects\fixingfortmyers-recovered-photos-20261009.zip. Necessary website images are already in the repository; the associate does not need the VMDK to continue. Do not publish raw recovery inventories, backups, customer data or credentials.
+
+4. CURRENT INTAKE CONTRACT AND OWNER PREFERENCES
+
+Calls are answered by AI intake, which gathers information and forwards it to the shop. Texts go straight to the mechanic with the supplied vehicle/problem/location details so the mechanic can call back or arrive better prepared. Responses are best effort at any hour; do not promise immediate dispatch, a fixed callback time, or an unconfirmed appointment. Phone routing was described by the owner, not independently verified through a real test call.
+
+Latest owner wording: 'Calls: Our AI assistant gathers the details so we can call back with the right resources to help get you and your vehicle to safety. Texts go straight to the mechanic.' Keep that benefit clear without implying guaranteed dispatch or a callback deadline. The owner confirmed a mix of urgent mobile calls and larger scheduled repairs.
+
+Additional owner clarification: especially after hours, ask people to describe the situation as best they can, including vehicle, location and whether it can be driven safely. The shop calls back to clarify and plan next steps: getting the car somewhere safe or repairing it where it is, depending on the situation. This guidance is now beside the call action, in the repair-form instructions and the homepage after-hours note. The mobile/pickup/towing language is conditional; never imply that every repair can be done on site or that a response time is guaranteed.
+
+Keep mobile capability and workshop capability accurate. Workshop visits/drop-off arrangements require confirmation. The public business phone is (239) 397-2048. Do not publish private addresses or personal phone numbers. Use straightforward garage language and real photos, not a literal comic-book theme. Prioritize people with real vehicle problems who are ready to discuss repair; oil-change customers remain welcome. Do not use insulting customer labels or make assumptions about income.
+
+Production form requests use contact-config.js and the cloud endpoint https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site . Public Bay One has separate configuration in bay-one-config.js. Neither backend/provider was switched in this release. Confirm the live code before changing any endpoint.
+
+GitHub Pages only serves static files. _config.yml excludes backend, tools, tests, docs, node_modules and source-materials. Pushing backend source does not start a receiver. Do not expose the private inbox/database. When the receiver is unavailable, the form offers an editable text/email draft that the customer must actually send. Preparing a draft is not successful delivery.
+
+5. VALIDATION ALREADY PERFORMED
+
+The photo/service release passed 126 synthetic tests, schema/local-reference checks across 49 HTML pages, and structural accessibility checks on 15 representative pages with zero reported violations. The accessibility run excluded color contrast. Browser review at desktop and 390px mobile verified loaded photos and no horizontal overflow. A synthetic walnut inquiry reached a saved-request receipt in the isolated local mock receiver with external notifications disabled. No real production lead or customer message was sent as a test. Sixty-two deployed files/images were checked against Git blob bytes after Pages deployment.
+
+The subsequent source/privacy release passed 130 isolated tests, 49-page checks and 113 parsed JSON-LD blocks, with no real inquiry or notification generated. The final runtime-guidance follow-up also passed 41 focused tests and the 49-page/2,296-reference structure check, with cache references updated in 48 HTML files. Its deployment remains pending at this update.
+
+Use Node 24, npm ci, npm test, and npm run preview. The default isolated preview is http://127.0.0.1:18909 and uses .preview-data with mocked AI and disabled alerts. On Tony's machine only, the existing OLLAMA_HOST environment value lacks its URL scheme; the successful test command set $env:OLLAMA_HOST='http://127.0.0.1:11434' for that subprocess. Do not change system/provider configuration to run website tests. Useful focused checks are node tools/check-clean-structure.mjs and node tools/audit-accessibility.mjs. Inspect package.json and tools before running. After publication verify the live rendered path and corresponding Pages commit. Revert a specific bad commit to roll back; do not reset unrelated work.
+
+6. CURRENT PROMOTION AND SCHEDULE STATUS
+
+The 14-day $0 plan is docs/FREE-LOCAL-TRAFFIC-TEST-20261009.md. Its three drafts remain useful for follow-ups; its original draft-only status is historical. The owner wants both urgent mobile calls and larger scheduled repairs, with walnut blasting and oil changes included.
+
+One organic Google Business Profile update is PUBLISHED for Perfect Timing Auto Repair LLC, profile 15150482990043040433, post ID 1500091062705957694. First line: 'Mobile repair calls and larger scheduled repairs in Fort Myers.' Learn more destination: https://fixingfortmyers.com/?service=no-start&utm_source=gbp_no_start . Google showed 'Published 29 seconds ago'; evidence: C:\Users\pf1\Projects\fixingfortmyers-recovery\google-post-published-20261009.jpg. Do not duplicate this post or retry the failed old Business Manager draft.
+
+The post is text plus a website button. Its real Mustang photo is on the linked website; it was NOT uploaded to the post because Chrome's extension lacks Allow access to file URLs. That permission was not changed. No paid boost was purchased. No profile-service edits or outbound referral solicitations are recorded. The signed-in business account also contains an unrelated business; do not alter it.
+
+An ACTIVE in-thread weekly task exists: 'Free local repair lead growth', ID free-local-repair-lead-growth, Mondays 9:00 AM America/New_York. It reviews actual outcomes, researches one primary-source operator practice and executes one useful $0 improvement, with at most one organic Google post per run. It preserves Facebook and Google identity constraints, avoids duplicating associate work, and reports meaningful progress or a concrete blocker. Local execution needs the app and computer running. No scheduled run has occurred yet; do not create a duplicate automation.
+
+The Google performance baseline for May-October 2026 is captured privately at C:\Users\pf1\Projects\fixingfortmyers-recovery\google-performance-baseline-20261009.json. Keep its metric counts and customer-level outcomes out of public Git. The associate must obtain authorized access to that private evidence separately; this Windows path is not a cloud attachment. Next priority is received inquiries and actual bookings, not recapturing the baseline as unfinished work.
+
+Nextdoor's current documentation supports free unlimited business posts, but account/page access remains unverified. Preserve the owner's Facebook exclusion and do not change Google name, categories, address, address visibility or hours based on assumptions. Live Google Search showed older hours, a visible street address, a Shopmonkey appointment link and an old post saying mobile service was unavailable; these conflict with historical notes. The new post clarifies current mobile/workshop capability. Verify the approved booking destination and operating details before profile corrections.
+
+7. TECHNICAL STATUS AND LIMITS
+
+- Discovery audit found 46 sitemap URLs with expected canonicals and public robots/sitemap/IndexNow key. .\tools\submit-indexnow.ps1 -Submit returned HTTP 200 for all 46 URLs: accepted, not proof of indexing or ranking. Search Console ownership and URL Inspection remain unverified.
+- site.js records a validated utm_source as lead.channel. Ten fixed sources now also survive into editable SMS/email fallback drafts: google, nextdoor, referral, trade_referral, gbp_no_start, gbp_walnut, gbp_major, nextdoor_no_start, nextdoor_walnut, nextdoor_major. A current valid source works even when sessionStorage is unavailable. Campaign/content UTM persistence is not implemented.
+- Anonymous visit requests include IDs and pathname, not campaign attribution. Actual production analytics storage/reporting and provider retention were not independently verified.
+- privacy-policy.html was corrected to describe observable analytics/browser storage and optional chat, recording and attachments. The earlier 'disabled analytics/Bay One' mismatch is fixed in the deployed source/privacy release; do not redo it from the historical handoff.
+- Direct call/text clicks do not establish connected calls or delivered texts. Production phone routing and real notification delivery remain unverified by an actual customer-path test.
+- Final runtime-guidance follow-up using cache version 20261009-guidance-fix is pending deployment at this update. Verify its actual commit, Pages run and live rendered copy before marking complete.
+
+8. NEXT ACTIONS AND ITERATIVE LOOP
+
+Pull current main, coordinate with the active owner/associate work, and verify the final runtime-guidance deployment. Preserve recipients, vehicle information, consent behavior and truthful receipt/fallback states. Do not generate fake production leads or upload private records to public Git.
+
+Review actual private inquiry outcomes against the captured Google baseline. Check the booking path, add missing accurate specialty service descriptions, and consider one walnut-focused Google follow-up after reviewing the first post's distribution and response. Obtain genuine walnut-job photographs; do not repurpose an unverified promotional valve graphic as proof. Verify account access and rules before Nextdoor. IndexNow has already accepted the sitemap URLs; do not repeatedly submit unchanged URLs or promise ranking.
+
+Work in measured batches: publish one useful item, verify its state, record received inquiries, review fit and revise the next message. Track views/clicks -> received inquiries -> reached/qualified -> booked -> completed repair value, plus response delay and time spent by source. Use unknown attribution when evidence is absent. Keep customer-level outcomes private and quoted value separate from earned revenue. No campaign-generated inquiry, booking or revenue outcome is established yet.
+
+The owner authorized iterative implementation and owned-channel promotion within available access and platform rules. The weekly task is active; use its existing scope and avoid duplicate work. Unsolicited individual outreach or new account/access/financial commitments still require relevant explicit authorization. Draft referral text is not a sent message. End each iteration with what actually changed, public links/status, validation, measured outcomes and the next useful step.

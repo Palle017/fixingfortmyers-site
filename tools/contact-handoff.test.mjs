@@ -9,6 +9,16 @@ const page=fs.readFileSync(new URL('index.html',root),'utf8');
 const site=fs.readFileSync(new URL('site.js',root),'utf8');
 const widget=fs.readFileSync(new URL('bay-one-widget.js',root),'utf8');
 const settle=async()=>{for(let i=0;i<5;i++)await new Promise(setImmediate);};
+function mockRecorder(w) {
+  Object.defineProperty(w.navigator,'mediaDevices',{value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})},configurable:true});
+  w.URL.createObjectURL=()=> 'blob:synthetic-recording';w.URL.revokeObjectURL=()=>{};
+  w.MediaRecorder=class extends w.EventTarget {
+    static isTypeSupported(){return true;}
+    constructor(_stream,options){super();this.mimeType=options.mimeType;this.state='inactive';}
+    start(){this.state='recording';}
+    stop(){this.state='inactive';const event=new w.Event('dataavailable');event.data=new w.Blob([new Uint8Array([0x1a,0x45,0xdf,0xa3])],{type:this.mimeType});this.dispatchEvent(event);this.dispatchEvent(new w.Event('stop'));}
+  };
+}
 function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00Z',enabled=true,publicContact=false,userAgent,savedSource,beforeScripts}={}){
   const dom=new JSDOM(page,{url,runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,requests=[];
   t.after(()=>w.close());
@@ -19,7 +29,7 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   // Tests set the Bay One flag explicitly; the shipped flag is checked separately below.
   w.PT_BAYONE_CONFIG={enabled};
   const NativeDate=w.Date;w.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[at]));}static now(){return NativeDate.parse(at);}};
-  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=typeof options.body==='string'||options.body===undefined?JSON.parse(options.body||'{}'):options.body;requests.push({url:String(url),route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
+  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=typeof options.body==='string'||options.body===undefined?JSON.parse(options.body||'{}'):options.body;if(route.startsWith('/hooks/analytics/'))return {ok:true,status:200,json:async()=>({ok:true})};requests.push({url:String(url),route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
   if(savedSource)w.sessionStorage.setItem('pt-repair-source',savedSource);
   beforeScripts?.(w);
   w.eval(site);w.eval(widget);
@@ -46,14 +56,7 @@ test('published contact configuration sends a repair to cloud intake and keeps p
 
 test('voice send requires a car location and serializes its selected address as multipart JSON',async t=>{
   const x=setup(t,{enabled:false,handler:async route=>({ok:true,status:route==='/healthz'?200:201,json:async()=>route==='/healthz'?{ok:true,media:'ready'}:{ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'}}),beforeScripts:w=>{
-    Object.defineProperty(w.navigator,'mediaDevices',{value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})},configurable:true});
-    w.URL.createObjectURL=()=> 'blob:synthetic-recording';w.URL.revokeObjectURL=()=>{};
-    w.MediaRecorder=class extends w.EventTarget {
-      static isTypeSupported(){return true;}
-      constructor(_stream,options){super();this.mimeType=options.mimeType;this.state='inactive';}
-      start(){this.state='recording';}
-      stop(){this.state='inactive';const event=new w.Event('dataavailable');event.data=new w.Blob([new Uint8Array([0x1a,0x45,0xdf,0xa3])],{type:this.mimeType});this.dispatchEvent(event);this.dispatchEvent(new w.Event('stop'));}
-    };
+    mockRecorder(w);
   }});
   const d=x.w.document;await settle();
   x.enter('request-name','Synthetic Voice Customer');x.enter('request-phone','2395550100');x.enter('request-vehicle','Synthetic car');
@@ -62,11 +65,37 @@ test('voice send requires a car location and serializes its selected address as 
   x.enter('request-location-choice','location');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
   x.enter('request-car-address','   ');d.getElementById('voice-send').click();await settle();assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/voicenote').length,0);
   x.enter('request-car-address','123 Example St, Fort Myers');d.getElementById('voice-send').click();await settle();
+  assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/voicenote').length,0);
+  assert.match(d.getElementById('voice-status').textContent,/Enter your city or ZIP/);
+  x.enter('request-city','   ');d.getElementById('voice-send').click();await settle();
+  assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/voicenote').length,0);
+  x.enter('request-city',' Fort Myers ');d.getElementById('voice-send').click();await settle();
   const sent=x.requests.filter(r=>r.route==='/hooks/lead/voicenote');assert.equal(sent.length,1);
+  assert.equal(sent[0].body.get('city'),'Fort Myers');
   assert.ok(sent[0].body instanceof x.w.FormData);assert.ok(sent[0].body.get('audio').size>0);
   assert.deepEqual(JSON.parse(sent[0].body.get('carLocation')),{type:'address',address:'123 Example St, Fort Myers'});
   assert.equal(sent[0].body.get('source'),'voice');assert.match(sent[0].body.get('details'),/^$/);
   assert.match(d.getElementById('voice-status').textContent,/Recording received/);
+});
+
+test('unchanged voice retries preserve the snapshot, but removing a sender pin creates a pin-free update',async t=>{
+  const x=setup(t,{enabled:false,handler:async route=>({ok:route==='/healthz',status:route==='/healthz'?200:503,json:async()=>route==='/healthz'?{ok:true}:{ok:false}}),beforeScripts:w=>{
+    mockRecorder(w);
+    Object.defineProperty(w.navigator,'geolocation',{value:{getCurrentPosition(ok){ok({coords:{latitude:26.6406,longitude:-81.8723,accuracy:18},timestamp:w.Date.now()});}},configurable:true});
+  }});
+  const d=x.w.document;await settle();
+  x.enter('request-name','Synthetic Voice Customer');x.enter('request-phone','2395550100');x.enter('request-vehicle','Synthetic car');x.enter('request-city','Fort Myers');
+  x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+  d.getElementById('request-use-my-location').click();d.getElementById('request-sms-consent').checked=true;
+  d.getElementById('voice-start').click();await settle();d.getElementById('voice-stop').click();
+  d.getElementById('voice-send').click();await settle();d.getElementById('voice-send').click();await settle();
+  const sent=()=>x.requests.filter(r=>r.route==='/hooks/lead/voicenote'),first=sent()[0],retry=sent()[1];
+  assert.equal(first.body.get('latitude'),'26.6406');assert.equal(retry.headers['Idempotency-Key'],first.headers['Idempotency-Key']);
+  for(const [key,value] of first.body) if(key!=='audio')assert.equal(retry.body.get(key),value);
+  d.getElementById('request-remove-my-location').click();d.getElementById('voice-send').click();await settle();
+  const changed=sent()[2];assert.ok(changed);assert.notEqual(changed.headers['Idempotency-Key'],first.headers['Idempotency-Key']);
+  for(const key of ['latitude','longitude','mapsLink','senderAccuracyMeters','senderCapturedAt'])assert.equal(changed.body.get(key),null);
+  assert.equal(changed.body.get('city'),'Fort Myers');
 });
 
 test('chat collects the problem, then its contact card sends one lead with the whole chat straight to Tony',async t=>{
@@ -87,7 +116,7 @@ test('chat collects the problem, then its contact card sends one lead with the w
   // The customer sees and can correct the urgency answers the chat inferred, and the full SMS disclosure.
   assert.equal(card.querySelector('[name=starts]').value,'no');assert.equal(card.querySelector('[name=stranded]').value,'yes');
   assert.match(card.querySelector('.b1-lead-check').textContent,/Reply STOP to opt out[\s\S]*SMS terms/);
-  card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='239-555-0100';card.querySelector('[name=sms]').checked=true;
+  card.querySelector('[name=city]').value='Fort Myers';card.querySelector('[name=city]').value='Fort Myers';card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='239-555-0100';card.querySelector('[name=sms]').checked=true;
   card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
   const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,1);
   assert.equal(sent[0].body.smsConsentDisclosure,card.querySelector('.b1-lead-check span').firstChild.textContent.trim());
@@ -104,7 +133,7 @@ test('chat collects the problem, then its contact card sends one lead with the w
 test('a failed lead send keeps the card and details, and never claims Tony has them',async t=>{
   const x=setup(t,{handler:async(route)=>route==='/hooks/lead/webform'?{ok:false,status:503,json:async()=>({ok:false,error:'The shop could not save your request.'})}:{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Thanks.',ready:true,intake:{}}}});
   await settle();await x.say('Brakes grind.');const d=x.w.document,card=d.querySelector('.b1-lead');
-  card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='2395550100';
+  card.querySelector('[name=city]').value='Fort Myers';card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='2395550100';
   card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
   assert.ok(d.querySelector('.b1-lead'));assert.match(card.querySelector('.b1-lead-status').textContent,/could not save[\s\S]*397-2048/);
   assert.doesNotMatch(d.querySelector('.b1-messages').textContent,/Tony has your details/);
@@ -124,7 +153,7 @@ test('a lost contact-card response retries the exact saved payload and key, incl
   }});
   await settle();await x.say('Synthetic brake inquiry');
   const card=x.w.document.querySelector('.b1-lead');
-  card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='2395550100';card.querySelector('[name=sms]').checked=true;
+  card.querySelector('[name=city]').value='Fort Myers';card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='2395550100';card.querySelector('[name=sms]').checked=true;
   card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
   assert.equal(card.querySelector('[name=phone]').disabled,true);
   assert.match(card.textContent,/same request/);
@@ -162,9 +191,11 @@ test('service preselection is whitelisted, optional vehicle submits with explici
   assert.equal(form.method,'post');assert.match(d.getElementById('request-status').textContent,/could not confirm receipt/);
   const rejected=setup(t,{url:'https://preview.invalid/?service=%3Cscript%3Ebad%3C%2Fscript%3E'});assert.equal(rejected.w.document.getElementById('request-service').selectedIndex,0);
 });
-test('after-hours wording uses Eastern time and untrusted text is displayed as text',async t=>{
+test('AI intake is disclosed at all hours and untrusted text is displayed as text',async t=>{
   const x=setup(t,{at:'2026-09-25T01:00:00Z'}),d=x.w.document;await settle();
-  assert.match(d.querySelector('.b1-messages').textContent,/overnight/);
+  assert.match(d.querySelector('.b1-messages').textContent,/AI intake assistant/);
+  assert.match(d.querySelector('.b1-messages').textContent,/makes every effort to get back to you, at any hour/);
+  assert.doesNotMatch(d.querySelector('.b1-messages').textContent,/first thing|overnight assistant/);
   await x.say('<img src=x onerror="window.bad=true"> The car will not start.');
   assert.equal(x.w.bad,undefined);assert.equal(d.querySelector('.b1-user img'),null);
   d.querySelector('.b1-contact').click();assert.match(d.getElementById('request-details').value,/<img src=x/);
@@ -193,8 +224,8 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
 
 test('mobile bar keeps request and call actions while the separate Bay One entry restores focus',async t=>{
   const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar'),entry=d.querySelector('.b1-launcher');
-  assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'tel:+12393972048');assert.equal(bar.children[1].getAttribute('href'),'sms:+12393972048');
-  assert.deepEqual([...bar.children].map(node=>node.textContent),['Call','Text']);
+  assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'#contact');assert.equal(bar.children[1].getAttribute('href'),'tel:+12393972048');
+  assert.deepEqual([...bar.children].map(node=>node.textContent),['Send details','Call']);
   assert.equal(bar.querySelector('.b1-bar-launcher'),null);assert.ok(d.getElementById('bay-one-widget').classList.contains('b1-has-contact-bar'));
   assert.equal(d.getElementById('b1-panel').hidden,true);
   entry.click();await settle();assert.equal(d.getElementById('b1-panel').hidden,false);assert.equal(entry.getAttribute('aria-expanded'),'true');
@@ -247,7 +278,7 @@ test('with cloud intake offline, the public form falls back to an editable nativ
   const x=setup(t,{enabled:false,publicContact:true,url:'https://fixingfortmyers.com/',handler:async()=>{throw new TypeError('offline');}}),d=x.w.document;
   await settle();
   assert.equal(x.w.PT_CONTACT_CONFIG.endpoint,'https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site');assert.ok(x.requests.some(r=>r.route==='/healthz'));x.requests.length=0;
-  assert.equal(d.getElementById('request-submit').textContent,'Prepare text to Tony');assert.equal(d.querySelector('.request-voice').hidden,true);
+  assert.equal(d.getElementById('request-submit').textContent,'Prepare text to the shop');assert.equal(d.querySelector('.request-voice').hidden,true);
   assert.equal(d.getElementById('request-phone').required,false);
   assert.equal(d.querySelector('.request-consent').hidden,true);assert.equal(d.getElementById('request-direct-consent').hidden,false);
   x.enter('request-name','Synthetic Customer');x.enter('request-details','Synthetic vehicle will not start.');x.enter('request-city','33901');x.enter('request-starts','no');x.enter('request-stranded','yes');
@@ -315,16 +346,29 @@ test('Bay One card sends photos and video to Tony after the request is saved, on
   assert.equal(picker.closest('label').hidden,false);assert.equal(picker.accept,'image/*,video/*');assert.equal(picker.multiple,true);
   const files=[new x.w.File([new Uint8Array([255,216,255,224,1,2,3])],'leak.jpg',{type:'image/jpeg'}),new x.w.File([new Uint8Array(20)],'IMG_0001.HEIC',{type:''}),new x.w.File([new Uint8Array(20)],'bad.mov',{type:'video/quicktime'}),new x.w.File(['x'],'notes.pdf',{type:'application/pdf'})];
   Object.defineProperty(picker,'files',{value:files,configurable:true});picker.dispatchEvent(new x.w.Event('change'));
-  assert.match(card.querySelector('.b1-lead-status').textContent,/3 files will go to Tony[\s\S]*Not added: notes\.pdf/);
-  card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='239-555-0100';
+  assert.match(card.querySelector('.b1-lead-status').textContent,/3 files will go to the shop[\s\S]*Not added: notes\.pdf/);
+  card.querySelector('[name=city]').value='Fort Myers';card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='239-555-0100';
   card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();await settle();
   const uploads=x.requests.filter(r=>r.route===`/hooks/lead/media/${id}`);
   assert.deepEqual(uploads.map(r=>[r.headers['Content-Type'],r.headers['X-Media-Token'],r.body.name]),[['image/jpeg','synthetic-media-token-000000000000','leak.jpg'],['image/heic','synthetic-media-token-000000000000','IMG_0001.HEIC'],['video/quicktime','synthetic-media-token-000000000000','bad.mov']]);
   assert.ok(x.requests.findIndex(r=>r.route==='/hooks/lead/webform')<x.requests.findIndex(r=>r.route.startsWith('/hooks/lead/media/')),'the lead is saved before any upload');
-  assert.match(d.querySelector('.b1-messages').textContent,/Tony has your 2 files\. 1 did not go through \(bad\.mov\)\. You can text it to Tony at \(239\) 397-2048\./);
+  assert.match(d.querySelector('.b1-messages').textContent,/The shop has your 2 files\. 1 did not go through \(bad\.mov\)\. You can text it to the shop at \(239\) 397-2048\./);
 });
 test('without receiver support the photo picker stays hidden and nothing is uploaded',async t=>{
   const x=setup(t,{handler:async(route)=>route==='/healthz'?{ok:true,status:200,json:async()=>({ok:true,chat:'ready'})}:{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Thanks.',ready:true,intake:{}}}});
   await settle();await x.say('Brakes grind.');
   assert.equal(x.w.document.querySelector('.b1-lead [name=media]').closest('label').hidden,true);
+});
+
+
+test('Bay One rejects whitespace city before posting and accepts a corrected city', async t => {
+  const x=setup(t,{handler:async route => ({ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:route==='/hooks/lead/webform'?{received:true,id:'12345678-1234-4234-8234-123456789012'}:{ok:true,reply:'Contact details?',ready:true,intake:{}}})});
+  await settle();await x.say('Synthetic brake inquiry');
+  const card=x.w.document.querySelector('.b1-lead');
+  card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='2395550100';
+  const city=card.querySelector('[name=city]');city.value='   ';
+  const send=()=>card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));
+  send();await settle();assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/webform').length,0);
+  city.value='Fort Myers';city.dispatchEvent(new x.w.Event('input'));send();await settle();
+  const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,1);assert.equal(sent[0].body.city,'Fort Myers');
 });

@@ -56,6 +56,8 @@ function normalize(input, kind) {
   const timestamp = clean(input.smsConsentTimestamp, 40);
   if (consent && (!timestamp || !Number.isFinite(Date.parse(timestamp)) || Date.parse(timestamp) > Date.now() + 300000)) throw error(400, 'Please confirm your text message preference again.');
   if (consent && !['smsConsentVersion', 'smsConsentSource', 'smsConsentPage', 'smsConsentDisclosure'].every(key => typeof input[key] === 'string' && input[key].trim())) throw error(400, 'Please confirm your text message preference again.');
+  if (input.locationContract !== undefined && input.locationContract !== 'sender-v1') throw error(400, 'Invalid location format.');
+  if (input.locationContract === 'sender-v1' && !clean(input.city,100)) throw error(400, 'Enter your city or ZIP.');
   const routing={};
   // Keep legacy payload hashes stable. New confirmed fields are additive.
   if(['starts','stranded','city','drivable','source','callbackTime','latitude','longitude','mapsLink'].some(key=>Object.hasOwn(input,key))){
@@ -66,14 +68,23 @@ function normalize(input, kind) {
     const lat = input.latitude, lng = input.longitude;
     const hasPin = (lat !== undefined && lat !== null && lat !== '') || (lng !== undefined && lng !== null && lng !== '') || (Object.hasOwn(input,'mapsLink') && input.mapsLink);
     if (hasPin) {
-      const latitude = typeof lat === 'number' ? lat : Number(lat);
-      const longitude = typeof lng === 'number' ? lng : Number(lng);
-      const mapsLink = clean(input.mapsLink, 500);
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) throw error(400, 'Please share your location again or type your city or ZIP.');
-      if (mapsLink && !mapsLink.startsWith('https://www.google.com/maps/')) throw error(400, 'Please share your location again or type your city or ZIP.');
+      const coordinate = value => {
+        if (typeof value !== 'number' && !(typeof value === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()))) throw error(400, 'Please share your location again or type your city or ZIP.');
+        const number = Number(value);
+        if (!Number.isFinite(number)) throw error(400, 'Please share your location again or type your city or ZIP.');
+        return number;
+      };
+      const latitude = coordinate(lat), longitude = coordinate(lng);
+      if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) throw error(400, 'Please share your location again or type your city or ZIP.');
       routing.latitude = latitude;
       routing.longitude = longitude;
-      routing.mapsLink = mapsLink || ('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(latitude + ',' + longitude));
+      routing.mapsLink = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(latitude + ',' + longitude);
+      if (input.senderAccuracyMeters !== undefined || input.senderCapturedAt !== undefined) {
+        const accuracy = coordinate(input.senderAccuracyMeters), capturedAt = clean(input.senderCapturedAt,40);
+        if (accuracy < 0 || !capturedAt || !Number.isFinite(Date.parse(capturedAt)) || Date.parse(capturedAt) > Date.now()+300000) throw error(400, 'Please share your location again.');
+        routing.senderAccuracyMeters = accuracy;
+        routing.senderCapturedAt = capturedAt;
+      }
     }
   }
   return {
@@ -292,7 +303,7 @@ export function createLeadServers(options = {}) {
       if (req.method === 'GET' && url.pathname === '/healthz') {
         // The site's widget checks this before showing Bay One, so the shop origins may read it.
         if (origins.has(req.headers.origin)) { res.setHeader('Access-Control-Allow-Origin', req.headers.origin); res.setHeader('Vary', 'Origin'); }
-        return json(res, 200, { ok: true, service: 'Perfect Timing website requests', chat: publicChat ? 'ready' : 'unavailable', media: 'ready' });
+        return json(res, 200, { ok: true, service: 'Perfect Timing website requests', chat: publicChat ? 'ready' : 'unavailable', media: 'ready', contracts: ['sender-v1'] });
       }
       if (['/chat/session','/chat/message'].includes(url.pathname)) {
         const forwarded = String(req.headers['x-forwarded-for'] ?? '').split(',').at(-1).trim();
@@ -491,7 +502,9 @@ export function createLeadServers(options = {}) {
         const page = rows.slice(0, limit);
         const last = page.at(-1);
         const nextCursor = hasMore && last ? Buffer.from(JSON.stringify({ v: 1, received_at: last.received_at, id: last.id })).toString('base64url') : null;
-        return json(res, 200, { ok: true, zohoEnabled: zoho.enabled, leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id),media:media.list(row.id),customerText:customerTexts.inspect(row.id),reviewText:customerTexts.inspectReview(row.id),zohoEstimate:zoho.inspect(row.id),bigJob:isBigJob(JSON.parse(payload_json)) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
+        return json(res, 200, { ok: true, zohoEnabled: zoho.enabled,
+          notificationStatus: {channels: notifier.channels.filter(channel => ['email','push','sms','desktop'].includes(channel)), urgentAlertsEnabled: alerts.enabled},
+          leads: page.map(({ payload_json, ...row }) => ({ ...row, ...JSON.parse(payload_json),...alerts.inspect(row.id),notifications:notifier.inspect(row.id),pipeline:desk.pipeline(row.id),touches:desk.touches(row.id),media:media.list(row.id),customerText:customerTexts.inspect(row.id),reviewText:customerTexts.inspectReview(row.id),zohoEstimate:zoho.inspect(row.id),bigJob:isBigJob(JSON.parse(payload_json)) })), next_cursor: nextCursor, has_more: hasMore, returned_count: page.length });
       }
       const mediaFile = url.pathname.match(/^\/api\/leads\/([a-f0-9-]{36})\/media\/([1-9]\d{0,2})$/);
       if (req.method === 'GET' && mediaFile) {
