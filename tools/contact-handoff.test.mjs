@@ -225,7 +225,7 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
 test('mobile bar keeps request and call actions while the separate Bay One entry restores focus',async t=>{
   const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar'),entry=d.querySelector('.b1-launcher');
   assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'#contact');assert.equal(bar.children[1].getAttribute('href'),'tel:+12393972048');
-  assert.deepEqual([...bar.children].map(node=>node.textContent),['Send details','Call']);
+  assert.deepEqual([...bar.children].map(node=>node.textContent),['Request a repair','Call']);
   assert.equal(bar.querySelector('.b1-bar-launcher'),null);assert.ok(d.getElementById('bay-one-widget').classList.contains('b1-has-contact-bar'));
   assert.equal(d.getElementById('b1-panel').hidden,true);
   entry.click();await settle();assert.equal(d.getElementById('b1-panel').hidden,false);assert.equal(entry.getAttribute('aria-expanded'),'true');
