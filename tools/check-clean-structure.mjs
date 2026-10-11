@@ -23,7 +23,7 @@ export function checkCleanPage(name,html){
       assert.ok(text(hero.querySelector('.service-hero__desc')),`${name}: keep a useful service description`);
       const actions=[...hero.querySelectorAll('.service-hero__actions a')];
       assert.equal(actions.length,2,`${name}: two service actions`);
-      const requestLabel=name==='oil-change-fort-myers.html'?'Request an oil change':name==='walnut-blasting-fort-myers.html'?'Ask about walnut blasting':'Request a repair plan';
+      const requestLabel=name==='oil-change-fort-myers.html'?'Request an oil change':name==='walnut-blasting-fort-myers.html'?'Ask about walnut blasting':'Request Repair';
       assert.equal(text(actions[0]),requestLabel,`${name}: service request is the first action`);
       assert.match(text(actions[1]),/^Call(?: — AI intake)?$/,`${name}: clear alternative call label`);
       assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: published call number`);
