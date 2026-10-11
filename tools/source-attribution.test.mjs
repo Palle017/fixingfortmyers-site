@@ -31,7 +31,7 @@ function browser(t, {file = 'index.html', url = 'https://preview.invalid/', endp
   };
   w.eval(script);
   const fill = () => {
-    for (const [id,value] of Object.entries({'request-name':'Synthetic Customer','request-phone':'2395550100','request-vehicle':'Synthetic test vehicle','request-details':'Synthetic repair symptoms','request-location-choice':'dropoff'})) {
+    for (const [id,value] of Object.entries({'request-city':'Fort Myers','request-name':'Synthetic Customer','request-phone':'2395550100','request-vehicle':'Synthetic test vehicle','request-details':'Synthetic repair symptoms','request-location-choice':'dropoff'})) {
       const field = d.getElementById(id); field.value=value; field.dispatchEvent(new w.Event(id==='request-location-choice'?'change':'input',{bubbles:true}));
     }
   };

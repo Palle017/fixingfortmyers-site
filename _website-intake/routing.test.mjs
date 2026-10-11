@@ -72,3 +72,30 @@ test('Bay One extracts reviewable fields but cannot quote, choose destinations o
     bad=true;const fallback=await send('Please also note another problem');assert.equal(fallback.assist,'scripted');assert.equal(fallback.intake.recipient,undefined);assert.equal(calls,2);
   }finally{chat.close();}
 });
+
+
+test('urgent SMS includes distinct car and sender maps before truncated symptoms', async t => {
+  const x=await setup(t,{alerts:{adapter:{fromNumber:'+12025550100',send:async()=>({id:'synthetic'}),status:async()=> 'delivered'}}});
+  // A fake adapter prepares the provider body without contacting a provider.
+  const receipt=await(await x.send(lead({carLocation:{type:'address',address:'123 Example St'},latitude:26.6,longitude:-81.8,details:'x'.repeat(4000)}))).json();
+  const row=x.app.db.prepare("SELECT body_json FROM urgent_alerts WHERE lead_id=? AND channel='notify_sms'").get(receipt.id);
+  const message=JSON.parse(row.body_json).Body;
+  assert.match(message,/Car map:/);assert.match(message,/Sender map/);assert.ok(message.indexOf('Sender map')<message.indexOf('Symptoms:'));
+  assert.ok(message.length<=1500);
+});
+
+test('urgent SMS budgets maximum Unicode addresses without losing city or the sender pin', async t => {
+  const x=await setup(t,{alerts:{adapter:{fromNumber:'+12025550100',send:async()=>({id:'synthetic'}),status:async()=> 'delivered'}}});
+  const city='é'.repeat(100);
+  const result=await x.send(lead({name:'😀'.repeat(50),vehicle:'🚗'.repeat(80),city,callbackTime:'🕐'.repeat(80),
+    carLocation:{type:'address',address:'é'.repeat(500)},latitude:26.6,longitude:-81.8,details:'🔧'.repeat(3000)}));
+  assert.equal(result.status,201);const receipt=await result.json();
+  const row=x.app.db.prepare("SELECT body_json FROM urgent_alerts WHERE lead_id=? AND channel='notify_sms'").get(receipt.id);
+  const body=JSON.parse(row.body_json).Body,senderMap='https://www.google.com/maps/search/?api=1&query=26.6%2C-81.8';
+  assert.ok(body.length<=1500);assert.equal(body.isWellFormed(),true);assert.match(body,/FIRST PRIORITY/);
+  assert.ok(body.includes(`City/ZIP: ${city}`));assert.ok(body.includes('Callback: 2395550100'));
+  assert.ok(body.includes('Sender map (device location, not confirmed vehicle location): '+senderMap));
+  assert.match(body,/Car map: Open the saved inquiry for the full address and map\./);
+  assert.deepEqual(body.match(/https:\/\/\S+/g),[senderMap]);
+  assert.match(body,/Review the saved inquiry; Tony confirms the appointment\. Reply STOP to opt out\.$/);
+});

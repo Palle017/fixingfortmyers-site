@@ -387,14 +387,22 @@
               <label for="request-dropoff-time">Preferred drop-off time <span class="field-note">(optional)</span><input id="request-dropoff-time" name="dropoffTime" maxlength="160" placeholder="e.g. Friday morning or sometime this week" disabled></label>
               <p class="request-fineprint">We’ll get back to you to arrange a drop-off time. Wait for confirmation before coming in.</p>
             </div>
+            <label class="request-full" for="request-city">Your city or ZIP <span class="field-note">(required)</span><input id="request-city" name="city" autocomplete="address-level2" maxlength="100" placeholder="e.g. Fort Myers or 33901" required aria-describedby="request-sender-location-help request-sender-location-status"></label>
+            <div class="request-full request-sender-location">
+              <button class="btn btn--outline" id="request-use-my-location" type="button">Use my location</button>
+              <button class="btn btn--outline" id="request-remove-my-location" type="button" hidden>Remove map pin</button>
+              <p class="request-fineprint" id="request-sender-location-help">Optional. Shares your device’s location, which may differ from the car’s location. City or ZIP is always required. You can remove the pin before sending.</p>
+              <p class="request-status" id="request-sender-location-status" role="status" aria-live="polite"></p>
+              <input type="hidden" id="request-latitude" name="latitude" value="">
+              <input type="hidden" id="request-longitude" name="longitude" value="">
+              <input type="hidden" id="request-maps-link" name="mapsLink" value="">
+            </div>
             <label for="request-name">Your name<input id="request-name" name="name" autocomplete="name" maxlength="100" required></label>
             <label for="request-phone"><span id="request-phone-label">Phone number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required></label>
           </div>
           <details class="request-options" id="request-options">
             <summary>More details &amp; contact preferences <span>(optional)</span></summary>
             <div class="request-fields">
-              
-              <label class="request-full" for="request-city">City or ZIP code <span class="field-note">(optional)</span><input id="request-city" name="city" autocomplete="address-level2" maxlength="100" placeholder="e.g. Fort Myers or 33901"></label>
               <label for="request-stranded">Are you stranded?<select id="request-stranded" name="stranded"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
               <label class="request-full" for="request-timing">Preferred timing <span class="field-note">(optional)</span><input id="request-timing" name="timing" maxlength="160" placeholder="e.g. This week; best callback after 3 pm"></label>
             </div>
@@ -695,5 +703,5 @@
 
 
 
-<aside class="mobile-contact-note" aria-label="Repair details benefit">Share the details so we can prepare.</aside><div class="mobile-contact-bar" role="navigation" aria-label="Send repair details or call"><a href="#contact">Send details</a><a href="tel:+12393972048">Call</a></div><script src="/contact-config.js?v=20261003-cloud-capture" defer></script><script src="/site.js?v=20261010-intake-metrics" defer></script><script src="/bay-one-config.js?v=20261001-workshop" defer></script><script src="/bay-one-widget.js?v=20261009-photo-contact" defer></script></body>
+<aside class="mobile-contact-note" aria-label="Repair details benefit">Share the details so we can prepare.</aside><div class="mobile-contact-bar" role="navigation" aria-label="Send repair details or call"><a href="#contact">Send details</a><a href="tel:+12393972048">Call</a></div><script src="/contact-config.js?v=20261003-cloud-capture" defer></script><script src="/site.js?v=20261010-sender-location" defer></script><script src="/bay-one-config.js?v=20261001-workshop" defer></script><script src="/bay-one-widget.js?v=20261010-sender-location" defer></script></body>
 </html>

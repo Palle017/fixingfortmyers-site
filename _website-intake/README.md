@@ -1,18 +1,20 @@
 # Perfect Timing website requests
 
-**Owner's current release decision, 2026-09-24:** Bay One is off until the rest of the website is in production. The immediate contact path prepares a text to Tony's regular number for the customer to send; it is not a confirmed backend submission. The existing Beside subscription will be assessed before adding a paid notification provider. See [ROUTING.md](ROUTING.md) for Beside findings and the prepared ordered IF/ELSE rules. Twilio call/text delivery is optional, parked and disabled. The historical deployment notes below are not proof of the current REDLINE endpoint or running data path; REDLINE is currently reported offline from this workstation. No backend production cutover or real alert has been verified.
+**Repository routing, verified October 11, 2026:** The homepage config sends requests to `https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site`. Bay One is enabled in `bay-one-config.js` and points to the separate `https://p15g2.tail68bd87.ts.net:10000` receiver. These settings supersede the September 24 Bay One-off decision; they do not prove either running receiver has the latest code, shares a database, or delivers alerts. Check both deployments independently. See [the activation sequence](../docs/LOCATION-RELEASE.md) and [ROUTING.md](ROUTING.md). Paid Twilio delivery remains conditional on explicit runtime configuration; code presence is not proof that it is enabled.
 
-This service receives repair requests and voice recordings on the shop computer. It saves them before acknowledging receipt. The owner reads them at **http://127.0.0.1:18798/**. It never writes to Zoho; when configured it only reads the status of Zoho estimates Tony links to a request (see **Zoho estimate status**).
+This service receives repair requests and voice recordings on the host where it runs. It saves them before acknowledging receipt. Its private inbox is **http://127.0.0.1:18798/** on that host; the laptop inbox does not automatically show the cloud receiver's records. It never writes to Zoho; when configured it only reads the status of Zoho estimates Tony links to a request (see **Zoho estimate status**).
 
-The current Bay One phone service on Tailscale port 8443 returns 404 for the old website endpoints. It provides authenticated employee assistant requests, not customer lead intake. This receiver therefore uses its own loopback port and its own public Tailscale port. The existing private 443 and 8443 mappings remain untouched.
+Historical laptop setup used private Tailscale ports 443 and 8443 for employee services. This receiver uses its own loopback port and public Tailscale port 10000. Inspect current mappings before activation; preserve the separate private services.
 
 ## Owner use
 
 Open the **Perfect Timing Website Requests** desktop shortcut. New messages appear automatically every 15 seconds. Click a phone number to call the customer, play a recording, and mark the request Contacted or Closed. The text preference and full consent record are shown with each request. A recording submitted after a repair request links back to that request.
 
-The inbox displays the latest 200 records. All received records remain in the SQLite database. Nothing is deleted by changing a status. Desktop alerts require clicking **Enable desktop alerts** and keeping the inbox open. No automatic message is sent to the customer, and receiving a request does not confirm an appointment.
+The inbox displays the latest 200 records. All received records remain in the SQLite database. Nothing is deleted by changing a status. Browser desktop alerts require clicking **Enable desktop alerts** and keeping the inbox open. Customer confirmation and review texts are separate opt-in, configured features described below; receiving a request does not confirm an appointment.
 
-The shop computer must be powered on and awake, Tailscale connected, and this service running to receive requests. The website retains direct Call, Text, and Email options if an upload fails.
+The private inbox shows configured notification channels, a warning when routine alerts are not configured, and each request's email/push/SMS/laptop notification state. A provider-accepted alert is not proof of phone delivery or that Tony read it. Failed or uncertain sends require operator review; this display does not resend anything or enable a provider. Raw provider errors are not rendered. The public health response contains no notification configuration or customer records.
+
+The Bay One laptop must be powered on and awake, Tailscale connected, and its receiver running to receive Bay One requests. The homepage receiver has its own cloud availability and persistence requirements. The website retains direct Call, Text, and Email options if an upload fails.
 
 ## Runtime files and persistence
 

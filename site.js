@@ -98,6 +98,7 @@
       new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) brandVideo.play().catch(() => {}); else brandVideo.pause(); }), { threshold: .25 }).observe(brandVideo);
     } else { brandVideo.pause(); brandVideo.controls = true; }
   }
+  byId('partsForm')?.addEventListener('input', () => reportMetric('parts_quote_started'), {once:true});
   const form = byId('bookingForm');
   if (!form) return;
   window.PT_REPAIR_CONTEXT.applyService(serviceKey);
@@ -181,6 +182,67 @@
     } catch (_) { fail(); }
   });
   updateCarLocation();
+  const cityField = byId('request-city');
+  const senderLocationButton = byId('request-use-my-location');
+  const senderLocationStatus = byId('request-sender-location-status');
+  const latitudeField = byId('request-latitude');
+  const longitudeField = byId('request-longitude');
+  const mapsLinkField = byId('request-maps-link');
+  let senderLocationAttempt = 0, senderMetadata = null;
+  const removeSenderPin = byId('request-remove-my-location');
+  const clearSenderPin = () => {
+    const hadPin = Boolean(senderMetadata || latitudeField?.value || longitudeField?.value || mapsLinkField?.value);
+    senderMetadata = null;
+    if (removeSenderPin) removeSenderPin.hidden = true;
+    if (latitudeField) latitudeField.value = '';
+    if (longitudeField) longitudeField.value = '';
+    if (mapsLinkField) mapsLinkField.value = '';
+    if (hadPin) senderPinChanged();
+  };
+  removeSenderPin?.addEventListener('click', () => {
+    ++senderLocationAttempt; clearSenderPin();
+    senderLocationButton.disabled = false; senderLocationButton.textContent = 'Use my location';
+    senderLocationStatus.textContent = 'Map pin removed from future requests and drafts. Requests already sent are unchanged.';
+  });
+  cityField?.addEventListener('input', () => {
+    // Keep typed city as the required value; do not clear a pin the customer already approved.
+    cityField.setCustomValidity('');
+  });
+  senderLocationButton?.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      if (senderLocationStatus) senderLocationStatus.textContent = 'Location is unavailable in this browser. Enter your city or ZIP instead.';
+      cityField?.focus();
+      return;
+    }
+    const attempt = ++senderLocationAttempt;
+    senderLocationButton.disabled = true;
+    if (removeSenderPin) removeSenderPin.hidden = false;
+    senderLocationButton.textContent = 'Finding location…';
+    if (senderLocationStatus) senderLocationStatus.textContent = 'Allow location access when your browser asks, or type your city or ZIP.';
+    const finish = () => { senderLocationButton.disabled = false; senderLocationButton.textContent = 'Use my location'; };
+    const fail = () => {
+      if (attempt !== senderLocationAttempt) return;
+      finish();
+      clearSenderPin();
+      if (senderLocationStatus) senderLocationStatus.textContent = 'Could not get your location. Your city or ZIP still works.';
+      cityField?.focus();
+    };
+    try {
+      navigator.geolocation.getCurrentPosition(position => {
+        if (attempt !== senderLocationAttempt) return;
+        const {latitude, longitude, accuracy} = position.coords;
+        if (![latitude,longitude,accuracy].every(Number.isFinite) || Math.abs(latitude)>90 || Math.abs(longitude)>180 || accuracy<0 || !Number.isFinite(position.timestamp)) { fail(); return; }
+        const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(latitude + ',' + longitude)}`;
+        latitudeField.value = String(latitude);
+        longitudeField.value = String(longitude);
+        mapsLinkField.value = mapsLink;
+        senderMetadata = {senderAccuracyMeters:accuracy,senderCapturedAt:new Date(position.timestamp).toISOString()};
+        senderPinChanged();
+        finish();
+        if (senderLocationStatus) senderLocationStatus.textContent = `Map pin added (within about ${Math.max(1,Math.round(accuracy))} metres). City or ZIP is still required.`;
+      }, fail, {enableHighAccuracy:true,timeout:15000,maximumAge:0});
+    } catch (_) { fail(); }
+  });
   const applyMode = () => {
   phoneField.required = Boolean(endpoint);
   byId('request-phone-label').textContent = endpoint ? 'Phone number' : 'Callback number, if different (optional)';
@@ -218,6 +280,13 @@
     const stranded = ['yes','no'].includes(data.get('stranded')) ? data.get('stranded') : 'unknown';
     const symptoms = String(data.get('details') || '').trim();
     const callbackTime = String(data.get('timing') || '').trim();
+    const latitude = Number(data.get('latitude'));
+    const longitude = Number(data.get('longitude'));
+    const mapsLink = String(data.get('mapsLink') || '').trim();
+    const senderPin = Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
+      && mapsLink.startsWith('https://www.google.com/maps/')
+      ? {latitude, longitude, mapsLink}
+      : null;
     if (deviceLocation && carAddress.value !== `Current location: ${deviceLocation.latitude.toFixed(6)}, ${deviceLocation.longitude.toFixed(6)}`) deviceLocation = null;
     const carLocation = locationChoice?.value === 'dropoff'
       ? {type:'dropoff',preferredTime:String(data.get('dropoffTime') || '').trim()}
@@ -227,9 +296,12 @@
       : carLocation.type === 'device'
         ? `Car location: Current device location (${carLocation.latitude.toFixed(6)}, ${carLocation.longitude.toFixed(6)}; accuracy about ${Math.max(1,Math.round(carLocation.accuracyMeters))} metres)\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.latitude + ',' + carLocation.longitude)}`
         : `Car location: ${carLocation.address}\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.address)}`;
+    const senderPinText = senderPin
+      ? `Sender map pin: ${senderPin.latitude.toFixed(6)}, ${senderPin.longitude.toFixed(6)}\nSender map: ${senderPin.mapsLink}`
+      : '';
     // Keep these details useful to the existing receiver during a staged rollout.
-    const context = [carLocationText,city ? `City / ZIP: ${city}` : '',`Does it drive: ${starts}`,`Stranded: ${stranded}`,callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
-    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(locationChoice ? {carLocation} : {}), city, starts, stranded, callbackTime, source:'form', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
+    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(locationChoice ? {carLocation} : {}), city, ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
@@ -239,6 +311,16 @@
     refreshDraftLinks();
     backup.hidden = false;
   };
+  function senderPinChanged() {
+    // Location buttons do not fire a form input event. Invalidate every cached
+    // representation so removing a pin cannot resend it through a voice retry
+    // or a previously prepared text/email draft.
+    requestKey = uid(); requestPayload = null; voicePayload = null;
+    voiceKey = uid(); sentRequestId = '';
+    if (!backup.hidden) status.textContent = 'Location changed. Prepare your text or email draft again before sending.';
+    preview.value = ''; refreshDraftLinks(); backup.hidden = true;
+  }
+  const sameRequestContent = data => JSON.stringify({...data,smsConsentTimestamp:''});
   const send = async (path, body, key, json = true) => {
     if (!endpoint) throw new Error('unavailable');
     const controller = new AbortController();
@@ -285,10 +367,10 @@
     // Browser autofill can insert invisible characters without an input event.
     phoneField.value = cleanPhone(phoneField.value);
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
+    if (cityField) cityField.setCustomValidity(cityField.value.trim() ? '' : 'Enter your city or ZIP.');
     if (!form.reportValidity()) return;
     const currentData = readRequest();
-    const sameContent = data => JSON.stringify({...data,smsConsentTimestamp:''});
-    if (requestPayload && sameContent(currentData) !== sameContent(requestPayload)) { requestKey = uid(); requestPayload = null; sentRequestId = ''; }
+    if (requestPayload && sameRequestContent(currentData) !== sameRequestContent(requestPayload)) { requestKey = uid(); requestPayload = null; sentRequestId = ''; }
     const data = requestPayload || currentData;
     if (data.website) return;
     if ((endpoint || data.phone) && !validPhone(data.phone)) { status.textContent = endpoint ? 'Please include a valid phone number with its area code.' : 'Please include a valid phone number with its area code, or leave the optional callback field blank when texting.'; phoneField.focus(); return; }
@@ -313,8 +395,10 @@
       location.assign('/request-received.html');
     } catch (_) {
       reportMetric('submit_unconfirmed', false);
-      status.textContent = 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the text/email draft and send it yourself.';
-      submit.textContent = 'Retry repair request';
+      status.textContent = submittedKey !== requestKey
+        ? 'Receipt of the earlier request could not be confirmed. Your changed details have not been sent. Send again to share the update, or call (239) 397-2048.'
+        : 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the text/email draft and send it yourself.';
+      submit.textContent = submittedKey !== requestKey ? 'Send updated request' : 'Retry repair request';
     } finally { sending = false; submit.disabled = false; }
   });
   // With scripts unavailable the disabled control cannot navigate away with an unsent form.
@@ -355,16 +439,25 @@
   voiceSend.addEventListener('click', async () => {
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
     if ((locationChoice && !locationChoice.reportValidity()) || (carAddress && !carAddress.disabled && !carAddress.reportValidity())) { voiceStatus.textContent = 'Choose the car location or shop drop-off above before sending your recording.'; return; }
-    const data = voicePayload || { ...readRequest(), source:'voice', requestId: sentRequestId };
+    if (cityField) cityField.setCustomValidity(cityField.value.trim() ? '' : 'Enter your city or ZIP.');
+    if (cityField && !cityField.reportValidity()) { voiceStatus.textContent = 'Enter your city or ZIP above before sending your recording.'; cityField.focus(); return; }
+    const currentData = { ...readRequest(), source:'voice', requestId: sentRequestId };
+    if (voicePayload && sameRequestContent(currentData) !== sameRequestContent(voicePayload)) { voiceKey = uid(); voicePayload = null; }
+    const data = voicePayload || currentData;
     if (!data.name || data.phone.replace(/\D/g, '').length < 10 || !data.vehicle) { voiceStatus.textContent = 'Enter your name, phone number, and vehicle in the form above so we can respond to your recording.'; byId('request-name').focus(); return; }
     if (!recording) return;
     voicePayload = data;
+    const submittedVoiceKey = voiceKey;
     voiceSend.disabled = true; start.disabled = true; voiceStatus.textContent = 'Sending recording…';
     const upload = new FormData();
     upload.append('audio', recording, byId('voice-download').download);
     Object.entries(data).forEach(([key, value]) => upload.append(key, key === 'carLocation' ? JSON.stringify(value) : String(value)));
-    try { const result = await send('/hooks/lead/voicenote', upload, voiceKey, false); voiceStatus.textContent = `Recording received. Reference: ${result.id}. Our team will follow up; your appointment is not confirmed yet.`; }
-    catch (_) { voiceStatus.textContent = 'We could not confirm receipt. Retry, or download the recording and attach it to your email or text. You can also call (239) 397-2048.'; }
+    try { const result = await send('/hooks/lead/voicenote', upload, submittedVoiceKey, false); voiceStatus.textContent = submittedVoiceKey !== voiceKey
+      ? `The earlier recording was received. Reference: ${result.id}. Your changed details have not been sent; send again to share the update.`
+      : `Recording received. Reference: ${result.id}. Our team will follow up; your appointment is not confirmed yet.`; }
+    catch (_) { voiceStatus.textContent = submittedVoiceKey !== voiceKey
+      ? 'Receipt of the earlier recording could not be confirmed. Your changed details have not been sent; send again to share the update, or call (239) 397-2048.'
+      : 'We could not confirm receipt. Retry, or download the recording and attach it to your email or text. You can also call (239) 397-2048.'; }
     finally { voiceSend.disabled = false; start.disabled = false; }
   });
   window.addEventListener('pagehide', () => { if (recorder?.state === 'recording') recorder.stop(); releaseMic(); if (recordingUrl) URL.revokeObjectURL(recordingUrl); });
@@ -381,7 +474,7 @@
     dropoffTime: ['request-dropoff-time', 'Preferred time when locationChoice is dropoff; the shop must confirm it.'],
     name: ['request-name', 'The customer’s name. Required before sending.'],
     phone: ['request-phone', 'The customer’s callback number, including area code. Required for online requests.'],
-    city: ['request-city', 'City or ZIP code, if known.'],
+    city: ['request-city', 'Your city or ZIP code; required before submission.'],
     stranded: ['request-stranded', 'Whether the customer is stranded: yes, no, or unknown.'],
     timing: ['request-timing', 'Preferred repair timing or callback time, in the customer’s words.']
   };
@@ -428,6 +521,7 @@
     reportMetric('webmcp_prepared');
     // Native constraints plus the same phone/address rules used on human submit.
     if (!carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
+    cityField.setCustomValidity(cityField.value.trim() ? '' : 'Enter your city or ZIP.');
     const incomplete = Object.entries(repairToolFields).filter(([, [id]]) => {
       const field = byId(id);
       return !field.disabled && ((!field.value.trim() && field.required) || !field.checkValidity());

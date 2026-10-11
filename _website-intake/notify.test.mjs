@@ -392,3 +392,52 @@ test('big jobs (engine, transmission, rebuild) are tagged so Tony calls them bac
   const both=summarize({name:'Synthetic',phone:'2395550100',vehicle:'Civic',details:'Spun bearing, stranded',starts:'no',stranded:'yes'},'L3',{priority:'first',actions:['notify_sms']});
   assert.match(both.title,/^URGENT BIG JOB New repair request/);
 });
+
+test('summarize: City / ZIP and sender or car map appear in Tony alerts', () => {
+  const withCar = summarize(lead({
+    city: 'Cape Coral',
+    carLocation: {type:'address', address:'123 Example St, Fort Myers'},
+  }), 'L-loc', NORMAL);
+  assert.ok(withCar.text.split('\n').includes('Location: 123 Example St, Fort Myers'));
+  assert.ok(withCar.text.split('\n').includes('City / ZIP: Cape Coral'));
+  assert.ok(withCar.text.split('\n').includes('Car map: https://www.google.com/maps/search/?api=1&query=123%20Example%20St%2C%20Fort%20Myers'));
+
+  const withSender = summarize(lead({
+    city: 'Lehigh Acres',
+    latitude: 26.625,
+    longitude: -81.625,
+    mapsLink: 'https://www.google.com/maps/search/?api=1&query=26.625%2C-81.625',
+  }), 'L-pin', NORMAL);
+  assert.ok(withSender.text.split('\n').includes('Location: Lehigh Acres'));
+  assert.ok(withSender.text.split('\n').includes('Sender map (device location, not confirmed vehicle location): https://www.google.com/maps/search/?api=1&query=26.625%2C-81.625'));
+});
+
+
+test('car and sender maps remain separately labeled before long symptoms', () => {
+  const message=summarize(lead({carLocation:{type:'address',address:'123 Example St'},latitude:26.6,longitude:-81.8,details:'x'.repeat(4000)}),'L-two',NORMAL);
+  assert.match(message.text,/Car map:/);assert.match(message.text,/Sender map \(device location, not confirmed vehicle location\):/);
+  assert.ok(message.text.indexOf('Sender map')<message.text.indexOf('What the customer said'));
+});
+
+test('normal SMS preserves city and sender link with maximum Unicode fields and never cuts a map URL',async()=>{
+  const sent=[],sms=createSmsAdapter({fromNumber:'+12025550100',send:async(_channel,body)=>{sent.push(body.Body);return {id:'synthetic'};}});
+  const senderMap='https://www.google.com/maps/search/?api=1&query=26.6%2C-81.8';
+  const longLead=lead({name:'😀'.repeat(50),vehicle:'🚗'.repeat(80),city:'é'.repeat(100),callbackTime:'🕐'.repeat(80),
+    carLocation:{type:'address',address:'é'.repeat(500)},latitude:26.6,longitude:-81.8,details:'🔧'.repeat(3000)});
+  const message=summarize(longLead,'12345678-1234-4234-8234-123456789012',NORMAL);
+  await sms.send(message);
+  const body=sent[0];assert.ok(body.length<=1500);assert.equal(body.isWellFormed(),true);
+  assert.ok(body.includes(`City/ZIP: ${longLead.city}`));assert.ok(body.includes('Callback: 2395550100'));
+  assert.ok(body.includes('Sender map (device location, not confirmed vehicle location): '+senderMap));
+  assert.match(body,/Car map: Open the saved inquiry for the full address and map\./);
+  assert.deepEqual(body.match(/https:\/\/\S+/g),[senderMap]);
+  assert.match(body,/Review the saved inquiry; Tony confirms the appointment\. Reply STOP to opt out\.$/);
+  assert.ok(message.desktopText.length<=600);assert.equal(message.desktopText.isWellFormed(),true);
+  assert.ok(message.desktopText.includes(`City/ZIP: ${longLead.city}`));
+  assert.match(message.desktopText,/Sender pin saved \(device location; car position unconfirmed\)/);
+  assert.match(message.desktopText,/Open the website inbox for the full request and maps\./);
+  assert.doesNotMatch(message.desktopText,/https:/);
+  await sms.send(summarize(lead({carLocation:{type:'address',address:'123 Example St'},latitude:26.6,longitude:-81.8,details:'x'.repeat(6000)}),'L-short',NORMAL));
+  const short=sent[1];assert.ok(short.length<=1500);
+  assert.deepEqual(short.match(/https:\/\/\S+/g),[senderMap,'https://www.google.com/maps/search/?api=1&query=123%20Example%20St']);
+});

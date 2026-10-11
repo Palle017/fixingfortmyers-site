@@ -53,7 +53,7 @@ function setup(t, {mode = 'supported', offline = false, geolocation, handler} = 
 
 const complete = {
   name:'Synthetic Customer', phone:'2395550100', details:'The brakes grind when slowing down.',
-  vehicle:'2018 Honda Civic', locationChoice:'location', carAddress:'123 Example St, Fort Myers'
+  vehicle:'2018 Honda Civic', city:'Fort Myers', locationChoice:'location', carAddress:'123 Example St, Fort Myers'
 };
 
 test('WebMCP prepares dependent address fields for review; only manual submit reaches the existing receiver', async t => {
@@ -95,7 +95,7 @@ test('partial preparations report missing details and preserve human consent and
   const result = x.execute({details:'The engine stalls.'});
   assert.equal(result.status, 'needs_details');
   assert.equal(result.submitted, false);
-  assert.deepEqual(Array.from(result.fields).sort(), ['locationChoice','name','phone']);
+  assert.deepEqual(Array.from(result.fields).sort(), ['city','locationChoice','name','phone']);
   assert.equal(x.field('vehicle').value, 'Existing vehicle');
   assert.equal(x.field('smsConsent').checked, true, 'tool does not alter a human’s choice');
   assert.equal(x.leads().length, 0);

@@ -46,6 +46,7 @@ function setup(t, {handler, offline = false, geolocation, url = 'https://preview
     enter('request-phone', '2395550100');
     enter('request-vehicle', '2018 Honda Civic');
     enter('request-details', 'The brakes grind when slowing down.');
+    enter('request-city', 'Fort Myers');
     enter('request-location-choice','dropoff');
     d.getElementById('request-location-choice').dispatchEvent(new w.Event('change',{bubbles:true}));
   };
@@ -126,6 +127,37 @@ test('offline text and email drafts carry the required car location and map',asy
   assert.match(decodeURIComponent(x.d.getElementById('request-email').href),/Map: https:\/\/www\.google\.com/);
 });
 
+test('removing a sender pin invalidates a prepared manual draft and every draft link', async t => {
+  const x = setup(t, {offline:true, geolocation:{getCurrentPosition(ok){ok({coords:{latitude:26.6406,longitude:-81.8723,accuracy:18},timestamp:Date.now()});}}});
+  await settle(); x.fill(); x.d.getElementById('request-use-my-location').click(); x.send(); await settle();
+  assert.match(x.d.getElementById('request-preview').value,/Sender map pin: 26.6406/);
+  x.d.getElementById('request-remove-my-location').click();
+  assert.equal(x.d.getElementById('request-backup').hidden,true);
+  assert.equal(x.d.getElementById('request-preview').value,'');
+  for (const name of ['request-text','request-email']) assert.doesNotMatch(decodeURIComponent(x.d.getElementById(name).href),/26\.6406|81\.8723|Sender map/);
+  x.send(); await settle();
+  assert.equal(x.d.getElementById('request-backup').hidden,false);
+  assert.match(x.d.getElementById('request-preview').value,/City \/ ZIP: Fort Myers/);
+  assert.doesNotMatch(x.d.getElementById('request-preview').value,/Sender map|26\.6406|81\.8723/);
+  assert.equal(x.leads().length,0);
+});
+
+test('removing a pin while a request is in flight preserves the old receipt and sends the update separately', async t => {
+  let confirm;
+  const x = setup(t, {handler:() => new Promise(resolve => { confirm = resolve; }),geolocation:{getCurrentPosition(ok){ok({coords:{latitude:26.6406,longitude:-81.8723,accuracy:18},timestamp:Date.now()});}}});
+  await settle(); x.fill(); x.d.getElementById('request-use-my-location').click(); x.send(); await settle();
+  const first = x.leads()[0]; assert.equal(first.body.latitude,26.6406);
+  x.d.getElementById('request-remove-my-location').click();
+  assert.match(x.d.getElementById('request-sender-location-status').textContent,/Requests already sent are unchanged/);
+  confirm(response({ok:true,received:true,id},201)); await settle();
+  assert.match(x.d.getElementById('request-status').textContent,/earlier request was received.*edited details have not been sent/);
+  assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null);
+  x.send(); await settle();
+  const updated = x.leads()[1]; assert.equal(updated.body.latitude,undefined); assert.doesNotMatch(updated.body.details,/Sender map/);
+  assert.notEqual(updated.headers['Idempotency-Key'],first.headers['Idempotency-Key']);
+  confirm(response({ok:true,received:true,id},201)); await settle();
+});
+
 test('online form initializes the short request flow and enables the safe submit control', async t => {
   const x = setup(t);
   assert.equal(x.d.getElementById('request-instructions').textContent,x.initialInstructions,'script startup preserves the page guidance');
@@ -136,15 +168,15 @@ test('online form initializes the short request flow and enables the safe submit
   assert.ok(x.d.getElementById('request-instructions').textContent.includes('Send your repair details so the shop can review the problem and be better prepared when calling you back.'));
   assert.equal(x.d.getElementById('request-submit').disabled, false);
   assert.doesNotMatch(x.d.getElementById('request-instructions').textContent, /prepare (?:a )?(?:text|message)|text draft/i);
-  for (const field of ['name', 'phone', 'details']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
-  for (const field of ['city', 'vehicle', 'timing']) assert.equal(x.d.getElementById(`request-${field}`).required, false);
+  for (const field of ['name', 'phone', 'details', 'city']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
+  for (const field of ['vehicle', 'timing']) assert.equal(x.d.getElementById(`request-${field}`).required, false);
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="tel:"]').textContent, 'Call');
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href="#contact"]').textContent, 'Send details');
   assert.ok(x.d.querySelector('a[href^="sms:"]'), 'texting remains available in the page');
   assert.equal(x.leads().length, 0);
 });
 
-test('core fields send without city; service, source and channel survive; receipt waits for saved confirmation', async t => {
+test('core fields require city; service, source and channel survive; receipt waits for saved confirmation', async t => {
   let confirm;
   const x = setup(t, {handler:() => new Promise(resolve => { confirm = resolve; })});
   await settle(); x.fill();
@@ -152,7 +184,7 @@ test('core fields send without city; service, source and channel survive; receip
   x.send(); x.send(); await settle();
   assert.equal(x.leads().length, 1, 'repeat submission while sending makes one request');
   const lead = x.leads()[0].body;
-  assert.equal(lead.city, '');
+  assert.equal(lead.city, 'Fort Myers');
   assert.equal(lead.service, 'Brakes');
   assert.equal(lead.source, 'form');
   assert.equal(lead.channel, 'google');
@@ -228,7 +260,7 @@ test('missing required details and invalid phone numbers never reach the receive
   assert.match(x.d.getElementById('request-status').textContent, /valid phone number/);
 });
 
-test('offline mode prepares an editable manual draft with optional city and callback, without claiming receipt', async t => {
+test('offline mode prepares an editable manual draft with required city and optional callback, without claiming receipt', async t => {
   const x = setup(t, {offline:true}); await settle(); x.fill();
   x.enter('request-phone', ''); x.send(); await settle();
   assert.equal(x.leads().length, 0);
@@ -238,4 +270,53 @@ test('offline mode prepares an editable manual draft with optional city and call
   assert.equal(x.d.getElementById('request-preview').readOnly, false);
   assert.match(x.d.getElementById('request-status').textContent, /Nothing has been sent yet/);
   assert.equal(x.w.sessionStorage.getItem('pt-last-request'), null);
+});
+
+test('sender Use my location fills hidden lat/lng and maps link; city remains required', async t => {
+  let lookups = 0;
+  const x = setup(t, {geolocation:{getCurrentPosition(ok,_fail,options){lookups++;assert.equal(options.maximumAge,0);ok({coords:{latitude:26.6406,longitude:-81.8723,accuracy:18},timestamp:Date.now()});}}, handler:() => response({ok:true, received:true, id, receivedAt:new Date().toISOString()}, 201)});
+  await settle(); x.fill();
+  x.d.getElementById('request-use-my-location').click();
+  x.send(); await settle();
+  assert.equal(lookups, 1);
+  const lead = x.leads()[0].body;
+  assert.equal(lead.city, 'Fort Myers');
+  assert.equal(lead.latitude, 26.6406);
+  assert.equal(lead.longitude, -81.8723);
+  assert.match(lead.mapsLink, /query=26\.6406%2C-81\.8723/);
+  assert.match(lead.details, /Sender map pin: 26\.640600, -81\.872300/);
+  assert.match(lead.details, /City \/ ZIP: Fort Myers/);
+});
+
+test('denied sender location still submits with typed city and without coordinates', async t => {
+  const x = setup(t, {geolocation:{getCurrentPosition(_ok,fail){fail({code:1});}}, handler:() => response({ok:true, received:true, id, receivedAt:new Date().toISOString()}, 201)});
+  await settle(); x.fill();
+  x.d.getElementById('request-use-my-location').click();
+  assert.match(x.d.getElementById('request-sender-location-status').textContent, /city or ZIP still works/i);
+  x.send(); await settle();
+  const lead = x.leads()[0].body;
+  assert.equal(lead.city, 'Fort Myers');
+  assert.equal(lead.latitude, undefined);
+  assert.equal(lead.mapsLink, undefined);
+});
+
+test('blank city blocks submit even when car drop-off is chosen', async t => {
+  const x = setup(t, {handler:() => response({ok:true, received:true, id, receivedAt:new Date().toISOString()}, 201)});
+  await settle(); x.fill();
+  x.enter('request-city', '');
+  x.send(); await settle();
+  assert.equal(x.leads().length, 0);
+});
+
+
+test('removing sender pin cancels a pending callback and omits coordinates', async t => {
+  let resolve;
+  const x=setup(t,{geolocation:{getCurrentPosition(ok){resolve=ok;}}});await settle();x.fill();
+  x.d.getElementById('request-use-my-location').click();
+  x.d.getElementById('request-remove-my-location').click();
+  resolve({coords:{latitude:26.6,longitude:-81.8,accuracy:10},timestamp:Date.now()});
+  x.send();await settle();
+  assert.equal(x.leads()[0].body.latitude,undefined);
+  assert.equal(x.leads()[0].body.locationContract,'sender-v1');
+  assert.equal(x.d.getElementById('request-latitude').value,'');
 });

@@ -7,9 +7,9 @@ import net from 'node:net';
 import tls from 'node:tls';
 import os from 'node:os';
 import {TONY_ALERT_NUMBER} from './lead-routing.mjs';
-import {createTwilioAlertAdapter} from './urgent-alerts.mjs';
+import {createTwilioAlertAdapter,formatOwnerSms} from './urgent-alerts.mjs';
 import {SOURCES} from './lead-desk.mjs';
-import {carLocationLabel,carLocationMap} from './car-location.mjs';
+import {carLocationLabel,locationMapLines} from './car-location.mjs';
 
 export const DEFAULT_ALERT_EMAILS = ['prudhvi.pallempati@gmail.com'];
 const DELAYS = [30000, 120000, 600000, 1800000, 3600000];
@@ -31,7 +31,8 @@ export function summarize(lead, id, decision) {
     lead.phone ? `Callback: ${lead.phone} (${lead.smsConsent ? 'text OK' : 'call only, no text permission'})` : 'Callback: no number given',
     `Vehicle: ${lead.vehicle || 'Not provided'}`,
     `Location: ${lead.carLocation ? carLocationLabel(lead.carLocation) : lead.city || 'Not provided'}`,
-    lead.carLocation && carLocationMap(lead.carLocation) ? `Map: ${carLocationMap(lead.carLocation)}` : null,
+    lead.city && lead.carLocation ? `City / ZIP: ${lead.city}` : null,
+    ...locationMapLines(lead),
     `Starts: ${yesNo(lead.starts)} · Stranded: ${yesNo(lead.stranded)}`,
     lead.callbackTime ? `Best time / notes: ${lead.callbackTime}` : null,
     `Came from: ${SOURCES[source]}${lead.channel ? ' (via ' + (lead.channel === 'google' ? 'Google' : lead.channel) + ')' : ''}`,
@@ -41,7 +42,17 @@ export function summarize(lead, id, decision) {
     '',
     `Lead ${id}`,
   ].filter(line => line !== null);
-  return {title, text: lines.join('\n'), urgent, bigJob: big};
+  // Desktop previews are short and must not show a partially clipped map link.
+  // Full details remain in the private inbox and the other configured channels.
+  const brief=(value,max)=>{
+    const text=String(value||'Not provided').replace(/[\u0000-\u001f\u007f]/g,' ').trim();
+    return text.length<=max?text:text.slice(0,max-1).replace(/[\uD800-\uDBFF]$/,'')+'…';
+  };
+  const desktopText=[`Name: ${brief(lead.name,40)}`,`Callback: ${brief(lead.phone,40)}`,`Vehicle: ${brief(lead.vehicle,60)}`,
+    `City/ZIP: ${brief(lead.city,100)}`,lead.carLocation?`Car location: ${brief(carLocationLabel(lead.carLocation),80)}`:null,
+    Number.isFinite(lead.latitude)&&Number.isFinite(lead.longitude)?'Sender pin saved (device location; car position unconfirmed).':null,
+    'Open the website inbox for the full request and maps.',`Lead ${brief(id,36)}`].filter(Boolean).join('\n');
+  return {title, text: lines.join('\n'), smsText:formatOwnerSms(lead,id,{urgent,bigJob:big}), desktopText, urgent, bigJob: big};
 }
 
 // Minimal SMTP submission client (implicit TLS, AUTH PLAIN). Enough for Gmail with an app password.
@@ -110,8 +121,8 @@ export function createSmsAdapter(twilio) {
     skipUrgent: true,
     // Twilio has no idempotency key: an uncertain send is never repeated, so Tony never gets billed copies.
     noRetry: true,
-    async send({text}) {
-      const result = await twilio.send('notify_sms', {To: TONY_ALERT_NUMBER, From: twilio.fromNumber, Body: ('Perfect Timing website lead\n' + text).slice(0, 1500)});
+    async send({text,smsText}) {
+      const result = await twilio.send('notify_sms', {To: TONY_ALERT_NUMBER, From: twilio.fromNumber, Body: smsText || ('Perfect Timing website lead\n' + text).slice(0, 1500)});
       return {id: result.id};
     },
   };
@@ -122,9 +133,9 @@ export function createDesktopAdapter({run = spawn} = {}) {
   if (process.platform !== 'win32' && !run.fake) throw Error('Desktop alerts need Windows.');
   return {
     name: 'desktop',
-    send({title, text}) {
+    send({title, text, desktopText}) {
       const xml = s => s.replace(/[<>&"']/g, c => ({'<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;'}[c]));
-      const toast = `<toast scenario="reminder"><visual><binding template="ToastGeneric"><text>${xml(title)}</text><text>${xml(text.slice(0, 600))}</text></binding></visual><actions><action content="Dismiss" arguments="dismiss" activationType="system"/></actions></toast>`;
+      const toast = `<toast scenario="reminder"><visual><binding template="ToastGeneric"><text>${xml(title)}</text><text>${xml(desktopText || text.slice(0, 600))}</text></binding></visual><actions><action content="Dismiss" arguments="dismiss" activationType="system"/></actions></toast>`;
       const script = [
         '[Windows.UI.Notifications.ToastNotificationManager,Windows.UI.Notifications,ContentType=WindowsRuntime]|Out-Null',
         '[Windows.Data.Xml.Dom.XmlDocument,Windows.Data.Xml.Dom.XmlDocument,ContentType=WindowsRuntime]|Out-Null',

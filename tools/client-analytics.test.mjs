@@ -44,7 +44,7 @@ function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = fal
   const enter = (name, value) => { field(name).value = value; field(name).dispatchEvent(new w.Event('input', {bubbles:true})); field(name).dispatchEvent(new w.Event('change', {bubbles:true})); };
   const metrics = name => calls.filter(call => call.path === '/hooks/analytics/event' && (!name || call.body.event === name));
   const submit = () => d.getElementById('bookingForm').dispatchEvent(new w.Event('submit', {bubbles:true, cancelable:true}));
-  const fill = () => { for (const [name,value] of Object.entries({name:'PRIVATE_CUSTOMER', phone:'2395550100', details:'PRIVATE_SYMPTOMS', locationChoice:'dropoff'})) enter(name,value); };
+  const fill = () => { for (const [name,value] of Object.entries({name:'PRIVATE_CUSTOMER', phone:'2395550100', details:'PRIVATE_SYMPTOMS', city:'Fort Myers', locationChoice:'dropoff'})) enter(name,value); };
   const click = selector => d.querySelector(selector).dispatchEvent(new w.MouseEvent('click', {bubbles:true, cancelable:true}));
   return {w,d,calls,retries,tools,enter,metrics,submit,fill,click};
 }
@@ -85,7 +85,7 @@ test('human starts, contact clicks and the discreet AI disclosure are bounded pe
 test('WebMCP preparation is separate from human form starts and attempts reflect actual HTTP requests', async t => {
   let attempts = 0;
   const x = setup(t, {leadHandler:() => ++attempts === 1 ? reply({ok:false}, 503) : reply(receipt)}); await settle();
-  const input = {name:'PRIVATE_CUSTOMER', phone:'2395550100', details:'PRIVATE_SYMPTOMS', locationChoice:'dropoff'};
+  const input = {name:'PRIVATE_CUSTOMER', phone:'2395550100', details:'PRIVATE_SYMPTOMS', city:'Fort Myers', locationChoice:'dropoff'};
   x.tools[0].execute(input); x.tools[0].execute(input); await settle();
   assert.equal(x.metrics('webmcp_prepared').length, 1);
   assert.equal(x.metrics('form_started').length, 0);
