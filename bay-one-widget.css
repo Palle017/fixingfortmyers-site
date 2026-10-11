@@ -119,3 +119,8 @@
 .b1-lead button:disabled{opacity:.6;cursor:wait}
 .b1-lead-status{margin:0!important;color:#f9cc80;font-size:12px!important;line-height:1.45}
 .b1-lead-status:empty{display:none}
+.b1-fallback{margin:10px 0 0;padding:10px 12px;border:1px solid #d7af59;border-radius:10px;background:rgba(245,198,109,.08)}
+.b1-fallback[hidden]{display:none}
+.b1-fallback p{margin:0;color:#f3f6f8;font-size:13px;line-height:1.45}
+.b1-fallback-link{display:inline-flex;align-items:center;justify-content:center;padding:8px 13px;margin:10px 6px 0 0;border:1px solid #d7af59;border-radius:8px;background:#f5c66d;color:#16222c!important;text-decoration:none!important;font-size:13px;font-weight:800;min-height:44px}
+.b1-fallback-link:hover{background:#ffdc96}
