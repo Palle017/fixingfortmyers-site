@@ -19,7 +19,7 @@
       details.dispatchEvent(new Event('input', {bubbles:true}));
     }
     window.PT_REPAIR_CONTEXT?.applyService(service);
-    for (const [name,limit] of [['vehicle',160],['city',100],['starts',7],['stranded',7]]) {
+    for (const [name,limit] of [['vehicle',160],['city',100],['starts',7],['stranded',7],['name',100],['phone',30]]) {
       const field = document.getElementById('request-'+name), value = fields[name];
       if (!field || field.dataset.userEdited === 'true' || typeof value !== 'string' || value.length > limit) continue;
       if (['starts','stranded'].includes(name) && !['yes','no','unknown'].includes(value)) continue;
@@ -41,18 +41,28 @@
   } catch (_) { /* An explicit service handoff still works without storage. */ }
 
   // Only offer Bay One when its server answers; otherwise the page keeps its call, text and form options.
-  const controller = new AbortController(), healthTimer = setTimeout(() => controller.abort(), 6000);
-  fetch(apiBase+'/healthz', { credentials:'omit', cache:'no-store', signal:controller.signal })
-    .then(response => response.ok ? response.json() : null)
-    .then(health => { if (health?.ok === true && health.chat !== 'unavailable' && !document.getElementById('bay-one-widget')) mount(health.media === 'ready'); })
-    .catch(() => { /* Unreachable: leave the page's normal contact options as they are. */ })
-    .finally(() => clearTimeout(healthTimer));
+  // An unreachable server is remembered for a few minutes so each page view doesn't wait on it again.
+  const downKey = 'pt-bayone-down';
+  let recentlyDown = false;
+  try { recentlyDown = Date.now() - Number(sessionStorage.getItem(downKey) || 0) < 5*60*1000; } catch (_) { /* check as usual */ }
+  const markDown = () => { try { sessionStorage.setItem(downKey, String(Date.now())); } catch (_) { /* check again next page */ } };
+  if (!recentlyDown) {
+    const controller = new AbortController(), healthTimer = setTimeout(() => controller.abort(), 6000);
+    fetch(apiBase+'/healthz', { credentials:'omit', cache:'no-store', signal:controller.signal })
+      .then(response => response.ok ? response.json() : null)
+      .then(health => {
+        if (health?.ok === true && health.chat !== 'unavailable') { try { sessionStorage.removeItem(downKey); } catch (_) { /* harmless */ } if (!document.getElementById('bay-one-widget')) mount(health.media === 'ready'); }
+        else markDown();
+      })
+      .catch(markDown)
+      .finally(() => clearTimeout(healthTimer));
+  }
 
   function mount(mediaReady = false) {
     const customAvatar = config.avatar || script?.dataset.avatar;
     const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
     const css = document.createElement('link');
-    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20261001-workshop', script?.src || location.href).href;
+    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20261011-offline-fallback', script?.src || location.href).href;
     document.head.append(css);
     const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
     widget.setAttribute('aria-label', 'Bay One repair assistant');
@@ -71,6 +81,7 @@
           <label class="b1-field-label" for="b1-message">What is happening with your vehicle?</label>
           <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Describe the problem. Partial vehicle details are okay." required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           <div class="b1-status" role="status" aria-live="polite"></div>
+          <div class="b1-fallback" hidden><p>Bay One can’t reach the shop right now. Your notes are kept, so send them with the repair form or call.</p><a class="b1-fallback-link b1-fallback-form" href="/#contact">Send with the repair form</a> <a class="b1-fallback-link" href="tel:+12393972048">Call (239) 397-2048</a></div>
         </form>
         <footer class="b1-footer"><span><a href="/privacy-policy.html">Chat privacy</a> · <a href="tel:+12393972048">Call — AI intake</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
       </section>`;
@@ -98,10 +109,13 @@
       if (unsent && notes.at(-1) !== unsent) notes.push(unsent);
       const summary = notes.length ? `Customer notes from Bay One:\n${notes.join('\n\n')}` : '';
       const service = window.PT_REPAIR_CONTEXT?.service || '';
-      const samePage = summary && prefillService(summary,service,state.intake);
+      const card = widget.querySelector('.b1-lead'), typed = {};
+      for (const name of ['name','phone','city']) { const value = card?.querySelector(`[name=${name}]`)?.value.trim(); if (value) typed[name] = value; }
+      const fields = {...state.intake, ...typed};
+      const samePage = summary && prefillService(summary,service,fields);
       close();
       if (samePage) { event.preventDefault(); location.hash = 'contact'; document.getElementById('bookingForm').scrollIntoView({behavior:'auto',block:'start'}); document.getElementById('request-name')?.focus({preventScroll:true}); }
-      else if (summary) { try { sessionStorage.setItem(handoffKey,JSON.stringify({at:Date.now(),summary,service,intake:state.intake})); } catch (_) { status.textContent = 'Your browser could not carry the notes to the form. Copy the important details before switching.'; event.preventDefault(); open(); } }
+      else if (summary) { try { sessionStorage.setItem(handoffKey,JSON.stringify({at:Date.now(),summary,service,intake:fields})); } catch (_) { status.textContent = 'Your browser could not carry the notes to the form. Copy the important details before switching.'; event.preventDefault(); open(); } }
     }
 
     function addMessage(speaker, text) {
@@ -113,21 +127,27 @@
       return row;
     }
 
+    // A dropped or unreachable server (laptop off, timeout, 5xx) gets the form and call instead of a dead end.
+    function fallback(error) {
+      if (!error?.offline) return;
+      $('.b1-fallback').hidden = false; markDown();
+    }
+
     async function request(path, body) {
       if (!apiBase) throw new Error('Bay One’s connection is not configured. You can still contact the shop.');
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 35000);
       try {
         const response = await fetch(apiBase+path, { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:controller.signal });
         let data;
-        try { data = await response.json(); } catch (_) { throw new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'Bay One’s reply could not be confirmed. Your message is still here.'); }
+        try { data = await response.json(); } catch (_) { throw Object.assign(new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'Bay One’s reply could not be confirmed. Your message is still here.'), {offline:true}); }
         if (!response.ok || data.ok !== true) {
           const error = new Error(String(data.error || 'Bay One is unavailable at the moment. Please try again or contact the shop.'));
-          error.code = data.code; error.usage = data.usage; error.retryAfter = data.retry_after; throw error;
+          error.code = data.code; error.usage = data.usage; error.retryAfter = data.retry_after; error.offline = response.status >= 500 && !data.code; throw error;
         }
         return data;
       } catch (error) {
-        if (error.name === 'AbortError') throw new Error(path === '/chat/session' ? 'Bay One could not connect in time. Try again, use the repair form or call the shop.' : 'Bay One took too long to reply. Send again to retry the same request, or contact the shop.');
-        if (error instanceof TypeError) throw new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'The connection dropped. Your message is preserved. Send again to retry, or contact the shop.');
+        if (error.name === 'AbortError') throw Object.assign(new Error(path === '/chat/session' ? 'Bay One could not connect in time. Try again, use the repair form or call the shop.' : 'Bay One took too long to reply. Send again to retry the same request, or contact the shop.'), {offline:true});
+        if (error instanceof TypeError) throw Object.assign(new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'The connection dropped. Your message is preserved. Send again to retry, or contact the shop.'), {offline:true});
         throw error;
       } finally { clearTimeout(timer); }
     }
@@ -154,7 +174,7 @@
       panel.hidden = false; launcher.hidden = true; launcher.setAttribute('aria-expanded','true');
       entryButtons.forEach(button => button.setAttribute('aria-expanded','true'));
       $('.b1-close').focus({preventScroll:true}); viewport();
-      if (!state.sessionReady) { status.textContent = 'Connecting to Bay One…'; session().then(() => { if (!state.busy) status.textContent = ''; }).catch(error => { status.textContent = error.message; }); }
+      if (!state.sessionReady) { status.textContent = 'Connecting to Bay One…'; session().then(() => { if (!state.busy) status.textContent = ''; }).catch(error => { status.textContent = error.message; fallback(error); }); }
     }
     function close() { panel.hidden = true; launcher.hidden = false; entryButtons.forEach(button => button.setAttribute('aria-expanded','false')); (opener?.isConnected ? opener : launcher).focus({preventScroll:true}); viewport(); }
     launcher.addEventListener('click', open); $('.b1-close').addEventListener('click', close);
@@ -164,6 +184,7 @@
     try { closedThisVisit = sessionStorage.getItem('pt-bayone-closed') === '1'; } catch (_) { /* treat as not closed */ }
     if (!closedThisVisit && config.autoOpen === true) setTimeout(() => { if (panel.hidden) open(); }, 800);
     $('.b1-contact').addEventListener('click',event => handoff(event));
+    $('.b1-fallback-form').addEventListener('click',event => handoff(event));
     const formLauncher = document.getElementById('request-bay-one');
     if (formLauncher) { formLauncher.hidden = false; formLauncher.setAttribute('aria-controls','b1-panel'); formLauncher.setAttribute('aria-expanded','false'); entryButtons.push(formLauncher); formLauncher.addEventListener('click',open); }
     const contactBar = document.querySelector('.mobile-contact-bar');
@@ -200,7 +221,7 @@
           state.sessionReady = false; state.token = '';
           try { localStorage.removeItem(storageKey); } catch (_) { /* The next request will still create a fresh session. */ }
         }
-        status.textContent = error.message;
+        status.textContent = error.message; fallback(error);
         if (error.code === 'rate_limit' && error.retryAfter) status.textContent += ` Try again in about ${Math.ceil(Number(error.retryAfter))} seconds.`;
       } finally {
         clearTimeout(slow); busy(false); if (!panel.hidden && matchMedia('(pointer:fine)').matches) input.focus({preventScroll:true});
@@ -329,9 +350,11 @@
       lockLeadFields(true);
       leadBusy = true; leadForm.querySelector('button').disabled = true; leadStatus.textContent = 'Sending to the shop…';
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
+      let leadStatusCode = 0;
       try {
         const response = await fetch(apiBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':pendingLead.key}, body:JSON.stringify(body), signal:controller.signal });
         const result = await response.json().catch(() => ({}));
+        leadStatusCode = response.status;
         if (!response.ok || result.received !== true) {
           // Validation/refusal confirms no save; allow corrections. A timeout, 5xx or
           // key conflict can be ambiguous, so preserve the snapshot and retry key.
@@ -346,7 +369,8 @@
         uploadMedia(result, mediaInput && !mediaInput.closest('label').hidden ? pickMedia().keep : []).catch(() => {});
         try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id:result.id, receivedAt:result.receivedAt, confirmed:true, smsConsent:sms })); } catch (_) { /* Confirmation is already shown in the chat. */ }
       } catch (error) {
-        leadStatus.textContent = (error.name === 'AbortError' ? 'Receipt could not be confirmed.' : error.message) + (pendingLead ? ' Retry to check the same request; its details are preserved.' : ' Correct your details and try again.') + ' You can also call or text the shop at (239) 397-2048.';
+        fallback({offline: error.name === 'AbortError' || error instanceof TypeError || leadStatusCode >= 500});
+        leadStatus.textContent = (error.name === 'AbortError' || error instanceof TypeError ? 'Receipt could not be confirmed.' : error.message) + (pendingLead ? ' Retry to check the same request; its details are preserved.' : ' Correct your details and try again.') + ' You can also call or text the shop at (239) 397-2048.';
       } finally { clearTimeout(timer); leadBusy = false; if (!leadSent) leadForm.querySelector('button').disabled = false; }
     });
 

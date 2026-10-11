@@ -367,3 +367,36 @@ test('Bay One rejects whitespace city before posting and accepts a corrected cit
   city.value='Fort Myers';city.dispatchEvent(new x.w.Event('input'));send();await settle();
   const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,1);assert.equal(sent[0].body.city,'Fort Myers');
 });
+test('when Bay One drops mid-chat, the customer gets the repair form and a call link with their notes and contact details carried over',async t=>{
+  let up=true;
+  const x=setup(t,{handler:async(route,body,w)=>{if(!up)throw new w.TypeError('Failed to fetch');return {ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Thanks.',ready:true,intake:{vehicle:'2015 Ford F-150'}}};}}),d=x.w.document;
+  await settle();d.querySelector('.b1-launcher').click();await settle();
+  await x.say('Truck dies at stop lights.');
+  assert.equal(d.querySelector('.b1-fallback').hidden,true,'no fallback while Bay One answers');
+  const card=d.querySelector('.b1-lead');card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='2395550100';card.querySelector('[name=city]').value='Fort Myers';
+  up=false;card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  const fallback=d.querySelector('.b1-fallback');
+  assert.equal(fallback.hidden,false);assert.ok(fallback.querySelector('a[href="tel:+12393972048"]'));
+  assert.match(card.querySelector('.b1-lead-status').textContent,/could not be confirmed[\s\S]*397-2048/);
+  assert.doesNotMatch(card.querySelector('.b1-lead-status').textContent,/Failed to fetch/);
+  assert.ok(Number(x.w.sessionStorage.getItem('pt-bayone-down'))>0,'an unreachable server is remembered for later pages');
+  fallback.querySelector('.b1-fallback-form').click();
+  assert.match(d.getElementById('request-details').value,/Truck dies at stop lights/);
+  assert.equal(d.getElementById('request-vehicle').value,'2015 Ford F-150');
+  assert.equal(d.getElementById('request-name').value,'Synthetic');assert.equal(d.getElementById('request-phone').value,'2395550100');
+});
+test('a chat reply that never arrives offers the form and call, while a refusal from Bay One does not',async t=>{
+  const x=setup(t,{handler:async(route,body,w)=>{if(route==='/chat/message')throw new w.TypeError('Failed to fetch');return {ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:{ok:true,visitor_token:'synthetic-token'}};}}),d=x.w.document;
+  await settle();d.querySelector('.b1-launcher').click();await settle();await x.say('Brakes grind.');
+  assert.equal(d.querySelector('.b1-fallback').hidden,false);assert.match(d.querySelector('.b1-status').textContent,/preserved/);
+  const y=setup(t,{handler:async route=>route==='/chat/message'?{ok:false,status:429,json:async()=>({ok:false,code:'rate_limit',error:'Slow down.'})}:{ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:{ok:true,visitor_token:'synthetic-token'}}});
+  await settle();y.w.document.querySelector('.b1-launcher').click();await settle();await y.say('Brakes grind.');
+  assert.equal(y.w.document.querySelector('.b1-fallback').hidden,true);
+});
+test('an unreachable Bay One is not re-checked on every page for a few minutes',async t=>{
+  const x=setup(t,{beforeScripts:w=>w.sessionStorage.setItem('pt-bayone-down',String(Date.parse('2026-09-24T15:58:00Z')))});
+  await settle();assert.equal(x.w.document.getElementById('bay-one-widget'),null);
+  const y=setup(t,{beforeScripts:w=>w.sessionStorage.setItem('pt-bayone-down',String(Date.parse('2026-09-24T15:50:00Z')))});
+  await settle();const checks=r=>r.requests.filter(q=>q.route==='/healthz').length;
+  assert.equal(checks(y),checks(x)+1,'only the stale record triggers a fresh Bay One check');assert.ok(y.w.document.getElementById('bay-one-widget'));
+});
