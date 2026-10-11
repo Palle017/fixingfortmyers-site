@@ -116,3 +116,6 @@
 
 /* Inline text links to the workshop and paint pages */
 .section-sub a[href^="/workshop"],.faq-item a[href^="/workshop"],.faq-item a[href^="/paint"],.mobile-image-caption a,.proof-hero__lead a,.service-hero__aside .section-sub a{color:var(--color-accent,#3ABEFF);text-decoration:underline;text-underline-offset:3px}
+
+/* Bigger tap areas for small standalone links (footer legal, contact details, review sources) without shifting layout. */
+.footer__legal a,.contact-detail__value a,.proof-source{display:inline-block;padding:10px 4px;margin:-10px 0}
