@@ -81,7 +81,7 @@
             <div><dt>Reference number</dt><dd id="receipt-ref">—</dd></div>
             <div><dt>Received</dt><dd id="receipt-time">—</dd></div>
           </dl>
-          <p class="receipt-note">Keep or screenshot the reference number. Quoting it makes it faster for our team to pull up your request. <strong>An appointment is not confirmed yet</strong> — our team confirms availability and price with you before your shop appointment.</p>
+          <p class="receipt-note" id="receipt-saved-note">Keep or screenshot the reference number. Quoting it makes it faster for our team to pull up your request. <strong>An appointment is not confirmed yet</strong> — our team confirms availability and price with you before your shop appointment.</p>
         </div>
 
         <div class="receipt-card" id="receipt-empty">
@@ -149,8 +149,16 @@
     var set = function (id, value) { var el = document.getElementById(id); if (el) el.textContent = value; };
     set('receipt-ref', stored.id);
     set('receipt-title', 'Request received');
-    set('receipt-message', 'Your repair inquiry was saved. Keep your reference number below. No appointment is confirmed yet.');
+    var parts = stored.requestType === 'parts';
+    set('receipt-message', parts ? 'Your parts quote request was saved. Keep your reference number below. No order or payment is confirmed.' : 'Your repair inquiry was saved. Keep your reference number below. No appointment is confirmed yet.');
     set('receipt-contact', stored.smsConsent ? 'Your mechanic makes every effort to follow up by text about your inquiry.' : 'Your mechanic makes every effort to call you about your inquiry.');
+    if (parts) {
+      set('receipt-saved-note', 'Keep or screenshot your reference number. This receipt confirms storage, not notification delivery. No order, payment, pickup or installation is confirmed.');
+      var steps = document.querySelectorAll('#receipt-next ol li');
+      steps[0].textContent = 'The mechanic reviews the part and vehicle details to check fitment.';
+      steps[1].textContent = 'The mechanic calls to discuss price, availability, pickup or installation, and applicable return terms.';
+      steps[2].textContent = 'You approve the quote before any order is placed.';
+    }
     if (stored.receivedAt) {
       var when = new Date(stored.receivedAt);
       if (!isNaN(when.valueOf())) set('receipt-time', when.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York' }) + ' ET');
