@@ -71,7 +71,7 @@ export function checkCleanPage(name,html){
       assert.ok(d.getElementById('request-phone').required,`${name}: collect a callback number`);
       assert.ok(d.getElementById('request-details').required,`${name}: collect the problem`);
       const service=d.getElementById('request-service');
-      if(name==='index.html'){
+      if(['index.html','request-a-repair.html'].includes(name)){
         assert.ok(service&&form.contains(service)&&!service.closest('details'),`${name}: type of repair is a core Lead Mechanic field`);
         assert.ok(d.getElementById('request-starts')&&!d.getElementById('request-starts').closest('details'),`${name}: does-it-drive is a core field`);
       } else {
@@ -89,7 +89,7 @@ export function checkCleanPage(name,html){
         assert.ok(!field.required,`${name}: ${id} is optional`);
         assert.equal(field.closest('details').open,false,`${name}: optional details start collapsed`);
       }
-      if(name!=='index.html'){
+      if(!['index.html','request-a-repair.html'].includes(name)){
         const starts=d.getElementById('request-starts');
         assert.ok(starts&&starts.closest('details'),`${name}: request-starts belongs in optional details`);
       }

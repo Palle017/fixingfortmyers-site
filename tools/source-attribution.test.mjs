@@ -52,6 +52,20 @@ function draftMessages(x) {
   return smsBody;
 }
 
+test('the dedicated repair page retains service context and submits through the existing receiver contract', async t => {
+  const inquiry = browser(t, {file:'request-a-repair.html', url:'https://preview.invalid/request-a-repair?service=transmission&utm_source=google', endpoint:'https://receiver.invalid', saved:{'pt-repair-source':'transmission-repair-fort-myers'}});
+  await settle();
+  await inquiry.submit();
+  const leads = inquiry.requests.filter(request => request.path === '/hooks/lead/webform');
+  assert.equal(leads.length, 1);
+  assert.equal(leads[0].body.channel, 'google');
+  assert.equal(leads[0].body.service, 'Transmission');
+  assert.equal(leads[0].body.city, 'Fort Myers');
+  assert.equal(leads[0].body.carLocation.type, 'dropoff');
+  assert.equal(leads[0].body.smsConsent, false);
+  assert.match(draftMessages(inquiry), /Website page context: \/transmission-repair-fort-myers/);
+});
+
 test('a shared specialty link keeps its source through the service page, inquiry and failed-receiver fallback', async t => {
   const landing = browser(t,{file:'walnut-blasting-fort-myers.html',url:'https://preview.invalid/walnut-blasting-fort-myers?utm_source=gbp_walnut&utm_content=PrivatePerson&phone=2395550199'});
   const inquiry = browser(t,{url:'https://preview.invalid/?service=walnut#contact',endpoint:'https://receiver.invalid',saved:landing.storage()});

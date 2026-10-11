@@ -1,134 +1,134 @@
-Synthetic test run 2026-10-11T10:22:40.715Z
-Node v24.19.0
-✔ Beside call creates a manual lead (source beside_call) and queues its notification (58.656859ms)
-✔ provider event retries deduplicate while distinct jobs from the same phone are retained for review (24.994537ms)
-✔ withheld-number replay is deduplicated by event ID; changed content returns conflict (18.156296ms)
-✔ outbound events stay in the event ledger and provider time is preserved for incoming candidates (20.750619ms)
-✔ missing provider identity stays captured and flagged, with no invented event identity claim (11.741022ms)
+Synthetic test run 2026-10-11T13:00:00.725Z
+Node v24.18.1
+✔ Beside call creates a manual lead (source beside_call) and queues its notification (2293.5518ms)
+✔ provider event retries deduplicate while distinct jobs from the same phone are retained for review (1673.4446ms)
+✔ withheld-number replay is deduplicated by event ID; changed content returns conflict (1758.506ms)
+✔ outbound events stay in the event ledger and provider time is preserved for incoming candidates (2512.556ms)
+✔ missing provider identity stays captured and flagged, with no invented event identity claim (1182.1185ms)
 {"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
-✔ manual lead notifications and Beside event records share the lead transaction (14.141049ms)
-✔ form-encoded Beside events work and message events become beside_text (9.074763ms)
-✔ Beside hook: wrong token 404, bad method 405, invalid JSON 400, nothing saved (14.994438ms)
+✔ manual lead notifications and Beside event records share the lead transaction (1430.6471ms)
+✔ form-encoded Beside events work and message events become beside_text (606.7762ms)
+✔ Beside hook: wrong token 404, bad method 405, invalid JSON 400, nothing saved (1139.8648ms)
 {"event":"beside_hook_disabled","reason":"BESIDE_WEBHOOK_TOKEN must be 24-256 characters with no / ? # % or spaces"}
-✔ Beside hook is closed (404) when no token, or a token under 24 characters, is configured (15.181563ms)
-✔ Beside notification says where the lead came from (11.470113ms)
-✔ desk.addManual requires a name or phone, a valid phone, and a real, non-future date (9.116725ms)
-✔ setStage estimate_sent requires a Tony-approved price (estimateLow + tonyApproved === true) (10.621011ms)
-✔ addManual with an unapproved estimate_sent stage is rejected without saving a lead (5.936979ms)
-✔ wrong Beside tokens cannot use up the rate limit that real Beside events rely on (267.343512ms)
-{"event":"lead_received","id":"e6f14ac0-3fb0-4a19-8c03-2e05fac9da7e","kind":"webform","receivedAt":"2026-10-11T10:22:38.291Z"}
-✔ inbox status buttons move the desk pipeline; lost never counts as contacted (19.714913ms)
-✔ location validation rejects absent addresses, invalid pins and unconfirmed device location (1.394174ms)
-✔ serialized location records reject malformed JSON, primitive values and oversized multipart text (0.263699ms)
-{"event":"lead_received","id":"e1462aa4-1a06-4de5-ae7e-be262a885690","kind":"voicenote","receivedAt":"2026-10-11T10:22:37.827Z"}
-{"event":"lead_received","id":"5ee460ed-618e-4d69-91e2-be33969d2d65","kind":"voicenote","receivedAt":"2026-10-11T10:22:37.866Z"}
-{"event":"lead_received","id":"eaa5d790-7031-4dde-854b-583244cfcfe4","kind":"voicenote","receivedAt":"2026-10-11T10:22:37.876Z"}
-✔ actual multipart voice uploads preserve address, GPS and drop-off, reject malformed location, and deduplicate retries (127.208885ms)
-{"event":"lead_received","id":"4c581d35-d7c4-471d-ba53-f9289f908d65","kind":"webform","receivedAt":"2026-10-11T10:22:37.926Z"}
-{"event":"lead_received","id":"9b813116-3bb9-421c-a558-72af0c8f23e3","kind":"webform","receivedAt":"2026-10-11T10:22:37.933Z"}
-{"event":"lead_received","id":"7717ff7f-d747-4d18-99a9-551fb1a9db84","kind":"webform","receivedAt":"2026-10-11T10:22:37.940Z"}
-✔ address, GPS and drop-off are saved before receipt, their location reaches mock alerts, and retries do not duplicate (33.626718ms)
-{"event":"lead_received","id":"be5a137b-24ac-48a6-b856-ea0177923028","kind":"webform","receivedAt":"2026-10-11T10:22:37.854Z"}
-✔ a customer who ticked text permission gets one confirmation text right away (136.039954ms)
-{"event":"lead_received","id":"0df9c528-180a-4969-8a0d-c4c4002a1250","kind":"webform","receivedAt":"2026-10-11T10:22:37.975Z"}
-{"event":"lead_received","id":"4e87e351-cb7d-44dd-ad61-38d0976b8ea8","kind":"webform","receivedAt":"2026-10-11T10:22:37.982Z"}
-{"event":"lead_received","id":"52f6f06c-3855-49f2-9bcf-1fd2fe99382f","kind":"webform","receivedAt":"2026-10-11T10:22:37.987Z"}
-✔ no text without permission, and at most one per phone number per day (128.916877ms)
-{"event":"lead_received","id":"76dd4065-1928-42e2-9a9b-1bbc0743fc0e","kind":"webform","receivedAt":"2026-10-11T10:22:38.099Z"}
-✔ customer texts are off unless an adapter is configured (28.188019ms)
-{"event":"lead_received","id":"3ca01c4c-0ce8-41b1-9d57-2498ec553b2e","kind":"webform","receivedAt":"2026-10-11T10:22:38.115Z"}
-{"event":"lead_received","id":"cb33c47f-0fc6-44a1-8e0c-8c7df3904a01","kind":"webform","receivedAt":"2026-10-11T10:22:38.180Z"}
-✔ an uncertain send is never repeated; a rate limit is retried (129.774501ms)
-✔ message wording, phone normalization and adapter guard rails (0.932254ms)
-{"event":"lead_received","id":"7a679f2a-4909-49ee-a1d8-ae98bc46b1dd","kind":"webform","receivedAt":"2026-10-11T10:22:38.250Z"}
-{"event":"lead_received","id":"f86b5f09-8dd9-4d46-bb21-00d54a402fca","kind":"webform","receivedAt":"2026-10-11T10:22:38.254Z"}
-✔ marking a job won schedules one Google review text two hours later, only with text permission (27.155527ms)
+✔ Beside hook is closed (404) when no token, or a token under 24 characters, is configured (1460.3611ms)
+✔ Beside notification says where the lead came from (936.9142ms)
+✔ desk.addManual requires a name or phone, a valid phone, and a real, non-future date (375.9388ms)
+✔ setStage estimate_sent requires a Tony-approved price (estimateLow + tonyApproved === true) (814.4854ms)
+✔ addManual with an unapproved estimate_sent stage is rejected without saving a lead (297.2592ms)
+✔ wrong Beside tokens cannot use up the rate limit that real Beside events rely on (1999.5125ms)
+{"event":"lead_received","id":"373edaed-6e20-4b79-a906-356e6cc99aed","kind":"webform","receivedAt":"2026-10-11T13:00:00.411Z"}
+✔ inbox status buttons move the desk pipeline; lost never counts as contacted (753.0661ms)
+✔ location validation rejects absent addresses, invalid pins and unconfirmed device location (5.5211ms)
+✔ serialized location records reject malformed JSON, primitive values and oversized multipart text (2.0425ms)
+{"event":"lead_received","id":"91569c3c-e57c-4bad-a757-ff371499467a","kind":"voicenote","receivedAt":"2026-10-11T12:59:43.061Z"}
+{"event":"lead_received","id":"32a4bbf5-ae3e-4fd2-83e4-b6e436101841","kind":"voicenote","receivedAt":"2026-10-11T12:59:43.333Z"}
+{"event":"lead_received","id":"433c5cc4-99f1-4e8a-808e-c309dfb79884","kind":"voicenote","receivedAt":"2026-10-11T12:59:43.723Z"}
+✔ actual multipart voice uploads preserve address, GPS and drop-off, reject malformed location, and deduplicate retries (2787.7591ms)
+{"event":"lead_received","id":"59917680-a0c6-4d05-a2d2-9c821722685f","kind":"webform","receivedAt":"2026-10-11T12:59:44.995Z"}
+{"event":"lead_received","id":"aa9b25f2-d5d7-40c5-8d76-9a16632a07a9","kind":"webform","receivedAt":"2026-10-11T12:59:45.090Z"}
+{"event":"lead_received","id":"0cdd0488-f2ed-42ea-aee9-635afd7983c5","kind":"webform","receivedAt":"2026-10-11T12:59:45.211Z"}
+✔ address, GPS and drop-off are saved before receipt, their location reaches mock alerts, and retries do not duplicate (1280.6895ms)
+{"event":"lead_received","id":"01b87f53-b292-4372-966d-4718260439fe","kind":"webform","receivedAt":"2026-10-11T12:59:42.825Z"}
+✔ a customer who ticked text permission gets one confirmation text right away (1913.7821ms)
+{"event":"lead_received","id":"fb3c20d2-0fd2-40ae-aa0a-c0cf4b7b7e0c","kind":"webform","receivedAt":"2026-10-11T12:59:44.544Z"}
+{"event":"lead_received","id":"9108c4a2-a6c5-43e6-9776-276a4675315a","kind":"webform","receivedAt":"2026-10-11T12:59:44.644Z"}
+{"event":"lead_received","id":"35b0a364-6c30-4a82-a106-24338c9959b1","kind":"webform","receivedAt":"2026-10-11T12:59:44.713Z"}
+✔ no text without permission, and at most one per phone number per day (1671.9532ms)
+{"event":"lead_received","id":"6d92b732-1d98-49dd-a544-c8f35fd45718","kind":"webform","receivedAt":"2026-10-11T12:59:45.895Z"}
+✔ customer texts are off unless an adapter is configured (1197.4285ms)
+{"event":"lead_received","id":"cc3166b8-f4cc-4472-8806-3f8b5bb1034d","kind":"webform","receivedAt":"2026-10-11T12:59:48.369Z"}
+{"event":"lead_received","id":"dab153e7-e3ac-432f-89f7-893390f81217","kind":"webform","receivedAt":"2026-10-11T12:59:50.294Z"}
+✔ an uncertain send is never repeated; a rate limit is retried (4378.0726ms)
+✔ message wording, phone normalization and adapter guard rails (3.4895ms)
+{"event":"lead_received","id":"f6b337d9-6260-4a5e-b189-9a7c336a475c","kind":"webform","receivedAt":"2026-10-11T12:59:51.353Z"}
+{"event":"lead_received","id":"a4e02ab8-9f55-42a9-b05f-78bcfb470cfd","kind":"webform","receivedAt":"2026-10-11T12:59:51.464Z"}
+✔ marking a job won schedules one Google review text two hours later, only with text permission (1658.4211ms)
 {"event":"public_chat_scripted","reason":"provider_error"}
 {"event":"public_chat_scripted","reason":"provider_error"}
 {"event":"public_chat_scripted","reason":"provider_error"}
 {"event":"public_chat_scripted","reason":"provider_error"}
 {"event":"public_chat_scripted","reason":"provider_error"}
-✔ golden cases are well formed (0.907517ms)
-✔ scoring matches keywords, exact statuses, absent fields and who answered (0.792658ms)
-✔ a model that never answers fails the check even though the script keeps collecting (42.707857ms)
-✔ a model that copies the customer words passes the matching cases (10.612869ms)
-✔ private inbox shows routine notification failures and refreshes even when the lead timestamp is unchanged (191.161122ms)
-✔ private inbox distinguishes accepted and uncertain alerts from receipt and exposes missing configuration (42.473671ms)
-✔ receiver exposes only notification capability names in the private inbox and preserves public and origin boundaries (44.306567ms)
-{"event":"lead_received","id":"d514bec0-4f3f-4777-8b0e-a9399c3e7de0","kind":"webform","receivedAt":"2026-10-11T10:22:37.871Z"}
-{"event":"lead_media_received","id":"d514bec0-4f3f-4777-8b0e-a9399c3e7de0","index":1,"duplicate":false}
-{"event":"lead_media_received","id":"d514bec0-4f3f-4777-8b0e-a9399c3e7de0","index":1,"duplicate":true}
-{"event":"lead_media_received","id":"d514bec0-4f3f-4777-8b0e-a9399c3e7de0","index":2,"duplicate":false}
-{"event":"lead_media_received","id":"d514bec0-4f3f-4777-8b0e-a9399c3e7de0","index":3,"duplicate":false}
-✔ a saved request returns an upload key; photos and video attach to it and show in the inbox (126.41499ms)
-{"event":"lead_received","id":"4d3d5a5f-3aae-418c-876e-7a1104f6cb1e","kind":"webform","receivedAt":"2026-10-11T10:22:37.974Z"}
-✔ uploads are refused without the right key, origin, type or content (42.885999ms)
-{"event":"lead_received","id":"a372551f-390f-4521-9ac0-592bf5c1b379","kind":"webform","receivedAt":"2026-10-11T10:22:38.006Z"}
-{"event":"lead_media_received","id":"a372551f-390f-4521-9ac0-592bf5c1b379","index":1,"duplicate":false}
-{"event":"lead_media_received","id":"a372551f-390f-4521-9ac0-592bf5c1b379","index":2,"duplicate":false}
-{"event":"lead_media_received","id":"a372551f-390f-4521-9ac0-592bf5c1b379","index":3,"duplicate":false}
-{"event":"lead_media_received","id":"a372551f-390f-4521-9ac0-592bf5c1b379","index":4,"duplicate":false}
-{"event":"lead_media_received","id":"a372551f-390f-4521-9ac0-592bf5c1b379","index":5,"duplicate":false}
-{"event":"lead_media_received","id":"a372551f-390f-4521-9ac0-592bf5c1b379","index":6,"duplicate":false}
-✔ one request holds at most six attachments, and Tony gets one grouped follow-up alert (31.158927ms)
-{"event":"lead_received","id":"15b5278f-6576-4b62-aaee-76ef8392fc27","kind":"webform","receivedAt":"2026-10-11T10:22:38.039Z"}
-{"event":"lead_media_received","id":"15b5278f-6576-4b62-aaee-76ef8392fc27","index":1,"duplicate":false}
-✔ a resent request gets a fresh upload key, and the old one stops working (18.637374ms)
-✔ media module: expiry, size caps, full disk and leftover partial uploads (4.752705ms)
+✔ golden cases are well formed (4.2298ms)
+✔ scoring matches keywords, exact statuses, absent fields and who answered (1.9358ms)
+✔ a model that never answers fails the check even though the script keeps collecting (601.6747ms)
+✔ a model that copies the customer words passes the matching cases (755.6455ms)
+✔ private inbox shows routine notification failures and refreshes even when the lead timestamp is unchanged (561.1377ms)
+✔ private inbox distinguishes accepted and uncertain alerts from receipt and exposes missing configuration (169.8859ms)
+✔ receiver exposes only notification capability names in the private inbox and preserves public and origin boundaries (2095.9072ms)
+{"event":"lead_received","id":"fc3e90ca-52cc-4f19-8bb7-c8d1b0f36fff","kind":"webform","receivedAt":"2026-10-11T12:59:42.937Z"}
+{"event":"lead_media_received","id":"fc3e90ca-52cc-4f19-8bb7-c8d1b0f36fff","index":1,"duplicate":false}
+{"event":"lead_media_received","id":"fc3e90ca-52cc-4f19-8bb7-c8d1b0f36fff","index":1,"duplicate":true}
+{"event":"lead_media_received","id":"fc3e90ca-52cc-4f19-8bb7-c8d1b0f36fff","index":2,"duplicate":false}
+{"event":"lead_media_received","id":"fc3e90ca-52cc-4f19-8bb7-c8d1b0f36fff","index":3,"duplicate":false}
+✔ a saved request returns an upload key; photos and video attach to it and show in the inbox (2557.1807ms)
+{"event":"lead_received","id":"7294eb40-5d03-4376-9653-1f09dce20b0e","kind":"webform","receivedAt":"2026-10-11T12:59:44.982Z"}
+✔ uploads are refused without the right key, origin, type or content (1228.8577ms)
+{"event":"lead_received","id":"ed02d420-beaf-41e5-9aa3-c4a8687ecec4","kind":"webform","receivedAt":"2026-10-11T12:59:46.873Z"}
+{"event":"lead_media_received","id":"ed02d420-beaf-41e5-9aa3-c4a8687ecec4","index":1,"duplicate":false}
+{"event":"lead_media_received","id":"ed02d420-beaf-41e5-9aa3-c4a8687ecec4","index":2,"duplicate":false}
+{"event":"lead_media_received","id":"ed02d420-beaf-41e5-9aa3-c4a8687ecec4","index":3,"duplicate":false}
+{"event":"lead_media_received","id":"ed02d420-beaf-41e5-9aa3-c4a8687ecec4","index":4,"duplicate":false}
+{"event":"lead_media_received","id":"ed02d420-beaf-41e5-9aa3-c4a8687ecec4","index":5,"duplicate":false}
+{"event":"lead_media_received","id":"ed02d420-beaf-41e5-9aa3-c4a8687ecec4","index":6,"duplicate":false}
+✔ one request holds at most six attachments, and Tony gets one grouped follow-up alert (2985.5326ms)
+{"event":"lead_received","id":"b5e6d516-9d06-4eb8-affa-d57aa2c0665f","kind":"webform","receivedAt":"2026-10-11T12:59:49.982Z"}
+{"event":"lead_media_received","id":"b5e6d516-9d06-4eb8-affa-d57aa2c0665f","index":1,"duplicate":false}
+✔ a resent request gets a fresh upload key, and the old one stops working (2121.4053ms)
+✔ media module: expiry, size caps, full disk and leftover partial uploads (67.0953ms)
 {"event":"public_chat_scripted","reason":"provider_error"}
-✔ visitor events deduplicate, distinguish unique browsers, enforce origin, and persist (120.431172ms)
-✔ completed AI counts survive retries, midnight, restart, and seven-day cleanup (31.151105ms)
-✔ summarize: urgent title, callback permission, source label, 3000-char details cap, no stray blank lines (3.679483ms)
-✔ enqueue: one pending row per channel; SMS channel skipped only when urgent alerts really queued a text to Tony (5.278208ms)
-✔ tick: sends due rows; a failing channel backs off 30s/2m/10m/30m/1h, becomes failed after 5 retries, and never blocks the others (7.228352ms)
-✔ a row left in sending by a crash is reset to pending on startup and delivered again (3.207657ms)
-✔ overlapping ticks share one run; rows for unconfigured channels wait; nothing is sent after close (2.356282ms)
-✔ SMTP adapter: EHLO, AUTH PLAIN, one RCPT per recipient, UTF-8 subject and base64 body (344.130755ms)
-✔ SMTP adapter rejects on a 535 auth reply, a non-220 greeting, or a dropped connection (7.524469ms)
-✔ SMTP adapter refuses incomplete or malformed configuration (0.533076ms)
-✔ ntfy adapter: POST /<topic>, urgent vs high priority, tel: call action, rejects bad responses and short topics (0.796233ms)
-✔ ntfy Title header carries the real plain-ASCII title (URGENT + vehicle) (0.211451ms)
-✔ desktop adapter runs an encoded PowerShell toast and maps exit 0 / exit 1 / spawn error (2.525081ms)
-✔ sms adapter texts the fixed Tony number, is marked skipUrgent, and caps the body (0.443243ms)
-✔ channelsFromEnv enables only configured channels and reports bad settings (0.704699ms)
-{"event":"lead_received","id":"96856640-a295-4996-a020-0017d4f0aaf8","kind":"webform","receivedAt":"2026-10-11T10:22:38.415Z"}
-✔ receiver: a web-form lead queues one notification per channel; a same-key retry does not queue again; inbox shows them (85.276747ms)
-{"event":"lead_received","id":"e98131b6-2513-4841-857e-c09a0ce1c0d2","kind":"webform","receivedAt":"2026-10-11T10:22:38.468Z"}
-{"event":"lead_received","id":"22c50ff6-eb86-4891-b626-808c80e8838c","kind":"webform","receivedAt":"2026-10-11T10:22:38.474Z"}
-✔ receiver: urgent lead skips the SMS channel only when urgent alerts queued a text; one failing channel stays pending (27.62508ms)
-{"event":"lead_received","id":"c7935ba5-6518-40ea-bf4c-3e9ba6c546b5","kind":"webform","receivedAt":"2026-10-11T10:22:38.496Z"}
-✔ receiver: the notification row is written in the lead transaction (a queue failure rolls the lead back) (13.803781ms)
-{"event":"lead_received","id":"067a20f7-5a77-479e-8e4b-fe437c67d31e","kind":"webform","receivedAt":"2026-10-11T10:22:38.506Z"}
+✔ visitor events deduplicate, distinguish unique browsers, enforce origin, and persist (1795.022ms)
+✔ completed AI counts survive retries, midnight, restart, and seven-day cleanup (1062.232ms)
+✔ summarize: urgent title, callback permission, source label, 3000-char details cap, no stray blank lines (11.3063ms)
+✔ enqueue: one pending row per channel; SMS channel skipped only when urgent alerts really queued a text to Tony (16.4299ms)
+✔ tick: sends due rows; a failing channel backs off 30s/2m/10m/30m/1h, becomes failed after 5 retries, and never blocks the others (11.3932ms)
+✔ a row left in sending by a crash is reset to pending on startup and delivered again (1.5044ms)
+✔ overlapping ticks share one run; rows for unconfigured channels wait; nothing is sent after close (1.7433ms)
+✔ SMTP adapter: EHLO, AUTH PLAIN, one RCPT per recipient, UTF-8 subject and base64 body (282.1131ms)
+✔ SMTP adapter rejects on a 535 auth reply, a non-220 greeting, or a dropped connection (84.8665ms)
+✔ SMTP adapter refuses incomplete or malformed configuration (1.2871ms)
+✔ ntfy adapter: POST /<topic>, urgent vs high priority, tel: call action, rejects bad responses and short topics (3.2134ms)
+✔ ntfy Title header carries the real plain-ASCII title (URGENT + vehicle) (0.7629ms)
+✔ desktop adapter runs an encoded PowerShell toast and maps exit 0 / exit 1 / spawn error (18.0444ms)
+✔ sms adapter texts the fixed Tony number, is marked skipUrgent, and caps the body (1.4659ms)
+✔ channelsFromEnv enables only configured channels and reports bad settings (6.0875ms)
+{"event":"lead_received","id":"f6747bc1-62d3-4e3a-a979-57bcb44af737","kind":"webform","receivedAt":"2026-10-11T12:59:43.293Z"}
+✔ receiver: a web-form lead queues one notification per channel; a same-key retry does not queue again; inbox shows them (2141.3217ms)
+{"event":"lead_received","id":"1165326c-f5ca-4e31-91fe-1f18e7f7bbea","kind":"webform","receivedAt":"2026-10-11T12:59:45.009Z"}
+{"event":"lead_received","id":"b5151f6f-0189-4b09-81c0-d07a1a4db04b","kind":"webform","receivedAt":"2026-10-11T12:59:45.088Z"}
+✔ receiver: urgent lead skips the SMS channel only when urgent alerts queued a text; one failing channel stays pending (1230.7123ms)
+{"event":"lead_received","id":"2321686b-3d0e-4f91-be09-67958abb3659","kind":"webform","receivedAt":"2026-10-11T12:59:46.929Z"}
+✔ receiver: the notification row is written in the lead transaction (a queue failure rolls the lead back) (1785.8658ms)
+{"event":"lead_received","id":"6d6d6533-b8f1-4cd6-9aa7-0919a4498d0f","kind":"webform","receivedAt":"2026-10-11T12:59:49.444Z"}
 {"event":"lead_notification_failed","channel":"sms","code":"fake_down:503"}
-✔ receiver: with urgent alerts disabled an urgent lead still texts Tony through the SMS channel (10.393406ms)
-✔ run: rows for a channel that is no longer configured never block configured channels (1.575031ms)
-✔ run: a text that may have gone out is never resent (Twilio cannot dedupe) (0.958473ms)
-✔ big jobs (engine, transmission, rebuild) are tagged so Tony calls them back first; small jobs are not (0.352249ms)
-✔ summarize: City / ZIP and sender or car map appear in Tony alerts (0.27873ms)
-✔ car and sender maps remain separately labeled before long symptoms (0.1696ms)
-✔ normal SMS preserves city and sender link with maximum Unicode fields and never cuts a map URL (1.041915ms)
-✔ Ollama provider posts a JSON-mode chat to loopback and returns parsed intake with usage (1.994369ms)
-✔ Ollama provider fails closed with customer-safe errors (1.063697ms)
-✔ provider selection defaults to DeepSeek and switches to Ollama only when named (0.63782ms)
-✔ paraphrased free-text fields are dropped and asked again instead of failing the chat (26.869126ms)
-✔ ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions (20.990903ms)
-{"event":"lead_received","id":"6f3a8984-f635-4e28-bf2a-cf811f980b70","kind":"webform","receivedAt":"2026-10-11T10:22:38.142Z"}
-{"event":"lead_received","id":"2785a487-b515-4ee7-a833-f3f44599450e","kind":"webform","receivedAt":"2026-10-11T10:22:38.157Z"}
+✔ receiver: with urgent alerts disabled an urgent lead still texts Tony through the SMS channel (2512.5454ms)
+✔ run: rows for a channel that is no longer configured never block configured channels (6.3474ms)
+✔ run: a text that may have gone out is never resent (Twilio cannot dedupe) (3.3401ms)
+✔ big jobs (engine, transmission, rebuild) are tagged so Tony calls them back first; small jobs are not (1.4522ms)
+✔ summarize: City / ZIP and sender or car map appear in Tony alerts (0.5214ms)
+✔ car and sender maps remain separately labeled before long symptoms (0.2714ms)
+✔ normal SMS preserves city and sender link with maximum Unicode fields and never cuts a map URL (1.0268ms)
+✔ Ollama provider posts a JSON-mode chat to loopback and returns parsed intake with usage (6.3053ms)
+✔ Ollama provider fails closed with customer-safe errors (2.107ms)
+✔ provider selection defaults to DeepSeek and switches to Ollama only when named (1.227ms)
+✔ paraphrased free-text fields are dropped and asked again instead of failing the chat (386.4283ms)
+✔ ordered rules match stranded AND no-start at any hour, preserve unknowns, and reject executable/arbitrary actions (54.3834ms)
+{"event":"lead_received","id":"62160518-373e-4c67-8914-596792b9ccae","kind":"webform","receivedAt":"2026-10-11T12:59:42.940Z"}
+{"event":"lead_received","id":"4457bf13-8e1b-4afd-9687-16576821c708","kind":"webform","receivedAt":"2026-10-11T12:59:43.174Z"}
 {"event":"receiver_error","code":"ERR_SQLITE_ERROR"}
-✔ lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts (67.246317ms)
-{"event":"lead_received","id":"87cdb2e2-1888-4ca2-b623-df0e57cbe5b1","kind":"webform","receivedAt":"2026-10-11T10:22:38.173Z"}
-{"event":"lead_received","id":"5dafe847-b271-4281-820c-8b78b48cb30d","kind":"webform","receivedAt":"2026-10-11T10:22:38.177Z"}
-{"event":"lead_received","id":"ce3b4664-675d-4552-bb2d-0045a0cf868f","kind":"webform","receivedAt":"2026-10-11T10:22:38.182Z"}
-✔ persistent callback/global caps suppress repeated alert pairs without losing saved leads (23.535002ms)
-{"event":"lead_received","id":"9d6fe36f-7dca-47d4-a711-57c1e141f0e1","kind":"webform","receivedAt":"2026-10-11T10:22:38.192Z"}
+✔ lead, rule result and disabled call/text pair commit together; duplicate retries do not add alerts (2326.6663ms)
+{"event":"lead_received","id":"14f58d04-543a-44ad-8bfa-cafa4488b03d","kind":"webform","receivedAt":"2026-10-11T12:59:44.994Z"}
+{"event":"lead_received","id":"48b1d0d3-6fcd-4bfa-ad3a-50cbe7123c72","kind":"webform","receivedAt":"2026-10-11T12:59:45.051Z"}
+{"event":"lead_received","id":"6da917e3-52d3-4aba-9736-4448932f2284","kind":"webform","receivedAt":"2026-10-11T12:59:45.140Z"}
+✔ persistent callback/global caps suppress repeated alert pairs without losing saved leads (1546.8812ms)
+{"event":"lead_received","id":"bc40d1a9-72b5-4920-8bc9-0ad4631d8e2a","kind":"webform","receivedAt":"2026-10-11T12:59:48.067Z"}
 {"event":"public_chat_scripted","reason":"invalid_answer"}
-✔ definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token (15.50591ms)
-✔ Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered (1.276351ms)
-✔ Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider (18.944196ms)
-{"event":"lead_received","id":"73366718-03f7-4118-b5f1-3ef65e20a170","kind":"webform","receivedAt":"2026-10-11T10:22:38.231Z"}
-✔ urgent SMS includes distinct car and sender maps before truncated symptoms (10.638106ms)
-{"event":"lead_received","id":"e3fcef62-9c50-4463-b0e0-cf74c77f8885","kind":"webform","receivedAt":"2026-10-11T10:22:38.241Z"}
-✔ urgent SMS budgets maximum Unicode addresses without losing city or the sender pin (11.409313ms)
+✔ definite rate limit retries, delivery is confirmed by status, uncertain sends never replay and recovery requires operator token (2938.51ms)
+✔ Twilio adapter fixes destination, uses documented resources, and never treats API acceptance as delivered (4.1885ms)
+✔ Bay One extracts reviewable fields but cannot quote, choose destinations or trigger alerts; hazards work without provider (1140.0457ms)
+{"event":"lead_received","id":"0548645e-2216-4b02-b0a5-504d708c5c46","kind":"webform","receivedAt":"2026-10-11T12:59:50.609Z"}
+✔ urgent SMS includes distinct car and sender maps before truncated symptoms (1220.981ms)
+{"event":"lead_received","id":"1bd59f80-2421-4764-85d9-43d6ed92de11","kind":"webform","receivedAt":"2026-10-11T12:59:51.497Z"}
+✔ urgent SMS budgets maximum Unicode addresses without losing city or the sender pin (1303.7784ms)
 {"event":"public_chat_scripted","reason":"chat_unavailable"}
 {"event":"public_chat_scripted","reason":"chat_unavailable"}
 {"event":"public_chat_scripted","reason":"chat_unavailable"}
@@ -137,120 +137,127 @@ Node v24.19.0
 {"event":"public_chat_scripted","reason":"chat_unavailable"}
 {"event":"public_chat_scripted","reason":"invalid_answer"}
 {"event":"public_chat_scripted","reason":"provider_error"}
-✔ a model outage still walks the customer through every question using their own words (50.936371ms)
-✔ bad model output falls back to the scripted answer instead of an error (5.994043ms)
-✔ scripted answers never store markup and still show the hazard warning (10.493313ms)
+✔ a model outage still walks the customer through every question using their own words (489.4972ms)
+✔ bad model output falls back to the scripted answer instead of an error (708.5729ms)
+✔ scripted answers never store markup and still show the hazard warning (211.6716ms)
 {"event":"public_chat_scripted","reason":"capacity"}
 {"event":"public_chat_scripted","reason":"capacity"}
-✔ when the one GPU slot is busy, a second customer gets the scripted flow without waiting (15.420043ms)
-✔ past the daily model budget, chats keep working in scripted mode at no token cost (10.497329ms)
-✔ the Ollama schema covers exactly the intake fields and can be switched back to plain JSON (1.210714ms)
-✔ urgency backstop: clear wording fills starts/stranded, negations and look-alikes never do (41.59723ms)
-{"event":"lead_received","id":"82c9e309-859c-4dc9-9059-48aa9003df70","kind":"webform","receivedAt":"2026-10-11T10:22:38.217Z"}
-✔ receives a real HTTP request, commits it, shows it privately, and deduplicates retries (99.340071ms)
-✔ public API has strict origin checks, preflight, and no unauthenticated owner inbox (25.832739ms)
-{"event":"lead_received","id":"895be490-1c00-4aa9-ad1f-b6d751ac7ab8","kind":"webform","receivedAt":"2026-10-11T10:22:38.326Z"}
-✔ validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON (27.297266ms)
-{"event":"lead_received","id":"42c5d73e-5c0a-4448-9ac6-bf246d9a91cf","kind":"webform","receivedAt":"2026-10-11T10:22:38.340Z"}
-{"event":"lead_received","id":"c906637b-902f-47b5-ab2e-d83a038c1388","kind":"webform","receivedAt":"2026-10-11T10:22:38.342Z"}
-✔ rate limits apply before accepting more uploads (12.197555ms)
-{"event":"lead_received","id":"95dfe0a8-69eb-4f53-861c-0188c8237871","kind":"webform","receivedAt":"2026-10-11T10:22:38.356Z"}
-{"event":"lead_received","id":"dc61d2f2-d2c4-451d-829e-bb23a8a3069e","kind":"voicenote","receivedAt":"2026-10-11T10:22:38.368Z"}
-✔ multipart recording is durable, privately playable with byte ranges, and requires name (39.16844ms)
-{"event":"lead_received","id":"a9d47cc4-6d8f-4de7-95e2-48871e932679","kind":"voicenote","receivedAt":"2026-10-11T10:22:38.393Z"}
-✔ legacy raw recording works and MIME-spoofed uploads fail (9.757809ms)
-{"event":"lead_received","id":"979e31a5-fcbd-4906-aeef-cd1df1c1ec3d","kind":"webform","receivedAt":"2026-10-11T10:22:38.400Z"}
-✔ phone numbers with invisible autofill characters are accepted, and the Google channel is kept (8.363495ms)
-{"event":"lead_received","id":"20fb9f2a-2607-43c3-98ad-0927af86bcd4","kind":"webform","receivedAt":"2026-10-11T10:22:38.423Z"}
-{"event":"lead_received","id":"151c3c81-c163-4bdb-a17c-24d2d62de351","kind":"webform","receivedAt":"2026-10-11T10:22:38.430Z"}
-✔ sender pin rejects coercion, canonicalizes maps, requires city for new clients and retains legacy retries (28.89412ms)
-✔ linking a sent Zoho estimate moves the lead to estimate_sent with the Zoho total as the approved price (44.585107ms)
-✔ a draft estimate links without moving the lead; the sync moves it once Zoho shows it sent, then accepted (18.436679ms)
-✔ a declined estimate marks the lead lost; a later acceptance reopens it as booked (12.205547ms)
-✔ Zoho never moves a lead backward or overrides Tony: won, spam and hand-marked lost leads stay put (9.851217ms)
-✔ an expired Zoho estimate shows in Needs action instead of waiting out the 3-day timer (25.310839ms)
-✔ link errors: unknown number, an estimate already on another lead, bad input, unlink, and Zoho not connected (28.935831ms)
-✔ a failed Zoho check is recorded on the estimate and does not change the lead (6.972315ms)
-✔ reader only signs in and reads: one token POST to Zoho accounts, then GETs with the organization ID (1.807303ms)
-✔ Zoho settings: off when absent, a clear problem when partial, Books and other data centers supported (0.275065ms)
-✔ analytics sends only fixed public categories and allowlisted sources, without persistent tracking or private data (484.825497ms)
-✔ human starts, contact clicks and the discreet AI disclosure are bounded per page and kept separate (123.640973ms)
-✔ WebMCP preparation is separate from human form starts and attempts reflect actual HTTP requests (60.399067ms)
-✔ validation failures and offline manual drafts are never counted as network submission attempts (126.900973ms)
-✔ analytics retries at most once with the same event ID and cannot block a repair submission (91.562158ms)
-✔ preview hosts create no analytics events even when the normal form is used (45.752221ms)
+✔ when the one GPU slot is busy, a second customer gets the scripted flow without waiting (869.7244ms)
+✔ past the daily model budget, chats keep working in scripted mode at no token cost (412.1068ms)
+✔ the Ollama schema covers exactly the intake fields and can be switched back to plain JSON (4.5354ms)
+✔ urgency backstop: clear wording fills starts/stranded, negations and look-alikes never do (1592.3676ms)
+{"event":"lead_received","id":"50408f8c-35de-4a49-8ec7-678f19257b41","kind":"webform","receivedAt":"2026-10-11T12:59:42.752Z"}
+✔ receives a real HTTP request, commits it, shows it privately, and deduplicates retries (1870.8193ms)
+✔ public API has strict origin checks, preflight, and no unauthenticated owner inbox (1275.2481ms)
+{"event":"lead_received","id":"b02a6c65-48fb-4f15-a98f-80b464f8fba1","kind":"webform","receivedAt":"2026-10-11T12:59:45.577Z"}
+✔ validation rejects invalid phone, missing consent evidence, honeypot, and oversized JSON (1030.2198ms)
+{"event":"lead_received","id":"ec217a35-8152-4965-99dc-5774703092e0","kind":"webform","receivedAt":"2026-10-11T12:59:48.199Z"}
+{"event":"lead_received","id":"11a598f5-b25e-4fe0-b6ac-c23c581dbf6d","kind":"webform","receivedAt":"2026-10-11T12:59:48.233Z"}
+✔ rate limits apply before accepting more uploads (2617.3023ms)
+{"event":"lead_received","id":"6b380350-b98e-4ef2-bc30-393bb1e93dda","kind":"webform","receivedAt":"2026-10-11T12:59:49.981Z"}
+{"event":"lead_received","id":"f64600d5-9a15-47b4-9470-bcb984cf7936","kind":"voicenote","receivedAt":"2026-10-11T12:59:50.045Z"}
+✔ multipart recording is durable, privately playable with byte ranges, and requires name (2024.8971ms)
+{"event":"lead_received","id":"cbd3d645-b9ae-421b-88da-bc3ff1d75791","kind":"voicenote","receivedAt":"2026-10-11T12:59:51.162Z"}
+✔ legacy raw recording works and MIME-spoofed uploads fail (912.5826ms)
+{"event":"lead_received","id":"b8bd040e-f208-4967-b928-7f4a659f9205","kind":"webform","receivedAt":"2026-10-11T12:59:52.471Z"}
+✔ phone numbers with invisible autofill characters are accepted, and the Google channel is kept (1259.5855ms)
+{"event":"lead_received","id":"2d5c3ce3-6f72-448d-b19e-3cfed7c2d626","kind":"webform","receivedAt":"2026-10-11T12:59:53.721Z"}
+{"event":"lead_received","id":"636dbab9-5c54-4fa6-94df-6f753a660fbb","kind":"webform","receivedAt":"2026-10-11T12:59:53.794Z"}
+✔ sender pin rejects coercion, canonicalizes maps, requires city for new clients and retains legacy retries (1329.8503ms)
+✔ linking a sent Zoho estimate moves the lead to estimate_sent with the Zoho total as the approved price (2295.8082ms)
+✔ a draft estimate links without moving the lead; the sync moves it once Zoho shows it sent, then accepted (1402.9269ms)
+✔ a declined estimate marks the lead lost; a later acceptance reopens it as booked (2728.776ms)
+✔ Zoho never moves a lead backward or overrides Tony: won, spam and hand-marked lost leads stay put (1918.3763ms)
+✔ an expired Zoho estimate shows in Needs action instead of waiting out the 3-day timer (1199.7551ms)
+✔ link errors: unknown number, an estimate already on another lead, bad input, unlink, and Zoho not connected (2598.3432ms)
+✔ a failed Zoho check is recorded on the estimate and does not change the lead (589.7094ms)
+✔ reader only signs in and reads: one token POST to Zoho accounts, then GETs with the organization ID (4.0273ms)
+✔ Zoho settings: off when absent, a clear problem when partial, Books and other data centers supported (0.8333ms)
+✔ analytics sends only fixed public categories and allowlisted sources, without persistent tracking or private data (1261.5415ms)
+✔ human starts, contact clicks and the discreet AI disclosure are bounded per page and kept separate (383.8423ms)
+✔ WebMCP preparation is separate from human form starts and attempts reflect actual HTTP requests (246.7973ms)
+✔ validation failures and offline manual drafts are never counted as network submission attempts (325.3821ms)
+✔ analytics retries at most once with the same event ID and cannot block a repair submission (265.3321ms)
+✔ preview hosts create no analytics events even when the normal form is used (222.542ms)
 Not implemented: navigation to another Document
 Not implemented: navigation to another Document
-✔ published contact configuration sends a repair to cloud intake and keeps previews off production (525.077955ms)
-✔ voice send requires a car location and serializes its selected address as multipart JSON (57.281743ms)
-✔ unchanged voice retries preserve the snapshot, but removing a sender pin creates a pin-free update (83.750127ms)
-✔ chat collects the problem, then its contact card sends one lead with the whole chat straight to Tony (130.466157ms)
-✔ a failed lead send keeps the card and details, and never claims Tony has them (83.148071ms)
-✔ a lost contact-card response retries the exact saved payload and key, including consent time (83.573558ms)
-✔ initial AI connection failure stays truthful and unsent notes still hand off to the normal form (49.64713ms)
-✔ service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable (84.00296ms)
-✔ AI intake is disclosed at all hours and untrusted text is displayed as text (65.903713ms)
-✔ long conversation preserves all customer words and blocks sending until the customer shortens it (44.722023ms)
-✔ receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity (116.776795ms)
-✔ mobile bar keeps request and call actions while the separate Bay One entry restores focus (52.244248ms)
-✔ careers preserves the applicant-specific mobile introduction action (15.618753ms)
-✔ an unreachable Bay One server shows no launcher, loads no assets and still restores carried notes (35.664503ms)
-✔ a server whose chat failed to start is treated as unavailable (27.028353ms)
-✔ shipped config enables public Bay One against the p15g2 receiver (5.095988ms)
-✔ public Bay One is disabled before UI/assets/network while normal contact remains available (43.957017ms)
-✔ with cloud intake offline, the public form falls back to an editable native text intent with no receipt claim (30.878877ms)
-✔ iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient (27.074522ms)
-✔ draft source carries only known page categories, never URL or session-injected personal data (111.914094ms)
-✔ the site form and Bay One store the exact SMS consent wording shown beside the site checkbox (18.921769ms)
-✔ Bay One card sends photos and video to Tony after the request is saved, only when the receiver supports it (52.562286ms)
-✔ without receiver support the photo picker stays hidden and nothing is uploaded (38.592202ms)
-✔ Bay One rejects whitespace city before posting and accepts a corrected city (38.423924ms)
-✔ parts confirms saved quote only after a receipt and keeps customer details out of receipt storage (195.422963ms)
-✔ parts uncertain retries preserve one key and edits create a new request (57.845964ms)
-✔ parts rejects incomplete or malformed acknowledgments instead of claiming receipt (132.058316ms)
-✔ parts blocks whitespace-only required fields, invalid phone, quantity and VIN (34.598866ms)
-✔ parts offline fallback remains editable and uses the iPhone text separator (24.502708ms)
-✔ parts keeps a confirmed inline receipt when session storage is unavailable (25.734153ms)
-✔ parts receipt explains quote approval without confirming an order or appointment (59.387526ms)
-✔ parts activity records a fixed start event without form values (48.191858ms)
-✔ specialty service links carry the right category into the submitted repair request (573.584334ms)
-✔ repair request requires a location choice and a nonblank address unless drop-off is selected (71.509133ms)
-✔ device location is requested only on click, saved with permission evidence and sent with its map (64.750098ms)
-✔ denied device location still permits a typed address and does not send coordinates (37.467044ms)
-✔ drop-off needs no address and carries the requested time without confirming a booking (38.243739ms)
-✔ late GPS result cannot replace a selected drop-off or an address typed while waiting (41.67834ms)
-✔ autofilled address supersedes an earlier GPS pin even without an input event (58.979796ms)
-✔ offline text and email drafts carry the required car location and map (34.914223ms)
-✔ removing a sender pin invalidates a prepared manual draft and every draft link (33.755145ms)
-✔ removing a pin while a request is in flight preserves the old receipt and sends the update separately (35.538798ms)
-✔ online form initializes the short request flow and enables the safe submit control (46.851451ms)
-✔ core fields require city; service, source and channel survive; receipt waits for saved confirmation (30.531255ms)
-✔ unconfirmed receiver response preserves entries and exposes manual contact without creating a receipt (31.072863ms)
-✔ uncertain retries keep the same payload and key, while browser autofill edits create an updated request (33.415274ms)
-✔ optional timing and text permission use the existing receiver contract and exact displayed disclosure (51.234739ms)
-✔ missing required details and invalid phone numbers never reach the receiver (30.579045ms)
-✔ offline mode prepares an editable manual draft with required city and optional callback, without claiming receipt (27.232354ms)
-✔ sender Use my location fills hidden lat/lng and maps link; city remains required (27.339742ms)
-✔ denied sender location still submits with typed city and without coordinates (40.45027ms)
-✔ blank city blocks submit even when car drop-off is chosen (27.634888ms)
-✔ removing sender pin cancels a pending callback and omits coordinates (27.012861ms)
-✔ a shared specialty link keeps its source through the service page, inquiry and failed-receiver fallback (344.18907ms)
-✔ each approved free-channel link identifies itself in unsent text and email drafts (460.165083ms)
-✔ unapproved URL and stored values cannot enter draft labels; generic lead channels remain compatible (138.86133ms)
-✔ blocked browser storage keeps current-link attribution and contacting the shop available with private anonymous analytics (43.344904ms)
-✔ WebMCP prepares dependent address fields for review; only manual submit reaches the existing receiver (328.255149ms)
-✔ partial preparations report missing details and preserve human consent and unsupplied values (90.699829ms)
-✔ repeating the same preparation preserves the idempotency key after an unconfirmed submission (69.796219ms)
-✔ invalid or restricted tool arguments leave every existing entry unchanged (60.129735ms)
-✔ preparation replaces stale GPS with the supplied address and invalidates a pending GPS result (70.656211ms)
-✔ old browsers and blocked WebMCP registration retain the working human form (174.758801ms)
-✔ offline preparation tells the truth and leaves sending to the customer’s manual draft flow (59.562495ms)
-✔ registration lifecycle cleans up on pagehide and restores after a back-forward cache return (33.34454ms)
-ℹ tests 169
+✔ published contact configuration sends a repair to cloud intake and keeps previews off production (1413.3385ms)
+✔ voice send requires a car location and serializes its selected address as multipart JSON (176.4953ms)
+✔ unchanged voice retries preserve the snapshot, but removing a sender pin creates a pin-free update (242.6535ms)
+✔ chat collects the problem, then its contact card sends one lead with the whole chat straight to Tony (346.9752ms)
+✔ a failed lead send keeps the card and details, and never claims Tony has them (193.9192ms)
+✔ a lost contact-card response retries the exact saved payload and key, including consent time (265.1776ms)
+✔ initial AI connection failure stays truthful and unsent notes still hand off to the normal form (250.7039ms)
+✔ service preselection is whitelisted, optional vehicle submits with explicit qualifiers, and uncertain retry is stable (188.2721ms)
+✔ AI intake is disclosed at all hours and untrusted text is displayed as text (91.3904ms)
+✔ long conversation preserves all customer words and blocks sending until the customer shortens it (81.9818ms)
+✔ receipt page stays neutral without fresh backend-confirmed evidence and displays no stored customer identity (218.7926ms)
+✔ mobile bar keeps request and call actions while the separate Bay One entry restores focus (80.9114ms)
+✔ careers preserves the applicant-specific mobile introduction action (54.8489ms)
+✔ an unreachable Bay One server shows no launcher, loads no assets and still restores carried notes (95.3456ms)
+✔ a server whose chat failed to start is treated as unavailable (55.1722ms)
+✔ shipped config enables public Bay One against the p15g2 receiver (13.8311ms)
+✔ public Bay One is disabled before UI/assets/network while normal contact remains available (168.1907ms)
+✔ with cloud intake offline, the public form falls back to an editable native text intent with no receipt claim (162.1796ms)
+✔ iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient (152.8374ms)
+✔ draft source carries only known page categories, never URL or session-injected personal data (454.9459ms)
+✔ the site form and Bay One store the exact SMS consent wording shown beside the site checkbox (78.1536ms)
+✔ Bay One card sends photos and video to Tony after the request is saved, only when the receiver supports it (231.3463ms)
+✔ without receiver support the photo picker stays hidden and nothing is uploaded (218.702ms)
+✔ Bay One rejects whitespace city before posting and accepts a corrected city (254.2242ms)
+✔ parts confirms saved quote only after a receipt and keeps customer details out of receipt storage (697.6859ms)
+✔ parts uncertain retries preserve one key and edits create a new request (164.6873ms)
+✔ parts rejects incomplete or malformed acknowledgments instead of claiming receipt (175.9518ms)
+✔ parts blocks whitespace-only required fields, invalid phone, quantity and VIN (123.1823ms)
+✔ parts offline fallback remains editable and uses the iPhone text separator (131.78ms)
+✔ parts keeps a confirmed inline receipt when session storage is unavailable (75.5355ms)
+✔ parts receipt explains quote approval without confirming an order or appointment (116.7304ms)
+✔ parts activity records a fixed start event without form values (79.4572ms)
+✔ repair action opens the same form, then closing restores it and returns focus (633.8354ms)
+✔ close and reopen preserve unsent entries, consent and location pin (147.632ms)
+✔ service deep link opens the form; closing removes only the contact fragment (152.5066ms)
+✔ dedicated request page opens immediately with the current homepage form (190.4612ms)
+✔ unsupported dialog browsers keep the inline form and contact fallback (93.6838ms)
+✔ AI preparation opens a review popup without submitting a lead or checking consent (228.5527ms)
+✔ specialty service links carry the right category into the submitted repair request (604.5303ms)
+✔ repair request requires a location choice and a nonblank address unless drop-off is selected (72.9604ms)
+✔ device location is requested only on click, saved with permission evidence and sent with its map (148.5651ms)
+✔ denied device location still permits a typed address and does not send coordinates (149.9363ms)
+✔ drop-off needs no address and carries the requested time without confirming a booking (193.3493ms)
+✔ late GPS result cannot replace a selected drop-off or an address typed while waiting (232.61ms)
+✔ autofilled address supersedes an earlier GPS pin even without an input event (142.5598ms)
+✔ offline text and email drafts carry the required car location and map (111.8648ms)
+✔ removing a sender pin invalidates a prepared manual draft and every draft link (191.7328ms)
+✔ removing a pin while a request is in flight preserves the old receipt and sends the update separately (136.1743ms)
+✔ online form initializes the short request flow and enables the safe submit control (195.9865ms)
+✔ core fields require city; service, source and channel survive; receipt waits for saved confirmation (156.3833ms)
+✔ unconfirmed receiver response preserves entries and exposes manual contact without creating a receipt (189.5315ms)
+✔ uncertain retries keep the same payload and key, while browser autofill edits create an updated request (183.3862ms)
+✔ optional timing and text permission use the existing receiver contract and exact displayed disclosure (191.0836ms)
+✔ missing required details and invalid phone numbers never reach the receiver (189.7199ms)
+✔ offline mode prepares an editable manual draft with required city and optional callback, without claiming receipt (161.7537ms)
+✔ sender Use my location fills hidden lat/lng and maps link; city remains required (152.8649ms)
+✔ denied sender location still submits with typed city and without coordinates (151.3072ms)
+✔ blank city blocks submit even when car drop-off is chosen (129.6367ms)
+✔ removing sender pin cancels a pending callback and omits coordinates (198.0503ms)
+✔ the dedicated repair page retains service context and submits through the existing receiver contract (464.8415ms)
+✔ a shared specialty link keeps its source through the service page, inquiry and failed-receiver fallback (411.5283ms)
+✔ each approved free-channel link identifies itself in unsent text and email drafts (1549.0756ms)
+✔ unapproved URL and stored values cannot enter draft labels; generic lead channels remain compatible (680.9794ms)
+✔ blocked browser storage keeps current-link attribution and contacting the shop available with private anonymous analytics (167.9341ms)
+✔ WebMCP prepares dependent address fields for review; only manual submit reaches the existing receiver (729.739ms)
+✔ partial preparations report missing details and preserve human consent and unsupplied values (140.8436ms)
+✔ repeating the same preparation preserves the idempotency key after an unconfirmed submission (192.9332ms)
+✔ invalid or restricted tool arguments leave every existing entry unchanged (164.4616ms)
+✔ preparation replaces stale GPS with the supplied address and invalidates a pending GPS result (244.0571ms)
+✔ old browsers and blocked WebMCP registration retain the working human form (740.5082ms)
+✔ offline preparation tells the truth and leaves sending to the customer’s manual draft flow (196.6597ms)
+✔ registration lifecycle cleans up on pagehide and restores after a back-forward cache return (166.7346ms)
+ℹ tests 176
 ℹ suites 0
-ℹ pass 169
+ℹ pass 176
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 2997.443922
+ℹ duration_ms 19634.1009

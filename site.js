@@ -73,7 +73,7 @@
   let sourcePage = sourcePages.has(currentSource) ? currentSource : '';
   try {
     if (sourcePage) sessionStorage.setItem('pt-repair-source',sourcePage);
-    else if (location.pathname === '/' || location.pathname === '/index.html') {
+    else if (['/', '/index.html', '/request-a-repair', '/request-a-repair.html'].includes(location.pathname)) {
       const saved = sessionStorage.getItem('pt-repair-source');
       if (sourcePages.has(saved)) sourcePage = saved;
     }
@@ -532,6 +532,7 @@
       ? endpoint ? 'Review the form and choose Send repair details. The shop must confirm appointments.' : 'Review the form and choose Prepare text to the shop, then send the draft yourself.'
       : 'Complete the listed fields, then review the form before sending.';
     status.textContent = `${message} Nothing has been sent by the agent.`;
+    form.dispatchEvent(new Event('pt:repair-review'));
     form.scrollIntoView({behavior:'auto', block:'nearest'});
     (ready ? submit : byId(repairToolFields[incomplete[0]][0])).focus();
     return {status:ready ? 'ready_for_review' : 'needs_details', submitted:false, reviewRequired:true, message, fields:incomplete};
