@@ -63,14 +63,16 @@ test('specialty service links carry the right category into the submitted repair
   }
 });
 
-test('repair request requires a location choice and a nonblank address unless drop-off is selected',async t=>{
-  const x=setup(t);await settle();x.fill();
-  x.enter('request-location-choice','');x.send();await settle();assert.equal(x.leads().length,0);
+test('car location is optional, but choosing an address requires a nonblank one',async t=>{
+  const x=setup(t,{handler:()=>response({ok:false},503)});await settle();x.fill();
+  x.enter('request-location-choice','');x.d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));x.send();await settle();
+  assert.equal(x.leads().length,1);assert.equal(Object.hasOwn(x.leads()[0].body,'carLocation'),false);
+  assert.match(x.leads()[0].body.details,/Car location: not given yet/);
   x.enter('request-location-choice','location');x.d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
   assert.equal(x.d.getElementById('request-car-address').required,true);
-  x.enter('request-car-address','   ');x.send();await settle();assert.equal(x.leads().length,0);
+  x.enter('request-car-address','   ');x.send();await settle();assert.equal(x.leads().length,1);
   x.enter('request-car-address','123 Example St, Fort Myers');x.send();await settle();
-  const lead=x.leads()[0].body;assert.deepEqual(lead.carLocation,{type:'address',address:'123 Example St, Fort Myers'});
+  const lead=x.leads()[1].body;assert.deepEqual(lead.carLocation,{type:'address',address:'123 Example St, Fort Myers'});
   assert.match(lead.details,/Car location: 123 Example St, Fort Myers/);assert.match(lead.details,/Map: https:\/\/www\.google\.com\/maps\/search/);
 });
 
@@ -163,20 +165,25 @@ test('online form initializes the short request flow and enables the safe submit
   assert.equal(x.d.getElementById('request-instructions').textContent,x.initialInstructions,'script startup preserves the page guidance');
   await settle();
   assert.equal(x.d.getElementById('request-instructions').textContent,x.initialInstructions,'a successful health check preserves the page guidance');
-  assert.equal(x.d.getElementById('request-heading').textContent, 'Send your repair details');
-  assert.equal(x.d.getElementById('request-submit').textContent, 'Send repair details');
-  assert.ok(x.d.getElementById('request-instructions').textContent.includes('Send your repair details so the shop can review the problem and be better prepared when calling you back.'));
+  assert.equal(x.d.getElementById('request-heading').textContent, 'How can we help with your car?');
+  assert.equal(x.d.getElementById('request-submit').textContent, 'Request Repair');
+  assert.equal(x.d.getElementById('request-phone-label').textContent, 'Best number');
+  // The first screen is four fields; everything else waits behind the optional step.
+  const core = [...x.d.querySelectorAll('.request-fields--core :is(input,textarea,select)')].map(field => field.name);
+  assert.deepEqual(core, ['vehicle', 'details', 'name', 'phone']);
+  assert.equal(x.d.getElementById('request-options').open, false);
+  assert.match(x.d.querySelector('#request-options > summary').textContent, /Add photos or more details/);
   assert.equal(x.d.getElementById('request-submit').disabled, false);
   assert.doesNotMatch(x.d.getElementById('request-instructions').textContent, /prepare (?:a )?(?:text|message)|text draft/i);
-  for (const field of ['name', 'phone', 'details', 'city']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
-  for (const field of ['vehicle', 'timing']) assert.equal(x.d.getElementById(`request-${field}`).required, false);
+  for (const field of ['name', 'phone', 'details']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
+  for (const field of ['vehicle', 'timing', 'city', 'location-choice']) assert.equal(x.d.getElementById(`request-${field}`).required, false);
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="tel:"]').textContent, 'Call');
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href="#contact"]').textContent, 'Request a repair');
   assert.ok(x.d.querySelector('a[href^="sms:"]'), 'texting remains available in the page');
   assert.equal(x.leads().length, 0);
 });
 
-test('core fields require city; service, source and channel survive; receipt waits for saved confirmation', async t => {
+test('service, source and channel survive; receipt waits for saved confirmation', async t => {
   let confirm;
   const x = setup(t, {handler:() => new Promise(resolve => { confirm = resolve; })});
   await settle(); x.fill();
@@ -300,12 +307,15 @@ test('denied sender location still submits with typed city and without coordinat
   assert.equal(lead.mapsLink, undefined);
 });
 
-test('blank city blocks submit even when car drop-off is chosen', async t => {
+test('blank city still sends under the sender-v1 contract, marked Not provided', async t => {
   const x = setup(t, {handler:() => response({ok:true, received:true, id, receivedAt:new Date().toISOString()}, 201)});
   await settle(); x.fill();
   x.enter('request-city', '');
   x.send(); await settle();
-  assert.equal(x.leads().length, 0);
+  assert.equal(x.leads().length, 1);
+  assert.equal(x.leads()[0].body.locationContract, 'sender-v1');
+  assert.equal(x.leads()[0].body.city, 'Not provided');
+  assert.doesNotMatch(x.leads()[0].body.details, /City \/ ZIP/);
 });
 
 

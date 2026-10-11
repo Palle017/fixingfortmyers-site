@@ -95,7 +95,7 @@ test('partial preparations report missing details and preserve human consent and
   const result = x.execute({details:'The engine stalls.'});
   assert.equal(result.status, 'needs_details');
   assert.equal(result.submitted, false);
-  assert.deepEqual(Array.from(result.fields).sort(), ['city','locationChoice','name','phone']);
+  assert.deepEqual(Array.from(result.fields).sort(), ['name','phone']);
   assert.equal(x.field('vehicle').value, 'Existing vehicle');
   assert.equal(x.field('smsConsent').checked, true, 'tool does not alter a human’s choice');
   assert.equal(x.leads().length, 0);

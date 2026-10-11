@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/style.css?v=20261001-workshop">
   <link rel="stylesheet" href="/site-updates.css?v=20261011-tap-targets">
   <link rel="stylesheet" href="/home-clean.css?v=20261011-mobile-first">
-  <link rel="stylesheet" href="/repair-dialog.css?v=20261011-popup">
+  <link rel="stylesheet" href="/repair-dialog.css?v=20261011-simple-form">
 </head>
 <body class="home-clean" data-repair-popup>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -68,44 +68,44 @@
         <div class="request-page__actions"><a class="btn btn--primary request-page__open" href="#contact">Open repair form</a><a class="btn btn--outline" href="tel:+12393972048">Call (239) 397-2048</a></div>
 <div class="request-panel" id="contact" role="region" aria-labelledby="request-heading">
         <form id="bookingForm" class="repair-request" method="post" action="#contact">
-          <h2 id="request-heading">Send your repair details</h2>
-          <p id="request-instructions">Send your repair details so the shop can review the problem and be better prepared when calling you back. Include your vehicle, symptoms, location and whether it drives. Appointments are confirmed by the shop.</p>
+          <h2 id="request-heading">How can we help with your car?</h2>
+          <p id="request-instructions">Tell us the car and what’s going on. The shop reviews your request and calls you back. It takes about a minute.</p>
           <div class="request-fields request-fields--core">
-            <label class="request-full" for="request-details">What’s going on?<textarea id="request-details" name="details" rows="3" maxlength="4000" placeholder="Describe the problem in your own words." required></textarea></label>
-            <label class="request-full" for="request-service">Type of repair<select id="request-service" name="service"><option>Diagnosis / not sure yet</option><option>Walnut blasting / carbon cleaning</option><option>Engine</option><option>Transmission</option><option>Diesel</option><option>Oil change / maintenance</option><option>Electrical / no-start</option><option>A/C repair</option><option>Brakes</option><option>Module programming</option><option>Other</option><option hidden>Engine / transmission</option><option hidden>Diesel service</option><option hidden>Maintenance / other repair</option></select></label>
-            <label for="request-starts">Does it drive?<select id="request-starts" name="starts"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-            <label class="request-full" for="request-vehicle">Year, make &amp; model <span class="field-note">(if known)</span><input id="request-vehicle" name="vehicle" placeholder="e.g. 2018 Ford F-150" maxlength="160"></label>
-            <label class="request-full" for="request-location-choice">Car location or shop drop-off <span class="field-note">(required)</span><select id="request-location-choice" name="locationChoice" required aria-controls="request-car-location request-dropoff"><option value="">Choose one</option><option value="location">Car is at an address</option><option value="dropoff">Arrange a shop drop-off</option></select></label>
-            <div class="request-full request-car-location" id="request-car-location" hidden>
-              <label for="request-car-address">Car address or current location <span class="field-note">(required)</span><input id="request-car-address" name="carAddress" autocomplete="street-address" maxlength="500" placeholder="Street address, city and any parking details" disabled aria-describedby="request-location-help request-location-status"></label>
-              <button class="btn btn--outline" id="request-use-location" type="button">Use current location</button>
-              <p class="request-fineprint" id="request-location-help">Use current location only when you’re with the car. Your location is shared with the request when you send it.</p>
-              <p class="request-status" id="request-location-status" role="status" aria-live="polite"></p>
-            </div>
-            <div class="request-full" id="request-dropoff" hidden>
-              <label for="request-dropoff-time">Preferred drop-off time <span class="field-note">(optional)</span><input id="request-dropoff-time" name="dropoffTime" maxlength="160" placeholder="e.g. Friday morning or sometime this week" disabled></label>
-              <p class="request-fineprint">We’ll get back to you to arrange a drop-off time. Wait for confirmation before coming in.</p>
-            </div>
-            <label class="request-full" for="request-city">Your city or ZIP <span class="field-note">(required)</span><input id="request-city" name="city" autocomplete="address-level2" maxlength="100" placeholder="e.g. Fort Myers or 33901" required aria-describedby="request-sender-location-help request-sender-location-status"></label>
-            <div class="request-full request-sender-location">
-              <button class="btn btn--outline" id="request-use-my-location" type="button">Use my location</button>
-              <button class="btn btn--outline" id="request-remove-my-location" type="button" hidden>Remove map pin</button>
-              <p class="request-fineprint" id="request-sender-location-help">Optional. Shares your device’s location, which may differ from the car’s location. City or ZIP is always required. You can remove the pin before sending.</p>
-              <p class="request-status" id="request-sender-location-status" role="status" aria-live="polite"></p>
-              <input type="hidden" id="request-latitude" name="latitude" value="">
-              <input type="hidden" id="request-longitude" name="longitude" value="">
-              <input type="hidden" id="request-maps-link" name="mapsLink" value="">
-            </div>
-            <label for="request-name">Your name<input id="request-name" name="name" autocomplete="name" maxlength="100" required></label>
-            <label for="request-phone"><span id="request-phone-label">Phone number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required></label>
+            <label class="request-full" for="request-vehicle">Vehicle <span class="field-note">(year, make, model)</span><input id="request-vehicle" name="vehicle" placeholder="e.g. 2018 Ford F-150" maxlength="160" autocomplete="off" enterkeyhint="next"></label>
+            <label class="request-full" for="request-details">What’s going on?<textarea id="request-details" name="details" rows="3" maxlength="4000" placeholder="e.g. Grinding noise when I brake, started last week." required></textarea></label>
+            <label for="request-name">Your name<input id="request-name" name="name" autocomplete="name" maxlength="100" required enterkeyhint="next"></label>
+            <label for="request-phone"><span id="request-phone-label">Best number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required enterkeyhint="send"></label>
           </div>
           <details class="request-options" id="request-options">
-            <summary>More details &amp; contact preferences <span>(optional)</span></summary>
+            <summary>Add photos or more details <span>(optional)</span></summary>
+            <label class="request-full request-media" for="request-media" hidden>Photos or a short video of the problem <small>(up to 6)</small><input id="request-media" name="media" type="file" accept="image/*,video/*" multiple></label>
             <div class="request-fields">
+              <label class="request-full" for="request-service">Type of repair<select id="request-service" name="service"><option>Diagnosis / not sure yet</option><option>Walnut blasting / carbon cleaning</option><option>Engine</option><option>Transmission</option><option>Diesel</option><option>Oil change / maintenance</option><option>Electrical / no-start</option><option>A/C repair</option><option>Brakes</option><option>Module programming</option><option>Other</option><option hidden>Engine / transmission</option><option hidden>Diesel service</option><option hidden>Maintenance / other repair</option></select></label>
+              <label for="request-starts">Does it drive?<select id="request-starts" name="starts"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
               <label for="request-stranded">Are you stranded?<select id="request-stranded" name="stranded"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-              <label class="request-full" for="request-timing">Preferred timing <span class="field-note">(optional)</span><input id="request-timing" name="timing" maxlength="160" placeholder="e.g. This week; best callback after 3 pm"></label>
+              <label class="request-full" for="request-location-choice">Where is the car?<select id="request-location-choice" name="locationChoice" aria-controls="request-car-location request-dropoff"><option value="">Not sure yet / I’ll explain on the call</option><option value="location">At an address (home, work or roadside)</option><option value="dropoff">I can drop it off at the shop</option></select></label>
+              <div class="request-full request-car-location" id="request-car-location" hidden>
+                <label for="request-car-address">Car address or current location<input id="request-car-address" name="carAddress" autocomplete="street-address" maxlength="500" placeholder="Street address, city and any parking details" disabled aria-describedby="request-location-help request-location-status"></label>
+                <button class="btn btn--outline" id="request-use-location" type="button">Use current location</button>
+                <p class="request-fineprint" id="request-location-help">Use current location only when you’re with the car. Your location is shared with the request when you send it.</p>
+                <p class="request-status" id="request-location-status" role="status" aria-live="polite"></p>
+              </div>
+              <div class="request-full" id="request-dropoff" hidden>
+                <label for="request-dropoff-time">Preferred drop-off time <span class="field-note">(optional)</span><input id="request-dropoff-time" name="dropoffTime" maxlength="160" placeholder="e.g. Friday morning or sometime this week" disabled></label>
+                <p class="request-fineprint">We’ll get back to you to arrange a drop-off time. Wait for confirmation before coming in.</p>
+              </div>
+              <label class="request-full" for="request-city">Your city or ZIP<input id="request-city" name="city" autocomplete="postal-code" maxlength="100" placeholder="e.g. Fort Myers or 33901" aria-describedby="request-sender-location-help request-sender-location-status"></label>
+              <div class="request-full request-sender-location">
+                <button class="btn btn--outline" id="request-use-my-location" type="button">Use my location</button>
+                <button class="btn btn--outline" id="request-remove-my-location" type="button" hidden>Remove map pin</button>
+                <p class="request-fineprint" id="request-sender-location-help">Shares your device’s location, which may differ from the car’s location. You can remove the pin before sending.</p>
+                <p class="request-status" id="request-sender-location-status" role="status" aria-live="polite"></p>
+                <input type="hidden" id="request-latitude" name="latitude" value="">
+                <input type="hidden" id="request-longitude" name="longitude" value="">
+                <input type="hidden" id="request-maps-link" name="mapsLink" value="">
+              </div>
+              <label class="request-full" for="request-timing">Preferred timing<input id="request-timing" name="timing" maxlength="160" placeholder="e.g. This week; best callback after 3 pm"></label>
             </div>
-            <label class="request-full request-media" for="request-media" hidden>Photos or a short video of the problem <small>(optional, up to 6)</small><input id="request-media" name="media" type="file" accept="image/*,video/*" multiple></label>
         <label class="request-consent" hidden><input type="checkbox" id="request-sms-consent" name="smsConsent"> <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates. Optional; consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="/sms-terms">SMS terms</a> · <a href="/privacy-policy">Privacy policy</a>.</span></label>
 
       <details class="request-voice">
@@ -122,12 +122,23 @@
           </details>
           <p id="request-direct-consent" class="request-fineprint" hidden>By sending this text, you ask the shop to reply about this repair inquiry. No marketing. <a href="/privacy-policy">Privacy policy</a>.</p>
           <div class="request-honeypot" aria-hidden="true"><label>Leave this blank<input name="website" tabindex="-1" autocomplete="off"></label></div>
-          <div class="request-primary-actions"><button class="btn btn--primary" id="request-submit" type="submit" disabled>Send repair details</button></div>
+          <div class="request-primary-actions"><button class="btn btn--primary" id="request-submit" type="submit" disabled>Request Repair</button></div>
           <p class="request-trust">★ 4.8 from ~70 Google reviews · Appointments confirmed by the shop</p>
           <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
-          <p class="request-fineprint request-privacy">Your details are used to respond to this inquiry. <a href="/privacy-policy">Privacy policy</a>.</p>
+          <p class="request-fineprint request-privacy">Your details are used to respond to this request. <a href="/privacy-policy">Privacy policy</a>.</p>
           <details class="request-ai-help"><summary>Can my AI assistant help?</summary><p>If your browser’s AI assistant supports this form, it can help fill it out. Review the details before sending. Nothing is sent automatically.</p></details>
         </form>
+      <div class="request-done" id="request-done" hidden>
+        <h2 id="request-done-heading" tabindex="-1">Got it, we received your repair request.</h2>
+        <p>We’ll review it and contact you shortly. Nothing is booked until the shop confirms a time with you.</p>
+        <p class="request-fineprint" id="request-done-ref"></p>
+        <div class="request-actions">
+          <a class="btn btn--primary" href="tel:+12393972048">Call us (239) 397-2048</a>
+          <label class="btn btn--outline request-done__photo" id="request-done-photo" hidden>Add another photo<input id="request-done-media" type="file" accept="image/*,video/*" multiple></label>
+          <a class="btn btn--outline" href="/">Return home</a>
+        </div>
+        <p class="request-status" id="request-done-status" role="status" aria-live="polite"></p>
+      </div>
       <div class="request-backup" id="request-backup" hidden>
         <h3>Your text draft</h3>
         <p>Edit the message if needed. Then open your texting app and tap Send. This page has not sent your inquiry. If your device cannot open texts or leaves the message blank, copy the message or use email. Add a callback number if you want a call, especially when using email.</p>
@@ -136,7 +147,7 @@
         <div class="request-actions"><a class="btn btn--primary" id="request-text" href="sms:+12393972048">Open text draft to the shop</a><a class="btn btn--outline" id="request-email" href="mailto:fixingfortmyers@gmail.com">Open email draft</a><button class="btn btn--outline" type="button" id="request-copy">Copy request</button></div>
       </div>
 
-        <noscript><p>To request a repair, <a href="tel:+12393972048">call (239) 397-2048</a> or <a href="mailto:fixingfortmyers@gmail.com">email fixingfortmyers@gmail.com</a>. The online request form requires JavaScript.</p></noscript>
+<noscript><p>To request a repair, <a href="tel:+12393972048">call (239) 397-2048</a> or <a href="mailto:fixingfortmyers@gmail.com">email fixingfortmyers@gmail.com</a>. The online request form requires JavaScript.</p></noscript>
       </div>
       </div>
     </section>
@@ -208,6 +219,6 @@
 </footer>
   <script src="/contact-config.js?v=20261003-cloud-capture" defer></script>
   <script src="/repair-dialog.js?v=20261011-popup" defer></script>
-  <script src="/site.js?v=20261011-popup" defer></script>
+  <script src="/site.js?v=20261011-simple-form" defer></script>
 </body>
 </html>
