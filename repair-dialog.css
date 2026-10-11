@@ -16,3 +16,14 @@
 .request-page__actions{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0 28px}
 .request-page__actions .btn{min-height:48px}
 @media(max-width:480px){.repair-dialog{width:calc(100% - 12px);max-height:calc(100vh - 12px);max-height:calc(100dvh - 12px);border-radius:10px}.repair-dialog__controls{padding:8px 12px}.request-page{padding-top:108px}}
+/* Confirmed-receipt state shown in place of the form. */
+.request-done{padding:6px 0 4px}
+.request-done h2{font-size:26px;line-height:1.2;margin-bottom:10px;color:#fff}
+.request-done h2:focus{outline:none}
+.request-done p{color:#c8d6e3;line-height:1.55}
+.request-done .request-actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 8px}
+.request-done .request-actions .btn{min-height:48px;justify-content:center}
+.request-done__photo{position:relative;cursor:pointer}
+.request-done__photo input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.request-done__photo:focus-within{outline:3px solid #a5e1ff;outline-offset:3px}
+.request-done [hidden]{display:none!important}

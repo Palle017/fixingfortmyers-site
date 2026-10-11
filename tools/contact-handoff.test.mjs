@@ -54,22 +54,17 @@ test('published contact configuration sends a repair to cloud intake and keeps p
   }
 });
 
-test('voice send requires a car location and serializes its selected address as multipart JSON',async t=>{
+test('voice send needs an address only when the car is at one, and serializes it as multipart JSON',async t=>{
   const x=setup(t,{enabled:false,handler:async route=>({ok:true,status:route==='/healthz'?200:201,json:async()=>route==='/healthz'?{ok:true,media:'ready'}:{ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'}}),beforeScripts:w=>{
     mockRecorder(w);
   }});
   const d=x.w.document;await settle();
   x.enter('request-name','Synthetic Voice Customer');x.enter('request-phone','2395550100');x.enter('request-vehicle','Synthetic car');
   d.getElementById('voice-start').click();await settle();d.getElementById('voice-stop').click();
-  d.getElementById('voice-send').click();await settle();assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/voicenote').length,0);
+  x.enter('request-city',' Fort Myers ');
   x.enter('request-location-choice','location');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
   x.enter('request-car-address','   ');d.getElementById('voice-send').click();await settle();assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/voicenote').length,0);
   x.enter('request-car-address','123 Example St, Fort Myers');d.getElementById('voice-send').click();await settle();
-  assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/voicenote').length,0);
-  assert.match(d.getElementById('voice-status').textContent,/Enter your city or ZIP/);
-  x.enter('request-city','   ');d.getElementById('voice-send').click();await settle();
-  assert.equal(x.requests.filter(r=>r.route==='/hooks/lead/voicenote').length,0);
-  x.enter('request-city',' Fort Myers ');d.getElementById('voice-send').click();await settle();
   const sent=x.requests.filter(r=>r.route==='/hooks/lead/voicenote');assert.equal(sent.length,1);
   assert.equal(sent[0].body.get('city'),'Fort Myers');
   assert.ok(sent[0].body instanceof x.w.FormData);assert.ok(sent[0].body.get('audio').size>0);

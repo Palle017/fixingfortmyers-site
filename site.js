@@ -31,15 +31,42 @@
     deliver().catch(() => setTimeout(() => deliver().catch(() => {}), 1500));
   };
   reportMetric('visit');
+  // Google Analytics 4 measurement ID (G-XXXXXXXXXX). Empty means no tag loads;
+  // events still collect in window.dataLayer so a tag added later sees them.
+  const GA4_ID = '';
+  window.dataLayer = window.dataLayer || [];
+  const gtagReady = /^G-[A-Z0-9]{4,20}$/.test(GA4_ID) && metricsEnabled;
+  if (gtagReady) {
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', GA4_ID);
+    const tag = document.createElement('script');
+    tag.async = true; tag.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
+    document.head.append(tag);
+  }
+  // Conversion events carry fixed categories only: never names, phones, vehicles or symptoms.
+  const track = (eventName, params = {}) => {
+    const detail = {page_path: metricPath, lead_source: window.PT_LEAD_CHANNEL || metricSource, ...params};
+    try {
+      if (gtagReady) window.gtag('event', eventName, detail);
+      else window.dataLayer.push({event: eventName, ...detail});
+    } catch (_) { /* Analytics must never block contacting the shop. */ }
+  };
+  window.PT_TRACK = track;
   document.addEventListener('click', event => {
     const link = event.target.closest?.('a[href]');
     if (!link) return;
     const href = link.getAttribute('href');
-    if (/^tel:/i.test(href)) reportMetric('call_clicked');
-    else if (/^sms:/i.test(href)) reportMetric('text_clicked');
+    const placement = link.closest('#contact, .request-done') ? 'form' : link.closest('nav, .nav') ? 'nav' : link.closest('footer') ? 'footer' : link.closest('.mobile-contact-bar') ? 'sticky_bar' : 'page';
+    if (/^tel:/i.test(href)) { reportMetric('call_clicked'); track('phone_click', {placement}); }
+    else if (/^sms:/i.test(href)) { reportMetric('text_clicked'); track('text_click', {placement}); }
     else if (/^mailto:/i.test(href)) reportMetric('email_clicked');
     else {
-      try { if (new URL(href, location.href).origin === location.origin && /^\/parts(?:-quote)?(?:\.html)?\/?$/.test(new URL(href, location.href).pathname)) reportMetric('parts_quote_started'); }
+      try {
+        const url = new URL(href, location.href);
+        if (url.origin === location.origin && /^\/parts(?:-quote)?(?:\.html)?\/?$/.test(url.pathname)) reportMetric('parts_quote_started');
+        if (url.origin === location.origin && (url.hash === '#contact' || /^\/request-a-repair(?:\.html)?\/?$/.test(url.pathname))) track('request_form_click', {placement});
+      }
       catch (_) { /* Invalid links cannot produce analytics data. */ }
     }
   });
@@ -204,10 +231,6 @@
     senderLocationButton.disabled = false; senderLocationButton.textContent = 'Use my location';
     senderLocationStatus.textContent = 'Map pin removed from future requests and drafts. Requests already sent are unchanged.';
   });
-  cityField?.addEventListener('input', () => {
-    // Keep typed city as the required value; do not clear a pin the customer already approved.
-    cityField.setCustomValidity('');
-  });
   senderLocationButton?.addEventListener('click', () => {
     if (!navigator.geolocation) {
       if (senderLocationStatus) senderLocationStatus.textContent = 'Location is unavailable in this browser. Enter your city or ZIP instead.';
@@ -239,19 +262,19 @@
         senderMetadata = {senderAccuracyMeters:accuracy,senderCapturedAt:new Date(position.timestamp).toISOString()};
         senderPinChanged();
         finish();
-        if (senderLocationStatus) senderLocationStatus.textContent = `Map pin added (within about ${Math.max(1,Math.round(accuracy))} metres). City or ZIP is still required.`;
+        if (senderLocationStatus) senderLocationStatus.textContent = `Map pin added (within about ${Math.max(1,Math.round(accuracy))} metres).`;
       }, fail, {enableHighAccuracy:true,timeout:15000,maximumAge:0});
     } catch (_) { fail(); }
   });
   const applyMode = () => {
   phoneField.required = Boolean(endpoint);
-  byId('request-phone-label').textContent = endpoint ? 'Phone number' : 'Callback number, if different (optional)';
+  byId('request-phone-label').textContent = endpoint ? 'Best number' : 'Callback number, if different (optional)';
   byId('request-sms-consent').closest('.request-consent').hidden = !endpoint;
   byId('request-direct-consent').hidden = Boolean(endpoint);
   const media = byId('request-media'); if (media) media.closest('label').hidden = !(endpoint && mediaReady);
   const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = !endpoint;
-  const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'Send your repair details' : 'Prepare a repair message';
-  if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Send repair details' : 'Prepare text to the shop';
+  const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'How can we help with your car?' : 'Prepare a repair message';
+  if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Request Repair' : 'Prepare text to the shop';
   // Preserve the current page's guidance (and any Bay One handoff) while online.
   if (!endpoint) byId('request-instructions').textContent = 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
   };
@@ -288,10 +311,11 @@
       ? {latitude, longitude, mapsLink}
       : null;
     if (deviceLocation && carAddress.value !== `Current location: ${deviceLocation.latitude.toFixed(6)}, ${deviceLocation.longitude.toFixed(6)}`) deviceLocation = null;
-    const carLocation = locationChoice?.value === 'dropoff'
+    const choice = locationChoice?.value || '';
+    const carLocation = choice === 'dropoff'
       ? {type:'dropoff',preferredTime:String(data.get('dropoffTime') || '').trim()}
-      : deviceLocation || {type:'address',address:String(data.get('carAddress') || '').trim()};
-    const carLocationText = carLocation.type === 'dropoff'
+      : choice === 'location' ? deviceLocation || {type:'address',address:String(data.get('carAddress') || '').trim()} : null;
+    const carLocationText = !carLocation ? 'Car location: not given yet; ask on the callback.' : carLocation.type === 'dropoff'
       ? `Car location: Shop drop-off requested${carLocation.preferredTime ? '; preferred time: ' + carLocation.preferredTime : ''}. Shop to confirm.`
       : carLocation.type === 'device'
         ? `Car location: Current device location (${carLocation.latitude.toFixed(6)}, ${carLocation.longitude.toFixed(6)}; accuracy about ${Math.max(1,Math.round(carLocation.accuracyMeters))} metres)\nMap: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(carLocation.latitude + ',' + carLocation.longitude)}`
@@ -300,8 +324,10 @@
       ? `Sender map pin: ${senderPin.latitude.toFixed(6)}, ${senderPin.longitude.toFixed(6)}\nSender map: ${senderPin.mapsLink}`
       : '';
     // Keep these details useful to the existing receiver during a staged rollout.
-    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : ''].filter(Boolean).join('\n');
-    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(locationChoice ? {carLocation} : {}), city, ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    // Fixed categories only: where the visitor came from and the last service page viewed.
+    const attribution = `Found via: ${draftChannel || metricSource}${sourcePage ? '; last page viewed: /' + sourcePage : ''}`;
+    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', attribution].filter(Boolean).join('\n');
+    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
@@ -327,8 +353,12 @@
     const timer = setTimeout(() => controller.abort(), 18000);
     try {
       const response = await fetch(endpoint + path, { method: 'POST', body: json ? JSON.stringify(body) : body, headers: { ...(json ? { 'Content-Type': 'application/json' } : {}), 'Idempotency-Key': key }, signal: controller.signal, credentials: 'omit' });
-      const result = await response.json();
-      if (!response.ok || result.ok !== true || result.received !== true || typeof result.id !== 'string') throw new Error('unconfirmed');
+      let result = null;
+      try { result = await response.json(); } catch (_) { /* A non-JSON reply is not a receipt. */ }
+      if (!response.ok || result?.ok !== true || result.received !== true || typeof result.id !== 'string') {
+        // Keep the intake's short validation message (for example a bad phone number) to show as text.
+        throw Object.assign(new Error('unconfirmed'), {status: response.status, reason: typeof result?.error === 'string' && result.error.length <= 200 ? result.error : ''});
+      }
       return result;
     } finally { clearTimeout(timer); }
   };
@@ -343,22 +373,27 @@
       .finally(() => clearTimeout(probeTimer));
   }
   const mediaTypes = {jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',heic:'image/heic',heif:'image/heif',mp4:'video/mp4',m4v:'video/mp4',mov:'video/quicktime',webm:'video/webm'};
-  const uploadMedia = async result => {
-    const items = !(mediaReady && result.mediaToken) ? [] : [...(byId('request-media')?.files || [])]
+  const uploadMedia = async (result, files = byId('request-media')?.files, statusField = status) => {
+    const items = !(mediaReady && result.mediaToken) ? [] : [...(files || [])]
       .map(file => ({file, type: Object.values(mediaTypes).includes((file.type||'').toLowerCase()) ? file.type.toLowerCase() : mediaTypes[(file.name.split('.').pop()||'').toLowerCase()] || ''}))
       .filter(item => item.type && item.file.size <= (item.type.startsWith('video/') ? 100 : 15) * 1024 * 1024).slice(0, 6);
     let sent = 0;
     for (const [n, item] of items.entries()) {
-      status.textContent = `Request received. Sending photo/video ${n + 1} of ${items.length}… keep this page open.`;
+      statusField.textContent = `Request received. Sending photo/video ${n + 1} of ${items.length}… keep this page open.`;
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 300000);
       try { const response = await fetch(`${endpoint}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type,'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal}); if (response.ok) sent++; }
       catch (_) { /* The request is saved; the customer can text the file instead. */ }
       finally { clearTimeout(timer); }
     }
-    return {sent, total: items.length};
+    // Count skipped files (wrong type, too large or past the limit) as not sent, so the customer is told.
+    return {sent, total: Math.max(items.length, (files || []).length || 0)};
   };
   let preparingWithWebMcp = false;
-  form.addEventListener('input', () => { if (!preparingWithWebMcp) reportMetric('form_started'); requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = ''; });
+  let formStartTracked = false;
+  form.addEventListener('input', () => {
+    if (!preparingWithWebMcp) { reportMetric('form_started'); if (!formStartTracked) { formStartTracked = true; track('form_start'); } }
+    clearTimeout(retryTimer); requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = '';
+  });
   document.querySelector('.request-ai-help')?.addEventListener('toggle', event => { if (event.currentTarget.open) reportMetric('ai_help_opened'); });
   form.addEventListener('submit', async event => {
     event.preventDefault();
@@ -367,8 +402,7 @@
     // Browser autofill can insert invisible characters without an input event.
     phoneField.value = cleanPhone(phoneField.value);
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
-    if (cityField) cityField.setCustomValidity(cityField.value.trim() ? '' : 'Enter your city or ZIP.');
-    if (!form.reportValidity()) return;
+    if (!form.reportValidity()) { track('form_validation_error', {field: form.querySelector(':invalid')?.name || 'unknown'}); return; }
     const currentData = readRequest();
     if (requestPayload && sameRequestContent(currentData) !== sameRequestContent(requestPayload)) { requestKey = uid(); requestPayload = null; sentRequestId = ''; }
     const data = requestPayload || currentData;
@@ -378,29 +412,80 @@
     makeBackup(data);
     requestPayload = data;
     if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app, attach photos or a short video of the problem if you have them, and tap Send. Nothing has been sent yet. You can also copy the text, email it or call the shop.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
-    const submittedKey = requestKey;
-    sending = true; submit.disabled = true; submit.textContent = 'Sending…'; status.textContent = 'Sending your repair request…';
+    autoRetries = 0;
+    deliver(data, requestKey);
+  });
+  // Success replaces the form in place, so the customer never lands on an unrelated page.
+  const done = byId('request-done');
+  let receipt = null;
+  const showDone = (result, sentMedia) => {
+    receipt = result;
+    backup.hidden = true; form.hidden = true; done.hidden = false;
+    byId('request-done-ref').textContent = `Reference: ${result.id}`;
+    const failed = sentMedia.total - sentMedia.sent;
+    byId('request-done-status').textContent = failed
+      ? `${failed} photo/video file(s) did not go through. Choose Add another photo to try again, or text them to (239) 397-2048.`
+      : sentMedia.sent ? `${sentMedia.sent} photo/video file(s) received.` : '';
+    byId('request-done-photo').hidden = !(mediaReady && result.mediaToken);
+    byId('repair-request-dialog')?.setAttribute('aria-labelledby', 'request-done-heading');
+    const heading = byId('request-done-heading');
+    heading.focus({preventScroll:true});
+    done.scrollIntoView({behavior:'auto', block:'nearest'});
+    // Receipt evidence contains no name, phone number, vehicle or message contents.
+    try { sessionStorage.setItem('pt-last-request', JSON.stringify({id: result.id, receivedAt: result.receivedAt || new Date().toISOString(), confirmed:true})); } catch (_) { /* The on-page receipt is enough. */ }
+  };
+  byId('request-done-media')?.addEventListener('change', async event => {
+    const input = event.currentTarget, doneStatus = byId('request-done-status');
+    if (!receipt || !input.files.length) return;
+    input.disabled = true;
+    const sentMedia = await uploadMedia(receipt, input.files, doneStatus);
+    input.value = ''; input.disabled = false;
+    if (sentMedia.total) track('form_photo_added', {count: sentMedia.sent});
+    doneStatus.textContent = !sentMedia.total
+      ? 'That file type or size can’t be sent here. Text it to (239) 397-2048 instead.'
+      : sentMedia.sent === sentMedia.total ? `${sentMedia.sent} more photo/video file(s) received. Thank you.`
+      : `${sentMedia.total - sentMedia.sent} file(s) did not go through. Try again, or text them to (239) 397-2048.`;
+  });
+  // A dropped connection retries the same saved payload and key in the background, so a
+  // customer who already pressed send is not left with an unsent lead after a brief outage.
+  let retryTimer = 0, autoRetries = 0;
+  // Only a 4xx is a definite rejection; anything else may have been saved, so retry with the same key.
+  const retryable = error => !error.status || error.status < 400 || error.status >= 500 || error.status === 408 || error.status === 429;
+  async function deliver(data, submittedKey) {
+    clearTimeout(retryTimer);
+    sending = true; submit.disabled = true; submit.textContent = 'Sending…';
+    status.textContent = autoRetries ? 'Trying again to send your repair request…' : 'Sending your repair request…';
     reportMetric('submit_attempted', false);
+    track('form_submit_attempt', {service: data.service, attempt: autoRetries + 1});
     try {
       const result = await send('/hooks/lead/webform', data, submittedKey);
       if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
       sentRequestId = result.id;
+      const files = byId('request-media')?.files?.length || 0;
+      track('form_submit_success', {service: data.service, has_photos: files > 0, car_location: data.carLocation?.type || 'not_given', text_consent: data.smsConsent === true});
+      status.textContent = `Repair request received. Reference: ${result.id}.`;
       const sentMedia = await uploadMedia(result);
-      if (sentMedia.sent < sentMedia.total) { status.textContent = `Repair request received (reference ${result.id}). ${sentMedia.total - sentMedia.sent} photo/video file(s) did not go through; text them to the shop at (239) 397-2048.`; submit.textContent = 'Request received'; backup.hidden = true; return; }
-      status.textContent = `Repair request received. Reference: ${result.id}. Opening your confirmation…`;
-      backup.hidden = true;
-      submit.textContent = 'Request received';
-      // Receipt evidence contains no name, phone number, vehicle or message contents.
-      try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id: result.id, receivedAt: result.receivedAt || new Date().toISOString(), confirmed:true,smsConsent:data.smsConsent })); } catch (_) { status.textContent = `Repair request received and saved. Reference: ${result.id}. Keep this reference; no appointment is confirmed yet.`; return; }
-      location.assign('/request-received.html');
-    } catch (_) {
+      showDone(result, sentMedia);
+    } catch (error) {
       reportMetric('submit_unconfirmed', false);
-      status.textContent = submittedKey !== requestKey
-        ? 'Receipt of the earlier request could not be confirmed. Your changed details have not been sent. Send again to share the update, or call (239) 397-2048.'
-        : 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the text/email draft and send it yourself.';
-      submit.textContent = submittedKey !== requestKey ? 'Send updated request' : 'Retry repair request';
-    } finally { sending = false; submit.disabled = false; }
-  });
+      track('form_submit_error', {reason: error.status ? `http_${error.status}` : 'network', attempt: autoRetries + 1});
+      if (submittedKey !== requestKey) {
+        status.textContent = 'Receipt of the earlier request could not be confirmed. Your changed details have not been sent. Send again to share the update, or call (239) 397-2048.';
+        submit.textContent = 'Send updated request';
+      } else if (error.status && !retryable(error)) {
+        status.textContent = `${error.reason || 'The shop’s system could not accept this request.'} Your details are still here: correct them and send again, or call (239) 397-2048.`;
+        submit.textContent = 'Retry repair request';
+      } else if (autoRetries < 2) {
+        autoRetries++;
+        status.textContent = 'We could not confirm receipt yet. Your details are safe on this page, and we’re trying again in a few seconds. You can also call (239) 397-2048.';
+        submit.textContent = 'Retry now';
+        retryTimer = setTimeout(() => { if (!sending && !sentRequestId && submittedKey === requestKey && requestPayload) deliver(requestPayload, submittedKey); }, autoRetries === 1 ? 4000 : 12000);
+      } else {
+        status.textContent = 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the text/email draft and send it yourself.';
+        submit.textContent = 'Retry repair request';
+      }
+    } finally { sending = false; submit.disabled = form.hidden; }
+  }
   // With scripts unavailable the disabled control cannot navigate away with an unsent form.
   submit.disabled = false;
   byId('request-copy').addEventListener('click', async () => {
@@ -438,9 +523,7 @@
   stop.addEventListener('click', () => { if (recorder?.state === 'recording') recorder.stop(); });
   voiceSend.addEventListener('click', async () => {
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
-    if ((locationChoice && !locationChoice.reportValidity()) || (carAddress && !carAddress.disabled && !carAddress.reportValidity())) { voiceStatus.textContent = 'Choose the car location or shop drop-off above before sending your recording.'; return; }
-    if (cityField) cityField.setCustomValidity(cityField.value.trim() ? '' : 'Enter your city or ZIP.');
-    if (cityField && !cityField.reportValidity()) { voiceStatus.textContent = 'Enter your city or ZIP above before sending your recording.'; cityField.focus(); return; }
+    if (carAddress && !carAddress.disabled && !carAddress.reportValidity()) { voiceStatus.textContent = 'Enter the car’s address above, or change “Where is the car?” to Not sure yet, before sending your recording.'; return; }
     const currentData = { ...readRequest(), source:'voice', requestId: sentRequestId };
     if (voicePayload && sameRequestContent(currentData) !== sameRequestContent(voicePayload)) { voiceKey = uid(); voicePayload = null; }
     const data = voicePayload || currentData;
@@ -469,12 +552,12 @@
     service: ['request-service', 'The type of repair, or Diagnosis / not sure yet.'],
     starts: ['request-starts', 'Whether the vehicle can be driven: yes, no, or unknown.'],
     vehicle: ['request-vehicle', 'Vehicle year, make and model, if known.'],
-    locationChoice: ['request-location-choice', 'location means the car is at an address; dropoff means asking the shop to arrange a drop-off.'],
+    locationChoice: ['request-location-choice', 'Optional. location means the car is at an address; dropoff means asking the shop to arrange a drop-off.'],
     carAddress: ['request-car-address', 'Street address, city and parking details when locationChoice is location.'],
     dropoffTime: ['request-dropoff-time', 'Preferred time when locationChoice is dropoff; the shop must confirm it.'],
     name: ['request-name', 'The customer’s name. Required before sending.'],
     phone: ['request-phone', 'The customer’s callback number, including area code. Required for online requests.'],
-    city: ['request-city', 'Your city or ZIP code; required before submission.'],
+    city: ['request-city', 'The customer’s city or ZIP code, if known.'],
     stranded: ['request-stranded', 'Whether the customer is stranded: yes, no, or unknown.'],
     timing: ['request-timing', 'Preferred repair timing or callback time, in the customer’s words.']
   };
@@ -521,7 +604,6 @@
     reportMetric('webmcp_prepared');
     // Native constraints plus the same phone/address rules used on human submit.
     if (!carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
-    cityField.setCustomValidity(cityField.value.trim() ? '' : 'Enter your city or ZIP.');
     const incomplete = Object.entries(repairToolFields).filter(([, [id]]) => {
       const field = byId(id);
       return !field.disabled && ((!field.value.trim() && field.required) || !field.checkValidity());
