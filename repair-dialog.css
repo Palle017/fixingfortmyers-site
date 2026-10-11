@@ -1,0 +1,18 @@
+/* Native modal focus, Escape and background inertness; inline form remains the fallback. */
+.repair-dialog{position:fixed;inset:0;width:min(680px,calc(100% - 24px));max-width:none;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);margin:auto;padding:0;border:1px solid #4a6c86;border-radius:16px;background:#111c28;color:#d8e3ef;box-shadow:0 24px 80px #0009;overflow:auto;overscroll-behavior:contain;scroll-padding-top:76px}
+.repair-dialog::backdrop{background:rgb(0 0 0 / .78)}
+.repair-dialog__controls{position:sticky;top:0;z-index:2;display:flex;justify-content:flex-end;padding:10px 16px;background:#111c28;border-bottom:1px solid #35536c}
+.repair-dialog__close{min-height:44px;min-width:100px;padding:8px 14px;border:1px solid #79d0ff;border-radius:7px;background:#152b3e;color:#f1f7ff;font:600 16px/1.4 'Barlow',sans-serif;cursor:pointer}
+.repair-dialog__close:hover{background:#21425a}
+.repair-dialog__close:focus-visible,.repair-dialog :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #a5e1ff;outline-offset:3px}
+.home-clean .repair-dialog .request-panel{border:0;border-radius:0;box-shadow:none;padding-top:18px}
+.repair-dialog .request-panel{position:relative;overflow-wrap:anywhere}
+.repair-dialog .request-honeypot{position:fixed}
+.repair-dialog-open,.repair-dialog-open body{overflow:hidden}
+.request-page{padding:124px 0 56px;background:#0b1119}
+.request-page .container{max-width:740px}
+.request-page h1{font:400 clamp(36px,6vw,52px)/1.1 'Bebas Neue',sans-serif;color:#fff;margin:12px 0}
+.request-page__intro{color:#c8d6e3;line-height:1.6;margin-bottom:18px}
+.request-page__actions{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0 28px}
+.request-page__actions .btn{min-height:48px}
+@media(max-width:480px){.repair-dialog{width:calc(100% - 12px);max-height:calc(100vh - 12px);max-height:calc(100dvh - 12px);border-radius:10px}.repair-dialog__controls{padding:8px 12px}.request-page{padding-top:108px}}
