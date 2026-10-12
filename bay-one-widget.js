@@ -7,6 +7,7 @@
   if (document.getElementById('bay-one-widget')) return;
   const script = document.currentScript;
   const apiBase = String(config.endpoint || window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
+  const leadBase = String(window.PT_CONTACT_CONFIG?.endpoint || apiBase).replace(/\/$/, '');
   if (!apiBase) return;
   // Notes carried from Bay One on another page are restored even if the server is now unreachable.
   const handoffKey = 'pt-bayone-service-draft-v1';
@@ -40,50 +41,38 @@
     if (saved && Date.now() - saved.at < 30*60*1000 && typeof saved.summary === 'string' && prefillService(saved.summary,saved.service,saved.intake || {})) sessionStorage.removeItem(handoffKey);
   } catch (_) { /* An explicit service handoff still works without storage. */ }
 
-  // Only offer Bay One when its server answers; otherwise the page keeps its call, text and form options.
-  // An unreachable server is remembered for a few minutes so each page view doesn't wait on it again.
-  const downKey = 'pt-bayone-down';
-  let recentlyDown = false;
-  try { recentlyDown = Date.now() - Number(sessionStorage.getItem(downKey) || 0) < 5*60*1000; } catch (_) { /* check as usual */ }
-  const markDown = () => { try { sessionStorage.setItem(downKey, String(Date.now())); } catch (_) { /* check again next page */ } };
-  if (!recentlyDown) {
-    const controller = new AbortController(), healthTimer = setTimeout(() => controller.abort(), 6000);
-    fetch(apiBase+'/healthz', { credentials:'omit', cache:'no-store', signal:controller.signal })
-      .then(response => response.ok ? response.json() : null)
-      .then(health => {
-        if (health?.ok === true && health.chat !== 'unavailable') { try { sessionStorage.removeItem(downKey); } catch (_) { /* harmless */ } if (!document.getElementById('bay-one-widget')) mount(health.media === 'ready'); }
-        else markDown();
-      })
-      .catch(markDown)
-      .finally(() => clearTimeout(healthTimer));
-  }
+  // A small optional entry stays visible when the receiver is offline.
+  // Connect only when opened; unavailable AI never looks like an answered chat.
+  const markDown = () => { try { sessionStorage.setItem('pt-bayone-down',String(Date.now())); } catch (_) { /* Optional outage marker. */ } };
+  mount();
 
   function mount(mediaReady = false) {
     const customAvatar = config.avatar || script?.dataset.avatar;
     const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
     const css = document.createElement('link');
-    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20261011-offline-fallback', script?.src || location.href).href;
+    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20261012-assistant', script?.src || location.href).href;
     document.head.append(css);
     const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
     widget.setAttribute('aria-label', 'Bay One repair assistant');
     const portrait = `<span class="b1-avatar${customAvatar ? '' : ' b1-avatar-sheet'}" aria-hidden="true"><span class="b1-monogram">B1</span></span>`;
     widget.innerHTML = `
       <button class="b1-launcher" type="button" aria-label="Ask Bay One, the AI repair assistant" aria-expanded="false" aria-controls="b1-panel">
-        ${portrait}<span class="b1-launcher-copy"><small><i class="b1-dot"></i> Here to help</small><strong><img class="b1-logo" src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">Ask Bay One</strong><span>Describe your problem · Reach the shop</span></span>
+        ${portrait}<span class="b1-launcher-copy"><small><i class="b1-dot"></i> AI assistant</small><strong><img class="b1-logo" data-b1-src="/assets/bay-one-b1-logo-20260908.jpg" alt="" width="438" height="329">Ask Bay One</strong><span>Questions · repair help</span></span>
       </button>
       <section class="b1-panel" id="b1-panel" role="dialog" aria-label="Chat with Bay One" hidden>
-        <header class="b1-header">${portrait}<div class="b1-brand"><h2 class="b1-title"><img class="b1-wordmark" src="/assets/bay-one-wordmark-20260908.jpg" alt="Bay One AI" width="1280" height="960"></h2><p class="b1-subtitle">The shop’s AI repair intake</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
-        <div class="b1-allowance">A few quick questions · Your details go straight to the shop</div>
+        <header class="b1-header">${portrait}<div class="b1-brand"><h2 class="b1-title"><img class="b1-wordmark" data-b1-src="/assets/bay-one-wordmark-20260908.jpg" alt="Bay One AI" width="1280" height="960"></h2><p class="b1-subtitle">Questions, rough estimates & repair help</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
+        <div class="b1-allowance" aria-live="polite">Connect to check estimate availability · Shop confirms final prices</div>
         <div class="b1-messages" role="log" aria-label="Conversation with Bay One" aria-live="polite" aria-relevant="additions text"></div>
-        <div class="b1-suggestions"><button type="button" data-b1-suggestion="question">Describe the problem</button></div>
+        <div class="b1-suggestions"><button type="button" data-b1-suggestion="question">Ask about a symptom</button><button type="button" data-b1-suggestion="estimate" disabled>Get a rough estimate</button></div>
         <form class="b1-composer">
+          <div class="b1-mode" role="group" aria-label="Conversation type"><button type="button" data-b1-mode="chat" aria-pressed="true">Ask a question</button><button type="button" data-b1-mode="estimate" aria-pressed="false" disabled>Rough estimate</button></div>
           <button class="b1-send-now" type="button" hidden>Ready? Send this to the shop</button>
-          <label class="b1-field-label" for="b1-message">What is happening with your vehicle?</label>
-          <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Describe the problem. Partial vehicle details are okay." required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+          <label class="b1-field-label" for="b1-message">What can I help you with?</label>
+          <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Ask a question or describe your car problem…" required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           <div class="b1-status" role="status" aria-live="polite"></div>
           <div class="b1-fallback" hidden><p>Bay One can’t reach the shop right now. Your notes are kept, so send them with the repair form or call.</p><a class="b1-fallback-link b1-fallback-form" href="/#contact">Send with the repair form</a> <a class="b1-fallback-link" href="tel:+12393972048">Call (239) 397-2048</a></div>
         </form>
-        <footer class="b1-footer"><span><a href="/privacy-policy.html">Chat privacy</a> · <a href="tel:+12393972048">Call — AI intake</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
+        <footer class="b1-footer"><span>Planning ranges only; the shop confirms prices. <a href="/privacy-policy">Chat privacy</a> · <a href="tel:+12393972048">Call — AI intake</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
       </section>`;
     document.body.append(widget);
     const $ = selector => widget.querySelector(selector);
@@ -93,18 +82,23 @@
     let opener = launcher;
     const entryButtons = [launcher];
     const storageKey = 'pt-bayone-visitor-v1';
-    const state = { token: '', sessionReady: false, sessionPromise: null, busy: false, mode: 'chat', failed: null, customerMessages:[], intake:{} };
+    const state = { token: '', sessionReady: false, sessionPromise: null, busy: false, mode: 'chat', failed: null, customerMessages:[], estimateSummaries:[], intake:{}, usage:null, capabilities:null };
     try { state.token = localStorage.getItem(storageKey) || ''; } catch (_) { /* The server also enforces the allowance by network. */ }
     const uuid = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const n = crypto.getRandomValues(new Uint8Array(1))[0] & 15; return (c === 'x' ? n : ((n & 3) | 8)).toString(16); });
 
-    if (avatarUrl) widget.querySelectorAll('.b1-avatar').forEach(container => {
-      const img = document.createElement('img'); img.src = avatarUrl; img.alt = ''; img.decoding = 'async';
-      img.addEventListener('load', () => container.classList.add('has-image'));
-      img.addEventListener('error', () => img.remove()); container.append(img);
-    });
+    let artLoaded = false;
+    function loadArtwork() {
+      if (artLoaded) return; artLoaded = true; widget.classList.add('b1-art-loaded');
+      widget.querySelectorAll('[data-b1-src]').forEach(img => { img.src = img.dataset.b1Src; img.decoding = 'async'; });
+      if (avatarUrl) widget.querySelectorAll('.b1-avatar').forEach(container => {
+        const img = document.createElement('img'); img.src = avatarUrl; img.alt = ''; img.decoding = 'async';
+        img.addEventListener('load', () => container.classList.add('has-image'));
+        img.addEventListener('error', () => img.remove()); container.append(img);
+      });
+    }
 
     function handoff(event) {
-      const notes = [...state.customerMessages];
+      const notes = [...state.customerMessages,...state.estimateSummaries];
       const unsent = input.value.trim();
       if (unsent && notes.at(-1) !== unsent) notes.push(unsent);
       const summary = notes.length ? `Customer notes from Bay One:\n${notes.join('\n\n')}` : '';
@@ -118,18 +112,31 @@
       else if (summary) { try { sessionStorage.setItem(handoffKey,JSON.stringify({at:Date.now(),summary,service,intake:fields})); } catch (_) { status.textContent = 'Your browser could not carry the notes to the form. Copy the important details before switching.'; event.preventDefault(); open(); } }
     }
 
-    function addMessage(speaker, text) {
+    function addMessage(speaker, text, estimate) {
       const row = document.createElement('div'); row.className = `b1-message b1-${speaker}`;
       const label = document.createElement('span'); label.className = 'b1-message-label'; label.textContent = speaker === 'user' ? 'YOU' : 'BAY ONE';
       const body = document.createElement('p'); body.textContent = String(text || '').slice(0, 20000);
       row.append(label, body);
+      if (estimate && Number.isFinite(estimate.low) && Number.isFinite(estimate.high) && estimate.low > 0 && estimate.high > estimate.low) {
+        const card = document.createElement('div'); card.className = 'b1-estimate';
+        const title = document.createElement('span'); title.className = 'b1-estimate-label'; title.textContent = 'ROUGH PLANNING RANGE';
+        const price = document.createElement('strong'); price.className = 'b1-estimate-range';
+        const money = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+        price.textContent = money.format(estimate.low)+'–'+money.format(estimate.high); card.append(title,price);
+        const list = document.createElement('ul');
+        for (const assumption of (estimate.assumptions || []).slice(0,4)) { const li=document.createElement('li'); li.textContent=String(assumption); list.append(li); }
+        card.append(list);
+        const note=document.createElement('p'); note.className='b1-estimate-note'; note.textContent='AI planning range, not a shop quote. Parts, labor and the actual repair need confirmation.'; card.append(note);
+        row.append(card);
+        state.estimateSummaries.push('Bay One AI planning range (not a shop quote): '+price.textContent+' for '+String(estimate.repair || 'the requested repair')+'. '+(estimate.assumptions || []).slice(0,4).join('; '));
+      }
       messages.append(row); messages.scrollTop = messages.scrollHeight;
       return row;
     }
 
     // A dropped or unreachable server (laptop off, timeout, 5xx) gets the form and call instead of a dead end.
     function fallback(error) {
-      if (!error?.offline) return;
+      if (!error?.offline && !['estimate_unavailable','chat_unavailable','intake_only'].includes(error?.code)) return;
       $('.b1-fallback').hidden = false; markDown();
     }
 
@@ -142,7 +149,7 @@
         try { data = await response.json(); } catch (_) { throw Object.assign(new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'Bay One’s reply could not be confirmed. Your message is still here.'), {offline:true}); }
         if (!response.ok || data.ok !== true) {
           const error = new Error(String(data.error || 'Bay One is unavailable at the moment. Please try again or contact the shop.'));
-          error.code = data.code; error.usage = data.usage; error.retryAfter = data.retry_after; error.offline = response.status >= 500 && !data.code; throw error;
+          error.code = data.code; error.usage = data.usage; error.retryAfter = data.retry_after; error.offline = response.status >= 500; throw error;
         }
         return data;
       } catch (error) {
@@ -152,14 +159,57 @@
       } finally { clearTimeout(timer); }
     }
 
+    function updateAvailability(result = {}) {
+      if (result.usage) state.usage = result.usage;
+      if (result.capabilities) state.capabilities = result.capabilities;
+      if (typeof result.canEstimate === 'boolean') state.canEstimate = result.canEstimate;
+      const estimates = state.canEstimate === true;
+      const remaining = state.usage?.remaining;
+      $('.b1-allowance').textContent = estimates
+        ? (remaining === 0 ? 'Today’s 2 rough estimates used · Questions welcome' : (Number.isFinite(remaining) ? remaining : 2)+' rough estimates left today · Shop confirms final prices')
+        : 'Rough estimates are not connected right now · Use the repair form for pricing';
+      widget.querySelectorAll('[data-b1-mode="estimate"],[data-b1-suggestion="estimate"]').forEach(button => {
+        button.disabled = state.busy || !estimates || remaining === 0;
+        button.title = !estimates ? 'This receiver has not enabled rough estimates.' : remaining === 0 ? 'Your allowance resets daily in Eastern time.' : '';
+      });
+      if ((!estimates || remaining === 0) && state.mode === 'estimate') mode('chat');
+    }
+    function mode(value) {
+      if (value === 'estimate' && (state.canEstimate !== true || state.usage?.remaining === 0)) return;
+      state.mode=value;
+      widget.querySelectorAll('[data-b1-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.b1Mode===value)));
+      $('.b1-field-label').textContent=value==='estimate'?'Vehicle year, make, model and specific repair':'What can I help you with?';
+      input.placeholder=value==='estimate'?'Example: 2015 Honda Civic, replace the front brake pads and rotors…':'Ask a question or describe your car problem…';
+    }
     async function session() {
       if (state.sessionReady) return;
       if (state.sessionPromise) return state.sessionPromise;
-      state.sessionPromise = request('/chat/session', { visitor_token:state.token || undefined }).then(result => {
-        if (typeof result.visitor_token !== 'string' || !result.visitor_token) throw new Error('Bay One could not start this conversation. Please try again.');
-        state.token = result.visitor_token; state.sessionReady = true;
-        try { localStorage.setItem(storageKey, state.token); } catch (_) { /* Continue with the current tab’s token. */ }
-      }).finally(() => { state.sessionPromise = null; });
+      state.sessionPromise = (async () => {
+        const probe = new AbortController(), timer=setTimeout(()=>probe.abort(),6000);
+        let health;
+        try {
+          const response=await fetch(apiBase+'/healthz',{credentials:'omit',cache:'no-store',signal:probe.signal});
+          health=await response.json();
+          if(!response.ok || health?.ok!==true || health.chat==='unavailable')throw new Error('down');
+        } catch (_) { throw Object.assign(new Error('Bay One is offline right now. Use the repair form or call the shop; your notes stay here.'),{offline:true}); }
+        finally { clearTimeout(timer); }
+        mediaReady=health.media==='ready' && leadBase===apiBase;
+        if(leadBase!==apiBase) {
+          const mediaProbe=new AbortController(), mediaTimer=setTimeout(()=>mediaProbe.abort(),6000);
+          fetch(leadBase+'/healthz',{credentials:'omit',cache:'no-store',signal:mediaProbe.signal})
+            .then(response=>response.ok?response.json():null)
+            .then(result=>{mediaReady=result?.ok===true&&result.media==='ready';mediaInput.closest('label').hidden=!mediaReady;})
+            .catch(()=>{}).finally(()=>clearTimeout(mediaTimer));
+        }
+        mediaInput.closest('label').hidden=!mediaReady;
+        const result=await request('/chat/session',{visitor_token:state.token || undefined});
+        if(typeof result.visitor_token!=='string'||!result.visitor_token)throw Object.assign(new Error('Bay One could not start this conversation. Please use the repair form or try again.'),{offline:true});
+        state.token=result.visitor_token; state.sessionReady=true; updateAvailability(result); $('.b1-fallback').hidden=state.capabilities?.questions!==false;
+        $('.b1-fallback p').textContent=state.capabilities?.questions===true
+          ? 'Prefer to speak to the shop? Send your details with the repair form or call.'
+          : 'This receiver is a repair-request helper. AI questions and estimates are not connected here yet.';
+        try { localStorage.setItem(storageKey,state.token); } catch (_) { /* Current tab token still works. */ }
+      })().finally(()=>{state.sessionPromise=null;});
       return state.sessionPromise;
     }
 
@@ -167,11 +217,12 @@
       state.busy = value; input.disabled = value; sendButton.disabled = value;
       widget.dataset.avatarState = value ? 'thinking' : 'idle';
       sendButton.setAttribute('aria-label', value ? 'Waiting for Bay One' : 'Send message to Bay One');
+      widget.querySelectorAll('[data-b1-mode="chat"]').forEach(button=>button.disabled=value); updateAvailability();
     }
 
     function open(event) {
       opener = event?.currentTarget instanceof HTMLElement ? event.currentTarget : document.activeElement;
-      panel.hidden = false; launcher.hidden = true; launcher.setAttribute('aria-expanded','true');
+      loadArtwork(); panel.hidden = false; launcher.hidden = true; launcher.setAttribute('aria-expanded','true');
       entryButtons.forEach(button => button.setAttribute('aria-expanded','true'));
       $('.b1-close').focus({preventScroll:true}); viewport();
       if (!state.sessionReady) { status.textContent = 'Connecting to Bay One…'; session().then(() => { if (!state.busy) status.textContent = ''; }).catch(error => { status.textContent = error.message; fallback(error); }); }
@@ -191,7 +242,8 @@
     if (contactBar) widget.classList.add('b1-has-contact-bar');
     widget.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); close(); } });
     input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('.b1-composer').requestSubmit(); } });
-    widget.querySelectorAll('[data-b1-suggestion]').forEach(button => button.addEventListener('click', () => input.focus()));
+    widget.querySelectorAll('[data-b1-suggestion]').forEach(button => button.addEventListener('click', () => { mode(button.dataset.b1Suggestion==='estimate'?'estimate':'chat'); input.focus(); }));
+    widget.querySelectorAll('[data-b1-mode]').forEach(button=>button.addEventListener('click',()=>{mode(button.dataset.b1Mode);input.focus();}));
 
     $('.b1-composer').addEventListener('submit', async event => {
       event.preventDefault(); if (state.busy) return;
@@ -214,14 +266,17 @@
             state.intake[name] = value;
           }
         }
-        addMessage('assistant',result.reply); offerSend(true); state.failed = null; input.value = ''; status.textContent = '';
+        const estimatedVehicle=result.estimate?.vehicle;
+        if(typeof estimatedVehicle==='string'&&estimatedVehicle.length<=160&&state.customerMessages.some(message=>message.toLowerCase().includes(estimatedVehicle.toLowerCase())))state.intake.vehicle=estimatedVehicle;
+        updateAvailability(result); addMessage('assistant',result.reply,result.estimate); offerSend(result.kind==='intake'||(!result.kind&&Boolean(result.intake))); state.failed = null; input.value = ''; status.textContent = '';
+        if(result.assist==='scripted') { $('.b1-fallback').hidden=false; $('.b1-fallback p').textContent='AI answers are unavailable. This is the repair-request helper; it does not generate an estimate.'; }
       } catch (error) {
         state.failed = !error.code || error.code === 'request_pending' ? pending : null;
         if (error.code === 'invalid_session') {
           state.sessionReady = false; state.token = '';
           try { localStorage.removeItem(storageKey); } catch (_) { /* The next request will still create a fresh session. */ }
         }
-        status.textContent = error.message; fallback(error);
+        if(error.usage)updateAvailability({usage:error.usage}); status.textContent = error.message; fallback(error);
         if (error.code === 'rate_limit' && error.retryAfter) status.textContent += ` Try again in about ${Math.ceil(Number(error.retryAfter))} seconds.`;
       } finally {
         clearTimeout(slow); busy(false); if (!panel.hidden && matchMedia('(pointer:fine)').matches) input.focus({preventScroll:true});
@@ -292,7 +347,7 @@
         if (!item || (item.type.startsWith('image/') && item.file.size > MEDIA.image)) { failed.push(original.file.name + ' (too large)'); continue; }
         const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 300000);
         try {
-          const response = await fetch(`${apiBase}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type, 'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal});
+          const response = await fetch(`${leadBase}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type, 'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal});
           const reply = await response.json().catch(() => ({}));
           if (!response.ok || reply.received !== true) throw new Error(reply.error || 'not saved');
           sent++;
@@ -337,7 +392,7 @@
         const body = {
         name:String(data.get('name') || '').trim(), phone:String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}),
         vehicle:String(state.intake.vehicle || '').slice(0,160), service:String(window.PT_REPAIR_CONTEXT?.service || '').slice(0,160),
-        details:('Bay One chat on '+location.pathname+':\n'+state.customerMessages.join('\n')).slice(0,6000),
+        details:('Bay One chat on '+location.pathname+':\n'+[...state.customerMessages,...state.estimateSummaries].join('\n')).slice(0,6000),
         city:String(data.get('city') || state.intake.city || '').trim().slice(0,100), starts:String(data.get('starts') || 'unknown'), stranded:String(data.get('stranded') || 'unknown'),
         callbackTime:String(data.get('callbackTime') || '').trim().slice(0,160), source:'ai', locationContract:'sender-v1', website:'',
         smsConsent:sms, smsConsentTimestamp:sms ? new Date().toISOString() : '', smsConsentVersion:'2026-09-06-v1',
@@ -352,7 +407,7 @@
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
       let leadStatusCode = 0;
       try {
-        const response = await fetch(apiBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':pendingLead.key}, body:JSON.stringify(body), signal:controller.signal });
+        const response = await fetch(leadBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':pendingLead.key}, body:JSON.stringify(body), signal:controller.signal });
         const result = await response.json().catch(() => ({}));
         leadStatusCode = response.status;
         if (!response.ok || result.received !== true) {
@@ -385,6 +440,7 @@
     window.addEventListener('resize', viewport, {passive:true}); window.visualViewport?.addEventListener('resize', viewport, {passive:true}); viewport();
     const contact = document.getElementById('bookingForm');
     if (contact && 'IntersectionObserver' in window) new IntersectionObserver(entries => widget.classList.toggle('b1-near-contact', entries[0].isIntersecting), {threshold:.05}).observe(contact);
-    addMessage('assistant', 'Hi, I’m Bay One, the shop’s AI intake assistant. Tell me what’s going on and I’ll help prepare your repair request. Your mechanic makes every effort to get back to you, at any hour. What is happening with your vehicle?');
+    addMessage('assistant', 'Hi, I’m Bay One. Ask a question or request a rough repair price range. I connect when you open this panel. Planning estimates depend on the AI service being available; the shop confirms the actual repair and price.');
   }
 })();
+

@@ -6,7 +6,8 @@ import fs from 'node:fs';
 const root = new URL('../', import.meta.url);
 const read = f => fs.readFileSync(new URL(f, root), 'utf8');
 const SITE = 'https://fixingfortmyers.com';
-const pages = fs.readdirSync(root).filter(f => f.endsWith('.html')).sort();
+const verificationFile = 'googlefc91785ed4d05625.html';
+const pages = fs.readdirSync(root).filter(f => f.endsWith('.html') && f !== verificationFile).sort();
 const sitemap = [...read('sitemap.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
 const ld = html => [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
   .flatMap(m => { const j = JSON.parse(m[1]); return j['@graph'] || [j]; });
@@ -14,6 +15,8 @@ const indexable = f => f !== '404.html' && !/<meta name="robots" content="[^"]*n
 const urlFor = f => f === 'index.html' ? `${SITE}/` : `${SITE}/${f.replace(/\.html$/, '')}`;
 
 test('every indexable page has a self canonical and is in the sitemap; nothing noindexed is listed', () => {
+  assert.equal(read(verificationFile).trim(), `google-site-verification: ${verificationFile}`, 'Google verification remains an exact token, not an SEO page');
+  assert.ok(!sitemap.some(u => u.includes(verificationFile.replace(/\.html$/, ''))), 'Google verification is not listed in the sitemap');
   for (const f of pages) {
     const html = read(f);
     if (!indexable(f)) { assert.ok(!sitemap.includes(urlFor(f)), `${f} is noindex but in sitemap`); continue; }
@@ -36,10 +39,14 @@ test('the business entity is identical on every page and keeps the street addres
     for (const n of ld(html).filter(n => n['@type'] === 'AutoRepair')) {
       seen.add(strip(n));
       assert.equal(n.telephone, '+12393972048', `${f} phone`);
-      assert.ok(n.address?.addressLocality && n.openingHoursSpecification?.length && n.areaServed?.length, `${f} incomplete business node`);
+      assert.ok(n.address?.addressLocality && n.areaServed?.length && n.url && n.name, `${f} incomplete business node`);
+      assert.equal(n.openingHoursSpecification, undefined, `${f} must not publish unconfirmed operating hours`);
+      assert.match(n.description, /temporary workshop/i, `${f} identifies the current workshop arrangement`);
+      assert.match(n.description, /mobile service for suitable jobs/i, `${f} keeps mobile service conditional on the job`);
+      assert.match(n.description, /appointment/i, `${f} service requires an appointment`);
     }
   }
-  assert.equal(seen.size, 1, 'business node differs between pages; run node tools/normalize-schema.mjs');
+  assert.equal(seen.size, 1, 'business node differs between pages; keep the shared business identity and appointment model consistent');
 });
 
 test('services name the provider and keep the city out of serviceType', () => {
@@ -58,3 +65,4 @@ test('repair guides carry the article fields search engines read', () => {
     assert.ok(a.headline.length <= 110, `${f} headline too long`);
   }
 });
+

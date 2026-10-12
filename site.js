@@ -2,20 +2,54 @@
   'use strict';
   // Bounded anonymous events: no persistent browser identifier or customer data.
   const metricsEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
-  const metricsEnabled = Boolean(metricsEndpoint && /^(www\.)?fixingfortmyers\.com$/.test(location.hostname));
+  const productionHost = /^(www\.)?fixingfortmyers\.com$/.test(location.hostname);
+  const metricsEnabled = Boolean(metricsEndpoint && productionHost);
   const metricSources = new Set(['direct','google','bing','facebook','instagram','chatgpt','perplexity','gemini','claude','qr','other']);
   const metricSource = (() => {
+    // Store only one fixed category for this tab's session. Internal navigation
+    // must not turn Google/AI/referral arrivals into direct traffic.
+    let source = '';
     const campaign = new URLSearchParams(location.search).get('utm_source');
-    if (campaign) return metricSources.has(campaign.toLowerCase()) ? campaign.toLowerCase() : 'other';
+    if (campaign) source = metricSources.has(campaign.toLowerCase()) ? campaign.toLowerCase() : 'other';
     try {
       const host = new URL(document.referrer).hostname.toLowerCase();
-      if (host === location.hostname) return 'direct';
+      const internal = host.replace(/^www\./, '') === location.hostname.replace(/^www\./, '');
       const domains = [['gemini.google.com','gemini'],['chatgpt.com','chatgpt'],['chat.openai.com','chatgpt'],['perplexity.ai','perplexity'],['claude.ai','claude'],['google.com','google'],['bing.com','bing'],['facebook.com','facebook'],['instagram.com','instagram']];
-      return domains.find(([domain]) => host === domain || host.endsWith('.' + domain))?.[1] || 'other';
-    } catch (_) { return 'direct'; }
+      if (!source && !internal) source = domains.find(([domain]) => host === domain || host.endsWith('.' + domain))?.[1] || 'other';
+    } catch (_) { /* Empty or invalid referrers do not erase a known session source. */ }
+    try {
+      if (!source) { const saved = sessionStorage.getItem('pt-metric-source-v1'); if (metricSources.has(saved)) source = saved; }
+      source ||= 'direct';
+      sessionStorage.setItem('pt-metric-source-v1', source);
+    } catch (_) { /* A blocked store still permits attribution on the landing page. */ }
+    return source || 'direct';
   })();
-  const metricPath = location.pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/';
-  const metricPage = metricPath === '/index' ? '/' : new Set(['/','/module-programming-fort-myers','/repair-guide-ecu-tcm-programming','/parts','/parts-quote']).has(metricPath) ? metricPath : '/other';
+  // Never export an arbitrary path, query, fragment or referrer to analytics.
+  // Keep this list aligned with actual public HTML pages when adding a page.
+  const analyticsPages = new Set([
+    '/', '/about-perfect-timing', '/ac-repair-fort-myers', '/alternator-starter-repair-fort-myers',
+    '/auto-diagnostics-fort-myers', '/auto-electrical-repair-fort-myers', '/auto-repair-cape-coral',
+    '/auto-repair-fort-myers', '/auto-repair-lehigh-acres', '/auto-repair-north-fort-myers',
+    '/battery-replacement-fort-myers', '/blue-smoke-burning-oil-fort-myers', '/brake-repair-fort-myers',
+    '/car-audio-installation-fort-myers', '/careers', '/case-studies', '/check-engine-light-diagnosis-fort-myers',
+    '/cooling-system-repair-fort-myers', '/data-privacy-policy', '/diesel-repair-fort-myers',
+    '/engine-knocking-noise-fort-myers', '/engine-rebuild-vs-replacement-fort-myers', '/engine-repair-fort-myers',
+    '/exhaust-emissions-repair-fort-myers', '/fort-myers-mechanic', '/fuel-system-repair-fort-myers',
+    '/head-gasket-overheating-damage-fort-myers', '/hot-rod-restoration-fort-myers', '/module-programming-fort-myers',
+    '/no-start-diagnosis-fort-myers', '/oil-change-fort-myers', '/paint-correction-detailing-fort-myers',
+    '/parts', '/pre-purchase-inspection-fort-myers', '/privacy-policy', '/race-car-modifications-fort-myers',
+    '/repair-guide-ac-warm-at-idle', '/repair-guide-battery-keeps-dying', '/repair-guide-car-overheating',
+    '/repair-guide-car-wont-start', '/repair-guide-ecu-tcm-programming', '/repair-guide-flashing-check-engine-light',
+    '/repair-guides', '/request-a-repair', '/request-received', '/sms-terms',
+    '/suspension-steering-repair-fort-myers', '/transmission-repair-fort-myers',
+    '/transmission-slipping-fort-myers', '/walnut-blasting-fort-myers', '/workshop'
+  ]);
+  const normalizedPath = location.pathname.replace(/\/$/, '').replace(/\.html$/, '') || '/';
+  const publicPath = normalizedPath === '/index' ? '/' : normalizedPath;
+  const metricPath = analyticsPages.has(publicPath) ? publicPath : '/other';
+  // Existing receiver contract: do not expand it without the cloud schema and a
+  // coordinated deployment. GA4 uses metricPath; the receiver keeps its buckets.
+  const metricPage = new Set(['/','/module-programming-fort-myers','/repair-guide-ecu-tcm-programming','/parts','/parts-quote']).has(publicPath) ? publicPath : '/other';
   const recordedMetrics = new Set();
   const reportMetric = (eventName, once = true) => {
     if (!metricsEnabled || (once && recordedMetrics.has(eventName))) return;
@@ -25,34 +59,58 @@
     const deliver = () => {
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 5000);
       return Promise.resolve().then(() => fetch(metricsEndpoint + '/hooks/analytics/event', {
-        method:'POST',headers:{'Content-Type':'application/json'},body,credentials:'omit',keepalive:true,signal:controller.signal
+        method:'POST',headers:{'Content-Type':'application/json'},body,credentials:'omit',referrerPolicy:'no-referrer',keepalive:true,signal:controller.signal
       })).then(response => { if (response.status >= 500) throw new Error('retry'); }).finally(() => clearTimeout(timer));
     };
     deliver().catch(() => setTimeout(() => deliver().catch(() => {}), 1500));
   };
   reportMetric('visit');
-  // Google Analytics 4 measurement ID (G-XXXXXXXXXX). Empty means no tag loads;
-  // events still collect in window.dataLayer so a tag added later sees them.
-  const GA4_ID = '';
+  // A real owner's GA4 measurement ID belongs in contact-config.js. Blank means
+  // no Google tag/request: dataLayer is local diagnostics, not collected data.
+  const GA4_ID = typeof window.PT_CONTACT_CONFIG?.ga4MeasurementId === 'string' ? window.PT_CONTACT_CONFIG.ga4MeasurementId.trim() : '';
   window.dataLayer = window.dataLayer || [];
-  const gtagReady = /^G-[A-Z0-9]{4,20}$/.test(GA4_ID) && metricsEnabled;
+  const validGa4Id = /^G-[A-Z0-9]{4,20}$/.test(GA4_ID);
+  const gtagReady = validGa4Id && productionHost;
+  let ga4Status = !productionHost ? 'preview_disabled' : !GA4_ID ? 'not_configured' : !validGa4Id ? 'invalid_id' : 'loading';
+  window.PT_ANALYTICS_STATUS = Object.freeze({
+    customMetrics: metricsEnabled ? 'configured_unverified' : 'disabled',
+    get ga4() { return ga4Status; },
+    page: metricPath, receiverPage: metricPage, source: metricSource
+  });
+  const safePage = {page_location: 'https://fixingfortmyers.com' + metricPath, page_referrer: '', page_title: metricPath};
   if (gtagReady) {
     window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
     window.gtag('js', new Date());
-    window.gtag('config', GA4_ID);
+    window.gtag('config', GA4_ID, {...safePage, send_page_view:false, allow_google_signals:false, allow_ad_personalization_signals:false});
     const tag = document.createElement('script');
     tag.async = true; tag.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
+    tag.referrerPolicy = 'no-referrer';
+    tag.addEventListener('load', () => { ga4Status = 'tag_loaded_unverified'; });
+    tag.addEventListener('error', () => { ga4Status = 'tag_load_failed'; });
     document.head.append(tag);
   }
   // Conversion events carry fixed categories only: never names, phones, vehicles or symptoms.
+  const trackedEvents = new Set(['page_view','phone_click','text_click','email_click','request_form_click','form_start','form_validation_error','form_submit_attempt','form_submit_success','form_submit_error','form_photo_added']);
+  const trackedServices = new Set(['Diagnosis / not sure yet','A/C repair','Brakes','Electrical / no-start','Engine','Transmission','Module programming','Diesel','Oil change / maintenance','Walnut blasting / carbon cleaning','Other','Engine / transmission','Diesel service','Maintenance / other repair']);
+  const trackedFields = new Set(['name','phone','vehicle','details','city','service','starts','stranded','locationChoice','carAddress','callbackTime','smsConsent']);
   const track = (eventName, params = {}) => {
-    const detail = {page_path: metricPath, lead_source: window.PT_LEAD_CHANNEL || metricSource, ...params};
+    if (!trackedEvents.has(eventName)) return;
+    const detail = {...safePage, page_path: metricPath, lead_source: metricSource};
+    if (['form','nav','footer','sticky_bar','page'].includes(params.placement)) detail.placement = params.placement;
+    if ('service' in params) detail.service = trackedServices.has(params.service) ? params.service : 'not_given';
+    if ('field' in params) detail.field = trackedFields.has(params.field) ? params.field : 'unknown';
+    if (['network'].includes(params.reason) || /^http_[1-5][0-9]{2}$/.test(params.reason)) detail.reason = params.reason;
+    if (Number.isInteger(params.attempt) && params.attempt >= 1 && params.attempt <= 3) detail.attempt = params.attempt;
+    if (Number.isInteger(params.count) && params.count >= 0 && params.count <= 6) detail.count = params.count;
+    if (['dropoff','address','device','not_given'].includes(params.car_location)) detail.car_location = params.car_location;
+    for (const key of ['has_photos','text_consent']) if (typeof params[key] === 'boolean') detail[key] = params[key];
     try {
       if (gtagReady) window.gtag('event', eventName, detail);
       else window.dataLayer.push({event: eventName, ...detail});
     } catch (_) { /* Analytics must never block contacting the shop. */ }
   };
   window.PT_TRACK = track;
+  track('page_view');
   document.addEventListener('click', event => {
     const link = event.target.closest?.('a[href]');
     if (!link) return;
@@ -60,7 +118,7 @@
     const placement = link.closest('#contact, .request-done') ? 'form' : link.closest('nav, .nav') ? 'nav' : link.closest('footer') ? 'footer' : link.closest('.mobile-contact-bar') ? 'sticky_bar' : 'page';
     if (/^tel:/i.test(href)) { reportMetric('call_clicked'); track('phone_click', {placement}); }
     else if (/^sms:/i.test(href)) { reportMetric('text_clicked'); track('text_click', {placement}); }
-    else if (/^mailto:/i.test(href)) reportMetric('email_clicked');
+    else if (/^mailto:/i.test(href)) { reportMetric('email_clicked'); track('email_click', {placement}); }
     else {
       try {
         const url = new URL(href, location.href);
@@ -639,3 +697,4 @@
   window.addEventListener('pagehide', () => { repairToolRegistration?.abort(); repairToolRegistration = null; });
   window.addEventListener('pageshow', event => { if (event.persisted) registerRepairTool(); });
 })();
+

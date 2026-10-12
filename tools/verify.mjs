@@ -9,12 +9,17 @@ fs.mkdirSync('docs/evidence',{recursive:true});
 fs.writeFileSync('docs/evidence/tests.txt',`Synthetic test run ${new Date().toISOString()}\nNode ${process.version}\n`+result.stdout+result.stderr);
 console.log(result.stdout);if(result.status!==0){console.error(result.stderr);process.exit(result.status||1);}
 let pages=0,schemas=0,links=0;
-for(const file of fs.readdirSync('.').filter(name=>name.endsWith('.html'))){
+for(const file of fs.readdirSync('.').filter(name=>name.endsWith('.html')&&name!=='googlefc91785ed4d05625.html')){
   const html=fs.readFileSync(file,'utf8'),dom=new JSDOM(html),d=dom.window.document;pages++;
   for(const script of d.querySelectorAll('script[type="application/ld+json"]')){JSON.parse(script.textContent);schemas++;}
   const ids=[...d.querySelectorAll('[id]')].map(x=>x.id);assert.equal(new Set(ids).size,ids.length,`${file}: duplicate IDs`);
   assert.ok(!/Mon.{0,8}Sat.{0,30}7.?AM|"opens":\s*"07:00"|Monday through Saturday, 7am/i.test(html),file+': obsolete hours');
-  if(d.querySelector('footer'))assert.match(d.querySelector('footer').textContent,/After-hours repairs depend on the job, location and availability/,file+': missing afterhours disclosure');
+  if(d.querySelector('footer')){
+    const footer=d.querySelector('footer').textContent;
+    assert.match(footer,/Repairs and mobile visits are by confirmed appointment/,file+': missing appointment and mobile-service disclosure');
+    assert.match(footer,/An immediate reply or visit is not guaranteed/,file+': missing response-time limitation');
+    assert.doesNotMatch(footer,/Available 24\/7|24\/7 availability/i,file+': do not advertise around-the-clock repairs');
+  }
   for(const node of d.querySelectorAll('a[href],link[href],script[src],img[src]')){
     const ref=node.getAttribute('href')||node.getAttribute('src');if(!ref||/^(https?:|tel:|sms:|mailto:|data:)/.test(ref))continue;
     const local=ref.split(/[?#]/)[0].replace(/^\.\//,'').replace(/^\//,'');if(!local)continue;

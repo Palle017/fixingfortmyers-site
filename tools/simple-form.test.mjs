@@ -82,7 +82,8 @@ test('success replaces the form in place with the receipt and three useful next 
   assert.equal(done.hidden, false);
   assert.equal(x.d.getElementById('bookingForm').hidden, true);
   assert.match(done.querySelector('h2').textContent, /we received your repair request/);
-  assert.match(done.textContent, /We’ll review it and contact you shortly/);
+  assert.match(done.textContent, /We’ll review it and contact you when available/);
+  assert.match(done.textContent, /job, location and appointment are not confirmed until you hear from the shop/, 'saved receipt is not a booking');
   assert.match(x.d.getElementById('request-done-ref').textContent, new RegExp(id));
   assert.equal(x.d.activeElement, x.d.getElementById('request-done-heading'));
   assert.ok(done.querySelector('a[href="tel:+12393972048"]'));
@@ -218,3 +219,4 @@ test('each lead says where the visitor came from, using fixed categories only', 
   assert.match(details, /Found via: google; last page viewed: \/walnut-blasting-fort-myers/);
   assert.doesNotMatch(details, /PRIVATE|search\?q/);
 });
+

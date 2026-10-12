@@ -11,7 +11,7 @@ const settle = async () => { for (let i = 0; i < 6; i++) await new Promise(setIm
 const reply = (body, status = 200) => ({ok:status >= 200 && status < 300, status, json:async () => body});
 const receipt = {ok:true, received:true, id:'12345678-1234-4234-8234-123456789012'};
 
-function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = false, analyticsHandler, leadHandler} = {}) {
+function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = false, analyticsHandler, leadHandler, ga4MeasurementId = '', saved = {}} = {}) {
   const errors = [], console = new VirtualConsole();
   console.on('jsdomError', error => { if (!/Not implemented: navigation/.test(error.message)) errors.push(error); });
   const dom = new JSDOM(html, {url, ...(referrer ? {referrer} : {}), runScripts:'outside-only', pretendToBeVisual:true, virtualConsole:console});
@@ -19,7 +19,8 @@ function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = fal
   t.after(() => { w.close(); assert.deepEqual(errors, []); });
   w.matchMedia = () => ({matches:false});
   w.HTMLElement.prototype.scrollIntoView = function () {};
-  w.PT_CONTACT_CONFIG = {endpoint:'https://receiver.invalid'};
+  w.PT_CONTACT_CONFIG = {endpoint:'https://receiver.invalid', ga4MeasurementId};
+  for (const [key,value] of Object.entries(saved)) w.sessionStorage.setItem(key,value);
   d.modelContext = {registerTool(tool) { tools.push(tool); return Promise.resolve(); }};
   const nativeTimeout = w.setTimeout.bind(w);
   w.setTimeout = (callback, delay, ...args) => {
@@ -29,7 +30,7 @@ function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = fal
   w.fetch = async (target, options = {}) => {
     const address = new URL(target);
     assert.equal(address.origin, 'https://receiver.invalid');
-    const call = {path:address.pathname, body:options.body && JSON.parse(options.body), headers:options.headers, credentials:options.credentials, keepalive:options.keepalive};
+    const call = {path:address.pathname, body:options.body && JSON.parse(options.body), headers:options.headers, credentials:options.credentials, referrerPolicy:options.referrerPolicy, keepalive:options.keepalive};
     calls.push(call);
     if (call.path === '/hooks/analytics/event') return analyticsHandler ? analyticsHandler(call) : reply({ok:true});
     if (call.path === '/healthz') {
@@ -49,6 +50,9 @@ function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = fal
   return {w,d,calls,retries,tools,enter,metrics,submit,fill,click};
 }
 
+const localEvents = x => Array.from(x.w.dataLayer).filter(entry => entry.event);
+const googleEvents = x => Array.from(x.w.dataLayer).filter(entry => entry[0] === 'event');
+
 test('analytics sends only fixed public categories and allowlisted sources, without persistent tracking or private data', async t => {
   for (const [url,referrer,page,source] of [
     ['https://fixingfortmyers.com/?utm_source=chatgpt&name=PRIVATE_QUERY', undefined, '/', 'chatgpt'],
@@ -63,6 +67,7 @@ test('analytics sends only fixed public categories and allowlisted sources, with
     assert.equal(metric.body.event, 'visit'); assert.equal(metric.body.page, page); assert.equal(metric.body.source, source);
     assert.match(metric.body.event_id, /^[A-Za-z0-9_-]{8,100}$/);
     assert.equal(metric.credentials, 'omit'); assert.equal(metric.keepalive, true);
+    assert.equal(metric.referrerPolicy,'no-referrer');
     assert.doesNotMatch(JSON.stringify(metric.body), /PRIVATE|visitor_id|utm_source|referrer/);
     assert.equal(x.w.localStorage.getItem('pt-website-visitor-v1'), null);
   }
@@ -133,3 +138,78 @@ test('preview hosts create no analytics events even when the normal form is used
   assert.equal(x.metrics().length,0);
   assert.equal(x.calls.filter(call=>call.path==='/hooks/lead/webform').length,1);
 });
+
+test('GA4 stays honestly unconfigured until an actual ID is provided, and never loads on previews', async t => {
+  for (const [options,expected] of [
+    [{},'not_configured'],
+    [{ga4MeasurementId:'PRIVATE_INVALID_ID'},'invalid_id'],
+    [{url:'https://preview.invalid/',ga4MeasurementId:'G-TEST1234'},'preview_disabled']
+  ]) {
+    const x = setup(t,options); await settle();
+    assert.equal(x.w.PT_ANALYTICS_STATUS.ga4,expected);
+    assert.equal(x.d.querySelectorAll('script[src*="googletagmanager.com"]').length,0);
+    assert.equal(localEvents(x).filter(event=>event.event==='page_view').length,1,'local diagnostics are not a claim of Google delivery');
+    assert.equal(x.w.gtag,undefined);
+  }
+});
+
+test('configured GA4 sends one sanitized page view and reports only tag loading, not confirmed collection', async t => {
+  const x = setup(t,{
+    url:'https://fixingfortmyers.com/transmission-repair-fort-myers.html?utm_source=PRIVATE_CAMPAIGN&name=PRIVATE_NAME#PRIVATE_FRAGMENT',
+    referrer:'https://www.google.com/search?q=PRIVATE_SEARCH', ga4MeasurementId:'G-TEST1234'
+  });
+  await settle();
+  const config = Array.from(x.w.dataLayer).find(entry=>entry[0]==='config');
+  assert.equal(config[1],'G-TEST1234');
+  assert.equal(config[2].send_page_view,false);
+  assert.equal(config[2].page_location,'https://fixingfortmyers.com/transmission-repair-fort-myers');
+  assert.equal(config[2].page_referrer,'');
+  assert.equal(googleEvents(x).filter(entry=>entry[1]==='page_view').length,1);
+  const tag=x.d.querySelector('script[src*="googletagmanager.com"]');
+  assert.equal(tag.referrerPolicy,'no-referrer');
+  assert.equal(x.w.PT_ANALYTICS_STATUS.ga4,'loading');
+  tag.dispatchEvent(new x.w.Event('load'));
+  assert.equal(x.w.PT_ANALYTICS_STATUS.ga4,'tag_loaded_unverified');
+  assert.doesNotMatch(JSON.stringify(x.w.dataLayer),/PRIVATE|utm_source/);
+  assert.equal(x.metrics('visit')[0].body.page,'/other','do not expand the unknown cloud receiver schema');
+});
+
+test('GA4 page detail covers known public pages but arbitrary paths and event parameters cannot expose private text', async t => {
+  for (const page of ['brake-repair-fort-myers','repair-guide-car-wont-start','careers','request-a-repair','request-received','PRIVATE_PATH']) {
+    const x=setup(t,{url:'https://fixingfortmyers.com/'+page+'.html?phone=PRIVATE_NUMBER'}); await settle();
+    const event=localEvents(x).find(entry=>entry.event==='page_view');
+    assert.equal(event.page_path,page==='PRIVATE_PATH'?'/other':'/'+page);
+    assert.equal(event.page_referrer,'');
+    x.w.PT_LEAD_CHANNEL='PRIVATE_LEAD_CHANNEL';
+    x.w.PT_TRACK('form_submit_attempt',{service:'PRIVATE_CUSTOMER',name:'PRIVATE_NAME',vehicle:'PRIVATE_VEHICLE',page_path:'/PRIVATE_PATH',lead_source:'PRIVATE_SOURCE',attempt:1});
+    x.w.PT_TRACK('PRIVATE_EVENT',{details:'PRIVATE_DETAILS'});
+    assert.doesNotMatch(JSON.stringify(x.w.dataLayer),/PRIVATE|phone=/);
+    assert.equal(localEvents(x).at(-1).lead_source,'direct');
+    assert.equal(localEvents(x).at(-1).service,'not_given');
+  }
+});
+
+test('a repair conversion waits for a positive server receipt and keeps the receipt in place', async t => {
+  let acknowledge;
+  const x=setup(t,{leadHandler:()=>new Promise(resolve=>{acknowledge=resolve;})});
+  await settle(); x.fill(); x.submit(); await settle();
+  assert.equal(localEvents(x).filter(event=>event.event==='form_submit_success').length,0);
+  acknowledge(reply(receipt)); await settle();
+  assert.equal(localEvents(x).filter(event=>event.event==='form_submit_success').length,1);
+  assert.equal(x.d.getElementById('bookingForm').hidden,true);
+  assert.equal(x.d.getElementById('request-done').hidden,false);
+  assert.equal(x.w.location.pathname,'/','do not redirect away from the receipt/photo-upload flow');
+  assert.doesNotMatch(JSON.stringify(x.w.dataLayer),/PRIVATE|2395550100|12345678-1234/);
+  const rejected=setup(t,{leadHandler:()=>reply({ok:true,received:false,id:receipt.id})});
+  await settle(); rejected.fill(); rejected.submit(); await settle();
+  assert.equal(localEvents(rejected).filter(event=>event.event==='form_submit_success').length,0,'HTTP 200 without durable receipt is not a lead');
+});
+
+test('every public content page keeps its exact approved path for page-level reporting', async t => {
+  const pages=fs.readdirSync(root).filter(file=>file.endsWith('.html') && file!=='404.html' && !/^google[a-z0-9]+\.html$/.test(file));
+  for(const file of pages){
+    const x=setup(t,{url:'https://fixingfortmyers.com/'+file}); await settle();
+    assert.equal(x.w.PT_ANALYTICS_STATUS.page,file==='index.html'?'/':'/'+file.replace(/\.html$/,''),file);
+  }
+});
+

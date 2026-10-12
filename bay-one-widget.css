@@ -2,6 +2,7 @@
 .b1-widget{--b1-cyan:#70e4ef;--b1-amber:#fbbf52;--b1-ink:#0b1420;--b1-border:#294559;font:400 14px/1.5 'Barlow',system-ui,sans-serif;color:#edf6fc;position:fixed;right:22px;bottom:22px;z-index:10020;color-scheme:dark}
 .b1-widget *{box-sizing:border-box}
 .b1-widget [hidden]{display:none!important}
+.repair-dialog-open .b1-widget{visibility:hidden;pointer-events:none}
 .b1-widget button,.b1-widget textarea{font:inherit}
 .b1-widget button,.b1-widget a{-webkit-tap-highlight-color:transparent}
 .b1-widget button{cursor:pointer}
@@ -76,16 +77,12 @@
 .b1-near-contact .b1-launcher .b1-avatar{border-radius:18px}
 @media(max-width:800px){
  .b1-widget{right:13px;bottom:calc(82px + env(safe-area-inset-bottom))}
- .b1-has-contact-bar .b1-launcher{display:none}
- .mobile-contact-bar.has-bay-one{grid-template-columns:repeat(3,minmax(0,1fr))}
- .mobile-contact-bar.has-bay-one>a{text-align:center;line-height:1.4;min-width:0}
- .mobile-contact-bar .b1-bar-launcher{display:flex;align-items:center;justify-content:center;min-height:44px;min-width:0;padding:4px;border:1px solid #51718d;border-radius:6px;background:#172c40;color:#e5f6ff;font:800 14px/1.4 'Barlow',system-ui,sans-serif;text-align:center;cursor:pointer}
- .mobile-contact-bar .b1-bar-launcher:focus-visible{outline:3px solid #a0f2f7;outline-offset:2px}
- .b1-near-contact .b1-launcher{display:none}
  .b1-footer .b1-contact{display:flex;align-items:center;min-height:44px}
- .b1-launcher{min-height:74px;gap:10px;padding-right:13px;border-radius:15px;max-width:206px}
- .b1-launcher .b1-avatar{width:58px;height:74px;border-radius:14px 0 0 14px}
- .b1-launcher-copy strong{font-size:16px}.b1-launcher-copy span{font-size:11px}.b1-launcher-copy small{font-size:10px}
+ .b1-widget .b1-launcher{display:flex;min-height:48px;gap:9px;padding-right:13px;border-radius:15px;max-width:190px}
+ .b1-widget .b1-launcher .b1-avatar{width:42px;height:48px;border-radius:14px 0 0 14px;font-size:21px}
+ .b1-widget .b1-launcher-copy{display:flex}
+ .b1-launcher-copy strong{font-size:14px}
+ .b1-launcher-copy span,.b1-launcher-copy small,.b1-launcher-copy .b1-logo{display:none}
  .b1-panel{width:min(430px,calc(100vw - 24px));height:min(690px,calc(var(--b1-viewport-height,100dvh) - 106px));border-radius:18px}
  .b1-header{padding:10px 13px}.b1-header .b1-avatar{height:53px;width:44px}.b1-title{font-size:20px!important}
  .b1-input-row textarea{font-size:16px;height:72px;min-height:72px}
@@ -98,9 +95,12 @@
 @media(prefers-reduced-motion:reduce){.b1-launcher{transition:none}.b1-launcher:hover{transform:none}}
 
 /* Keep the existing Bay One identity and backdrops. */
-.b1-widget .b1-launcher{background:linear-gradient(110deg,#090d15d9,#090d157a),url('/assets/bay-one-b1-logo-20260908.jpg') right center/170px auto no-repeat,#030508}
-.b1-widget .b1-panel{background:linear-gradient(#0b1420c4,#0b1420db),url('/assets/bay-one-b1-logo-20260908.jpg') center 42%/88% auto no-repeat,#030508}
-.b1-widget .b1-header{background:linear-gradient(90deg,#08090cf0,#08090c91),url('/assets/bay-one-b1-logo-20260908.jpg') right center/110px auto no-repeat,#030508}
+.b1-widget.b1-art-loaded .b1-launcher{background:linear-gradient(110deg,#090d15d9,#090d157a),url('/assets/bay-one-b1-logo-20260908.jpg') right center/170px auto no-repeat,#030508}
+.b1-widget.b1-art-loaded .b1-panel{background:linear-gradient(#0b1420c4,#0b1420db),url('/assets/bay-one-b1-logo-20260908.jpg') center 42%/88% auto no-repeat,#030508}
+.b1-widget.b1-art-loaded .b1-header{background:linear-gradient(90deg,#08090cf0,#08090c91),url('/assets/bay-one-b1-logo-20260908.jpg') right center/110px auto no-repeat,#030508}
+.b1-widget img[data-b1-src]:not([src]){display:none}
+.b1-widget .b1-mode button{min-height:44px}
+.b1-widget .b1-mode button:disabled,.b1-widget .b1-suggestions button:disabled{opacity:.55;cursor:not-allowed}
 
 .b1-send-now{display:block;width:100%;margin:0 0 9px;padding:10px 12px;border:1px solid #f7c76d;border-radius:10px;background:#f7c76d;color:#1b1204;font:700 14px/1.2 'Barlow',system-ui,sans-serif;cursor:pointer}
 .b1-send-now:hover{background:#ffdc96}
@@ -124,3 +124,4 @@
 .b1-fallback p{margin:0;color:#f3f6f8;font-size:13px;line-height:1.45}
 .b1-fallback-link{display:inline-flex;align-items:center;justify-content:center;padding:8px 13px;margin:10px 6px 0 0;border:1px solid #d7af59;border-radius:8px;background:#f5c66d;color:#16222c!important;text-decoration:none!important;font-size:13px;font-weight:800;min-height:44px}
 .b1-fallback-link:hover{background:#ffdc96}
+

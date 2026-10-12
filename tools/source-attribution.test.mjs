@@ -9,10 +9,10 @@ const script = fs.readFileSync(new URL('site.js', root), 'utf8');
 const settle = async () => { for (let n = 0; n < 5; n++) await new Promise(setImmediate); };
 const response = (body, status = 200) => ({ok:status < 400, status, json:async () => body});
 
-function browser(t, {file = 'index.html', url = 'https://preview.invalid/', endpoint = '', saved = {}, blockedStorage = false} = {}) {
+function browser(t, {file = 'index.html', url = 'https://preview.invalid/', referrer, endpoint = '', saved = {}, blockedStorage = false} = {}) {
   const errors = [], virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', error => errors.push(error));
-  const dom = new JSDOM(fs.readFileSync(new URL(file, root), 'utf8'), {url, runScripts:'outside-only', pretendToBeVisual:true, virtualConsole});
+  const dom = new JSDOM(fs.readFileSync(new URL(file, root), 'utf8'), {url, ...(referrer?{referrer}:{}), runScripts:'outside-only', pretendToBeVisual:true, virtualConsole});
   const w = dom.window, d = w.document, requests = [];
   t.after(() => { w.close(); assert.deepEqual(errors, []); });
   w.matchMedia = () => ({matches:false});
@@ -147,3 +147,38 @@ test('blocked browser storage keeps current-link attribution and contacting the 
   }
   assert.deepEqual(events.map(r=>r.body.event),['visit','form_started','submit_attempted','submit_unconfirmed']);
 });
+
+test('anonymous acquisition survives internal navigation without becoming a raw UTM lead channel', async t => {
+  const landing=browser(t,{file:'brake-repair-fort-myers.html',url:'https://fixingfortmyers.com/brake-repair-fort-myers',referrer:'https://www.google.com/search?q=PRIVATE_SEARCH',endpoint:'https://receiver.invalid'});
+  await settle();
+  assert.equal(landing.storage()['pt-metric-source-v1'],'google');
+  const intermediate=browser(t,{file:'repair-guides.html',url:'https://www.fixingfortmyers.com/repair-guides',referrer:'https://fixingfortmyers.com/brake-repair-fort-myers?PRIVATE_QUERY',saved:landing.storage(),endpoint:'https://receiver.invalid'});
+  await settle();
+  const inquiry=browser(t,{file:'request-a-repair.html',url:'https://fixingfortmyers.com/request-a-repair',referrer:'https://www.fixingfortmyers.com/repair-guides',saved:intermediate.storage(),endpoint:'https://receiver.invalid'});
+  await settle(); await inquiry.submit();
+  for(const x of [landing,intermediate,inquiry]){
+    assert.equal(x.requests.find(r=>r.body?.event==='visit').body.source,'google');
+    assert.equal(x.w.PT_ANALYTICS_STATUS.source,'google');
+    assert.doesNotMatch(JSON.stringify(x.storage()),/PRIVATE|google\.com|utm_/);
+  }
+  const lead=inquiry.requests.find(r=>r.path==='/hooks/lead/webform');
+  assert.equal(lead.body.channel,undefined,'organic referrer does not invent an explicit campaign code');
+  assert.match(lead.body.details,/Found via: google/);
+});
+
+test('new campaign/external arrivals replace acquisition while empty referrers preserve a validated session category', async t => {
+  for(const [options,expected] of [
+    [{},'google'],
+    [{url:'https://fixingfortmyers.com/?utm_source=chatgpt'},'chatgpt'],
+    [{referrer:'https://www.bing.com/search?q=PRIVATE_SEARCH'},'bing'],
+    [{url:'https://fixingfortmyers.com/?utm_source=PRIVATE_CAMPAIGN'},'other'],
+    [{saved:{'pt-metric-source-v1':'PRIVATE_STORED_SOURCE'}},'direct']
+  ]){
+    const x=browser(t,{url:'https://fixingfortmyers.com/',saved:{'pt-metric-source-v1':'google'},...options,endpoint:'https://receiver.invalid'});
+    await settle();
+    assert.equal(x.requests.find(r=>r.body?.event==='visit').body.source,expected);
+    assert.equal(x.storage()['pt-metric-source-v1'],expected);
+    assert.doesNotMatch(JSON.stringify(x.w.dataLayer),/PRIVATE/);
+  }
+});
+

@@ -186,10 +186,10 @@ test('service preselection is whitelisted, optional vehicle submits with explici
   assert.equal(form.method,'post');assert.match(d.getElementById('request-status').textContent,/could not confirm receipt/);
   const rejected=setup(t,{url:'https://preview.invalid/?service=%3Cscript%3Ebad%3C%2Fscript%3E'});assert.equal(rejected.w.document.getElementById('request-service').selectedIndex,0);
 });
-test('AI intake is disclosed at all hours and untrusted text is displayed as text',async t=>{
+test('AI planning limits are disclosed and untrusted text is displayed as text',async t=>{
   const x=setup(t,{at:'2026-09-25T01:00:00Z'}),d=x.w.document;await settle();
-  assert.match(d.querySelector('.b1-messages').textContent,/AI intake assistant/);
-  assert.match(d.querySelector('.b1-messages').textContent,/makes every effort to get back to you, at any hour/);
+  assert.match(d.querySelector('.b1-messages').textContent,/AI service being available/);
+  assert.match(d.querySelector('.b1-messages').textContent,/shop confirms the actual repair and price/);
   assert.doesNotMatch(d.querySelector('.b1-messages').textContent,/first thing|overnight assistant/);
   await x.say('<img src=x onerror="window.bad=true"> The car will not start.');
   assert.equal(x.w.bad,undefined);assert.equal(d.querySelector('.b1-user img'),null);
@@ -239,24 +239,26 @@ test('careers preserves the applicant-specific mobile introduction action',t=>{
   assert.ok(w.document.querySelector('#apply #careers-form'));
 });
 
-test('an unreachable Bay One server shows no launcher, loads no assets and still restores carried notes',async t=>{
+test('an unreachable Bay One keeps its optional entry, defers artwork and restores carried notes',async t=>{
   const draft=JSON.stringify({at:Date.parse('2026-09-24T15:55:00Z'),summary:'Customer notes from Bay One:\nGrinding when braking',service:'',intake:{city:'Fort Myers'}});
   const x=setup(t,{handler:async(route,body,w)=>{if(route!=='/healthz')w.bad=true;throw new w.TypeError('Synthetic outage');},beforeScripts:w=>w.sessionStorage.setItem('pt-bayone-service-draft-v1',draft)}),d=x.w.document;
   await settle();
   assert.ok(x.requests.every(r=>r.route==='/healthz'));assert.equal(x.w.bad,undefined);
-  assert.equal(d.getElementById('bay-one-widget'),null);assert.equal(d.querySelector('link[href*="bay-one-widget.css"]'),null);
-  assert.equal(d.querySelector('.b1-bar-launcher'),null);assert.equal(d.getElementById('request-bay-one').hidden,true);
+  assert.ok(d.getElementById('bay-one-widget'));assert.ok(d.querySelector('link[href*="bay-one-widget.css"]'));
+  assert.equal(d.querySelector('#bay-one-widget img[src]'),null,'no portrait/logo is downloaded before opening');
+  assert.equal(d.getElementById('request-bay-one').hidden,false);
   assert.match(d.getElementById('request-details').value,/Grinding when braking/);assert.equal(d.getElementById('request-city').value,'Fort Myers');
+  d.querySelector('.b1-launcher').click();await settle();assert.equal(d.querySelector('.b1-fallback').hidden,false);assert.match(d.querySelector('.b1-status').textContent,/offline/);
 });
 
 test('a server whose chat failed to start is treated as unavailable',async t=>{
   const x=setup(t,{handler:async route=>({ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'unavailable'}:{ok:true}})}),d=x.w.document;
-  await settle();assert.equal(d.getElementById('bay-one-widget'),null);assert.ok(x.requests.every(r=>r.route==='/healthz'));
+  await settle();assert.ok(d.getElementById('bay-one-widget'));d.querySelector('.b1-launcher').click();await settle();assert.ok(x.requests.every(r=>r.route==='/healthz'));assert.equal(d.querySelector('.b1-fallback').hidden,false);
 });
 
-test('shipped config enables public Bay One against the p15g2 receiver',()=>{
+test('shipped config enables optional public Bay One over HTTPS',()=>{
   const dom=new JSDOM('',{runScripts:'outside-only'});dom.window.eval(fs.readFileSync(new URL('bay-one-config.js',root),'utf8'));
-  assert.equal(dom.window.PT_BAYONE_CONFIG.enabled,true);assert.equal(dom.window.PT_BAYONE_CONFIG.endpoint,'https://p15g2.tail68bd87.ts.net:10000');dom.window.close();
+  assert.equal(dom.window.PT_BAYONE_CONFIG.enabled,true);assert.match(dom.window.PT_BAYONE_CONFIG.endpoint,/^https:\/\//);assert.equal(dom.window.PT_BAYONE_CONFIG.autoOpen,false);dom.window.close();
 });
 
 test('public Bay One is disabled before UI/assets/network while normal contact remains available',async t=>{
@@ -393,10 +395,12 @@ test('a chat reply that never arrives offers the form and call, while a refusal 
   await settle();y.w.document.querySelector('.b1-launcher').click();await settle();await y.say('Brakes grind.');
   assert.equal(y.w.document.querySelector('.b1-fallback').hidden,true);
 });
-test('an unreachable Bay One is not re-checked on every page for a few minutes',async t=>{
+test('Bay One does not probe chat on page load and can retry a previously offline receiver when opened',async t=>{
   const x=setup(t,{beforeScripts:w=>w.sessionStorage.setItem('pt-bayone-down',String(Date.parse('2026-09-24T15:58:00Z')))});
-  await settle();assert.equal(x.w.document.getElementById('bay-one-widget'),null);
+  await settle();assert.ok(x.w.document.getElementById('bay-one-widget'));assert.equal(x.requests.filter(q=>q.route.startsWith('/chat/')).length,0);
   const y=setup(t,{beforeScripts:w=>w.sessionStorage.setItem('pt-bayone-down',String(Date.parse('2026-09-24T15:50:00Z')))});
   await settle();const checks=r=>r.requests.filter(q=>q.route==='/healthz').length;
-  assert.equal(checks(y),checks(x)+1,'only the stale record triggers a fresh Bay One check');assert.ok(y.w.document.getElementById('bay-one-widget'));
+  assert.equal(checks(y),checks(x),'no chat receiver check happens until opened');assert.ok(y.w.document.getElementById('bay-one-widget'));
+  x.w.document.querySelector('.b1-launcher').click();await settle();assert.equal(checks(x),checks(y)+1,'a stale outage marker cannot permanently hide chat');
 });
+

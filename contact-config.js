@@ -2,5 +2,7 @@
 // Owner-approved 2026-10-03: repair requests are saved in durable cloud intake before receipt is confirmed.
 // Keep local previews from sending production inquiries; the preview server supplies its own mock endpoint.
 window.PT_CONTACT_CONFIG = /^(www\.)?fixingfortmyers\.com$/.test(location.hostname)
-  ? { endpoint: 'https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site' }
-  : { endpoint: '' };
+  ? { endpoint: 'https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site', ga4MeasurementId: '' }
+  : { endpoint: '', ga4MeasurementId: '' };
+// Add only the owner's actual GA4 web-stream ID. Until then, no Google tag is
+// loaded. See docs/ANALYTICS-SETUP.md for property settings and receipt events.
