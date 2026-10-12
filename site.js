@@ -1,8 +1,14 @@
 (() => {
   'use strict';
   // Bounded anonymous events: no persistent browser identifier or customer data.
+  const shopHost = /^(www\.)?fixingfortmyers\.com$/.test(location.hostname);
   const metricsEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
-  const metricsEnabled = Boolean(metricsEndpoint && /^(www\.)?fixingfortmyers\.com$/.test(location.hostname));
+  const metricsEnabled = Boolean(metricsEndpoint && shopHost);
+  const counterEndpoint = shopHost
+    ? (window.PT_CONTACT_CONFIG
+      ? (window.PT_CONTACT_CONFIG.counterEndpoint ?? window.PT_CONTACT_CONFIG.mirrorEndpoint ?? '')
+      : 'https://redline.taild5f39d.ts.net:10000').replace(/\/$/, '')
+    : '';
   const metricSources = new Set(['direct','google','bing','facebook','instagram','chatgpt','perplexity','gemini','claude','qr','other']);
   const metricSource = (() => {
     const campaign = new URLSearchParams(location.search).get('utm_source');
@@ -18,17 +24,20 @@
   const metricPage = metricPath === '/index' ? '/' : new Set(['/','/module-programming-fort-myers','/repair-guide-ecu-tcm-programming','/parts','/parts-quote']).has(metricPath) ? metricPath : '/other';
   const recordedMetrics = new Set();
   const reportMetric = (eventName, once = true) => {
-    if (!metricsEnabled || (once && recordedMetrics.has(eventName))) return;
+    if ((!metricsEnabled && !(eventName === 'visit' && counterEndpoint)) || (once && recordedMetrics.has(eventName))) return;
     if (once) recordedMetrics.add(eventName);
     const eventId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
     const body = JSON.stringify({event:eventName,event_id:eventId,page:metricPage,source:metricSource});
-    const deliver = () => {
+    const deliver = (endpoint, requireReceipt = false) => {
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 5000);
-      return Promise.resolve().then(() => fetch(metricsEndpoint + '/hooks/analytics/event', {
+      return Promise.resolve().then(() => fetch(endpoint + '/hooks/analytics/event', {
         method:'POST',headers:{'Content-Type':'application/json'},body,credentials:'omit',keepalive:true,signal:controller.signal
-      })).then(response => { if (response.status >= 500) throw new Error('retry'); }).finally(() => clearTimeout(timer));
+      })).then(response => { if (response.status >= 500 || (requireReceipt && !response.ok)) throw new Error('retry'); }).finally(() => clearTimeout(timer));
     };
-    deliver().catch(() => setTimeout(() => deliver().catch(() => {}), 1500));
+    if (metricsEnabled) deliver(metricsEndpoint).catch(() => setTimeout(() => deliver(metricsEndpoint).catch(() => {}), 1500));
+    // Keep the shop's private counter current without changing cloud lead delivery.
+    if (eventName === 'visit' && counterEndpoint) deliver(counterEndpoint, true).catch(() =>
+      setTimeout(() => deliver(counterEndpoint, true).catch(() => console.warn('Bay One website counter is unavailable.')), 1500));
   };
   reportMetric('visit');
   // Google Analytics 4 measurement ID (G-XXXXXXXXXX). Empty means no tag loads;
@@ -136,6 +145,8 @@
     if (field) field.addEventListener('input',()=>{field.dataset.userEdited='true';});
   }
   const configuredEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
+  const mirrorEndpoint = (window.PT_CONTACT_CONFIG?.mirrorEndpoint || '').replace(/\/$/, '');
+  const mirrorRequired = /^(www\.)?fixingfortmyers\.com$/.test(location.hostname);
   let endpoint = configuredEndpoint;
   const status = byId('request-status');
   const submit = byId('request-submit');
@@ -291,11 +302,13 @@
   const uid = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   let requestKey = uid();
   let sentRequestId = '';
+  let localRequestId = '';
+  let cloudReceipt = null, mediaUpload = null, mirrorRetries = 0;
   let sending = false;
   let requestPayload = null, voicePayload = null;
   // Stored as consent evidence, so it must be the exact wording shown beside the checkbox in index.html.
   const consentDisclosure = 'Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates. Optional; consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help.';
-  const readRequest = () => {
+  const readRequest = (includeContextWithoutSymptoms = false) => {
     const data = new FormData(form);
     const consent = byId('request-sms-consent').checked;
     const city = String(data.get('city') || '').trim();
@@ -327,7 +340,7 @@
     // Fixed categories only: where the visitor came from and the last service page viewed.
     const attribution = `Found via: ${draftChannel || metricSource}${sourcePage ? '; last page viewed: /' + sourcePage : ''}`;
     const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', attribution].filter(Boolean).join('\n');
-    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : includeContextWithoutSymptoms ? context : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
@@ -341,7 +354,7 @@
     // Location buttons do not fire a form input event. Invalidate every cached
     // representation so removing a pin cannot resend it through a voice retry
     // or a previously prepared text/email draft.
-    requestKey = uid(); requestPayload = null; voicePayload = null;
+    requestKey = uid(); requestPayload = null; voicePayload = null; cloudReceipt = null; mediaUpload = null; mirrorRetries = 0; localRequestId = ''; voiceCloudReceipt = null;
     voiceKey = uid(); sentRequestId = '';
     if (!backup.hidden) status.textContent = 'Location changed. Prepare your text or email draft again before sending.';
     preview.value = ''; refreshDraftLinks(); backup.hidden = true;
@@ -362,6 +375,48 @@
       return result;
     } finally { clearTimeout(timer); }
   };
+  const mirrorToBayOne = async (data, key, result) => {
+    if (!mirrorRequired) return null;
+    if (!mirrorEndpoint) throw new Error('Bay One inbox route is not configured.');
+    const selectedFiles = byId('request-media')?.files?.length || 0;
+    const note = `\n\nWebsite receipt: ${result.id}${selectedFiles ? `\nCustomer selected ${selectedFiles} photo/video file(s). File uploads are handled separately online and are not in this inbox; ask for a text if needed.` : ''}`;
+    // readRequest already includes location, urgency, callback timing and campaign
+    // context in details. Keep the customer's words intact for the local inbox.
+    const mirrored = { ...data, details: data.details.length + note.length <= 6000 ? data.details + note : data.details };
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(mirrorEndpoint + '/hooks/lead/webform', {
+        method:'POST', body:JSON.stringify(mirrored),
+        headers:{'Content-Type':'application/json','Idempotency-Key':key},
+        credentials:'omit', signal:controller.signal
+      });
+      let receipt = null;
+      try { receipt = await response.json(); } catch (_) { /* No JSON is no receipt. */ }
+      if (!response.ok || receipt?.ok !== true || receipt.received !== true || typeof receipt.id !== 'string')
+        throw Object.assign(new Error('Bay One inbox did not confirm this request.'), {status:response.status});
+      return receipt;
+    } finally { clearTimeout(timer); }
+  };
+  const mirrorVoiceToBayOne = async (data, audio, filename, key, result, parentId) => {
+    if (!mirrorRequired) return null;
+    if (!mirrorEndpoint) throw new Error('Bay One inbox route is not configured.');
+    const note = `\n\nWebsite recording receipt: ${result.id}`;
+    const mirrored = { ...data, requestId: parentId || '', details: data.details.length + note.length <= 6000 ? data.details + note : data.details };
+    const upload = new FormData();
+    upload.append('audio', audio, filename);
+    Object.entries(mirrored).forEach(([field, value]) => upload.append(field, field === 'carLocation' ? JSON.stringify(value) : String(value)));
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 30000);
+    try {
+      const response = await fetch(mirrorEndpoint + '/hooks/lead/voicenote', {
+        method:'POST', body:upload, headers:{'Idempotency-Key':key}, credentials:'omit', signal:controller.signal
+      });
+      let receipt = null;
+      try { receipt = await response.json(); } catch (_) { /* No JSON is no receipt. */ }
+      if (!response.ok || receipt?.ok !== true || receipt.received !== true || typeof receipt.id !== 'string')
+        throw Object.assign(new Error('Bay One inbox did not confirm this recording.'), {status:response.status});
+      return receipt;
+    } finally { clearTimeout(timer); }
+  };
   applyMode();
   // Online only while the shop's receiver answers; otherwise the form keeps preparing a text draft.
   if (configuredEndpoint) {
@@ -379,7 +434,7 @@
       .filter(item => item.type && item.file.size <= (item.type.startsWith('video/') ? 100 : 15) * 1024 * 1024).slice(0, 6);
     let sent = 0;
     for (const [n, item] of items.entries()) {
-      statusField.textContent = `Request received. Sending photo/video ${n + 1} of ${items.length}… keep this page open.`;
+      if (statusField) statusField.textContent = `Request received. Sending photo/video ${n + 1} of ${items.length}… keep this page open.`;
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 300000);
       try { const response = await fetch(`${endpoint}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type,'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal}); if (response.ok) sent++; }
       catch (_) { /* The request is saved; the customer can text the file instead. */ }
@@ -392,7 +447,7 @@
   let formStartTracked = false;
   form.addEventListener('input', () => {
     if (!preparingWithWebMcp) { reportMetric('form_started'); if (!formStartTracked) { formStartTracked = true; track('form_start'); } }
-    clearTimeout(retryTimer); requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = '';
+    clearTimeout(retryTimer); requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; localRequestId = ''; cloudReceipt = null; voiceCloudReceipt = null; mediaUpload = null; mirrorRetries = 0; status.textContent = '';
   });
   document.querySelector('.request-ai-help')?.addEventListener('toggle', event => { if (event.currentTarget.open) reportMetric('ai_help_opened'); });
   form.addEventListener('submit', async event => {
@@ -404,7 +459,7 @@
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
     if (!form.reportValidity()) { track('form_validation_error', {field: form.querySelector(':invalid')?.name || 'unknown'}); return; }
     const currentData = readRequest();
-    if (requestPayload && sameRequestContent(currentData) !== sameRequestContent(requestPayload)) { requestKey = uid(); requestPayload = null; sentRequestId = ''; }
+    if (requestPayload && sameRequestContent(currentData) !== sameRequestContent(requestPayload)) { requestKey = uid(); requestPayload = null; sentRequestId = ''; localRequestId = ''; cloudReceipt = null; mediaUpload = null; mirrorRetries = 0; }
     const data = requestPayload || currentData;
     if (data.website) return;
     if ((endpoint || data.phone) && !validPhone(data.phone)) { status.textContent = endpoint ? 'Please include a valid phone number with its area code.' : 'Please include a valid phone number with its area code, or leave the optional callback field blank when texting.'; phoneField.focus(); return; }
@@ -458,13 +513,40 @@
     reportMetric('submit_attempted', false);
     track('form_submit_attempt', {service: data.service, attempt: autoRetries + 1});
     try {
-      const result = await send('/hooks/lead/webform', data, submittedKey);
+      const result = cloudReceipt || await send('/hooks/lead/webform', data, submittedKey);
       if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
-      sentRequestId = result.id;
+      cloudReceipt = result; sentRequestId = result.id;
       const files = byId('request-media')?.files?.length || 0;
+      if (!mediaUpload) mediaUpload = uploadMedia(result, undefined, null);
+      try {
+        const localReceipt = await mirrorToBayOne(data, submittedKey, result);
+        if (localReceipt) localRequestId = localReceipt.id;
+      } catch (mirrorError) {
+        if (submittedKey !== requestKey) { status.textContent = 'Your earlier request was saved online, but the shop inbox did not confirm it. Your edited details have not been sent; please call (239) 397-2048.'; return; }
+        reportMetric('bay_one_delivery_unconfirmed', false);
+        track('form_bay_one_delivery_error', {reason: mirrorError.status ? `http_${mirrorError.status}` : 'network'});
+        console.warn('Bay One website inbox delivery unconfirmed', {reference:result.id, status:mirrorError.status || 'network'});
+        const warning = `Your request was saved online (reference ${result.id}), but the shop inbox has not confirmed it. Please call or text (239) 397-2048, or use the email draft below. Your details remain here so you can retry delivery to the shop.`;
+        status.textContent = warning;
+        submit.textContent = 'Retry shop delivery';
+        if (mirrorRetries < 2) {
+          mirrorRetries++;
+          retryTimer = setTimeout(() => {
+            if (!sending && submittedKey === requestKey && cloudReceipt === result && requestPayload) deliver(requestPayload, submittedKey);
+          }, mirrorRetries === 1 ? 4000 : 12000);
+        }
+        mediaUpload.then(({sent,total}) => {
+          if (submittedKey === requestKey && cloudReceipt === result && !form.hidden && total)
+            status.textContent = warning + (sent === total ? ' Attached files were saved with the online receipt.' : ' Some attached files did not upload; please text them to the shop.');
+        });
+        return;
+      }
+      if (submittedKey !== requestKey) { status.textContent = 'Your earlier request was saved. Your edited details have not been sent; send again to share this update.'; return; }
+      mirrorRetries = 0;
       track('form_submit_success', {service: data.service, has_photos: files > 0, car_location: data.carLocation?.type || 'not_given', text_consent: data.smsConsent === true});
       status.textContent = `Repair request received. Reference: ${result.id}.`;
-      const sentMedia = await uploadMedia(result);
+      const sentMedia = await mediaUpload;
+      if (submittedKey !== requestKey) { status.textContent = 'Your earlier request was saved. Your edited details have not been sent; send again to share this update.'; return; }
       showDone(result, sentMedia);
     } catch (error) {
       reportMetric('submit_unconfirmed', false);
@@ -493,6 +575,7 @@
     catch (_) { preview.focus(); preview.select(); status.textContent = 'Select and copy the message above, then paste it into your email or text.'; }
   });
   let recorder, stream, chunks = [], recording, recordingUrl, stopTimer, voiceKey;
+  let voiceCloudReceipt = null, voiceLocalParentId = '';
   const start = byId('voice-start'), stop = byId('voice-stop'), voiceSend = byId('voice-send'), voiceStatus = byId('voice-status');
   const releaseMic = () => { clearTimeout(stopTimer); stream?.getTracks().forEach(track => track.stop()); stream = null; };
   start.addEventListener('click', async () => {
@@ -502,7 +585,7 @@
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mimeType = ['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus'].find(type => MediaRecorder.isTypeSupported(type));
       recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
-      chunks = []; recording = null; voiceKey = uid(); voicePayload = null;
+      chunks = []; recording = null; voiceKey = uid(); voicePayload = null; voiceCloudReceipt = null; voiceLocalParentId = '';
       voiceSend.hidden = true; byId('voice-preview').hidden = true; byId('voice-download').hidden = true;
       recorder.addEventListener('dataavailable', event => { if (event.data.size) chunks.push(event.data); });
       recorder.addEventListener('error', () => { releaseMic(); start.disabled = false; stop.disabled = true; voiceStatus.textContent = 'Recording failed. Please type your request or call the shop.'; });
@@ -524,20 +607,36 @@
   voiceSend.addEventListener('click', async () => {
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
     if (carAddress && !carAddress.disabled && !carAddress.reportValidity()) { voiceStatus.textContent = 'Enter the car’s address above, or change “Where is the car?” to Not sure yet, before sending your recording.'; return; }
-    const currentData = { ...readRequest(), source:'voice', requestId: sentRequestId };
-    if (voicePayload && sameRequestContent(currentData) !== sameRequestContent(voicePayload)) { voiceKey = uid(); voicePayload = null; }
+    const currentData = { ...readRequest(true), source:'voice', requestId: sentRequestId };
+    if (voicePayload && sameRequestContent(currentData) !== sameRequestContent(voicePayload)) { voiceKey = uid(); voicePayload = null; voiceCloudReceipt = null; voiceLocalParentId = ''; }
     const data = voicePayload || currentData;
     if (!data.name || data.phone.replace(/\D/g, '').length < 10 || !data.vehicle) { voiceStatus.textContent = 'Enter your name, phone number, and vehicle in the form above so we can respond to your recording.'; byId('request-name').focus(); return; }
     if (!recording) return;
+    if (recording.size > 8 * 1024 * 1024) { voiceStatus.textContent = 'This recording is too large for the shop inbox. Please make a shorter recording, or download and text it to (239) 397-2048.'; return; }
+    if (!voicePayload) voiceLocalParentId = localRequestId;
     voicePayload = data;
     const submittedVoiceKey = voiceKey;
+    const submittedLocalParentId = voiceLocalParentId;
     voiceSend.disabled = true; start.disabled = true; voiceStatus.textContent = 'Sending recording…';
     const upload = new FormData();
     upload.append('audio', recording, byId('voice-download').download);
     Object.entries(data).forEach(([key, value]) => upload.append(key, key === 'carLocation' ? JSON.stringify(value) : String(value)));
-    try { const result = await send('/hooks/lead/voicenote', upload, submittedVoiceKey, false); voiceStatus.textContent = submittedVoiceKey !== voiceKey
-      ? `The earlier recording was received. Reference: ${result.id}. Your changed details have not been sent; send again to share the update.`
-      : `Recording received. Reference: ${result.id}. Our team will follow up; your appointment is not confirmed yet.`; }
+    try {
+      const result = voiceCloudReceipt || await send('/hooks/lead/voicenote', upload, submittedVoiceKey, false);
+      if (submittedVoiceKey === voiceKey) voiceCloudReceipt = result;
+      try {
+        await mirrorVoiceToBayOne(data, recording, byId('voice-download').download, submittedVoiceKey, result, submittedLocalParentId);
+      } catch (mirrorError) {
+        console.warn('Bay One website voice delivery unconfirmed', {reference:result.id, status:mirrorError.status || 'network'});
+        voiceStatus.textContent = submittedVoiceKey !== voiceKey
+          ? `The earlier recording was saved online (reference ${result.id}), but the shop inbox did not confirm it. Your changed details have not been sent; call or text (239) 397-2048.`
+          : `Your recording was saved online (reference ${result.id}), but the shop inbox has not confirmed it. Retry shop delivery here, or download the recording and text or email it to the shop. You can also call (239) 397-2048.`;
+        return;
+      }
+      voiceStatus.textContent = submittedVoiceKey !== voiceKey
+        ? `The earlier recording was received. Reference: ${result.id}. Your changed details have not been sent; send again to share the update.`
+        : `Recording received. Reference: ${result.id}. Our team will follow up; your appointment is not confirmed yet.`;
+    }
     catch (_) { voiceStatus.textContent = submittedVoiceKey !== voiceKey
       ? 'Receipt of the earlier recording could not be confirmed. Your changed details have not been sent; send again to share the update, or call (239) 397-2048.'
       : 'We could not confirm receipt. Retry, or download the recording and attach it to your email or text. You can also call (239) 397-2048.'; }

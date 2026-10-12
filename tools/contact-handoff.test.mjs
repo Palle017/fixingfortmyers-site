@@ -29,7 +29,7 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
   // Tests set the Bay One flag explicitly; the shipped flag is checked separately below.
   w.PT_BAYONE_CONFIG={enabled};
   const NativeDate=w.Date;w.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[at]));}static now(){return NativeDate.parse(at);}};
-  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=typeof options.body==='string'||options.body===undefined?JSON.parse(options.body||'{}'):options.body;if(route.startsWith('/hooks/analytics/'))return {ok:true,status:200,json:async()=>({ok:true})};requests.push({url:String(url),route,body,headers:options.headers});return handler?handler(route,body,w):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
+  w.fetch=async(url,options={})=>{const route=new URL(url).pathname,body=typeof options.body==='string'||options.body===undefined?JSON.parse(options.body||'{}'):options.body;if(route.startsWith('/hooks/analytics/'))return {ok:true,status:200,json:async()=>({ok:true})};requests.push({url:String(url),route,body,headers:options.headers});return handler?handler(route,body,w,String(url),options):{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Where is your vehicle?',intake:{}}};};
   if(savedSource)w.sessionStorage.setItem('pt-repair-source',savedSource);
   beforeScripts?.(w);
   w.eval(site);w.eval(widget);
@@ -40,18 +40,46 @@ function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00
 
 test('published contact configuration sends a repair to cloud intake and keeps previews off production',async t=>{
   const cloud='https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site';
+  const bayOne='https://redline.taild5f39d.ts.net:10000';
   for(const url of ['https://fixingfortmyers.com/','https://www.fixingfortmyers.com/']){
-    const x=setup(t,{url,enabled:false,publicContact:true,handler:async route=>({ok:true,status:route==='/healthz'?200:201,json:async()=>route==='/healthz'?{ok:true,storage:'cloud',media:'ready'}:{ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'}})}),d=x.w.document;
+    const x=setup(t,{url,enabled:false,publicContact:true,handler:async (route,_body,_w,target)=>({ok:true,status:route==='/healthz'?200:201,json:async()=>route==='/healthz'?{ok:true,storage:'cloud',media:'ready'}:{ok:true,received:true,id:target.startsWith(bayOne)?'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa':'12345678-1234-4234-8234-123456789012'}})}),d=x.w.document;
     await settle();
     x.enter('request-name','Synthetic Customer');x.enter('request-phone','2395550100');x.enter('request-details','Synthetic concern.');x.enter('request-city','Fort Myers');
     x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
     d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
-    const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,1);assert.equal(sent[0].url,cloud+'/hooks/lead/webform');
-    assert.deepEqual(sent[0].body.carLocation,{type:'dropoff',preferredTime:''});assert.match(d.getElementById('request-status').textContent,/received/i);
+    const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,2);assert.equal(sent[0].url,cloud+'/hooks/lead/webform');assert.equal(sent[1].url,bayOne+'/hooks/lead/webform');
+    assert.equal(sent[0].headers['Idempotency-Key'],sent[1].headers['Idempotency-Key']);
+    assert.deepEqual(sent[0].body.carLocation,{type:'dropoff',preferredTime:''});assert.match(sent[1].body.details,/Car location: Shop drop-off requested[\s\S]*Website receipt: 12345678/);
+    assert.equal(sent[1].body.smsConsent,sent[0].body.smsConsent);assert.equal(d.getElementById('request-done').hidden,false);
   }
   for(const url of ['http://127.0.0.1/','http://localhost/','https://preview.invalid/']){
     const x=setup(t,{url,enabled:false,publicContact:true});await settle();assert.equal(x.w.PT_CONTACT_CONFIG.endpoint,'');assert.equal(x.requests.length,0);
   }
+});
+
+test('cloud receipt stays saved when Bay One inbox is offline, and retry mirrors one lead without resending cloud',async t=>{
+  const cloud='https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site';
+  let mirrorAttempts=0;
+  const x=setup(t,{url:'https://fixingfortmyers.com/',enabled:false,publicContact:true,handler:async (route,_body,_w,target)=>{
+    if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,storage:'cloud',media:'ready'})};
+    if(route==='/hooks/lead/webform'&&target.startsWith(cloud))return {ok:true,status:201,json:async()=>({ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'})};
+    if(route==='/hooks/lead/webform'&&++mirrorAttempts===1)return {ok:false,status:503,json:async()=>({ok:false,error:'temporarily offline'})};
+    return {ok:true,status:201,json:async()=>({ok:true,received:true,id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'})};
+  }}),d=x.w.document;
+  await settle();
+  x.enter('request-name','Synthetic Customer');x.enter('request-phone','2395550100');x.enter('request-vehicle','2018 Synthetic Sedan');x.enter('request-details','Will not start; stranded at test address.');x.enter('request-city','Fort Myers');
+  x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+  const form=d.getElementById('bookingForm');form.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  assert.equal(d.getElementById('request-done').hidden,true);assert.equal(d.getElementById('request-backup').hidden,false);
+  assert.match(d.getElementById('request-status').textContent,/saved online[\s\S]*shop inbox has not confirmed[\s\S]*call or text/i);
+  assert.equal(d.getElementById('request-submit').textContent,'Retry shop delivery');
+  assert.equal(x.requests.filter(r=>r.url===cloud+'/hooks/lead/webform').length,1);
+  form.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  const mirrored=x.requests.filter(r=>r.url==='https://redline.taild5f39d.ts.net:10000/hooks/lead/webform');
+  assert.equal(mirrored.length,2);assert.deepEqual(mirrored[0].body,mirrored[1].body);
+  assert.equal(mirrored[0].headers['Idempotency-Key'],mirrored[1].headers['Idempotency-Key']);
+  assert.equal(x.requests.filter(r=>r.url===cloud+'/hooks/lead/webform').length,1);
+  assert.equal(d.getElementById('request-done').hidden,false);
 });
 
 test('voice send needs an address only when the car is at one, and serializes it as multipart JSON',async t=>{
@@ -69,7 +97,34 @@ test('voice send needs an address only when the car is at one, and serializes it
   assert.equal(sent[0].body.get('city'),'Fort Myers');
   assert.ok(sent[0].body instanceof x.w.FormData);assert.ok(sent[0].body.get('audio').size>0);
   assert.deepEqual(JSON.parse(sent[0].body.get('carLocation')),{type:'address',address:'123 Example St, Fort Myers'});
-  assert.equal(sent[0].body.get('source'),'voice');assert.match(sent[0].body.get('details'),/^$/);
+  assert.equal(sent[0].body.get('source'),'voice');assert.match(sent[0].body.get('details'),/Car location: 123 Example St, Fort Myers[\s\S]*City \/ ZIP: Fort Myers/);
+  assert.match(d.getElementById('voice-status').textContent,/Recording received/);
+});
+
+test('a cloud-saved voice note reaches Bay One with audio, and a failed mirror retries without a second cloud lead',async t=>{
+  const cloud='https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site';
+  const bayOne='https://redline.taild5f39d.ts.net:10000';
+  let mirrorAttempts=0;
+  const x=setup(t,{url:'https://fixingfortmyers.com/',enabled:false,publicContact:true,beforeScripts:mockRecorder,handler:async (route,_body,_w,target)=>{
+    if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,storage:'cloud',media:'ready'})};
+    if(route==='/hooks/lead/voicenote'&&target.startsWith(cloud))return {ok:true,status:201,json:async()=>({ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'})};
+    if(route==='/hooks/lead/voicenote'&&target.startsWith(bayOne)&&++mirrorAttempts===1)return {ok:false,status:503,json:async()=>({ok:false,error:'offline'})};
+    return {ok:true,status:201,json:async()=>({ok:true,received:true,id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'})};
+  }}),d=x.w.document;
+  await settle();
+  x.enter('request-name','Synthetic Voice Customer');x.enter('request-phone','2395550100');x.enter('request-vehicle','2018 Synthetic Sedan');x.enter('request-city','Fort Myers');
+  x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+  d.getElementById('voice-start').click();await settle();d.getElementById('voice-stop').click();d.getElementById('voice-send').click();await settle();
+  assert.match(d.getElementById('voice-status').textContent,/saved online[\s\S]*shop inbox has not confirmed[\s\S]*text or email/i);
+  d.getElementById('voice-send').click();await settle();
+  const cloudCalls=x.requests.filter(r=>r.url===cloud+'/hooks/lead/voicenote');
+  const mirrorCalls=x.requests.filter(r=>r.url===bayOne+'/hooks/lead/voicenote');
+  assert.equal(cloudCalls.length,1);assert.equal(mirrorCalls.length,2);
+  assert.equal(mirrorCalls[0].headers['Idempotency-Key'],mirrorCalls[1].headers['Idempotency-Key']);
+  assert.equal(mirrorCalls[0].body.get('requestId'),'');
+  assert.match(mirrorCalls[0].body.get('details'),/Stranded: unknown[\s\S]*Website recording receipt: 12345678/);
+  assert.ok(mirrorCalls[0].body.get('audio').size>0);
+  assert.equal(mirrorCalls[0].body.get('audio').size,mirrorCalls[1].body.get('audio').size);
   assert.match(d.getElementById('voice-status').textContent,/Recording received/);
 });
 
@@ -124,6 +179,36 @@ test('chat collects the problem, then its contact card sends one lead with the w
   assert.match(d.querySelector('.b1-messages').textContent,/request is saved[\s\S]*marked urgent/);
   assert.ok(d.querySelector('.b1-messages a[href="tel:+12393972048"]'));
   assert.ok(x.requests.filter(r=>r.route==='/chat/message').every(r=>r.body.mode==='chat'));
+});
+test('published Bay One chat handoff mirrors to the local inbox and retries only that delivery',async t=>{
+  const chat='https://p15g2.tail68bd87.ts.net:10000';
+  const bayOne='https://redline.taild5f39d.ts.net:10000';
+  let mirrorAttempts=0;
+  const x=setup(t,{url:'https://fixingfortmyers.com/?utm_source=google',publicContact:true,beforeScripts:w=>{w.PT_BAYONE_CONFIG={enabled:true,endpoint:chat,leadMirrorEndpoint:bayOne};},handler:async (route,_body,_w,target)=>{
+    if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,chat:'ready',media:'ready'})};
+    if(route==='/chat/session')return {ok:true,status:200,json:async()=>({ok:true,visitor_token:'synthetic-token'})};
+    if(route==='/chat/message')return {ok:true,status:200,json:async()=>({ok:true,kind:'intake',reply:'Share your contact details.',ready:true,intake:{vehicle:'2015 Synthetic Sedan',city:'Fort Myers',starts:'no',stranded:'yes'}})};
+    if(route==='/hooks/lead/webform'&&target.startsWith(chat))return {ok:true,status:201,json:async()=>({ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'})};
+    if(route==='/hooks/lead/webform'&&target.startsWith(bayOne)&&++mirrorAttempts===1)return {ok:false,status:503,json:async()=>({ok:false})};
+    return {ok:true,status:201,json:async()=>({ok:true,received:true,id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'})};
+  }}),d=x.w.document;
+  await settle();await x.say('The car will not start and I am stranded.');
+  const card=d.querySelector('.b1-lead');assert.ok(card);
+  card.querySelector('[name=name]').value='Synthetic Chat Customer';card.querySelector('[name=phone]').value='2395550100';card.querySelector('[name=city]').value='Fort Myers';
+  card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  assert.match(card.querySelector('.b1-lead-status').textContent,/saved online[\s\S]*shop inbox has not confirmed/i);
+  assert.equal(d.querySelector('.b1-lead'),card);
+  card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  const primary=x.requests.filter(r=>r.url===chat+'/hooks/lead/webform');
+  const mirrored=x.requests.filter(r=>r.url===bayOne+'/hooks/lead/webform');
+  assert.equal(primary.length,1);assert.equal(mirrored.length,2);
+  assert.equal(primary[0].headers['Idempotency-Key'],mirrored[0].headers['Idempotency-Key']);
+  assert.equal(mirrored[0].headers['Idempotency-Key'],mirrored[1].headers['Idempotency-Key']);
+  assert.deepEqual(mirrored[0].body,mirrored[1].body);
+  assert.match(mirrored[0].body.details,/car will not start[\s\S]*Website chat receipt: 12345678[\s\S]*City \/ ZIP: Fort Myers[\s\S]*Stranded: yes[\s\S]*Website source: google/i);
+  assert.equal(mirrored[0].body.smsConsent,primary[0].body.smsConsent);
+  assert.equal(d.querySelector('.b1-lead'),null);
+  assert.match(d.querySelector('.b1-messages').textContent,/request is saved/);
 });
 test('a failed lead send keeps the card and details, and never claims Tony has them',async t=>{
   const x=setup(t,{handler:async(route)=>route==='/hooks/lead/webform'?{ok:false,status:503,json:async()=>({ok:false,error:'The shop could not save your request.'})}:{ok:true,status:200,json:async()=>route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Thanks.',ready:true,intake:{}}}});

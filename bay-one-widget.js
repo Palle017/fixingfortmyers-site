@@ -7,6 +7,8 @@
   if (document.getElementById('bay-one-widget')) return;
   const script = document.currentScript;
   const apiBase = String(config.endpoint || window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
+  const mirrorRequired = /^(www\.)?fixingfortmyers\.com$/.test(location.hostname);
+  const leadMirrorBase = String(window.PT_CONTACT_CONFIG?.mirrorEndpoint || config.leadMirrorEndpoint || '').replace(/\/$/, '');
   if (!apiBase) return;
   // Notes carried from Bay One on another page are restored even if the server is now unreachable.
   const handoffKey = 'pt-bayone-service-draft-v1';
@@ -344,34 +346,74 @@
         smsConsentSource:'bay-one-chat', smsConsentPage:location.origin+location.pathname, smsConsentDisclosure:sms ? CONSENT : '',
         };
         // Keep the exact payload, including consent time, for an uncertain retry.
-        pendingLead = {key:leadKey,body};
+        pendingLead = {key:leadKey,body,primaryReceipt:null,mediaStarted:false};
       }
       const {body} = pendingLead, sms = body.smsConsent;
       lockLeadFields(true);
       leadBusy = true; leadForm.querySelector('button').disabled = true; leadStatus.textContent = 'Sending to the shop…';
-      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
       let leadStatusCode = 0;
       try {
-        const response = await fetch(apiBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':pendingLead.key}, body:JSON.stringify(body), signal:controller.signal });
-        const result = await response.json().catch(() => ({}));
-        leadStatusCode = response.status;
-        if (!response.ok || result.received !== true) {
-          // Validation/refusal confirms no save; allow corrections. A timeout, 5xx or
-          // key conflict can be ambiguous, so preserve the snapshot and retry key.
-          if (!retryingPending && [400,403,413,422,429].includes(response.status)) { pendingLead = null; leadKey = uuid(); lockLeadFields(false); }
-          throw new Error(result.error || 'Receipt could not be confirmed.');
+        let result = pendingLead.primaryReceipt;
+        if (!result) {
+          const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
+          try {
+            const response = await fetch(apiBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':pendingLead.key}, body:JSON.stringify(body), signal:controller.signal });
+            result = await response.json().catch(() => ({}));
+            leadStatusCode = response.status;
+            if (!response.ok || result.received !== true || typeof result.id !== 'string') {
+              // Validation/refusal confirms no save; allow corrections. A timeout, 5xx or
+              // key conflict can be ambiguous, so preserve the snapshot and retry key.
+              if (!retryingPending && [400,403,413,422,429].includes(response.status)) { pendingLead = null; leadKey = uuid(); lockLeadFields(false); }
+              throw new Error(result.error || 'Receipt could not be confirmed.');
+            }
+            pendingLead.primaryReceipt = result;
+          } finally { clearTimeout(timer); }
+        }
+        const selectedMedia = mediaInput && !mediaInput.closest('label').hidden ? pickMedia().keep : [];
+        if (!pendingLead.mediaStarted) {
+          pendingLead.mediaStarted = true;
+          uploadMedia(result, selectedMedia).catch(() => {});
+        }
+        if (mirrorRequired) {
+          const note = [
+            `Website chat receipt: ${result.id}`,
+            `City / ZIP: ${body.city || 'Not provided'}`,
+            `Does it start: ${body.starts}`,
+            `Stranded: ${body.stranded}`,
+            body.callbackTime ? `Preferred timing: ${body.callbackTime}` : '',
+            body.channel ? `Website source: ${body.channel}` : '',
+            selectedMedia.length ? `Customer selected ${selectedMedia.length} photo/video file(s). File uploads are handled separately online and are not in this inbox; ask for a text if needed.` : ''
+          ].filter(Boolean).join('\n');
+          const details = body.details.length + note.length + 2 <= 6000 ? body.details + '\n\n' + note : body.details;
+          const mirrored = {...body,details};
+          const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 8000);
+          try {
+            if (!leadMirrorBase) throw new Error('Shop inbox route unavailable.');
+            const response = await fetch(leadMirrorBase+'/hooks/lead/webform', {method:'POST',credentials:'omit',headers:{'Content-Type':'application/json','Idempotency-Key':pendingLead.key},body:JSON.stringify(mirrored),signal:controller.signal});
+            const localReceipt = await response.json().catch(() => ({}));
+            if (!response.ok || localReceipt?.ok !== true || localReceipt.received !== true || typeof localReceipt.id !== 'string')
+              throw Object.assign(new Error('Shop inbox did not confirm the request.'), {status:response.status});
+          } catch (error) {
+            error.mirror = true;
+            throw error;
+          } finally { clearTimeout(timer); }
         }
         leadSent = true; leadForm.remove(); $('.b1-composer').hidden = true;
         const urgent = body.stranded === 'yes' && body.starts === 'no';
         const row = addMessage('assistant', `Your request is saved for the shop to review. Your callback number is ${body.phone}; ${sms ? 'text or call' : 'call only'}. Booking is not confirmed.` + (urgent ? ' You said you are stranded, so your request is marked urgent. If you are somewhere unsafe, call 911.' : ' Your mechanic confirms pricing after reviewing the problem.'));
         const call = document.createElement('a'); call.className = 'b1-request-service'; call.href = 'tel:+12393972048'; call.textContent = urgent ? 'Call — AI intake' : 'Call — AI intake';
         row.append(call);
-        uploadMedia(result, mediaInput && !mediaInput.closest('label').hidden ? pickMedia().keep : []).catch(() => {});
         try { sessionStorage.setItem('pt-last-request', JSON.stringify({ id:result.id, receivedAt:result.receivedAt, confirmed:true, smsConsent:sms })); } catch (_) { /* Confirmation is already shown in the chat. */ }
       } catch (error) {
-        fallback({offline: error.name === 'AbortError' || error instanceof TypeError || leadStatusCode >= 500});
-        leadStatus.textContent = (error.name === 'AbortError' || error instanceof TypeError ? 'Receipt could not be confirmed.' : error.message) + (pendingLead ? ' Retry to check the same request; its details are preserved.' : ' Correct your details and try again.') + ' You can also call or text the shop at (239) 397-2048.';
-      } finally { clearTimeout(timer); leadBusy = false; if (!leadSent) leadForm.querySelector('button').disabled = false; }
+        if (error.mirror) {
+          console.warn('Bay One website chat lead delivery unconfirmed', {reference:pendingLead.primaryReceipt.id, status:error.status || 'network'});
+          leadStatus.textContent = `Your chat request was saved online (reference ${pendingLead.primaryReceipt.id}), but the shop inbox has not confirmed it. Retry shop delivery here, or call or text (239) 397-2048. Your details remain here.`;
+          leadForm.querySelector('button').textContent = 'Retry shop delivery';
+        } else {
+          fallback({offline: error.name === 'AbortError' || error instanceof TypeError || leadStatusCode >= 500});
+          leadStatus.textContent = (error.name === 'AbortError' || error instanceof TypeError ? 'Receipt could not be confirmed.' : error.message) + (pendingLead ? ' Retry to check the same request; its details are preserved.' : ' Correct your details and try again.') + ' You can also call or text the shop at (239) 397-2048.';
+        }
+      } finally { leadBusy = false; if (!leadSent) leadForm.querySelector('button').disabled = false; }
     });
 
     function viewport() {

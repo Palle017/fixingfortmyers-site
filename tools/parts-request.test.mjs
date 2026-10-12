@@ -8,17 +8,17 @@ const script = fs.readFileSync('parts-request.js', 'utf8');
 const reference = '12345678-1234-4234-8234-123456789012';
 const confirmed = () => ({ok:true,json:async()=>({ok:true,received:true,id:reference})});
 const settle = async () => { for (let i=0; i<4; i++) await new Promise(setImmediate); };
-function setup(t, {handler, endpoint='https://receiver.invalid', beforeScripts} = {}) {
+function setup(t, {handler, endpoint='https://receiver.invalid', mirrorEndpoint='', url='https://preview.invalid/parts', beforeScripts} = {}) {
   const v = new VirtualConsole(), errors = [];
   v.on('jsdomError', e => { if (!/Not implemented: navigation/.test(e.message)) errors.push(e.message); });
-  const dom = new JSDOM(html, {url:'https://preview.invalid/parts',runScripts:'outside-only',virtualConsole:v});
+  const dom = new JSDOM(html, {url,runScripts:'outside-only',virtualConsole:v});
   const w = dom.window, d = w.document, requests = [];
   t.after(() => { w.close(); assert.deepEqual(errors, []); });
-  w.PT_CONTACT_CONFIG = {endpoint};
+  w.PT_CONTACT_CONFIG = {endpoint,mirrorEndpoint};
   w.fetch = async (url, options) => {
-    assert.equal(url, endpoint + '/hooks/lead/webform');
+    assert.ok([endpoint,mirrorEndpoint].filter(Boolean).some(base=>url===base+'/hooks/lead/webform'));
     assert.equal(options.credentials, 'omit');
-    const request = {body:JSON.parse(options.body),key:options.headers['Idempotency-Key']};
+    const request = {url,body:JSON.parse(options.body),key:options.headers['Idempotency-Key']};
     requests.push(request);
     return handler ? handler(request) : {ok:false,json:async()=>({ok:false})};
   };
@@ -41,6 +41,33 @@ test('parts confirms saved quote only after a receipt and keeps customer details
   assert.equal(x.d.getElementById('parts-backup').hidden,true);
   assert.match(x.d.getElementById('parts-status').textContent,/No order is confirmed/);
   x.send(); await settle(); assert.equal(x.requests.length,1);
+});
+
+test('published parts quote mirrors complete part and VIN details to Bay One and retries only local delivery',async t=>{
+  const cloud='https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site';
+  const bayOne='https://redline.taild5f39d.ts.net:10000';
+  let localAttempts=0;
+  const x=setup(t,{url:'https://fixingfortmyers.com/parts',endpoint:cloud,mirrorEndpoint:bayOne,beforeScripts:w=>{w.PT_LEAD_CHANNEL='google';},handler:request=>{
+    if(request.url.startsWith(cloud))return confirmed();
+    if(++localAttempts===1)return {ok:false,status:503,json:async()=>({ok:false})};
+    return {ok:true,status:201,json:async()=>({ok:true,received:true,id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'})};
+  }});
+  x.fill();x.enter('quantity','2');x.enter('vin','1HGCM82633A004352');x.enter('number','BP-123');x.enter('email','synthetic@example.invalid');x.enter('notes','Synthetic front axle request.');
+  x.send();await settle();
+  assert.equal(x.requests.filter(r=>r.url.startsWith(cloud)).length,1);
+  assert.equal(x.requests.filter(r=>r.url.startsWith(bayOne)).length,1);
+  assert.equal(x.d.getElementById('parts-backup').hidden,false);
+  assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null);
+  assert.match(x.d.getElementById('parts-status').textContent,/saved online[\s\S]*shop inbox has not confirmed[\s\S]*Call or text/i);
+  x.send();await settle();
+  const mirrored=x.requests.filter(r=>r.url.startsWith(bayOne));
+  assert.equal(mirrored.length,2);assert.deepEqual(mirrored[0].body,mirrored[1].body);
+  assert.equal(mirrored[0].key,mirrored[1].key);
+  assert.equal(x.requests.filter(r=>r.url.startsWith(cloud)).length,1);
+  assert.match(mirrored[0].body.details,/Part requested: Front brake pads[\s\S]*Quantity: 2[\s\S]*VIN: 1HGCM82633A004352[\s\S]*Part number: BP-123[\s\S]*Website source: google[\s\S]*Synthetic front axle request[\s\S]*Website receipt: 12345678/);
+  assert.equal(mirrored[0].body.phone,'2395550100');assert.equal(mirrored[0].body.vehicle,'2018 Example sedan');
+  assert.equal(x.w.sessionStorage.getItem('pt-last-request')!==null,true);
+  assert.match(x.d.getElementById('parts-status').textContent,/received and saved/);
 });
 
 test('parts uncertain retries preserve one key and edits create a new request', async t => {

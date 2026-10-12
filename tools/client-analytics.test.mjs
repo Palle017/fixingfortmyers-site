@@ -11,15 +11,16 @@ const settle = async () => { for (let i = 0; i < 6; i++) await new Promise(setIm
 const reply = (body, status = 200) => ({ok:status >= 200 && status < 300, status, json:async () => body});
 const receipt = {ok:true, received:true, id:'12345678-1234-4234-8234-123456789012'};
 
-function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = false, analyticsHandler, leadHandler} = {}) {
-  const errors = [], console = new VirtualConsole();
+function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = false, analyticsHandler, leadHandler, counterEndpoint, mirrorEndpoint = ''} = {}) {
+  const errors = [], warnings = [], console = new VirtualConsole();
   console.on('jsdomError', error => { if (!/Not implemented: navigation/.test(error.message)) errors.push(error); });
+  console.on('warn', message => warnings.push(message));
   const dom = new JSDOM(html, {url, ...(referrer ? {referrer} : {}), runScripts:'outside-only', pretendToBeVisual:true, virtualConsole:console});
   const w = dom.window, d = w.document, calls = [], retries = [], tools = [];
   t.after(() => { w.close(); assert.deepEqual(errors, []); });
   w.matchMedia = () => ({matches:false});
   w.HTMLElement.prototype.scrollIntoView = function () {};
-  w.PT_CONTACT_CONFIG = {endpoint:'https://receiver.invalid'};
+  w.PT_CONTACT_CONFIG = {endpoint:'https://receiver.invalid',counterEndpoint,mirrorEndpoint};
   d.modelContext = {registerTool(tool) { tools.push(tool); return Promise.resolve(); }};
   const nativeTimeout = w.setTimeout.bind(w);
   w.setTimeout = (callback, delay, ...args) => {
@@ -28,8 +29,8 @@ function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = fal
   };
   w.fetch = async (target, options = {}) => {
     const address = new URL(target);
-    assert.equal(address.origin, 'https://receiver.invalid');
-    const call = {path:address.pathname, body:options.body && JSON.parse(options.body), headers:options.headers, credentials:options.credentials, keepalive:options.keepalive};
+    assert.ok(['https://receiver.invalid','https://counter.invalid','https://mirror.invalid'].includes(address.origin));
+    const call = {origin:address.origin,path:address.pathname, body:options.body && JSON.parse(options.body), headers:options.headers, credentials:options.credentials, keepalive:options.keepalive};
     calls.push(call);
     if (call.path === '/hooks/analytics/event') return analyticsHandler ? analyticsHandler(call) : reply({ok:true});
     if (call.path === '/healthz') {
@@ -46,7 +47,7 @@ function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = fal
   const submit = () => d.getElementById('bookingForm').dispatchEvent(new w.Event('submit', {bubbles:true, cancelable:true}));
   const fill = () => { for (const [name,value] of Object.entries({name:'PRIVATE_CUSTOMER', phone:'2395550100', details:'PRIVATE_SYMPTOMS', city:'Fort Myers', locationChoice:'dropoff'})) enter(name,value); };
   const click = selector => d.querySelector(selector).dispatchEvent(new w.MouseEvent('click', {bubbles:true, cancelable:true}));
-  return {w,d,calls,retries,tools,enter,metrics,submit,fill,click};
+  return {w,d,calls,retries,warnings,tools,enter,metrics,submit,fill,click};
 }
 
 test('analytics sends only fixed public categories and allowlisted sources, without persistent tracking or private data', async t => {
@@ -66,6 +67,27 @@ test('analytics sends only fixed public categories and allowlisted sources, with
     assert.doesNotMatch(JSON.stringify(metric.body), /PRIVATE|visitor_id|utm_source|referrer/);
     assert.equal(x.w.localStorage.getItem('pt-website-visitor-v1'), null);
   }
+});
+
+test('anonymous visit mirrors once to Bay One with the same retry identifier', async t => {
+  const x=setup(t,{counterEndpoint:'https://counter.invalid'}); await settle();
+  const visits=x.metrics('visit');
+  assert.equal(visits.length,2);
+  assert.deepEqual(visits.map(call=>call.origin).sort(),['https://counter.invalid','https://receiver.invalid']);
+  assert.deepEqual(visits[0].body,visits[1].body);
+  assert.deepEqual(Object.keys(visits[0].body).sort(),['event','event_id','page','source']);
+  assert.equal(x.w.localStorage.getItem('pt-website-visitor-v1'),null);
+});
+
+test('Bay One counter rejects a non-success response and logs failed retry without interrupting cloud analytics', async t => {
+  const x=setup(t,{counterEndpoint:'https://counter.invalid',analyticsHandler:call=>
+    call.origin==='https://counter.invalid'?reply({ok:false},404):reply({ok:true})});
+  await settle();
+  assert.equal(x.retries.length,1);
+  x.retries.shift()(); await settle();
+  assert.equal(x.metrics('visit').filter(call=>call.origin==='https://counter.invalid').length,2);
+  assert.equal(x.metrics('visit').filter(call=>call.origin==='https://receiver.invalid').length,1);
+  assert.deepEqual(x.warnings,['Bay One website counter is unavailable.']);
 });
 
 test('human starts, contact clicks and the discreet AI disclosure are bounded per page and kept separate', async t => {
@@ -115,14 +137,19 @@ test('validation failures and offline manual drafts are never counted as network
 });
 
 test('analytics retries at most once with the same event ID and cannot block a repair submission', async t => {
-  const x = setup(t,{analyticsHandler:() => reply({ok:false},503)}); await settle();
-  assert.equal(x.metrics('visit').length,1); assert.equal(x.retries.length,1);
-  x.retries.shift()(); await settle();
-  assert.equal(x.metrics('visit').length,2);
-  assert.deepEqual(x.metrics('visit')[1].body,x.metrics('visit')[0].body);
+  const x = setup(t,{analyticsHandler:() => reply({ok:false},503),mirrorEndpoint:'https://mirror.invalid'}); await settle();
+  assert.equal(x.metrics('visit').length,2); assert.equal(x.retries.length,2);
+  for (const retry of x.retries.splice(0)) retry();
+  await settle();
+  assert.equal(x.metrics('visit').length,4);
+  for (const origin of ['https://receiver.invalid','https://mirror.invalid']) {
+    const visits=x.metrics('visit').filter(call=>call.origin===origin);
+    assert.equal(visits.length,2);
+    assert.deepEqual(visits[1].body,visits[0].body);
+  }
   assert.equal(x.retries.length,0,'a failed retry does not schedule a third attempt');
   x.fill(); x.submit(); await settle();
-  assert.equal(x.calls.filter(call=>call.path==='/hooks/lead/webform').length,1);
+  assert.deepEqual(x.calls.filter(call=>call.path==='/hooks/lead/webform').map(call=>call.origin),['https://receiver.invalid','https://mirror.invalid']);
   assert.equal(JSON.parse(x.w.sessionStorage.getItem('pt-last-request')).confirmed,true);
   const limited=setup(t,{analyticsHandler:()=>reply({ok:false},429)}); await settle();
   assert.equal(limited.retries.length,0,'rate limits do not trigger retries');
