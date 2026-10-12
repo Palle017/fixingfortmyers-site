@@ -80,6 +80,31 @@ test('a shared specialty link keeps its source through the service page, inquiry
   assert.equal(inquiry.w.sessionStorage.getItem('pt-last-request'),null);
 });
 
+test('symptom-page repair links preserve the matching service and last viewed page in an unsent draft', async t => {
+  for (const [page, service, label] of [
+    ['transmission-slipping-fort-myers','transmission','Transmission'],
+    ['engine-knocking-noise-fort-myers','engine','Engine']
+  ]) {
+    const landing = browser(t,{file:page+'.html',url:'https://preview.invalid/'+page});
+    const actions = [...landing.d.querySelectorAll('a[href]')].filter(link => {
+      const url = new URL(link.href);
+      return url.origin === 'https://preview.invalid' && url.hash === '#contact';
+    });
+    assert.equal(actions.length,6,'all six repair actions use the same service');
+    for (const action of actions) assert.equal(new URL(action.href).searchParams.get('service'),service);
+    assert.equal(landing.w.PT_REPAIR_CONTEXT.service,service);
+    assert.equal(landing.storage()['pt-repair-source'],page);
+    const inquiry = browser(t,{url:actions[0].href,saved:landing.storage()});
+    assert.equal(inquiry.d.getElementById('request-service').value,label);
+    await inquiry.submit();
+    const message = draftMessages(inquiry);
+    assert.ok(message.includes('\nService: '+label+'\n'));
+    assert.ok(message.endsWith('Website page context: /'+page+' (last guide or service viewed)'));
+    assert.deepEqual(landing.requests,[]);
+    assert.deepEqual(inquiry.requests,[],'preparing the draft never submits a lead');
+  }
+});
+
 test('each approved free-channel link identifies itself in unsent text and email drafts', async t => {
   for (const source of ['google','nextdoor','referral','trade_referral','gbp_no_start','gbp_walnut','gbp_major','nextdoor_no_start','nextdoor_walnut','nextdoor_major']) {
     const x = browser(t,{url:'https://preview.invalid/?utm_source='+source});
