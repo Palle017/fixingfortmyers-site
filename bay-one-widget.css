@@ -76,14 +76,14 @@
 .b1-near-contact .b1-launcher{padding-right:0}
 .b1-near-contact .b1-launcher .b1-avatar{border-radius:18px}
 @media(max-width:800px){
- .b1-widget{right:13px;bottom:calc(82px + env(safe-area-inset-bottom))}
+ .b1-widget{right:13px;max-width:calc(100% - 26px);bottom:calc(82px + env(safe-area-inset-bottom))}
  .b1-footer .b1-contact{display:flex;align-items:center;min-height:44px}
  .b1-widget .b1-launcher{display:flex;min-height:48px;gap:9px;padding-right:13px;border-radius:15px;max-width:190px}
  .b1-widget .b1-launcher .b1-avatar{width:42px;height:48px;border-radius:14px 0 0 14px;font-size:21px}
  .b1-widget .b1-launcher-copy{display:flex}
  .b1-launcher-copy strong{font-size:14px}
  .b1-launcher-copy span,.b1-launcher-copy small,.b1-launcher-copy .b1-logo{display:none}
- .b1-panel{width:min(430px,calc(100vw - 24px));height:min(690px,calc(var(--b1-viewport-height,100dvh) - 106px));border-radius:18px}
+ .b1-panel{width:430px;max-width:100%;height:min(690px,calc(var(--b1-viewport-height,100dvh) - 106px));border-radius:18px}
  .b1-header{padding:10px 13px}.b1-header .b1-avatar{height:53px;width:44px}.b1-title{font-size:20px!important}
  .b1-input-row textarea{font-size:16px;height:72px;min-height:72px}
  .b1-messages{padding:12px 12px 8px;gap:10px}.b1-message{padding:10px 11px}
