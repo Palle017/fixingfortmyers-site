@@ -674,7 +674,7 @@
     if ((endpoint || phoneField.value.trim()) && !validPhone(cleanPhone(phoneField.value)) && !incomplete.includes('phone')) incomplete.push('phone');
     const ready = incomplete.length === 0;
     const message = ready
-      ? endpoint ? 'Review the form and choose Send repair details. The shop must confirm appointments.' : 'Review the form and choose Prepare text to the shop, then send the draft yourself.'
+      ? endpoint ? `Review the form and choose ${submit.textContent.trim()}. The shop must confirm appointments.` : 'Review the form and choose Prepare text to the shop, then send the draft yourself.'
       : 'Complete the listed fields, then review the form before sending.';
     status.textContent = `${message} Nothing has been sent by the agent.`;
     form.dispatchEvent(new Event('pt:repair-review'));
