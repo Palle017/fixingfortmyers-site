@@ -50,7 +50,7 @@
     const customAvatar = config.avatar || script?.dataset.avatar;
     const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
     const css = document.createElement('link');
-    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20261012-assistant', script?.src || location.href).href;
+    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20261013-review', script?.src || location.href).href;
     document.head.append(css);
     const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
     widget.setAttribute('aria-label', 'Bay One repair assistant');
@@ -66,11 +66,11 @@
         <div class="b1-suggestions"><button type="button" data-b1-suggestion="question">Ask about a symptom</button><button type="button" data-b1-suggestion="estimate" disabled>Get a rough estimate</button></div>
         <form class="b1-composer">
           <div class="b1-mode" role="group" aria-label="Conversation type"><button type="button" data-b1-mode="chat" aria-pressed="true">Ask a question</button><button type="button" data-b1-mode="estimate" aria-pressed="false" disabled>Rough estimate</button></div>
-          <button class="b1-send-now" type="button" hidden>Ready? Send this to the shop</button>
+          <button class="b1-send-now" type="button" hidden>Review and send to the shop</button>
           <label class="b1-field-label" for="b1-message">What can I help you with?</label>
           <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Ask a question or describe your car problem…" required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           <div class="b1-status" role="status" aria-live="polite"></div>
-          <div class="b1-fallback" hidden><p>Bay One can’t reach the shop right now. Your notes are kept, so send them with the repair form or call.</p><a class="b1-fallback-link b1-fallback-form" href="/#contact">Send with the repair form</a> <a class="b1-fallback-link" href="tel:+12393972048">Call (239) 397-2048</a></div>
+          <div class="b1-fallback" hidden><p>Bay One is unavailable right now. Your notes are kept, so review them with the repair form or call.</p><a class="b1-fallback-link b1-fallback-form" href="/#contact">Review with the repair form</a> <a class="b1-fallback-link" href="tel:+12393972048">Call (239) 397-2048</a></div>
         </form>
         <footer class="b1-footer"><span>Planning ranges only; the shop confirms prices. <a href="/privacy-policy">Chat privacy</a> · <a href="tel:+12393972048">Call — AI intake</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
       </section>`;
@@ -97,14 +97,20 @@
       });
     }
 
-    function handoff(event) {
+    function conversationNotes() {
       const notes = [...state.customerMessages,...state.estimateSummaries];
       const unsent = input.value.trim();
-      if (unsent && notes.at(-1) !== unsent) notes.push(unsent);
-      const summary = notes.length ? `Customer notes from Bay One:\n${notes.join('\n\n')}` : '';
-      const service = window.PT_REPAIR_CONTEXT?.service || '';
+      if (unsent && !state.customerMessages.includes(unsent)) notes.push(unsent);
+      return notes.join('\n\n');
+    }
+
+    function handoff(event) {
+      if (pendingLead) { event.preventDefault(); status.textContent = 'Retry the pending repair request to confirm receipt before starting another request. Its details are preserved.'; return; }
       const card = widget.querySelector('.b1-lead'), typed = {};
-      for (const name of ['name','phone','city']) { const value = card?.querySelector(`[name=${name}]`)?.value.trim(); if (value) typed[name] = value; }
+      const notes = card ? card.querySelector('[name=details]').value.trim() : conversationNotes();
+      const summary = notes ? `Customer notes from Bay One:\n${notes}` : '';
+      const service = window.PT_REPAIR_CONTEXT?.service || '';
+      for (const name of ['name','phone','city','vehicle','starts','stranded']) { const field = card?.querySelector(`[name=${name}]`); if (field) typed[name] = field.value.trim(); }
       const fields = {...state.intake, ...typed};
       const samePage = summary && prefillService(summary,service,fields);
       close();
@@ -136,7 +142,7 @@
 
     // A dropped or unreachable server (laptop off, timeout, 5xx) gets the form and call instead of a dead end.
     function fallback(error) {
-      if (!error?.offline && !['estimate_unavailable','chat_unavailable','intake_only'].includes(error?.code)) return;
+      if (!error?.offline && !['invalid_answer','estimate_unavailable','chat_unavailable','intake_only'].includes(error?.code)) return;
       $('.b1-fallback').hidden = false; markDown();
     }
 
@@ -147,9 +153,9 @@
         const response = await fetch(apiBase+path, { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:controller.signal });
         let data;
         try { data = await response.json(); } catch (_) { throw Object.assign(new Error(path === '/chat/session' ? 'Bay One could not connect. You can still use the repair form or call the shop.' : 'Bay One’s reply could not be confirmed. Your message is still here.'), {offline:true}); }
-        if (!response.ok || data.ok !== true) {
-          const error = new Error(String(data.error || 'Bay One is unavailable at the moment. Please try again or contact the shop.'));
-          error.code = data.code; error.usage = data.usage; error.retryAfter = data.retry_after; error.offline = response.status >= 500; throw error;
+        if (!response.ok || data?.ok !== true) {
+          const error = new Error(String(data?.error || 'Bay One is unavailable at the moment. Please try again or contact the shop.'));
+          error.code = data?.code; error.usage = data?.usage; error.retryAfter = data?.retry_after; error.offline = response.status >= 500; throw error;
         }
         return data;
       } catch (error) {
@@ -267,7 +273,7 @@
       try {
         await session();
         const result = await request('/chat/message', { ...pending, visitor_token:state.token });
-        if (typeof result.reply !== 'string' || !result.reply.trim()) throw new Error('Bay One’s reply was empty. Your message is preserved; send again to retry.');
+        if (typeof result.reply !== 'string' || !result.reply.trim()) throw Object.assign(new Error('Bay One’s reply was empty. Your message is preserved; send again to retry.'), {code:'invalid_answer'});
         if (result.intake && typeof result.intake === 'object') {
           for (const [name,limit] of [['vehicle',160],['city',100],['starts',7],['stranded',7]]) {
             const value = result.intake[name];
@@ -280,12 +286,17 @@
         updateAvailability(result); addMessage('assistant',result.reply,result.estimate); offerSend(result.kind==='intake'||(!result.kind&&Boolean(result.intake))); state.failed = null; input.value = ''; status.textContent = '';
         if(result.assist==='scripted') { $('.b1-fallback').hidden=false; $('.b1-fallback p').textContent='AI answers are unavailable. This is the repair-request helper; it does not generate an estimate.'; }
       } catch (error) {
-        state.failed = !error.code || error.code === 'request_pending' ? pending : null;
+        state.failed = !error.code || error.offline || ['request_pending','invalid_answer'].includes(error.code) ? pending : null;
         if (error.code === 'invalid_session') {
           state.sessionReady = false; state.token = '';
           try { localStorage.removeItem(storageKey); } catch (_) { /* The next request will still create a fresh session. */ }
         }
         if(error.usage)updateAvailability({usage:error.usage}); status.textContent = error.message; fallback(error);
+        if (error.offline || error.code === 'invalid_answer') {
+          status.textContent = 'Bay One’s reply is unavailable right now. Your message is preserved. Try again or review and send your repair details.';
+          $('.b1-fallback p').textContent = 'Your message has not been answered. You can review your own words and send a repair request; the shop will review it.';
+        }
+        offerSend(false);
         if (error.code === 'rate_limit' && error.retryAfter) status.textContent += ` Try again in about ${Math.ceil(Number(error.retryAfter))} seconds.`;
       } finally {
         clearTimeout(slow); busy(false); if (!panel.hidden && matchMedia('(pointer:fine)').matches) input.focus({preventScroll:true});
@@ -300,7 +311,10 @@
     const sendNow = $('.b1-send-now');
     const leadForm = document.createElement('form'); leadForm.className = 'b1-lead'; leadForm.noValidate = false;
     leadForm.innerHTML = `
-      <p class="b1-lead-title">Send this to the shop</p>
+      <p class="b1-lead-title">Review and send to the shop</p>
+      <p class="b1-lead-note">Check and edit these details. Nothing is sent to the shop until you choose Send to the shop.</p>
+      <label>Vehicle <small>(year, make, model, if known)</small><input name="vehicle" maxlength="160" placeholder="e.g. 2018 Ford F-150"></label>
+      <label>Repair details<textarea name="details" rows="5" maxlength="6000" required></textarea></label>
       <label>First name<input name="name" autocomplete="given-name" maxlength="100" required></label>
       <label>Mobile number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" required></label>
       <label>Your city or ZIP<input name="city" autocomplete="address-level2" maxlength="100" placeholder="e.g. Fort Myers or 33901" required></label>
@@ -366,23 +380,30 @@
       text.textContent = (sent ? `The shop has your ${sent} file${sent > 1 ? 's' : ''}.` : '') + (failed.length ? ` ${failed.length} did not go through (${failed.join(', ')}). You can text ${failed.length > 1 ? 'them' : 'it'} to the shop at (239) 397-2048.` : '');
     }
     let leadKey = uuid(), leadBusy = false, leadSent = false, pendingLead = null;
-    leadForm.addEventListener('input', () => { if (!leadBusy && !pendingLead) leadKey = uuid(); });
-    function lockLeadFields(locked) { leadForm.querySelectorAll('input,select').forEach(field => { field.disabled = locked; }); }
+    leadForm.addEventListener('input', event => {
+      event.target.dataset.touched = '1';
+      if (event.target.name === 'details') event.target.setCustomValidity('');
+      if (!leadBusy && !pendingLead) leadKey = uuid();
+    });
+    function lockLeadFields(locked) { leadForm.querySelectorAll('input,select,textarea').forEach(field => { field.disabled = locked; }); }
+    function refreshReview() {
+      if (leadSent || pendingLead) return;
+      const values = {vehicle:state.intake.vehicle || document.getElementById('request-vehicle')?.value || '', details:conversationNotes(), city:state.intake.city || '', starts:state.intake.starts || 'unknown', stranded:state.intake.stranded || 'unknown'};
+      for (const [name,value] of Object.entries(values)) {
+        const field = leadForm.querySelector(`[name=${name}]`);
+        if (!field.dataset.touched) field.value = value;
+      }
+    }
     function showLead() {
       if (leadSent) return;
-      if (!leadForm.isConnected) {
-        for (const name of ['starts', 'stranded']) leadForm.querySelector(`[name=${name}]`).value = ['yes', 'no'].includes(state.intake[name]) ? state.intake[name] : 'unknown';
-        if (state.intake.city) leadForm.querySelector('[name=city]').value = String(state.intake.city).slice(0, 100);
-      }
-      sendNow.hidden = true; messages.append(leadForm); messages.scrollTop = messages.scrollHeight;
-      leadForm.querySelector('[name=name]').focus({preventScroll:true});
+      refreshReview();
+      sendNow.hidden = true; messages.append(leadForm); leadForm.scrollIntoView({behavior:'auto',block:'start'});
+      leadForm.querySelector('[name=vehicle]').focus({preventScroll:true});
     }
     // The card appears after the first message; later chat answers still fill the urgency boxes the customer has not touched.
     for (const name of ['starts', 'stranded']) leadForm.querySelector(`[name=${name}]`).addEventListener('change', event => { event.target.dataset.touched = '1'; });
     function offerSend(ready) {
-      const city = leadForm.querySelector('[name=city]');
-      if (leadForm.isConnected && !leadSent && !city.dataset.touched && state.intake.city) city.value = String(state.intake.city).slice(0,100);
-      if (leadForm.isConnected && !leadSent) for (const name of ['starts', 'stranded']) { const field = leadForm.querySelector(`[name=${name}]`); if (!field.dataset.touched && ['yes', 'no'].includes(state.intake[name])) field.value = state.intake[name]; }
+      if (leadForm.isConnected) refreshReview();
       if (leadSent || leadForm.isConnected) return;
       if (ready) showLead(); else if (state.customerMessages.length) sendNow.hidden = false;
     }
@@ -393,6 +414,8 @@
       event.preventDefault(); if (leadBusy || leadSent) return;
       if (!pendingLead) {
         leadCity.setCustomValidity(leadCity.value.trim() ? '' : 'Enter your city or ZIP.');
+        const details = leadForm.querySelector('[name=details]');
+        details.setCustomValidity(!details.value.trim() ? 'Add the repair details you want the shop to review.' : details.value.length > details.maxLength ? 'Your notes are preserved. Shorten the repair details to 6,000 characters before sending.' : '');
         if (!leadForm.reportValidity()) return;
       }
       const retryingPending = !!pendingLead;
@@ -400,8 +423,8 @@
         const data = new FormData(leadForm), sms = data.get('sms') === 'on';
         const body = {
         name:String(data.get('name') || '').trim(), phone:String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}),
-        vehicle:String(state.intake.vehicle || '').slice(0,160), service:String(window.PT_REPAIR_CONTEXT?.service || '').slice(0,160),
-        details:('Bay One chat on '+location.pathname+':\n'+[...state.customerMessages,...state.estimateSummaries].join('\n')).slice(0,6000),
+        vehicle:String(data.get('vehicle') || '').trim().slice(0,160), service:String(window.PT_REPAIR_CONTEXT?.service || '').slice(0,160),
+        details:String(data.get('details') || '').trim(),
         city:String(data.get('city') || state.intake.city || '').trim().slice(0,100), starts:String(data.get('starts') || 'unknown'), stranded:String(data.get('stranded') || 'unknown'),
         callbackTime:String(data.get('callbackTime') || '').trim().slice(0,160), source:'ai', locationContract:'sender-v1', website:'',
         smsConsent:sms, smsConsentTimestamp:sms ? new Date().toISOString() : '', smsConsentVersion:'2026-09-06-v1',
@@ -425,9 +448,10 @@
           if (!retryingPending && [400,403,413,422,429].includes(response.status)) { pendingLead = null; leadKey = uuid(); lockLeadFields(false); }
           throw new Error(result?.error || 'Receipt could not be confirmed.');
         }
-        leadSent = true; leadForm.remove(); $('.b1-composer').hidden = true;
+        leadSent = true; pendingLead = null; leadForm.remove(); $('.b1-composer').hidden = true;
         const urgent = body.stranded === 'yes' && body.starts === 'no';
         const row = addMessage('assistant', `Your request is saved for the shop to review. Your callback number is ${body.phone}; ${sms ? 'text or call' : 'call only'}. Booking is not confirmed.` + (urgent ? ' You said you are stranded, so your request is marked urgent. If you are somewhere unsafe, call 911.' : ' Your mechanic confirms pricing after reviewing the problem.'));
+        const reference = document.createElement('p'); reference.className = 'b1-receipt-reference'; reference.textContent = `Reference: ${result.id}`; row.append(reference);
         const call = document.createElement('a'); call.className = 'b1-request-service'; call.href = 'tel:+12393972048'; call.textContent = urgent ? 'Call — AI intake' : 'Call — AI intake';
         row.append(call);
         uploadMedia(result, mediaInput && !mediaInput.closest('label').hidden ? pickMedia().keep : []).catch(() => {});

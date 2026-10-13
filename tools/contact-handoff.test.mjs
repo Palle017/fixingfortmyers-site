@@ -369,9 +369,9 @@ test('Bay One rejects whitespace city before posting and accepts a corrected cit
   city.value='Fort Myers';city.dispatchEvent(new x.w.Event('input'));send();await settle();
   const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');assert.equal(sent.length,1);assert.equal(sent[0].body.city,'Fort Myers');
 });
-test('when Bay One drops mid-chat, the customer gets the repair form and a call link with their notes and contact details carried over',async t=>{
+test('an uncertain Bay One lead keeps the reviewed snapshot for retry instead of starting a duplicate form request',async t=>{
   let up=true;
-  const x=setup(t,{handler:async(route,body,w)=>{if(!up)throw new w.TypeError('Failed to fetch');return {ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:{ok:true,kind:'intake',reply:'Thanks.',ready:true,intake:{vehicle:'2015 Ford F-150'}}};}}),d=x.w.document;
+  const x=setup(t,{handler:async(route,body,w)=>{if(!up)throw new w.TypeError('Failed to fetch');return {ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:route==='/hooks/lead/webform'?{ok:true,received:true,id:'confirmed-retry-receipt'}:{ok:true,kind:'intake',reply:'Thanks.',ready:true,intake:{vehicle:'2015 Ford F-150'}}};}}),d=x.w.document;
   await settle();d.querySelector('.b1-launcher').click();await settle();
   await x.say('Truck dies at stop lights.');
   assert.equal(d.querySelector('.b1-fallback').hidden,true,'no fallback while Bay One answers');
@@ -383,9 +383,17 @@ test('when Bay One drops mid-chat, the customer gets the repair form and a call 
   assert.doesNotMatch(card.querySelector('.b1-lead-status').textContent,/Failed to fetch/);
   assert.ok(Number(x.w.sessionStorage.getItem('pt-bayone-down'))>0,'an unreachable server is remembered for later pages');
   fallback.querySelector('.b1-fallback-form').click();
-  assert.match(d.getElementById('request-details').value,/Truck dies at stop lights/);
-  assert.equal(d.getElementById('request-vehicle').value,'2015 Ford F-150');
-  assert.equal(d.getElementById('request-name').value,'Synthetic');assert.equal(d.getElementById('request-phone').value,'2395550100');
+  assert.equal(d.getElementById('request-details').value,'','the normal form cannot create a second request while the first receipt is uncertain');
+  assert.match(d.querySelector('.b1-status').textContent,/Retry the pending repair request/);
+  assert.equal(card.querySelector('[name=vehicle]').disabled,true);
+  assert.equal(card.querySelector('[name=details]').disabled,true);
+  assert.match(card.querySelector('[name=details]').value,/Truck dies at stop lights/);
+  up=true;card.dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');
+  assert.equal(sent.length,2);
+  assert.deepEqual(sent[1].body,sent[0].body);
+  assert.equal(sent[1].headers['Idempotency-Key'],sent[0].headers['Idempotency-Key']);
+  assert.equal(d.querySelector('.b1-receipt-reference').textContent,'Reference: confirmed-retry-receipt');
 });
 test('a chat reply that never arrives offers the form and call, while a refusal from Bay One does not',async t=>{
   const x=setup(t,{handler:async(route,body,w)=>{if(route==='/chat/message')throw new w.TypeError('Failed to fetch');return {ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:{ok:true,visitor_token:'synthetic-token'}};}}),d=x.w.document;
