@@ -63,3 +63,41 @@ test('provider failure preserves the message for a real retry and never renders 
   assert.equal(x.d.querySelector('.b1-estimate'),null);assert.match(x.d.getElementById('b1-message').value,/Honda Civic/);assert.equal(x.d.querySelector('.b1-fallback').hidden,false);
   fail=false;await x.send('2015 Honda Civic replace brakes');assert.match(x.d.querySelector('.b1-messages').textContent,/Which model/);
 });
+
+test('malformed lead receipts preserve the card and reuse the exact request until the receiver confirms it', async t => {
+  const id = '12345678-1234-4234-8234-123456789012';
+  const invalid = [null, {received:true, id}, {ok:false, received:true, id}, {ok:true, received:true},
+    {ok:true, received:true, id:''}, {ok:true, received:true, id:'   '}, {ok:true, received:false, id}, 'non-JSON'];
+  for (const receipt of invalid) {
+    let attempts = 0;
+    const x = setup(t, {handler:async route => {
+      if (route === '/hooks/lead/webform') {
+        attempts++;
+        return {ok:true, status:200, json:async () => {
+          if (attempts > 1) return {ok:true, received:true, id};
+          if (receipt === 'non-JSON') throw new SyntaxError('HTML response');
+          return receipt;
+        }};
+      }
+      return {ok:true, status:200, json:async () => route === '/healthz' ? {ok:true, chat:'ready'}
+        : route === '/chat/session' ? {ok:true, visitor_token:'synthetic-token'}
+        : {ok:true, kind:'intake', reply:'Please add your contact details.', intake:{}}};
+    }});
+    await x.open(); await x.send('Synthetic brake inquiry.');
+    const card = x.d.querySelector('.b1-lead');
+    for (const [key,value] of Object.entries({name:'Synthetic', phone:'2395550100', city:'Fort Myers'})) card.querySelector('[name='+key+']').value = value;
+    const submit = () => card.dispatchEvent(new x.w.Event('submit', {bubbles:true, cancelable:true}));
+    submit(); await settle();
+    assert.equal(card.isConnected, true);
+    assert.equal(card.querySelector('[name=phone]').disabled, true, 'an uncertain save keeps its payload for retry');
+    assert.match(card.querySelector('.b1-lead-status').textContent, /Receipt could not be confirmed/);
+    assert.doesNotMatch(x.d.querySelector('.b1-messages').textContent, /Your request is saved/);
+    assert.equal(x.w.sessionStorage.getItem('pt-last-request'), null);
+    submit(); await settle();
+    const calls = x.calls.filter(call => call.route === '/hooks/lead/webform');
+    assert.deepEqual(calls[0].body, calls[1].body);
+    assert.equal(calls[0].headers['Idempotency-Key'], calls[1].headers['Idempotency-Key']);
+    assert.equal(card.isConnected, false);
+    assert.equal(JSON.parse(x.w.sessionStorage.getItem('pt-last-request')).id, id);
+  }
+});

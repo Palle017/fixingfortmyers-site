@@ -413,7 +413,7 @@
       const response = await fetch(endpoint + path, { method: 'POST', body: json ? JSON.stringify(body) : body, headers: { ...(json ? { 'Content-Type': 'application/json' } : {}), 'Idempotency-Key': key }, signal: controller.signal, credentials: 'omit' });
       let result = null;
       try { result = await response.json(); } catch (_) { /* A non-JSON reply is not a receipt. */ }
-      if (!response.ok || result?.ok !== true || result.received !== true || typeof result.id !== 'string') {
+      if (!response.ok || result?.ok !== true || result.received !== true || typeof result.id !== 'string' || !result.id.trim()) {
         // Keep the intake's short validation message (for example a bad phone number) to show as text.
         throw Object.assign(new Error('unconfirmed'), {status: response.status, reason: typeof result?.error === 'string' && result.error.length <= 200 ? result.error : ''});
       }
@@ -439,7 +439,12 @@
     for (const [n, item] of items.entries()) {
       statusField.textContent = `Request received. Sending photo/video ${n + 1} of ${items.length}… keep this page open.`;
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 300000);
-      try { const response = await fetch(`${endpoint}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type,'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal}); if (response.ok) sent++; }
+      try {
+        const response = await fetch(`${endpoint}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type,'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal});
+        const receipt = await response.json().catch(() => null);
+        // A successful HTTP response can still be an error page or an unsaved upload.
+        if (response.ok && receipt?.ok === true && receipt.received === true) sent++;
+      }
       catch (_) { /* The request is saved; the customer can text the file instead. */ }
       finally { clearTimeout(timer); }
     }
