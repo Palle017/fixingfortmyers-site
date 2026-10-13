@@ -329,13 +329,13 @@ test('the site form and Bay One store the exact SMS consent wording shown beside
   assert.ok(site.includes(`'${shown}'`),'site.js consentDisclosure matches index.html');
   assert.ok(widget.includes(`'${shown}'`),'bay-one-widget.js CONSENT matches index.html');
 });
-test('Bay One card sends photos and video to Tony after the request is saved, only when the receiver supports it',async t=>{
+test('Bay One card sends photos after the request is saved and requires a successful media receipt',async t=>{
   const id='12345678-1234-4234-8234-123456789012';
   const x=setup(t,{handler:async(route,body)=>{
     if(route==='/healthz')return {ok:true,status:200,json:async()=>({ok:true,chat:'ready',media:'ready'})};
     if(route==='/chat/session')return {ok:true,status:200,json:async()=>({ok:true,visitor_token:'synthetic-token'})};
     if(route==='/hooks/lead/webform')return {ok:true,status:201,json:async()=>({ok:true,received:true,id,receivedAt:'2026-09-24T16:00:00.000Z',mediaToken:'synthetic-media-token-000000000000'})};
-    if(route.startsWith('/hooks/lead/media/'))return body.name==='bad.mov'?{ok:false,status:415,json:async()=>({ok:false,error:'no'})}:{ok:true,status:201,json:async()=>({ok:true,received:true,index:1,count:1})};
+    if(route.startsWith('/hooks/lead/media/'))return body.name==='bad.mov'?{ok:true,status:200,json:async()=>({ok:false,received:true,error:'not saved'})}:{ok:true,status:201,json:async()=>({ok:true,received:true,index:1,count:1})};
     return {ok:true,status:200,json:async()=>({ok:true,kind:'intake',reply:'Add your name and number below.',ready:true,intake:{vehicle:'2015 Honda Civic'}})};
   }});
   await settle();await x.say('Oil leak under the engine.');
@@ -359,7 +359,7 @@ test('without receiver support the photo picker stays hidden and nothing is uplo
 
 
 test('Bay One rejects whitespace city before posting and accepts a corrected city', async t => {
-  const x=setup(t,{handler:async route => ({ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:route==='/hooks/lead/webform'?{received:true,id:'12345678-1234-4234-8234-123456789012'}:{ok:true,reply:'Contact details?',ready:true,intake:{}}})});
+  const x=setup(t,{handler:async route => ({ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:route==='/chat/session'?{ok:true,visitor_token:'synthetic-token'}:route==='/hooks/lead/webform'?{ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'}:{ok:true,reply:'Contact details?',ready:true,intake:{}}})});
   await settle();await x.say('Synthetic brake inquiry');
   const card=x.w.document.querySelector('.b1-lead');
   card.querySelector('[name=name]').value='Synthetic';card.querySelector('[name=phone]').value='2395550100';

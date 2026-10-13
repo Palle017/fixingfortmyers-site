@@ -221,7 +221,16 @@
     }
 
     function open(event) {
-      opener = event?.currentTarget instanceof HTMLElement ? event.currentTarget : document.activeElement;
+      const trigger = event?.currentTarget instanceof HTMLElement ? event.currentTarget : document.activeElement;
+      const repairDialog = document.getElementById('repair-request-dialog');
+      if (repairDialog?.open) {
+        // Native modals make siblings inert. Wait for the repair dialog to restore
+        // the same form and finish returning focus before opening this body-level panel.
+        repairDialog.addEventListener('close', () => open({currentTarget:trigger}), {once:true});
+        repairDialog.close();
+        return;
+      }
+      opener = trigger;
       loadArtwork(); panel.hidden = false; launcher.hidden = true; launcher.setAttribute('aria-expanded','true');
       entryButtons.forEach(button => button.setAttribute('aria-expanded','true'));
       $('.b1-close').focus({preventScroll:true}); viewport();
@@ -349,7 +358,7 @@
         try {
           const response = await fetch(`${leadBase}/hooks/lead/media/${result.id}`, {method:'POST', credentials:'omit', headers:{'Content-Type':item.type, 'X-Media-Token':result.mediaToken}, body:item.file, signal:controller.signal});
           const reply = await response.json().catch(() => ({}));
-          if (!response.ok || reply.received !== true) throw new Error(reply.error || 'not saved');
+          if (!response.ok || reply?.ok !== true || reply.received !== true) throw new Error(reply?.error || 'not saved');
           sent++;
         } catch (error) { failed.push(original.file.name + (error.name === 'AbortError' ? ' (timed out)' : '')); }
         finally { clearTimeout(timer); }
@@ -410,11 +419,11 @@
         const response = await fetch(leadBase+'/hooks/lead/webform', { method:'POST', credentials:'omit', headers:{'Content-Type':'application/json','Idempotency-Key':pendingLead.key}, body:JSON.stringify(body), signal:controller.signal });
         const result = await response.json().catch(() => ({}));
         leadStatusCode = response.status;
-        if (!response.ok || result.received !== true) {
+        if (!response.ok || result?.ok !== true || result.received !== true || typeof result.id !== 'string' || !result.id.trim()) {
           // Validation/refusal confirms no save; allow corrections. A timeout, 5xx or
           // key conflict can be ambiguous, so preserve the snapshot and retry key.
           if (!retryingPending && [400,403,413,422,429].includes(response.status)) { pendingLead = null; leadKey = uuid(); lockLeadFields(false); }
-          throw new Error(result.error || 'Receipt could not be confirmed.');
+          throw new Error(result?.error || 'Receipt could not be confirmed.');
         }
         leadSent = true; leadForm.remove(); $('.b1-composer').hidden = true;
         const urgent = body.stranded === 'yes' && body.starts === 'no';

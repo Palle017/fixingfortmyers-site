@@ -125,6 +125,40 @@ test('files the form cannot send are counted and the customer is told', async t 
   assert.match(x.d.getElementById('request-done-status').textContent, /1 photo\/video file\(s\) did not go through/);
 });
 
+test('HTTP success alone never confirms a photo upload, including photos added after receipt', async t => {
+  const replies = [null, {ok:true}, {ok:false, received:true}, {ok:true, received:false}, 'non-JSON'];
+  for (const reply of replies) {
+    const x = setup(t, {handler:() => saved({mediaToken:'token-1'}), media:true,
+      mediaHandler:() => reply === 'non-JSON' ? {ok:true, status:200, json:async () => { throw new SyntaxError('HTML response'); }} : response(reply)});
+    await settle(); x.fill();
+    const file = new x.w.File([new Uint8Array([255, 216, 255])], 'engine.jpg', {type:'image/jpeg'});
+    Object.defineProperty(x.d.getElementById('request-media'), 'files', {value:[file], configurable:true});
+    x.send(); await settle();
+    assert.equal(x.d.getElementById('request-done').hidden, false, 'the lead receipt remains valid');
+    assert.match(x.d.getElementById('request-done-status').textContent, /1 photo\/video file\(s\) did not go through/);
+    const more = x.d.getElementById('request-done-media');
+    Object.defineProperty(more, 'files', {value:[file], configurable:true});
+    more.dispatchEvent(new x.w.Event('change')); await settle();
+    assert.match(x.d.getElementById('request-done-status').textContent, /1 file\(s\) did not go through/);
+    assert.equal(x.events('form_photo_added').at(-1).count, 0);
+  }
+});
+
+test('a lead receipt requires a nonblank reference and an uncertain response retries the same request', async t => {
+  for (const reference of ['', '   ']) {
+    let attempts = 0;
+    const x = setup(t, {handler:() => ++attempts === 1 ? saved({id:reference}) : saved()});
+    await settle(); x.fill(); x.send(); await settle();
+    assert.equal(x.d.getElementById('request-done').hidden, true);
+    assert.equal(x.events('form_submit_success').length, 0);
+    assert.equal(x.w.sessionStorage.getItem('pt-last-request'), null);
+    x.timers.shift().callback(); await settle();
+    assert.equal(x.d.getElementById('request-done').hidden, false);
+    assert.deepEqual(x.leads()[0].body, x.leads()[1].body);
+    assert.equal(x.leads()[0].headers['Idempotency-Key'], x.leads()[1].headers['Idempotency-Key']);
+  }
+});
+
 test('a network failure retries the same payload and key in the background, then succeeds', async t => {
   let calls = 0;
   const x = setup(t, {handler:() => { if (++calls === 1) throw new TypeError('Synthetic outage'); return saved(); }});

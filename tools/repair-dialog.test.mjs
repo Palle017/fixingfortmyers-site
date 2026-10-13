@@ -103,3 +103,48 @@ test('AI preparation opens a review popup without submitting a lead or checking 
   assert.equal(d.getElementById('request-sms-consent').checked, false);
   assert.deepEqual(calls, []);
 });
+
+test('asking Bay One from the repair popup closes the native modal before opening chat and preserves the form', async t => {
+  const {d, w, click} = setup(t);
+  w.matchMedia = () => ({matches:false});
+  w.HTMLElement.prototype.scrollIntoView = function () {};
+  w.PT_CONTACT_CONFIG = {endpoint:''};
+  w.PT_BAYONE_CONFIG = {enabled:true, endpoint:'https://chat.invalid'};
+  const requests = [];
+  w.fetch = async target => {
+    const route = new URL(target).pathname; requests.push(route);
+    return {ok:true, status:200, json:async () => route === '/healthz' ? {ok:true, chat:'ready'} : {ok:true, visitor_token:'synthetic-token'}};
+  };
+  w.eval(markup('site.js')); w.eval(markup('bay-one-widget.js'));
+  // Native close events arrive later, after close() returns; keep that ordering.
+  w.HTMLDialogElement.prototype.close = function () {
+    this.open = false;
+    w.setTimeout(() => this.dispatchEvent(new w.Event('close')), 0);
+  };
+  click(d.querySelector('.home-start__actions a[href="#contact"]'));
+  const dialog = d.getElementById('repair-request-dialog'), form = d.getElementById('bookingForm');
+  d.getElementById('request-details').value = 'Synthetic unsent no-start notes';
+  d.getElementById('request-phone').value = '2395550100';
+  d.getElementById('request-sms-consent').checked = true;
+  const helper = d.getElementById('request-bay-one');
+  assert.equal(helper.hidden, false);
+  click(helper);
+  assert.equal(dialog.open, false, 'a body-level chat would be inert behind an open native modal');
+  assert.equal(d.querySelector('.b1-panel').hidden, true, 'chat waits for the repair form close handler');
+  await new Promise(resolve => w.setTimeout(resolve, 0)); await settle();
+  assert.equal(d.querySelector('.b1-panel').hidden, false);
+  assert.equal(d.activeElement.className, 'b1-close', 'the modal close handler cannot steal chat focus');
+  assert.equal(d.getElementById('bookingForm'), form);
+  assert.ok(form.closest('.home-start__grid'));
+  assert.equal(d.getElementById('request-details').value, 'Synthetic unsent no-start notes');
+  assert.equal(d.getElementById('request-phone').value, '2395550100');
+  assert.equal(d.getElementById('request-sms-consent').checked, true);
+  const message = d.getElementById('b1-message'); message.value = 'Additional synthetic notes from Bay One.';
+  click(d.querySelector('.b1-contact'));
+  await new Promise(resolve => w.setTimeout(resolve, 0)); await settle();
+  assert.equal(dialog.open, true, 'the handoff reopens the same repair form for review');
+  assert.equal(d.querySelector('.b1-panel').hidden, true);
+  assert.match(d.getElementById('request-details').value, /Synthetic unsent no-start notes[\s\S]*Additional synthetic notes/);
+  assert.equal(d.getElementById('bookingForm'), form);
+  assert.equal(requests.some(route => route.startsWith('/hooks/')), false, 'opening help and reviewing notes sends no repair request');
+});
