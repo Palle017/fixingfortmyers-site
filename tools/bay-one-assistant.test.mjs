@@ -65,6 +65,19 @@ test('provider failure preserves the message for a real retry and never renders 
   fail=false;await x.send('What does it cost to replace brakes on a 2015 Honda Civic?');assert.match(x.d.querySelector('.b1-messages').textContent,/Which model/);
 });
 
+test('hosted estimate quota responses do not expose a two-per-day gate and preserve a route to the shop',async t=>{
+  const x=setup(t,{handler:async route=>{
+    if(route==='/chat/message')return {ok:false,status:429,json:async()=>({ok:false,code:'estimate_limit',error:'Your two rough estimates for today are used.'})};
+    return {ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:{ok:true,visitor_token:'synthetic-token',canEstimate:true,capabilities,usage:{limit:2,remaining:0}}};
+  }});
+  await x.open();await x.send('How much to replace the brakes on a 2015 Honda Civic?');
+  assert.match(x.d.querySelector('.b1-status').textContent,/price range is unavailable/i);
+  assert.doesNotMatch(x.d.querySelector('#bay-one-widget').textContent,/two rough estimates|2 rough estimates|today are used/i);
+  assert.equal(x.d.querySelector('.b1-fallback').hidden,false);
+  assert.equal(x.d.querySelector('.b1-send-now').hidden,false);
+  assert.match(x.d.querySelector('#b1-message').value,/2015 Honda Civic/);
+});
+
 test('malformed lead receipts preserve the card and reuse the exact request until the receiver confirms it', async t => {
   const id = '12345678-1234-4234-8234-123456789012';
   const invalid = [null, {received:true, id}, {ok:false, received:true, id}, {ok:true, received:true},

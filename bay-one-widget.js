@@ -140,7 +140,7 @@
 
     // A dropped or unreachable server (laptop off, timeout, 5xx) gets the form and call instead of a dead end.
     function fallback(error) {
-      if (!error?.offline && !['invalid_answer','estimate_unavailable','chat_unavailable','intake_only'].includes(error?.code)) return;
+      if (!error?.offline && !['invalid_answer','estimate_unavailable','estimate_limit','chat_unavailable','intake_only'].includes(error?.code)) return;
       $('.b1-fallback').hidden = false; markDown();
     }
 
@@ -268,7 +268,12 @@
           state.sessionReady = false; state.token = '';
           try { localStorage.removeItem(storageKey); } catch (_) { /* The next request will still create a fresh session. */ }
         }
-        if(error.usage)updateAvailability({usage:error.usage}); status.textContent = error.message; fallback(error);
+        if(error.usage)updateAvailability({usage:error.usage}); status.textContent = error.code === 'estimate_limit'
+          ? 'An automated price range is unavailable right now. Review your repair details and send them to the shop for pricing.'
+          : error.message; fallback(error);
+        if (error.code === 'estimate_limit') {
+          $('.b1-fallback p').textContent = 'The price-range service could not respond. Your original question is preserved; review and send it to the shop for a preliminary estimate.';
+        }
         if (error.offline || error.code === 'invalid_answer') {
           status.textContent = 'Bay One’s reply is unavailable right now. Your message is preserved. Try again or review and send your repair details.';
           $('.b1-fallback p').textContent = 'Your message has not been answered. You can review your own words and send a repair request; the shop will review it.';
