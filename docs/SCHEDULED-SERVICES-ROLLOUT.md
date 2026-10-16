@@ -6,11 +6,11 @@ A customer can open the short existing repair form from an oil-service, detailin
 
 The checkout is isolated from older P15G2 website worktrees and preserves the existing intake endpoint, original form, consent, idempotency behavior and production auth. Synthetic tests cover appointment preference and payment-link intent.
 
-## Decision needed before publishing a percentage-off offer
+## Approved 50%-off labor offer (October 16, 2026)
 
-Owner approved a **50% prepay incentive**, but did not specify its exact discount base. Confirm one precise choice: half of **oil-change labor**, half of **oil + filter materials**, or half of **the complete oil-change invoice**. Do not advertise a specific percentage or take a payment before the baseline, qualifying materials, refund terms, applicable taxes and eligibility are approved. Prepaid part orders should be placed only after VIN/vehicle specifications and job compatibility are confirmed.
+The owner explicitly confirmed **50% off oil-change labor when the correct LIQUI MOLY motor oil is purchased and paid for in advance**. The oil, filter, taxes and other charges are **not** discounted. Fitment/oil approval, customer quotation and prepayment verification come before order or repair. The static public form requests a secure itemized oil-payment link; it does not charge the customer. The shop will apply the labor reduction to an authorized itemized estimate/invoice after qualifying payment is verified.
 
-Always match the OEM-required viscosity, formal approvals/specifications and capacity. **LIQUI MOLY** is used only when an approved product fits that engine; never promise compatibility without a verification step. Keep a complete itemized estimate before charging.
+See [the approved offer, Google Calendar and supplier rollout specification](LIQUI-MOLY-PREPAY-CALENDAR-ROLLOUT-20261016.md) for billing calculations, Florida estimate/authorization requirements, business-calendar setup, and security/test gates.
 
 ## True self-booking (later activation)
 
