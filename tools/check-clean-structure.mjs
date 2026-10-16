@@ -97,9 +97,9 @@ export function checkCleanPage(name,html){
         const picker=d.querySelector('.hero-appointment');
         assert.ok(picker,'index.html: show a date and time appointment picker');
         assert.equal(picker.querySelector('input[type="date"]')?.id,'hero-appointment-date');
-        assert.equal(picker.querySelector('select#hero-appointment-time')?.id,'hero-appointment-time');
+        assert.equal(picker.querySelector('input#hero-appointment-time')?.id,'hero-appointment-time');
         assert.equal(picker.querySelector('#hero-appointment-continue')?.getAttribute('href'),'#contact');
-        assert.match(text(picker),/shop confirms availability/i,'Do not promise unverified appointment availability');
+        assert.match(text(picker),/Tony verbally confirms by phone/i,'Do not promise unverified appointment availability');
         assert.equal(d.querySelectorAll('.home-start__actions .btn').length,0,'No duplicate hero buttons');
         assert.match(text(d.getElementById('request-instructions')),/reviews your request and calls you back/,`${name}: explain what happens after a request`);
         const aiHelp=d.querySelector('.request-ai-help');

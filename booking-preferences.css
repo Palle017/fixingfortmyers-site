@@ -33,3 +33,9 @@
 
 .request-oil-offer{border:1px solid #6ac1d8;background:#123342;color:#eff8fd;border-radius:10px;padding:13px 16px;margin:14px 0;line-height:1.5;font-size:.92rem}
 .request-oil-offer strong{display:block;color:#fff;margin-bottom:5px}
+
+/* 24/7 tentative requests: explicit acknowledgement before an appointment time can be sent. */
+.request-pencil-consent{display:flex;align-items:flex-start;gap:10px;margin:14px 0 2px;padding:12px 14px;border:1px solid #4a89a5;border-radius:9px;background:#102b40;color:#ecf7ff;font-size:13px;line-height:1.5;cursor:pointer}
+.request-pencil-consent[hidden]{display:none}
+.request-pencil-consent input[type="checkbox"]{width:20px;min-width:20px;height:20px;min-height:20px;flex:0 0 20px;margin:1px 0 0;accent-color:#35b8f0}
+.request-pencil-consent span{flex:1;min-width:0}

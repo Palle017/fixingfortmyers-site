@@ -255,44 +255,75 @@ test('optional timing and text permission use the existing receiver contract and
   assert.ok(Number.isFinite(Date.parse(lead.smsConsentTimestamp)));
 });
 
-test('hero calendar and time picker populate the existing scheduled-service lead without booking', async t => {
+test('hero accepts 24/7 appointment preferences but requires verbal-confirmation acknowledgement', async t => {
   const x = setup(t); await settle(); x.fill();
   const day = x.d.getElementById('hero-appointment-date');
   const time = x.d.getElementById('hero-appointment-time');
   const next = x.d.getElementById('hero-appointment-continue');
-  assert.ok(day && time && next, 'all hero controls exist');
-  assert.equal(x.d.querySelector('.home-start__actions'), null, 'no duplicate hero buttons');
-  assert.equal(next.dispatchEvent(new x.w.MouseEvent('click', {bubbles:true,cancelable:true})), false);
-  assert.match(x.d.getElementById('hero-appointment-error').textContent,/date/);
-  assert.equal(x.leads().length,0);
+  const ack = x.d.getElementById('request-pencil-ack');
+  assert.equal(day.type,'date');
+  assert.equal(time.type,'time');
+  assert.equal(next.dispatchEvent(new x.w.MouseEvent('click',{bubbles:true,cancelable:true})),false,'date is required');
   const min = x.d.getElementById('request-visit-date').min;
-  const tomorrow = new Date(Date.parse(min + 'T12:00:00Z') + 86400000).toISOString().slice(0,10);
+  const tomorrow = new Date(Date.parse(min+'T12:00:00Z')+86400000).toISOString().slice(0,10);
   x.enter('hero-appointment-date',tomorrow);
-  x.enter('hero-appointment-time','10:00');
+  x.enter('hero-appointment-time','23:47');
   assert.equal(x.d.getElementById('request-visit-date').value,tomorrow);
-  assert.equal(x.d.getElementById('request-visit-time').value,'10:00');
-  assert.equal(x.d.getElementById('request-visit-time').disabled,false);
-  assert.match(x.d.getElementById('request-appointment-summary').textContent,/shop must confirm availability/i);
-  assert.equal(x.leads().length,0,'choosing a preference never submits or books');
+  assert.equal(x.d.getElementById('request-visit-time').value,'23:47');
+  assert.equal(ack.required,true);
+  assert.equal(ack.closest('label').hidden,false);
+  assert.match(x.d.getElementById('request-appointment-summary').textContent,/verbally confirms by phone/);
+  x.send(); await settle();
+  assert.equal(x.leads().length,0,'cannot submit a chosen appointment without acknowledging the rule');
+  assert.match(x.d.getElementById('request-status').textContent,/Please acknowledge/);
+  ack.click();
   x.send(); await settle();
   assert.equal(x.leads().length,1);
-  assert.equal(x.leads()[0].body.callbackTime,'Preferred appointment: ' + tomorrow + ' at 10:00 America/New_York; requested only, not booked');
-  assert.match(x.leads()[0].body.details,/requested only, not booked/);
+  const lead=x.leads()[0].body;
+  assert.equal(lead.preferredDate,tomorrow);
+  assert.equal(lead.preferredTime,'23:47');
+  assert.equal(lead.appointmentPencilAcknowledged,true);
+  assert.equal(lead.appointmentPencilDisclosureVersion,'2026-10-16-v1');
+  assert.ok(Number.isFinite(Date.parse(lead.appointmentPencilAcknowledgedAt)));
+  assert.match(lead.callbackTime,/at 23:47 America\/New_York; PENCILED-IN REQUEST ONLY; NOT CONFIRMED until Tony verbally confirms by phone/);
+  assert.match(lead.details,/Customer checked the penciled-in appointment disclosure/);
 });
 
-test('changing the hero date beyond the allowed window clears an earlier preferred appointment', async t => {
-  const x = setup(t); await settle();
-  const min = x.d.getElementById('request-visit-date').min;
-  const tomorrow = new Date(Date.parse(min + 'T12:00:00Z') + 86400000).toISOString().slice(0,10);
+test('appointment picker accepts any clock time and future date without a 9-to-4 restriction', async t => {
+  for(const time of ['00:12','02:41','04:29','12:37','23:59']){
+    const x=setup(t); await settle(); x.fill();
+    const min=x.d.getElementById('request-visit-date').min;
+    const tomorrow=new Date(Date.parse(min+'T12:00:00Z')+86400000).toISOString().slice(0,10);
+    x.enter('hero-appointment-date',tomorrow);
+    x.enter('hero-appointment-time',time);
+    const ack=x.d.getElementById('request-pencil-ack');
+    assert.equal(ack.required,true);
+    ack.click(); x.send(); await settle();
+    assert.equal(x.leads().length,1,time+' request should be accepted');
+    assert.match(x.leads()[0].body.callbackTime,new RegExp('at '+time+' America/New_York'));
+  }
+});
+
+test('changing appointment time requires a new acknowledgement, and past dates clear stale preferences', async t => {
+  const x=setup(t); await settle(); x.fill();
+  const min=x.d.getElementById('request-visit-date').min;
+  const tomorrow=new Date(Date.parse(min+'T12:00:00Z')+86400000).toISOString().slice(0,10);
   x.enter('hero-appointment-date',tomorrow);
-  x.enter('hero-appointment-time','09:00');
-  assert.equal(x.d.getElementById('request-visit-date').value,tomorrow);
-  x.enter('hero-appointment-date','2099-01-15');
+  x.enter('hero-appointment-time','09:15');
+  const ack=x.d.getElementById('request-pencil-ack');
+  ack.click(); assert.equal(ack.checked,true);
+  x.enter('hero-appointment-time','22:10');
+  assert.equal(ack.checked,false);
+  x.send(); await settle(); assert.equal(x.leads().length,0);
+  ack.click();
+  x.enter('hero-appointment-date','2020-01-01');
   assert.equal(x.d.getElementById('request-visit-date').value,'');
   assert.equal(x.d.getElementById('request-visit-time').value,'');
   assert.equal(x.d.getElementById('request-appointment-summary'),null);
   assert.equal(x.d.getElementById('hero-appointment-continue').dispatchEvent(new x.w.MouseEvent('click',{bubbles:true,cancelable:true})),false);
-  assert.match(x.d.getElementById('hero-appointment-error').textContent,/60 days/);
+  assert.match(x.d.getElementById('hero-appointment-error').textContent,/future date/);
+  x.enter('hero-appointment-date','2099-01-15');
+  assert.equal(x.d.getElementById('request-visit-date').value,'2099-01-15','no arbitrary 60-day date cap');
 });
 
 test('missing required details and invalid phone numbers never reach the receiver', async t => {
