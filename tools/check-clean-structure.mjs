@@ -94,9 +94,13 @@ export function checkCleanPage(name,html){
       assert.match(text(optional.querySelector('summary')),/more details.*optional/i,`${name}: optional expansion label`);
       assert.match(text(d.getElementById('request-submit')),/^(?:Request Repair|Request a repair|Send repair request|Send repair details|Get My Repair Plan)$/,`${name}: clear submit label`);
       if(name==='index.html'){
-        const primary=d.querySelector('.home-start__actions .btn--primary');
-        assert.equal(primary?.getAttribute('href'),'#contact',`${name}: primary introduction action opens the intake`);
-        assert.equal(text(primary),'Request a repair',`${name}: describe the intake action`);
+        const picker=d.querySelector('.hero-appointment');
+        assert.ok(picker,'index.html: show a date and time appointment picker');
+        assert.equal(picker.querySelector('input[type="date"]')?.id,'hero-appointment-date');
+        assert.equal(picker.querySelector('input[type="time"]')?.id,'hero-appointment-time');
+        assert.equal(picker.querySelector('#hero-appointment-continue')?.getAttribute('href'),'#contact');
+        assert.match(text(picker),/confirmed by the shop/,'Never promise unverified appointment availability');
+        assert.equal(d.querySelectorAll('.home-start__actions .btn').length,0,'No duplicate hero buttons');
         assert.match(text(d.getElementById('request-instructions')),/reviews your request and calls you back/,`${name}: explain what happens after a request`);
         const aiHelp=d.querySelector('.request-ai-help');
         assert.ok(aiHelp&&aiHelp.tagName==='DETAILS'&&!aiHelp.open,`${name}: optional AI help stays discreet`);

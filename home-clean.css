@@ -57,9 +57,20 @@
 @media(max-width:480px){.home-clean .request-panel{padding:19px 17px}.home-clean .request-panel h3{font-size:24px}.home-clean .request-fields--core{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.home-clean .request-panel label{font-size:14px}.home-clean .request-primary-actions{gap:12px}.home-clean .request-primary-actions .btn{font-size:14px;padding:11px}.home-clean .request-call span{font-size:12px}.home-clean .request-options>summary{font-size:13px}.home-start .section-label{font-size:11px}.home-start__details{max-width:40ch}.home-clean .request-panel input,.home-clean .request-panel textarea{font-size:16px}}
 @media(max-width:350px){.home-clean .request-fields--core{grid-template-columns:minmax(0,1fr)}.home-clean .request-primary-actions{align-items:stretch;flex-direction:column}.home-clean .request-call{flex-direction:row;align-items:center;gap:8px}}
 
-.home-start__actions{display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 16px}
-.home-start__actions .btn{min-height:48px;font-size:15px;padding:12px 18px}
-.home-start__actions .btn span{font-weight:600;opacity:.9}
+/* Compact date/time preference capture replaces duplicate hero call-to-action buttons. */
+.hero-appointment{margin:20px 0 16px;padding:16px;border:1px solid #35536c;border-radius:14px;background:#111f2d}
+.hero-appointment__heading h2{font:700 19px/1.25 'Barlow',sans-serif;color:#f7fbff;letter-spacing:normal;margin:0 0 4px}
+.hero-appointment__heading p{margin:0 0 12px;color:#b7cadb;font-size:13px;line-height:1.4}
+.hero-appointment__inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.hero-appointment label{display:flex;flex-direction:column;gap:6px;min-width:0;font:600 12px/1.3 'Barlow',sans-serif;color:#d4e4f1}
+.hero-appointment input{width:100%;min-width:0;min-height:44px;box-sizing:border-box;border:1px solid #4b657b;border-radius:8px;background:#0b1724;color:#f7fbff;color-scheme:dark;font:400 16px/1.35 'Barlow',sans-serif;padding:9px}
+.hero-appointment input:focus-visible,.hero-appointment__continue:focus-visible{outline:2px solid #69d1ff;outline-offset:3px}
+.hero-appointment__footer{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px}
+.hero-appointment__continue{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 14px;border-radius:8px;background:#35b8f0;color:#071522;font:700 14px/1.25 'Barlow',sans-serif;text-decoration:none}
+.hero-appointment__continue:hover{background:#6accf6;color:#071522}
+.hero-appointment__footer>span{flex:1;min-width:135px;color:#b7cadb;font-size:12px;line-height:1.4}
+.hero-appointment__error{color:#ffca9b;font-size:13px;line-height:1.4;margin:10px 0 0}
+.request-appointment-summary{background:#123041;border-left:3px solid #51c9ff;padding:10px 12px;color:#e4f2fb;font-size:13px;line-height:1.5}
 .home-start__rating{font-size:14px;line-height:1.55;color:#c8d7e6;margin:0 0 10px;max-width:48ch}
 .home-start__rating a{color:#e8f4ff;text-decoration:none}
 .home-start__rating a:hover{text-decoration:underline;text-underline-offset:3px}
@@ -88,16 +99,17 @@
 @media(max-width:800px){.home-start h1{font-size:clamp(38px,8.8vw,56px)}.home-start__photo{margin:18px 0}.home-method__photos{gap:14px;margin-bottom:24px}.home-clean .services__grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-start__focus{font-size:14px;margin:18px 0}.home-clean #contact{scroll-margin-top:90px}}
 @media(max-width:540px){.home-method__photos,.home-clean .services__grid{grid-template-columns:1fr}.home-method__photos img{aspect-ratio:3/2}}
 @media(max-width:800px){
-  .home-start__actions{margin:16px 0 12px}
+  .hero-appointment{margin:16px 0 12px}
   .home-start__rating{font-size:13px}
   .home-start__focus{display:block}
   body.home-clean{padding-bottom:76px}
 }
-/* Mobile first screen: what, where, proof and the two actions before the photo. */
+/* Mobile first screen: headline, appointment preference, then trust proof. */
 @media(max-width:540px){
   .home-start{padding-top:96px}
   .home-start h1{font-size:clamp(34px,9vw,40px);margin:8px 0 12px}
-  .home-start__actions{display:grid;grid-template-columns:1fr;gap:10px}
-  .home-start__actions .btn{width:100%;justify-content:center;min-height:52px}
-  .home-start__actions .btn--primary{font-size:17px}
+  .hero-appointment{padding:14px}
+  .hero-appointment__inputs{gap:9px}
+  .hero-appointment input{padding:8px;font-size:16px}
 }
+@media(max-width:345px){.hero-appointment__inputs{grid-template-columns:1fr}}

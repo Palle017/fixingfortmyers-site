@@ -255,6 +255,29 @@ test('optional timing and text permission use the existing receiver contract and
   assert.ok(Number.isFinite(Date.parse(lead.smsConsentTimestamp)));
 });
 
+test('homepage date and time picker carries a preference into the existing lead, not a booking', async t => {
+  const x = setup(t); await settle(); x.fill();
+  const link = x.d.getElementById('hero-appointment-continue');
+  assert.ok(link);
+  assert.equal(x.d.querySelector('.home-start__actions'), null, 'duplicate hero actions are removed');
+  assert.equal(link.dispatchEvent(new x.w.MouseEvent('click', {bubbles:true,cancelable:true})), false, 'date is required');
+  assert.match(x.d.getElementById('hero-appointment-error').textContent, /date/);
+  assert.equal(x.leads().length, 0, 'the picker never submits by itself');
+  x.enter('hero-appointment-date', '2099-01-15');
+  x.enter('hero-appointment-time', '10:30');
+  const preferred = x.d.getElementById('request-timing').value;
+  assert.match(preferred, /Jan 15, 2099 at 10:30 AM Eastern; shop confirmation required/);
+  assert.match(x.d.getElementById('request-appointment-summary').textContent, /shop confirmation required/);
+  assert.equal(x.leads().length, 0);
+  x.enter('hero-appointment-date', '2020-01-01');
+  assert.equal(x.d.getElementById('request-timing').value, '', 'invalid editing clears stale time');
+  x.enter('hero-appointment-date', '2099-01-15');
+  x.send(); await settle();
+  const lead = x.leads()[0].body;
+  assert.equal(lead.callbackTime, preferred);
+  assert.match(lead.details, /Preferred timing: Preferred appointment:/);
+});
+
 test('missing required details and invalid phone numbers never reach the receiver', async t => {
   const x = setup(t); await settle(); x.fill();
   x.enter('request-details', ''); x.send(); await settle();

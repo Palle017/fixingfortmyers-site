@@ -189,6 +189,72 @@
   const form = byId('bookingForm');
   if (!form) return;
   window.PT_REPAIR_CONTEXT.applyService(serviceKey);
+  // The homepage date/time inputs are preferences, not availability or booked slots.
+  // Reuse the existing timing field so the same cloud intake handles the request.
+  const appointmentDate = byId('hero-appointment-date');
+  const appointmentTime = byId('hero-appointment-time');
+  const appointmentLink = byId('hero-appointment-continue');
+  if (appointmentDate && appointmentTime && appointmentLink) {
+    const timingField = byId('request-timing');
+    const error = byId('hero-appointment-error');
+    const instructions = byId('request-instructions');
+    const shopNow = () => {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York', year: 'numeric', month: '2-digit',
+        day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+      }).formatToParts(new Date());
+      const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      return {date: values.year + '-' + values.month + '-' + values.day, time: values.hour + ':' + values.minute};
+    };
+    const setError = message => { error.textContent = message; error.hidden = !message; };
+    const syncAppointment = () => {
+      const now = shopNow(), day = appointmentDate.value, time = appointmentTime.value;
+      appointmentDate.min = now.date;
+      const valid = /^\d{4}-\d{2}-\d{2}$/.test(day) && /^([01]\d|2[0-3]):[0-5]\d$/.test(time)
+        && (day > now.date || (day === now.date && time > now.time));
+      if (!valid) {
+        if (timingField?.dataset.appointmentGenerated === 'true') {
+          timingField.value = '';
+          delete timingField.dataset.appointmentGenerated;
+          timingField.dispatchEvent(new Event('input', {bubbles: true}));
+        }
+        byId('request-appointment-summary')?.remove();
+        return false;
+      }
+      const dateLabel = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric'
+      }).format(new Date(day + 'T12:00:00Z'));
+      const [hour, minute] = time.split(':').map(Number);
+      const timeLabel = (hour % 12 || 12) + ':' + String(minute).padStart(2, '0') + ' ' + (hour >= 12 ? 'PM' : 'AM');
+      const preference = 'Preferred appointment: ' + dateLabel + ' at ' + timeLabel + ' Eastern; shop confirmation required.';
+      timingField.value = preference;
+      timingField.dataset.appointmentGenerated = 'true';
+      timingField.dispatchEvent(new Event('input', {bubbles: true}));
+      let summary = byId('request-appointment-summary');
+      if (!summary && instructions) {
+        summary = document.createElement('p');
+        summary.id = 'request-appointment-summary';
+        summary.className = 'request-appointment-summary';
+        instructions.after(summary);
+      }
+      if (summary) summary.textContent = preference + ' Complete the form to send your request.';
+      return true;
+    };
+    appointmentDate.min = shopNow().date;
+    for (const input of [appointmentDate, appointmentTime]) {
+      input.addEventListener('input', () => { setError(''); syncAppointment(); });
+      input.addEventListener('change', () => { setError(''); syncAppointment(); });
+    }
+    appointmentLink.addEventListener('click', event => {
+      if (syncAppointment()) return; // repair-dialog.js opens the existing form
+      event.preventDefault();
+      const now = shopNow();
+      if (!appointmentDate.value) { setError('Choose a preferred date.'); appointmentDate.focus(); }
+      else if (appointmentDate.value < now.date) { setError('Choose a future date.'); appointmentDate.focus(); }
+      else if (!appointmentTime.value) { setError('Choose a preferred time.'); appointmentTime.focus(); }
+      else { setError('Choose a future time in Fort Myers.'); appointmentTime.focus(); }
+    });
+  }
   const problemField = byId('request-details');
   if (problemField) problemField.addEventListener('input',()=>problemField.setCustomValidity(problemField.maxLength>0&&problemField.value.length>problemField.maxLength?'Your notes are preserved. Please shorten them to fit the form before sending.':''));
   for (const id of ['request-vehicle','request-city','request-starts','request-stranded']) {
