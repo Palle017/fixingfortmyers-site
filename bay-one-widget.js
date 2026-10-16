@@ -50,7 +50,7 @@
     const customAvatar = config.avatar || script?.dataset.avatar;
     const avatarUrl = customAvatar || '/assets/bay-one-character-states-20260908.jpg';
     const css = document.createElement('link');
-    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20261013-review', script?.src || location.href).href;
+    css.rel = 'stylesheet'; css.href = new URL('bay-one-widget.css?v=20261016-unified', script?.src || location.href).href;
     document.head.append(css);
     const widget = document.createElement('aside'); widget.id = 'bay-one-widget'; widget.className = 'b1-widget';
     widget.setAttribute('aria-label', 'Bay One repair assistant');
@@ -61,18 +61,16 @@
       </button>
       <section class="b1-panel" id="b1-panel" role="dialog" aria-label="Chat with Bay One" hidden>
         <header class="b1-header">${portrait}<div class="b1-brand"><h2 class="b1-title"><img class="b1-wordmark" data-b1-src="/assets/bay-one-wordmark-20260908.jpg" alt="Bay One AI" width="1280" height="960"></h2><p class="b1-subtitle">Questions, rough estimates & repair help</p></div><button class="b1-close" type="button" aria-label="Close Bay One chat">×</button></header>
-        <div class="b1-allowance" aria-live="polite">Connect to check estimate availability · Shop confirms final prices</div>
+        <div class="b1-disclaimer">Ask questions and discuss repair costs naturally. Any price range is preliminary, not a written repair estimate or repair authorization.</div>
         <div class="b1-messages" role="log" aria-label="Conversation with Bay One" aria-live="polite" aria-relevant="additions text"></div>
-        <div class="b1-suggestions"><button type="button" data-b1-suggestion="question">Ask about a symptom</button><button type="button" data-b1-suggestion="estimate" disabled>Get a rough estimate</button></div>
         <form class="b1-composer">
-          <div class="b1-mode" role="group" aria-label="Conversation type"><button type="button" data-b1-mode="chat" aria-pressed="true">Ask a question</button><button type="button" data-b1-mode="estimate" aria-pressed="false" disabled>Rough estimate</button></div>
           <button class="b1-send-now" type="button" hidden>Review and send to the shop</button>
-          <label class="b1-field-label" for="b1-message">What can I help you with?</label>
-          <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Ask a question or describe your car problem…" required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+          <label class="b1-field-label" for="b1-message">What do you need help with?</label>
+          <div class="b1-input-row"><textarea id="b1-message" rows="2" maxlength="1600" placeholder="Describe a repair, ask a question, or ask what it might cost…" required></textarea><button class="b1-send" type="submit" aria-label="Send message to Bay One"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           <div class="b1-status" role="status" aria-live="polite"></div>
           <div class="b1-fallback" hidden><p>Bay One is unavailable right now. Your notes are kept, so review them with the repair form or call.</p><a class="b1-fallback-link b1-fallback-form" href="/#contact">Review with the repair form</a> <a class="b1-fallback-link" href="tel:+12393972048">Call (239) 397-2048</a></div>
         </form>
-        <footer class="b1-footer"><span>Planning ranges only; the shop confirms prices. <a href="/privacy-policy">Chat privacy</a> · <a href="tel:+12393972048">Call — AI intake</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
+        <footer class="b1-footer"><span>Planning ranges only. The shop confirms scope and pricing before work begins. <a href="/privacy-policy">Chat privacy</a> · <a href="tel:+12393972048">Call — AI intake</a></span><a class="b1-contact" href="/#contact">Use the repair form ↗</a></footer>
       </section>`;
     document.body.append(widget);
     const $ = selector => widget.querySelector(selector);
@@ -82,8 +80,8 @@
     let opener = launcher;
     const entryButtons = [launcher];
     const storageKey = 'pt-bayone-visitor-v1';
-    const state = { token: '', sessionReady: false, sessionPromise: null, busy: false, mode: 'chat', failed: null, customerMessages:[], estimateSummaries:[], intake:{}, usage:null, capabilities:null };
-    try { state.token = localStorage.getItem(storageKey) || ''; } catch (_) { /* The server also enforces the allowance by network. */ }
+    const state = { token: '', sessionReady: false, sessionPromise: null, busy: false, failed: null, customerMessages:[], estimateSummaries:[], intake:{}, capabilities:null };
+    try { state.token = localStorage.getItem(storageKey) || ''; } catch (_) { /* The server independently rate-limits chat requests. */ }
     const uuid = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const n = crypto.getRandomValues(new Uint8Array(1))[0] & 15; return (c === 'x' ? n : ((n & 3) | 8)).toString(16); });
 
     let artLoaded = false;
@@ -166,26 +164,7 @@
     }
 
     function updateAvailability(result = {}) {
-      if (result.usage) state.usage = result.usage;
       if (result.capabilities) state.capabilities = result.capabilities;
-      if (typeof result.canEstimate === 'boolean') state.canEstimate = result.canEstimate;
-      const estimates = state.canEstimate === true;
-      const remaining = state.usage?.remaining;
-      $('.b1-allowance').textContent = estimates
-        ? (remaining === 0 ? 'Today’s 2 rough estimates used · Questions welcome' : (Number.isFinite(remaining) ? remaining : 2)+' rough estimates left today · Shop confirms final prices')
-        : 'Rough estimates are not connected right now · Use the repair form for pricing';
-      widget.querySelectorAll('[data-b1-mode="estimate"],[data-b1-suggestion="estimate"]').forEach(button => {
-        button.disabled = state.busy || !estimates || remaining === 0;
-        button.title = !estimates ? 'This receiver has not enabled rough estimates.' : remaining === 0 ? 'Your allowance resets daily in Eastern time.' : '';
-      });
-      if ((!estimates || remaining === 0) && state.mode === 'estimate') mode('chat');
-    }
-    function mode(value) {
-      if (value === 'estimate' && (state.canEstimate !== true || state.usage?.remaining === 0)) return;
-      state.mode=value;
-      widget.querySelectorAll('[data-b1-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.b1Mode===value)));
-      $('.b1-field-label').textContent=value==='estimate'?'Vehicle year, make, model and specific repair':'What can I help you with?';
-      input.placeholder=value==='estimate'?'Example: 2015 Honda Civic, replace the front brake pads and rotors…':'Ask a question or describe your car problem…';
     }
     async function session() {
       if (state.sessionReady) return;
@@ -213,7 +192,7 @@
         state.token=result.visitor_token; state.sessionReady=true; updateAvailability(result); $('.b1-fallback').hidden=state.capabilities?.questions!==false;
         $('.b1-fallback p').textContent=state.capabilities?.questions===true
           ? 'Prefer to speak to the shop? Send your details with the repair form or call.'
-          : 'This receiver is a repair-request helper. AI questions and estimates are not connected here yet.';
+          : 'AI responses are unavailable on this receiver. You can still send your repair details to the shop.';
         try { localStorage.setItem(storageKey,state.token); } catch (_) { /* Current tab token still works. */ }
       })().finally(()=>{state.sessionPromise=null;});
       return state.sessionPromise;
@@ -223,7 +202,7 @@
       state.busy = value; input.disabled = value; sendButton.disabled = value;
       widget.dataset.avatarState = value ? 'thinking' : 'idle';
       sendButton.setAttribute('aria-label', value ? 'Waiting for Bay One' : 'Send message to Bay One');
-      widget.querySelectorAll('[data-b1-mode="chat"]').forEach(button=>button.disabled=value); updateAvailability();
+      updateAvailability();
     }
 
     function open(event) {
@@ -257,18 +236,16 @@
     if (contactBar) widget.classList.add('b1-has-contact-bar');
     widget.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); close(); } });
     input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('.b1-composer').requestSubmit(); } });
-    widget.querySelectorAll('[data-b1-suggestion]').forEach(button => button.addEventListener('click', () => { mode(button.dataset.b1Suggestion==='estimate'?'estimate':'chat'); input.focus(); }));
-    widget.querySelectorAll('[data-b1-mode]').forEach(button=>button.addEventListener('click',()=>{mode(button.dataset.b1Mode);input.focus();}));
 
     $('.b1-composer').addEventListener('submit', async event => {
       event.preventDefault(); if (state.busy) return;
       if (pendingLead) { status.textContent = 'Retry the pending repair request below to confirm receipt before changing these details.'; return; }
       const text = input.value.trim(); if (!text) return;
-      const retry = state.failed && state.failed.message === text && state.failed.mode === state.mode;
-      const pending = retry ? state.failed : { request_id:uuid(), message:text, mode:state.mode };
+      const retry = state.failed && state.failed.message === text && state.failed.mode === 'chat';
+      const pending = retry ? state.failed : { request_id:uuid(), message:text, mode:'chat' };
       if (!retry) { addMessage('user',text); state.customerMessages.push(text); }
       $('.b1-contact').textContent = 'Review details for the shop ↗';
-      $('.b1-suggestions').hidden = true; busy(true); status.textContent = 'Bay One is replying…';
+      busy(true); status.textContent = 'Bay One is replying…';
       const slow = setTimeout(() => { if (state.busy) status.textContent = 'Still working on it. Thanks for waiting…'; }, 8000);
       try {
         await session();
@@ -284,7 +261,7 @@
         const estimatedVehicle=result.estimate?.vehicle;
         if(typeof estimatedVehicle==='string'&&estimatedVehicle.length<=160&&state.customerMessages.some(message=>message.toLowerCase().includes(estimatedVehicle.toLowerCase())))state.intake.vehicle=estimatedVehicle;
         updateAvailability(result); addMessage('assistant',result.reply,result.estimate); offerSend(result.kind==='intake'||(!result.kind&&Boolean(result.intake))); state.failed = null; input.value = ''; status.textContent = '';
-        if(result.assist==='scripted') { $('.b1-fallback').hidden=false; $('.b1-fallback p').textContent='AI answers are unavailable. This is the repair-request helper; it does not generate an estimate.'; }
+        if(result.assist==='scripted') { $('.b1-fallback').hidden=false; $('.b1-fallback p').textContent='AI answers are unavailable right now. You can still send a repair request for shop review.'; }
       } catch (error) {
         state.failed = !error.code || error.offline || ['request_pending','invalid_answer'].includes(error.code) ? pending : null;
         if (error.code === 'invalid_session') {
@@ -473,7 +450,7 @@
     window.addEventListener('resize', viewport, {passive:true}); window.visualViewport?.addEventListener('resize', viewport, {passive:true}); viewport();
     const contact = document.getElementById('bookingForm');
     if (contact && 'IntersectionObserver' in window) new IntersectionObserver(entries => widget.classList.toggle('b1-near-contact', entries[0].isIntersecting), {threshold:.05}).observe(contact);
-    addMessage('assistant', 'Hi, I’m Bay One. Ask a question or request a rough repair price range. I connect when you open this panel. Planning estimates depend on the AI service being available; the shop confirms the actual repair and price.');
+    addMessage('assistant', 'Hi, I’m Bay One. Tell me about your vehicle, ask a question, or ask what a repair might cost. I’ll ask for missing details before offering a preliminary range. The shop confirms the actual repair and price.');
   }
 })();
 

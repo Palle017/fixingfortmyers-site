@@ -22,32 +22,33 @@ function setup(t,{handler}={}){
   const send=async(message)=>{const field=w.document.getElementById('b1-message');field.value=message;w.document.querySelector('.b1-composer').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await settle();};
   return {w,d:w.document,calls,open,send};
 }
-test('entry stays optional with no chat network or images until opened; artwork and two modes then become available',async t=>{
+test('entry stays optional with no network until opened and offers a single conversation',async t=>{
   const x=setup(t);await settle();assert.ok(x.d.querySelector('.b1-launcher'));assert.equal(x.d.querySelector('.b1-panel').hidden,true);
   assert.equal(x.calls.length,0);assert.equal(x.d.querySelector('#bay-one-widget img[src]'),null);
   await x.open();assert.ok(x.d.querySelector('.b1-art-loaded'));assert.ok(x.d.querySelector('#bay-one-widget img[src]'));
-  assert.equal(x.d.querySelector('[data-b1-mode=estimate]').disabled,false);assert.match(x.d.querySelector('.b1-allowance').textContent,/2 rough estimates/);
+  assert.equal(x.d.querySelector('.b1-mode'),null);assert.equal(x.d.querySelector('.b1-suggestions'),null);
+  assert.match(x.d.querySelector('.b1-disclaimer').textContent,/preliminary, not a written repair estimate/);
 });
-test('older intake-only receiver cannot advertise or enable estimates',async t=>{
+test('older intake-only receiver still keeps one conversation without fake pricing',async t=>{
   const x=setup(t,{handler:async route=>({ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:{ok:true,visitor_token:'synthetic-token'}})});
-  await x.open();assert.equal(x.d.querySelector('[data-b1-mode=estimate]').disabled,true);assert.match(x.d.querySelector('.b1-allowance').textContent,/not connected/);
+  await x.open();assert.equal(x.d.querySelector('.b1-mode'),null);assert.equal(x.d.querySelector('.b1-estimate'),null);
 });
 test('offline receiver keeps call and repair-form fallback without submitting or faking an answer',async t=>{
   const x=setup(t,{handler:async(_r,_b,_u,w)=>{throw new w.TypeError('offline');}});
   await x.open();assert.equal(x.d.querySelector('.b1-fallback').hidden,false);assert.match(x.d.querySelector('.b1-status').textContent,/offline/);
   assert.equal(x.calls.some(call=>call.route==='/chat/session'),false);assert.equal(x.d.querySelector('.b1-estimate'),null);
 });
-test('estimate UI displays the actual range, disables quota-exhausted mode and hands the range to the separate lead receiver',async t=>{
+test('natural price request displays the range without a mode switch and hands it to the separate lead receiver',async t=>{
   const x=setup(t,{handler:async(route,body)=>({ok:true,status:200,json:async()=>{
     if(route==='/healthz')return {ok:true,chat:'ready',media:'ready'};
     if(route==='/chat/session')return {ok:true,visitor_token:'synthetic-token',canEstimate:true,capabilities,usage:{remaining:1}};
     if(route==='/hooks/lead/webform')return {ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'};
     return {ok:true,kind:'estimate',reply:'A planning range, not a shop quote.',canEstimate:true,capabilities,usage:{remaining:0},estimate:{low:300,high:600,currency:'USD',vehicle:'2015 Honda Civic',repair:'replace brake pads',assumptions:['Typical parts and normal access.']}};
   }})});
-  await x.open();x.d.querySelector('[data-b1-mode=estimate]').click();await x.send('2015 Honda Civic replace brake pads');
-  assert.equal(x.calls.find(call=>call.route==='/chat/message').body.mode,'estimate');
+  await x.open();await x.send('What might it cost for a 2015 Honda Civic to replace brake pads?');
+  assert.equal(x.calls.find(call=>call.route==='/chat/message').body.mode,'chat');
   assert.match(x.d.querySelector('.b1-estimate-range').textContent,/\$300.*\$600/);
-  assert.equal(x.d.querySelector('[data-b1-mode=estimate]').disabled,true);
+  assert.equal(x.d.querySelector('.b1-mode'),null);
   assert.equal(x.d.querySelector('.b1-lead'),null,'Q&A does not force the contact card');
   x.d.querySelector('.b1-send-now').click();const card=x.d.querySelector('.b1-lead');
   for(const [key,value] of Object.entries({name:'Synthetic',phone:'2395550100',city:'Fort Myers'}))card.querySelector('[name='+key+']').value=value;
@@ -59,9 +60,9 @@ test('estimate UI displays the actual range, disables quota-exhausted mode and h
 test('provider failure preserves the message for a real retry and never renders a synthetic estimate',async t=>{
   let fail=true;
   const x=setup(t,{handler:async(route)=>route==='/chat/message'?{ok:!fail,status:fail?503:200,json:async()=>fail?{ok:false,code:'estimate_unavailable',error:'Estimates are unavailable.'}:{ok:true,reply:'Which model is it?',kind:'clarify',usage:{remaining:2},canEstimate:true}}:{ok:true,status:200,json:async()=>route==='/healthz'?{ok:true,chat:'ready'}:{ok:true,visitor_token:'synthetic-token',canEstimate:true,capabilities,usage:{remaining:2}}}});
-  await x.open();x.d.querySelector('[data-b1-mode=estimate]').click();await x.send('2015 Honda Civic replace brakes');
+  await x.open();await x.send('What does it cost to replace brakes on a 2015 Honda Civic?');
   assert.equal(x.d.querySelector('.b1-estimate'),null);assert.match(x.d.getElementById('b1-message').value,/Honda Civic/);assert.equal(x.d.querySelector('.b1-fallback').hidden,false);
-  fail=false;await x.send('2015 Honda Civic replace brakes');assert.match(x.d.querySelector('.b1-messages').textContent,/Which model/);
+  fail=false;await x.send('What does it cost to replace brakes on a 2015 Honda Civic?');assert.match(x.d.querySelector('.b1-messages').textContent,/Which model/);
 });
 
 test('malformed lead receipts preserve the card and reuse the exact request until the receiver confirms it', async t => {

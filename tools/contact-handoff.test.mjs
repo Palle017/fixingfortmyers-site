@@ -188,7 +188,7 @@ test('service preselection is whitelisted, optional vehicle submits with explici
 });
 test('AI planning limits are disclosed and untrusted text is displayed as text',async t=>{
   const x=setup(t,{at:'2026-09-25T01:00:00Z'}),d=x.w.document;await settle();
-  assert.match(d.querySelector('.b1-messages').textContent,/AI service being available/);
+  assert.match(d.querySelector('.b1-disclaimer').textContent,/preliminary, not a written repair estimate or repair authorization/);
   assert.match(d.querySelector('.b1-messages').textContent,/shop confirms the actual repair and price/);
   assert.doesNotMatch(d.querySelector('.b1-messages').textContent,/first thing|overnight assistant/);
   await x.say('<img src=x onerror="window.bad=true"> The car will not start.');
