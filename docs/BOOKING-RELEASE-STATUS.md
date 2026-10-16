@@ -27,3 +27,11 @@ Provision the **dedicated Google Calendar service account** with minimal event-e
 
 ## Rollout completion condition
 No "calendar integrated" or "penciled in" claims until one authorized synthetic lead creates one verified tentative event, the real retry/outage path works, and Tony's real phone confirmation can be recorded as an explicit Owner Dashboard action. Keep details, provider emails and credentials private.
+
+
+## Deployment verification update — 2026-10-16 (after PR #74)
+- **Public source:** [PR #74](https://github.com/Palle017/fixingfortmyers-site/pull/74) passed GitHub Actions and was squash-merged to `main` at commit `3faf642138ce37b36ef2886e73af95442d5fee16`. The canonical booking spec, AGENTS.md and Codex handoff are in main.
+- **Live website:** Independent cache-busted HTTP 200 checks of `https://fixingfortmyers.com/` and `/site.js` verified the optional VIN field and conditional “Call Tony to confirm (239) 397-2048” receipt action. The 24/7 picker and verbal-confirmation acknowledgement remain live. Local 239/239 tests and GitHub CI passed. VIN is customer-entered/unverified and stays in private lead details, not analytics.
+- **Local backup for Codex:** `C:\Users\LP15\Codex\PerfectTiming-Booking-Plan-20261016\` contains the locked specification, complete Codex handoff and status file. The Bay One email draft is saved separately there.
+- **Still NOT live:** Automatically placing tentative Google Calendar events, the private backend migration/credential/deployment, and the owner-only action that records Tony's actual phone confirmation. An ordinary webform receipt is not evidence of calendar placement or verbal confirmation.
+- **Next engineering gate:** enable dedicated server-side Google Calendar access on the **existing** Perfect Timing Shop calendar and deploy/read back one approved synthetic tentative event from the existing Cloud Intake with idempotent recovery, without changing the agreed customer workflow.
