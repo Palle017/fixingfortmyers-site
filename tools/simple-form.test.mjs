@@ -254,3 +254,43 @@ test('each lead says where the visitor came from, using fixed categories only', 
   assert.doesNotMatch(details, /PRIVATE|search\?q/);
 });
 
+
+
+test('preferred time and itemized parts-payment request reach the existing intake without booking or charging', async t => {
+  const x = setup(t, {url:'https://preview.invalid/?service=detailing&schedule=1'});
+  await settle();
+  assert.equal(x.d.getElementById('request-appointment').open, true);
+  assert.match(x.d.getElementById('request-details').value, /professional interior\/exterior car detailing/);
+  assert.equal(x.d.getElementById('request-service').value, 'Detailing / paint correction');
+  x.fill();
+  x.enter('request-details', 'Detailing request. Please check interior and exterior and quote the scope.');
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate()+10);
+  x.enter('request-visit-date', date.toISOString().slice(0,10));
+  x.d.getElementById('request-visit-date').dispatchEvent(new x.w.Event('change', {bubbles:true}));
+  assert.equal(x.d.getElementById('request-visit-time').disabled, false);
+  x.enter('request-visit-time','14:00');
+  x.d.getElementById('request-payment-link').click();
+  assert.equal(x.d.getElementById('request-payment-intent').value,'yes');
+  assert.equal(x.d.getElementById('request-payment-link').getAttribute('aria-pressed'),'true');
+  x.send(); await settle();
+  assert.equal(x.leads().length,1);
+  const payload=x.leads()[0].body;
+  assert.equal(payload.service,'Detailing / paint correction');
+  assert.match(payload.callbackTime,/Preferred appointment: \d{4}-\d{2}-\d{2} at 14:00 America\/New_York; requested only, not booked/);
+  assert.match(payload.details,/Customer requests a secure parts payment link after quote\/fitment approval/);
+  assert.match(x.d.getElementById('request-done').textContent,/appointment are not confirmed until you hear from the shop/);
+  assert.equal(Object.hasOwn(payload,'cardNumber'),false);
+  assert.equal(Object.hasOwn(payload,'paymentAmount'),false);
+});
+
+test('parts payment choice can be removed and no scheduling preference is fabricated', async t => {
+  const x=setup(t); await settle();
+  x.d.getElementById('request-payment-link').click();
+  x.d.getElementById('request-payment-link').click();
+  assert.equal(x.d.getElementById('request-payment-intent').value,'no');
+  x.fill(); x.send(); await settle();
+  assert.equal(x.leads().length,1);
+  assert.doesNotMatch(x.leads()[0].body.details,/Customer requests a secure parts payment link/);
+  assert.equal(x.leads()[0].body.callbackTime,'');
+});

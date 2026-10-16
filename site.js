@@ -93,7 +93,7 @@
   }
   // Conversion events carry fixed categories only: never names, phones, vehicles or symptoms.
   const trackedEvents = new Set(['page_view','phone_click','text_click','email_click','request_form_click','form_start','form_validation_error','form_submit_attempt','form_submit_success','form_submit_error','form_photo_added']);
-  const trackedServices = new Set(['Diagnosis / not sure yet','A/C repair','Brakes','Electrical / no-start','Engine','Transmission','Module programming','Diesel','Oil change / maintenance','Walnut blasting / carbon cleaning','Water damage / flood vehicle','Other','Engine / transmission','Diesel service','Maintenance / other repair']);
+  const trackedServices = new Set(['Diagnosis / not sure yet','A/C repair','Brakes','Electrical / no-start','Engine','Transmission','Module programming','Diesel','Oil change / maintenance','Walnut blasting / carbon cleaning','Water damage / flood vehicle','Detailing / paint correction','Other','Engine / transmission','Diesel service','Maintenance / other repair']);
   const trackedFields = new Set(['name','phone','vehicle','details','city','service','starts','stranded','locationChoice','carAddress','callbackTime','smsConsent']);
   const track = (eventName, params = {}) => {
     if (!trackedEvents.has(eventName)) return;
@@ -146,9 +146,9 @@
   window.PT_LEAD_CHANNEL = leadChannel;
   const draftChannel = draftChannels.has(leadChannel) ? leadChannel : '';
   // Service attribution is a fixed category, never arbitrary query text.
-  const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine',engine:'Engine',transmission:'Transmission',programming:'Module programming',diesel:'Diesel',maintenance:'Oil change / maintenance',walnut:'Walnut blasting / carbon cleaning','water-damage':'Water damage / flood vehicle'});
+  const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine',engine:'Engine',transmission:'Transmission',programming:'Module programming',diesel:'Diesel',maintenance:'Oil change / maintenance',walnut:'Walnut blasting / carbon cleaning','water-damage':'Water damage / flood vehicle',detailing:'Detailing / paint correction'});
   const servicePages = {'auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'engine','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
-  Object.assign(servicePages,{'repair-guide-ecu-tcm-programming':'programming','cooling-system-repair-fort-myers':'cooling','repair-guide-car-overheating':'cooling','repair-guide-flashing-check-engine-light':'diagnostics','walnut-blasting-fort-myers':'walnut','vehicle-water-damage-restoration-fort-myers':'water-damage','engine-rebuild-vs-replacement-fort-myers':'engine','engine-knocking-noise-fort-myers':'engine','transmission-repair-fort-myers':'transmission','transmission-slipping-fort-myers':'transmission'});
+  Object.assign(servicePages,{'repair-guide-ecu-tcm-programming':'programming','cooling-system-repair-fort-myers':'cooling','repair-guide-car-overheating':'cooling','repair-guide-flashing-check-engine-light':'diagnostics','walnut-blasting-fort-myers':'walnut','vehicle-water-damage-restoration-fort-myers':'water-damage','paint-correction-detailing-fort-myers':'detailing','engine-rebuild-vs-replacement-fort-myers':'engine','engine-knocking-noise-fort-myers':'engine','transmission-repair-fort-myers':'transmission','transmission-slipping-fort-myers':'transmission'});
   const validService = key => typeof key === 'string' && Object.hasOwn(services,key);
   const requestedService = new URLSearchParams(location.search).get('service');
   const pageService = servicePages[location.pathname.replace(/^\//,'').replace(/\.html$/,'')];
@@ -195,6 +195,47 @@
     const field = byId(id);
     if (field) field.addEventListener('input',()=>{field.dataset.userEdited='true';});
   }
+  // Customers propose a time. No Calendar event or payment is created by this public form.
+  const visitBox = byId('request-appointment'), visitDay = byId('request-visit-date'), visitTime = byId('request-visit-time');
+  const paymentButton = byId('request-payment-link'), paymentIntent = byId('request-payment-intent');
+  if (visitDay) {
+    const easternDay = date => {
+      const parts = new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
+      const value = part => parts.find(item => item.type === part)?.value || '';
+      return value('year') + '-' + value('month') + '-' + value('day');
+    };
+    const today = easternDay(new Date());
+    visitDay.min = today;
+    const max = new Date(Date.UTC(Number(today.slice(0,4)), Number(today.slice(5,7))-1, Number(today.slice(8,10))+60, 12));
+    visitDay.max = max.toISOString().slice(0,10);
+    const updatePreference = () => { if (visitTime) visitTime.disabled = !visitDay.value; };
+    updatePreference();
+    visitDay.addEventListener('change', updatePreference);
+    if (new URLSearchParams(location.search).get('schedule') === '1' && visitBox) visitBox.open = true;
+  }
+  const params = new URLSearchParams(location.search);
+  const requestMore = byId('request-options');
+  if (params.get('service') === 'detailing' && requestMore) requestMore.open = true;
+  const suggestedDescriptions = {
+    maintenance: 'Please contact me about a scheduled LIQUI MOLY oil and filter service. Confirm the manufacturer-required oil specification and filter for my car.',
+    detailing: 'I would like a quote for professional interior/exterior car detailing or paint correction.',
+    walnut: 'I would like an assessment for intake-valve carbon cleaning / walnut blasting.'
+  };
+  if (params.get('schedule') === '1' && problemField && !problemField.value && Object.hasOwn(suggestedDescriptions, serviceKey)) {
+    problemField.value = suggestedDescriptions[serviceKey];
+  }
+  paymentButton?.addEventListener('click', () => {
+    if (!paymentIntent) return;
+    const requested = paymentIntent.value !== 'yes';
+    paymentIntent.value = requested ? 'yes' : 'no';
+    paymentButton.setAttribute('aria-pressed', String(requested));
+    paymentButton.textContent = requested ? 'Remove parts-payment request' : 'Ask for a parts-payment link';
+    const feedback = byId('request-payment-message');
+    if (feedback) feedback.textContent = requested
+      ? 'Parts-payment link requested. Submit the form. The shop will first confirm your parts and the itemized amount; no payment is taken now.'
+      : 'No card details or payment on this form. After checking fitment and your quote, the shop can send a secure itemized payment link.';
+    paymentIntent.dispatchEvent(new Event('input', {bubbles:true}));
+  });
   const configuredEndpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
   let endpoint = configuredEndpoint;
   const status = byId('request-status');
@@ -362,7 +403,14 @@
     const starts = ['yes','no'].includes(data.get('starts')) ? data.get('starts') : 'unknown';
     const stranded = ['yes','no'].includes(data.get('stranded')) ? data.get('stranded') : 'unknown';
     const symptoms = String(data.get('details') || '').trim();
-    const callbackTime = String(data.get('timing') || '').trim();
+    const originalTiming = String(data.get('timing') || '').trim();
+    const requestedDay = String(data.get('preferredDate') || '');
+    const requestedTime = String(data.get('preferredTime') || '');
+    const dayOk = visitDay && /^\d{4}-\d{2}-\d{2}$/.test(requestedDay) && requestedDay >= visitDay.min && requestedDay <= visitDay.max;
+    const timeOk = /^(09:00|10:00|11:00|13:00|14:00|15:00|16:00)$/.test(requestedTime);
+    const preferredVisit = dayOk ? 'Preferred appointment: ' + requestedDay + (timeOk ? ' at ' + requestedTime : ' (flexible time)') + ' America/New_York; requested only, not booked' : '';
+    const callbackTime = preferredVisit || originalTiming;
+    const wantsPartsLink = data.get('paymentIntent') === 'yes';
     const latitude = Number(data.get('latitude'));
     const longitude = Number(data.get('longitude'));
     const mapsLink = String(data.get('mapsLink') || '').trim();
@@ -386,7 +434,7 @@
     // Keep these details useful to the existing receiver during a staged rollout.
     // Fixed categories only: where the visitor came from and the last service page viewed.
     const attribution = `Found via: ${draftChannel || metricSource}${sourcePage ? '; last page viewed: /' + sourcePage : ''}`;
-    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', attribution].filter(Boolean).join('\n');
+    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', (wantsPartsLink ? 'Customer requests a secure parts payment link after quote/fitment approval. No payment collected online.' : ''), attribution].filter(Boolean).join('\n');
     return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
