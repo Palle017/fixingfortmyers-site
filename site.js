@@ -308,6 +308,13 @@
     });
   }
   const params = new URLSearchParams(location.search);
+  const oilPrepayOffer = params.get('offer') === 'liquimoly-labor50' && params.get('service') === 'maintenance';
+  const serviceSelector = byId('request-service'), oilOfferNotice = byId('request-oil-offer');
+  const syncOilOffer = () => {
+    if (oilOfferNotice) oilOfferNotice.hidden = !(oilPrepayOffer && serviceSelector?.value === 'Oil change / maintenance');
+  };
+  syncOilOffer();
+  serviceSelector?.addEventListener('change', syncOilOffer);
   const requestMore = byId('request-options');
   if (params.get('service') === 'detailing' && requestMore) requestMore.open = true;
   const suggestedDescriptions = {
@@ -317,6 +324,17 @@
   };
   if (params.get('schedule') === '1' && problemField && !problemField.value && Object.hasOwn(suggestedDescriptions, serviceKey)) {
     problemField.value = suggestedDescriptions[serviceKey];
+  }
+  if (oilPrepayOffer) {
+    if (visitBox) visitBox.open = true;
+    if (paymentIntent) paymentIntent.value = 'yes';
+    if (paymentButton) {
+      paymentButton.setAttribute('aria-pressed', 'true');
+      paymentButton.textContent = 'Remove parts-payment request';
+    }
+    const paymentMessage = byId('request-payment-message');
+    if (paymentMessage) paymentMessage.textContent =
+      'LIQUI MOLY prepay offer selected. Submit your request to receive a shop-approved oil quote and secure payment link. Only oil-change labor is discounted by 50% after eligible oil prepayment; no payment is taken here.';
   }
   paymentButton?.addEventListener('click', () => {
     if (!paymentIntent) return;
@@ -505,6 +523,7 @@
     const preferredVisit = dayOk ? 'Preferred appointment: ' + requestedDay + (timeOk ? ' at ' + requestedTime : ' (flexible time)') + ' America/New_York; requested only, not booked' : '';
     const callbackTime = preferredVisit || originalTiming;
     const wantsPartsLink = data.get('paymentIntent') === 'yes';
+    const offerRequested = oilPrepayOffer && data.get('service') === 'Oil change / maintenance';
     const latitude = Number(data.get('latitude'));
     const longitude = Number(data.get('longitude'));
     const mapsLink = String(data.get('mapsLink') || '').trim();
@@ -528,7 +547,7 @@
     // Keep these details useful to the existing receiver during a staged rollout.
     // Fixed categories only: where the visitor came from and the last service page viewed.
     const attribution = `Found via: ${draftChannel || metricSource}${sourcePage ? '; last page viewed: /' + sourcePage : ''}`;
-    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', (wantsPartsLink ? 'Customer requests a secure parts payment link after quote/fitment approval. No payment collected online.' : ''), attribution].filter(Boolean).join('\n');
+    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', (offerRequested ? 'Offer requested: LIQUI MOLY prepay labor50. 50% discount applies to oil-change labor ONLY once correct-spec LIQUI MOLY oil is purchased and paid for in advance; oil/filter/taxes/other repairs remain full quoted price. Shop must confirm fitment, invoice, payment and appointment; no payment taken here.' : ''), (wantsPartsLink ? 'Customer requests a secure parts payment link after quote/fitment approval. No payment collected online.' : ''), attribution].filter(Boolean).join('\n');
     return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {

@@ -294,3 +294,51 @@ test('parts payment choice can be removed and no scheduling preference is fabric
   assert.doesNotMatch(x.leads()[0].body.details,/Customer requests a secure parts payment link/);
   assert.equal(x.leads()[0].body.callbackTime,'');
 });
+
+
+test('LIQUI MOLY prepay URL selects 50% labor-only offer and requests secure oil-payment link', async t => {
+  const x = setup(t, {url:'https://preview.invalid/?service=maintenance&schedule=1&offer=liquimoly-labor50'});
+  await settle();
+  assert.equal(x.d.getElementById('request-service').value,'Oil change / maintenance');
+  assert.equal(x.d.getElementById('request-appointment').open,true);
+  assert.equal(x.d.getElementById('request-oil-offer').hidden,false);
+  assert.match(x.d.getElementById('request-oil-offer').textContent,/50% off oil-change labor/);
+  assert.equal(x.d.getElementById('request-payment-intent').value,'yes');
+  assert.equal(x.d.getElementById('request-payment-link').getAttribute('aria-pressed'),'true');
+  assert.match(x.d.getElementById('request-payment-message').textContent,/no payment is taken here/);
+  x.fill();
+  x.send(); await settle();
+  assert.equal(x.leads().length,1);
+  const lead=x.leads()[0].body;
+  assert.equal(lead.service,'Oil change / maintenance');
+  assert.match(lead.details,/Offer requested: LIQUI MOLY prepay labor50/);
+  assert.match(lead.details,/50% discount applies to oil-change labor ONLY/);
+  assert.match(lead.details,/correct-spec LIQUI MOLY oil is purchased and paid for in advance/);
+  assert.match(lead.details,/Customer requests a secure parts payment link/);
+  assert.equal(Object.hasOwn(lead,'paymentAmount'),false);
+  assert.equal(Object.hasOwn(lead,'cardNumber'),false);
+  assert.match(x.d.getElementById('request-done').textContent,/appointment are not confirmed/);
+});
+
+test('LIQUI MOLY labor discount never attaches when customer switches away from oil change', async t => {
+  const x=setup(t, {url:'https://preview.invalid/?service=maintenance&schedule=1&offer=liquimoly-labor50'});
+  await settle();
+  const svc=x.d.getElementById('request-service');
+  svc.value='Brakes';
+  svc.dispatchEvent(new x.w.Event('change',{bubbles:true}));
+  assert.equal(x.d.getElementById('request-oil-offer').hidden,true);
+  x.fill(); x.send(); await settle();
+  assert.equal(x.leads().length,1);
+  assert.equal(x.leads()[0].body.service,'Brakes');
+  assert.doesNotMatch(x.leads()[0].body.details,/Offer requested: LIQUI MOLY prepay labor50/);
+});
+
+test('unrecognized discount parameters cannot activate the 50% labor promotion', async t => {
+  const x=setup(t,{url:'https://preview.invalid/?service=maintenance&schedule=1&offer=entire-invoice-free'});
+  await settle();
+  assert.equal(x.d.getElementById('request-oil-offer').hidden,true);
+  assert.equal(x.d.getElementById('request-payment-intent').value,'no');
+  x.fill();x.send();await settle();
+  assert.equal(x.leads().length,1);
+  assert.doesNotMatch(x.leads()[0].body.details,/Offer requested: LIQUI MOLY prepay labor50/);
+});

@@ -1,0 +1,8 @@
+/* LIQUI MOLY labor-only prepayment promotion; page is not a payment gateway. */
+.oil-prepay-offer{padding:18px 0 40px}
+.oil-prepay-offer__card{background:#102734;border:1px solid #53c9db;border-radius:15px;padding:clamp(18px,3vw,32px);color:#ecf7fd;box-shadow:0 8px 30px rgba(0,0,0,.15)}
+.oil-prepay-offer__eyebrow{font-size:12px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:#93e6f3}
+.oil-prepay-offer h2{font-size:clamp(23px,3vw,35px);line-height:1.18;margin:10px 0 14px;color:#fff}
+.oil-prepay-offer p{line-height:1.65;margin:10px 0}
+.oil-prepay-offer__link{display:inline-flex;align-items:center;min-height:44px;margin-top:10px;color:#9deaff;font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.oil-prepay-offer__link:focus-visible{outline:2px solid #9deaff;outline-offset:3px}
