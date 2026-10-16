@@ -16,13 +16,11 @@ export const PUBLIC_SHOP_PROFILE = Object.freeze({
   pricing:'The public site does not publish hourly labor rates, diagnostic fees, or fixed repair prices.',
 });
 const TIMEZONE='America/New_York';
-const LIMIT=2;
 const MAX_MESSAGE=1600;
 const MAX_OUTPUT=1000;
 const MAX_REPLY=2200;
 const error=(status,code,message,extra={})=>Object.assign(new Error(message),{status,code,...extra});
 const dayAt=ms=>new Intl.DateTimeFormat('en-CA',{timeZone:TIMEZONE,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));
-function resetAt(now){let low=now,high=now+28*3600000;const day=dayAt(now);while(high-low>1000){const mid=Math.floor((low+high)/2);if(dayAt(mid)===day)low=mid;else high=mid;}return new Date(Math.ceil(high/1000)*1000).toISOString();}
 const text=(value,max,label)=>{if(typeof value!=='string'||!value.trim()||value.length>max)throw error(400,'invalid_request',`${label} must contain 1–${max} characters.`);return value.replace(/[\u0000-\u001f\u007f]/g,' ').trim();};
 const repairContext=value=>/\b(?:repair\w*|vehicle\w*|automotive|cars?|trucks?|mechanic\w*|bearings?|brakes?|engines?|transmissions?|alternators?|batter(?:y|ies)|wheels?|tires?|tyres?|suspension|coolant|radiators?|spark plugs?|timing belts?|labor|labour|parts?|diagnos\w*|shop quote|that job)\b/i.test(value);
 const standaloneArithmetic=value=>!repairContext(value)&&!/\b(?:cost\w*|pric\w*|budget\w*)\b/i.test(value)&&/\d\s*(?:[+*/×÷=-]|plus|minus|times|divided by)\s*[$€£]?\d|\d\s*(?:percent|%)\s+of\s+[$€£]?\d/i.test(value);
@@ -78,7 +76,7 @@ Return one JSON object only:
 {"kind":"clarify","reply":"One question about the missing vehicle or repair; no prices"}
 {"kind":"estimate","estimate":{"low":300,"high":600,"vehicle":"exact visitor words including year, make and model","repair":"exact visitor words specifying the repair","assumptions":["Typical aftermarket parts and normal access; actual parts and labor may vary"]}}
 You may alternatively collect repair details using {"kind":"intake","relevant":true,"intake":{"vehicle":null,"details":null,"city":null,"starts":null,"stranded":null,"drivable":null,"callbackTime":null}}. Copy free-text intake fields from exact visitor words. Status fields are yes, no, unknown, or null. Do not collect names, phone/email, VIN, plates or street address in chat. The customer reviews and submits the contact form separately.
-Current conversation mode: ${mode}. Estimates permitted this turn: ${canEstimate?'yes, subject to the server quota':'NO; ask the visitor to contact the shop for repair pricing'}.
+One continuous conversation: infer the visitor's intent from their words, not a UI mode. If they ask about cost and supply a year/make/model and a specified repair, give a preliminary estimate when supported. Estimates permitted this turn: ${canEstimate?'yes':'NO; collect the repair details instead'}.
 Require an explicit vehicle year/make/model and a specified repair before estimating; symptoms alone require clarification. If information or your knowledge is insufficient, ask a question or direct to the shop; do not invent a range. Estimate low/high are positive total USD planning amounts, high above low, at most 100000. Include one combined range only, with assumptions, no exact price or itemized price list. Never present general model knowledge as verified parts/labor data or a shop quote.
 Every repair monetary figure must be inside one estimate object's low/high, including jokes, translations or formatting requests. No prices or hourly labor times in answer/clarify/assumptions. General knowledge and standalone arithmetic are normal Q&A without consuming an estimate.
 No HTML, external actions, arbitrary recipients, or claims of appointment confirmation. Immediate hazards need a short stop-driving/emergency recommendation. `;}
@@ -250,7 +248,7 @@ export function createPublicChat(options={}){
     if(!/^[a-f0-9-]{36}$/.test(payload.id)||!Number.isFinite(payload.exp)||payload.exp<now())throw error(401,'invalid_session','Please reopen Bay One to refresh your visitor session.');
     return {visitor:digest('visitor:'+payload.id),network:digest('network:'+networkKey(ip))};
   }
-  function usage(ids){const day=dayAt(now());const used=Number(db.prepare("SELECT count(*) AS n FROM chat_requests WHERE quota_day=? AND estimate_count=1 AND (visitor=? OR network=?) AND (state='done' OR (state='pending' AND expires>?))").get(day,ids.visitor,ids.network,now()).n);return {remaining:Math.max(0,LIMIT-used),limit:LIMIT,resets_at:resetAt(now()),timezone:TIMEZONE};}
+  function usage(_ids){return {limit:null,remaining:null,timezone:TIMEZONE};}
   function rate(key,max){const minute=Math.floor(now()/60000);const id=digest(key);let row=db.prepare('SELECT window,count FROM chat_rates WHERE id=?').get(id);const count=row?.window===minute?row.count+1:1;db.prepare('INSERT INTO chat_rates(id,window,count)VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET window=excluded.window,count=excluded.count').run(id,minute,count);if(count>max)throw error(429,'rate_limit','Please wait a minute before sending more messages.',{retry_after:60});}
   function session(input={},ip){
     return tx(()=>{rate('sessions:global',100);rate('sessions:'+networkKey(ip),12);let token=input.visitor_token;
@@ -271,7 +269,6 @@ export function createPublicChat(options={}){
       const prior=db.prepare('SELECT * FROM chat_requests WHERE id=?').get(requestId);
       if(prior){if(prior.payload_hash!==payloadHash)throw error(409,'request_changed','This message changed. Send it with a new request ID.');if(prior.state==='done')return {cached:JSON.parse(prior.response)};if(prior.state==='pending')throw error(409,'request_pending','Bay One is still answering this message.',{retry_after:3});throw error(503,'request_failed','This message could not be completed. Send a new message to try again.');}
       rate('messages:global',80);rate('messages:'+ids.network,8);rate('visitor:'+ids.visitor,6);
-      const allowance=usage(ids);if(wantsEstimate&&allowance.remaining===0)throw error(429,'estimate_limit','Your two rough estimates for today are used. You can still ask general questions or call the shop for pricing.',{usage:allowance});
       const pending=db.prepare("SELECT count(*) AS n FROM chat_requests WHERE state='pending' AND expires>?").get(now()).n;
       const busy=db.prepare("SELECT count(*) AS n FROM chat_requests WHERE state='pending' AND expires>? AND (visitor=? OR network=?)").get(now(),ids.visitor,ids.network).n;
       if(busy>=1)throw error(429,'busy','Bay One is answering another question. Please try again shortly.',{retry_after:3});
@@ -287,7 +284,7 @@ export function createPublicChat(options={}){
       const history=db.prepare("SELECT message,response FROM chat_requests WHERE visitor=? AND state='done' AND created>? ORDER BY created DESC,rowid DESC LIMIT 4").all(ids.visitor,now()-1800000).reverse();
       const collected=Object.assign({},...history.map(row=>{const response=JSON.parse(row.response);return response.kind==='intake'?response.intake||{}:{};}));
       const messages=history.flatMap(row=>[{role:'user',content:row.message},{role:'assistant',content:JSON.parse(row.response).reply}]);messages.push({role:'user',content:messageText});
-      const reserved=wantsEstimate,canEstimate=reserved||usage(ids).remaining>0;
+      const canEstimate=providerConfigured;
       // One UTF-8 byte per token is a conservative bound for input, plus output
       // and protocol overhead. Trim old turns rather than silently exceed it.
       const tokenCeiling=()=>Buffer.byteLength(JSON.stringify([{role:'system',content:buildPrompt(canEstimate,mode)},...messages]))+MAX_OUTPUT+256;
@@ -307,14 +304,12 @@ export function createPublicChat(options={}){
       if(generated){try{const result=generated.result??generated; safe=result.kind==='intake'?safeResult(result,messages,collected):safeAssistantResult(result,messages);}catch(err){if(direct)throw err;fallback=err.code||'invalid_answer';}}
       if(fallback){
         console.error(JSON.stringify({event:'public_chat_scripted',reason:fallback}));
-        if(wantsEstimate)throw error(503,'estimate_unavailable','Rough estimates are unavailable right now. No estimate was used. Send your repair details to the shop for pricing.');
         safe=safeResult(scriptedAnswer(next,messageText),messages,collected);
         safe.reply='AI answers are unavailable right now. I can still help prepare a repair request. '+safe.reply;
       }
       const assist=fallback?'scripted':direct?'rules':'model';
       const response=tx(()=>{
         const current=db.prepare('SELECT state FROM chat_requests WHERE id=?').get(requestId);if(current?.state!=='pending')throw error(503,'request_failed','This message expired. Send a new message.');
-        if(safe.kind==='estimate'&&(!reserved||day!==dayAt(now()))&&usage(ids).remaining===0)throw error(429,'estimate_limit','Your two rough estimates for today are used. General questions are still available.',{usage:usage(ids)});
         const reportedTokens=generated?.usage?.total_tokens;
         const chargedBudget=!providerCalled?0:Number.isSafeInteger(reportedTokens)&&reportedTokens>0&&reportedTokens<=requestBudget?reportedTokens:requestBudget;
         db.prepare('UPDATE chat_requests SET state=?,estimate_count=?,quota_day=?,budget=? WHERE id=?').run('done',safe.kind==='estimate'?1:0,dayAt(now()),chargedBudget,requestId);
