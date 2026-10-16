@@ -20,6 +20,7 @@
 
 
 
+<link rel="stylesheet" href="/booking-preferences.css?v=20261016">
 </head>
 <body class="home-clean" data-repair-popup>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -78,11 +79,33 @@
             <label for="request-name">Your name<input id="request-name" name="name" autocomplete="name" maxlength="100" required enterkeyhint="next"></label>
             <label for="request-phone"><span id="request-phone-label">Best number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required enterkeyhint="send"></label>
           </div>
+          <details class="request-appointment" id="request-appointment">
+            <summary>Pick a preferred appointment time <span>(optional)</span></summary>
+            <p class="request-fineprint">Choose a time that works for you. These are requests, not real-time availability. The shop confirms before any appointment is booked.</p>
+            <div class="request-fields request-appointment__fields">
+              <label for="request-visit-date">Preferred day<input id="request-visit-date" name="preferredDate" type="date" autocomplete="off" aria-describedby="request-visit-help"></label>
+              <label for="request-visit-time">Preferred time (Eastern)<select id="request-visit-time" name="preferredTime">
+                <option value="">I'm flexible</option><option value="09:00">9:00 AM</option><option value="10:00">10:00 AM</option>
+                <option value="11:00">11:00 AM</option><option value="13:00">1:00 PM</option><option value="14:00">2:00 PM</option>
+                <option value="15:00">3:00 PM</option><option value="16:00">4:00 PM</option>
+              </select></label>
+            </div>
+            <p id="request-visit-help" class="request-fineprint">Select a preferred day within the next 60 days. We check shop capacity, parts and service requirements before confirming.</p>
+            <div class="request-appointment__contact">
+              <a class="btn btn--outline" href="tel:+12393972048">Call now about this time</a>
+              <span>Or submit the request below and the shop will contact you to confirm.</span>
+            </div>
+            <div class="request-appointment__payment">
+              <button class="btn btn--outline" type="button" id="request-payment-link" aria-pressed="false">Ask for a parts-payment link</button>
+              <input id="request-payment-intent" type="hidden" name="paymentIntent" value="no">
+              <p id="request-payment-message" class="request-fineprint" role="status" aria-live="polite">No card details or payment on this form. After checking fitment and your quote, the shop can send a secure itemized payment link.</p>
+            </div>
+          </details>
           <details class="request-options" id="request-options">
             <summary>Add photos or more details <span>(optional)</span></summary>
             <label class="request-full request-media" for="request-media" hidden>Photos or a short video of the problem <small>(up to 6)</small><input id="request-media" name="media" type="file" accept="image/*,video/*" multiple></label>
             <div class="request-fields">
-              <label class="request-full" for="request-service">Type of repair<select id="request-service" name="service"><option>Diagnosis / not sure yet</option><option>Walnut blasting / carbon cleaning</option><option>Engine</option><option>Transmission</option><option>Diesel</option><option>Oil change / maintenance</option><option>Electrical / no-start</option><option>A/C repair</option><option>Brakes</option><option>Module programming</option><option>Water damage / flood vehicle</option><option>Other</option><option hidden>Engine / transmission</option><option hidden>Diesel service</option><option hidden>Maintenance / other repair</option></select></label>
+              <label class="request-full" for="request-service">Type of repair<select id="request-service" name="service"><option>Diagnosis / not sure yet</option><option>Walnut blasting / carbon cleaning</option><option>Engine</option><option>Transmission</option><option>Diesel</option><option>Oil change / maintenance</option><option>Electrical / no-start</option><option>A/C repair</option><option>Brakes</option><option>Module programming</option><option>Water damage / flood vehicle</option><option>Detailing / paint correction</option><option>Other</option><option hidden>Engine / transmission</option><option hidden>Diesel service</option><option hidden>Maintenance / other repair</option></select></label>
               <label for="request-starts">Does it drive?<select id="request-starts" name="starts"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
               <label for="request-stranded">Are you stranded?<select id="request-stranded" name="stranded"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
               <label class="request-full" for="request-location-choice">Where is the car?<select id="request-location-choice" name="locationChoice" aria-controls="request-car-location request-dropoff"><option value="">Not sure yet / I’ll explain on the call</option><option value="location">At an address (home, work or roadside)</option><option value="dropoff">I can drop it off at the shop</option></select></label>
@@ -220,6 +243,6 @@
   <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Repairs and mobile visits are by confirmed appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
 </footer>
   <script src="/repair-dialog.js?v=20261011-popup" defer></script>
-  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261013-review" defer></script>
+  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261016-premium-booking" defer></script>
 </body>
 </html>
