@@ -280,6 +280,8 @@ test('hero accepts 24/7 appointment preferences but requires verbal-confirmation
   x.send(); await settle();
   assert.equal(x.leads().length,1);
   const lead=x.leads()[0].body;
+  assert.equal(lead.preferredDate,tomorrow);
+  assert.equal(lead.preferredTime,'23:47');
   assert.equal(lead.appointmentPencilAcknowledged,true);
   assert.equal(lead.appointmentPencilDisclosureVersion,'2026-10-16-v1');
   assert.ok(Number.isFinite(Date.parse(lead.appointmentPencilAcknowledgedAt)));
