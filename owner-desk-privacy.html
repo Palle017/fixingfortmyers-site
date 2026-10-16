@@ -87,13 +87,13 @@
           </section>
           <section>
             <h2>Storage and security</h2>
-            <p>Normalized reporting snapshots are stored in the private application&rsquo;s database. Authorization credentials are kept separately from public website files and dashboard reports, in protected local credential storage or private server secrets used by the connection. Access controls restrict the private dashboard to approved accounts.</p>
+            <p>Search Console and URL Inspection snapshots are stored in the private application&rsquo;s database. Business Profile performance and keyword reports are processed in memory for the current request and are not stored in that database. Operational connection timestamps and error codes are retained. Authorization credentials are kept separately from public website files and dashboard reports, in protected local credential storage or private server secrets used by the connection. Access controls restrict the private dashboard to approved accounts.</p>
             <p>Connection errors are reported without displaying Google access tokens, refresh tokens or client secrets. No system can guarantee complete security.</p>
           </section>
           <section>
             <h2>Retention</h2>
-            <p>The app caches the latest successful report for each configured source and reporting window. A later successful collection replaces that snapshot. Failed collection or missing authorization can leave the last successful snapshot available with its original dates and a stale or disconnected status.</p>
-            <p>There is no fixed automatic deletion period for stored Google reporting snapshots or authorization credentials. Older source configurations and protected credentials can remain until manually removed. The website&rsquo;s separate 90-day usage-count window does not describe retention of Google reports.</p>
+            <p>The app caches the latest successful Search Console and URL Inspection report for each configured source and reporting window. A later successful collection replaces that snapshot. Failed collection or missing authorization can leave the last successful snapshot available with its original dates and a stale or disconnected status. Business Profile performance and keyword reports are retrieved afresh for each successful request; an unavailable request does not use a stored Business Profile report.</p>
+            <p>There is no fixed automatic deletion period for Search Console snapshots, indexing results, operational or discovery records, and protected authorization credentials. These records and older connection configurations can remain until manually removed. The website&rsquo;s separate 90-day usage-count window does not describe retention of those records.</p>
           </section>
           <section>
             <h2>Revoke access or request removal</h2>
