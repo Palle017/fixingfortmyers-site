@@ -14,13 +14,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Barlow:wght@400;600;700;800&amp;family=Russo+One&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/bundle-core.min.css?v=c3dcf1f49fc0" data-css-sources="base.css style.css">
-<link rel="stylesheet" href="/bundle-page-2560e8eda477.min.css?v=73da301f6c5e" data-css-sources="site-updates.css home-clean.css repair-dialog.css">
+<link rel="stylesheet" href="/bundle-page-d45da5c15a17.min.css?v=578df9175fa0" data-css-sources="site-updates.css home-clean.css repair-dialog.css booking-preferences.css">
 
 
 
 
 
-<link rel="stylesheet" href="/booking-preferences.css?v=20261016">
+
+
 </head>
 <body class="home-clean" data-repair-popup>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -87,19 +88,19 @@
           </p>
           <details class="request-appointment" id="request-appointment">
             <summary>Pick a preferred appointment time <span>(optional)</span></summary>
-            <p class="request-fineprint">Choose a time that works for you. These are requests, not real-time availability. The shop confirms before any appointment is booked.</p>
+            <p class="request-fineprint">Appointment requests are accepted 24 hours a day, seven days a week, including evenings, weekends and holidays. All requested times are tentative until Tony verbally confirms by phone.</p>
             <div class="request-fields request-appointment__fields">
               <label for="request-visit-date">Preferred day<input id="request-visit-date" name="preferredDate" type="date" autocomplete="off" aria-describedby="request-visit-help"></label>
-              <label for="request-visit-time">Preferred time (Eastern)<select id="request-visit-time" name="preferredTime">
-                <option value="">I'm flexible</option><option value="09:00">9:00 AM</option><option value="10:00">10:00 AM</option>
-                <option value="11:00">11:00 AM</option><option value="13:00">1:00 PM</option><option value="14:00">2:00 PM</option>
-                <option value="15:00">3:00 PM</option><option value="16:00">4:00 PM</option>
-              </select></label>
+              <label for="request-visit-time">Preferred time (Eastern)<input type="time" id="request-visit-time" name="preferredTime" step="60" aria-describedby="request-visit-help"></label>
             </div>
-            <p id="request-visit-help" class="request-fineprint">Select a preferred day within the next 60 days. We check shop capacity, parts and service requirements before confirming.</p>
+            <p id="request-visit-help" class="request-fineprint">Any time of day is welcome. Leave the time blank if flexible. The date and time are a request, never a confirmed visit.</p>
+            <label for="request-pencil-ack" class="request-pencil-consent" hidden>
+              <input type="checkbox" id="request-pencil-ack" name="pencilAcknowledged" value="yes">
+              <span>I understand my appointment is penciled in only, not confirmed. Tony must speak with me by phone and verbally confirm the appointment before it becomes official.</span>
+            </label>
             <div class="request-appointment__contact">
               <a class="btn btn--outline" href="tel:+12393972048">Call now about this time</a>
-              <span>Or submit the request below and the shop will contact you to confirm.</span>
+              <span>Submitting a time does not confirm your visit. Call Tony to get verbal confirmation.</span>
             </div>
             <div class="request-appointment__payment">
               <button class="btn btn--outline" type="button" id="request-payment-link" aria-pressed="false">Ask for a parts-payment link</button>
@@ -154,14 +155,14 @@
           <p id="request-direct-consent" class="request-fineprint" hidden>By sending this text, you ask the shop to reply about this repair inquiry. No marketing. <a href="/privacy-policy">Privacy policy</a>.</p>
           <div class="request-honeypot" aria-hidden="true"><label>Leave this blank<input name="website" tabindex="-1" autocomplete="off"></label></div>
           <div class="request-primary-actions"><button class="btn btn--primary" id="request-submit" type="submit" disabled>Request Repair</button></div>
-          <p class="request-trust">★ 4.8 from ~70 Google reviews · Appointments confirmed by the shop</p>
+          <p class="request-trust">★ 4.8 from ~70 Google reviews · Appointments are confirmed only when Tony speaks with you by phone</p>
           <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
           <p class="request-fineprint request-privacy">Your details are used to respond to this request. <a href="/privacy-policy">Privacy policy</a>.</p>
           <details class="request-ai-help"><summary>Can my AI assistant help?</summary><p>If your browser’s AI assistant supports this form, it can help fill it out. Review the details before sending. Nothing is sent automatically.</p></details>
         </form>
       <div class="request-done" id="request-done" hidden>
         <h2 id="request-done-heading" tabindex="-1">Got it, we received your repair request.</h2>
-        <p>We’ll review it and contact you when available. The job, location and appointment are not confirmed until you hear from the shop.</p>
+        <p>We’ll review it and contact you when available. This receipt verifies your repair request, not a confirmed appointment. A requested time may be penciled into the shop calendar, but this receipt does not verify calendar placement. The job, location and appointment are not confirmed until Tony speaks with you by phone and verbally confirms them. Please do not arrive without that confirmation.</p>
         <p class="request-fineprint" id="request-done-ref"></p>
         <div class="request-actions">
           <a class="btn btn--primary" href="tel:+12393972048">Call us (239) 397-2048</a>
@@ -249,6 +250,6 @@
   <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Repairs and mobile visits are by confirmed appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
 </footer>
   <script src="/repair-dialog.js?v=20261011-popup" defer></script>
-  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261016-lm-labor50" defer></script>
+  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261016-pencil-24x7" defer></script>
 </body>
 </html>

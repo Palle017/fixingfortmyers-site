@@ -83,7 +83,7 @@ test('success replaces the form in place with the receipt and three useful next 
   assert.equal(x.d.getElementById('bookingForm').hidden, true);
   assert.match(done.querySelector('h2').textContent, /we received your repair request/);
   assert.match(done.textContent, /We’ll review it and contact you when available/);
-  assert.match(done.textContent, /job, location and appointment are not confirmed until you hear from the shop/, 'saved receipt is not a booking');
+  assert.match(done.textContent, /appointment are not confirmed until Tony speaks with you by phone/, 'saved receipt is not a booking');
   assert.match(x.d.getElementById('request-done-ref').textContent, new RegExp(id));
   assert.equal(x.d.activeElement, x.d.getElementById('request-done-heading'));
   assert.ok(done.querySelector('a[href="tel:+12393972048"]'));
@@ -270,6 +270,8 @@ test('preferred time and itemized parts-payment request reach the existing intak
   x.d.getElementById('request-visit-date').dispatchEvent(new x.w.Event('change', {bubbles:true}));
   assert.equal(x.d.getElementById('request-visit-time').disabled, false);
   x.enter('request-visit-time','14:00');
+  assert.equal(x.d.getElementById('request-pencil-ack').required,true);
+  x.d.getElementById('request-pencil-ack').click();
   x.d.getElementById('request-payment-link').click();
   assert.equal(x.d.getElementById('request-payment-intent').value,'yes');
   assert.equal(x.d.getElementById('request-payment-link').getAttribute('aria-pressed'),'true');
@@ -277,9 +279,10 @@ test('preferred time and itemized parts-payment request reach the existing intak
   assert.equal(x.leads().length,1);
   const payload=x.leads()[0].body;
   assert.equal(payload.service,'Detailing / paint correction');
-  assert.match(payload.callbackTime,/Preferred appointment: \d{4}-\d{2}-\d{2} at 14:00 America\/New_York; requested only, not booked/);
+  assert.match(payload.callbackTime,/Preferred appointment: \d{4}-\d{2}-\d{2} at 14:00 America\/New_York; PENCILED-IN REQUEST ONLY; NOT CONFIRMED until Tony verbally confirms by phone/);
+  assert.equal(payload.appointmentPencilAcknowledged,true);
   assert.match(payload.details,/Customer requests a secure parts payment link after quote\/fitment approval/);
-  assert.match(x.d.getElementById('request-done').textContent,/appointment are not confirmed until you hear from the shop/);
+  assert.match(x.d.getElementById('request-done').textContent,/appointment are not confirmed until Tony speaks with you by phone/);
   assert.equal(Object.hasOwn(payload,'cardNumber'),false);
   assert.equal(Object.hasOwn(payload,'paymentAmount'),false);
 });

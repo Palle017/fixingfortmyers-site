@@ -317,7 +317,7 @@
 .walnut-offer{padding:clamp(24px,5vw,56px) 0}.walnut-offer__card{background:#101b20;border:1px solid #36d9dd;border-radius:18px;padding:clamp(20px,4vw,40px);color:#f5f7f8}.walnut-offer__grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:28px;align-items:center}.walnut-offer h2{font-size:clamp(28px,4vw,48px);line-height:1.12;margin:8px 0 18px;color:#fff}.walnut-offer p{line-height:1.65;margin:12px 0}.walnut-offer__badge{display:inline-block;background:#ff9b24;color:#101010;padding:8px 14px;border-radius:6px;font-weight:800}.walnut-offer code{font-family:inherit;font-weight:800;color:#5de4e7}.walnut-offer__actions{display:flex;gap:12px;flex-wrap:wrap;margin:22px 0}.walnut-offer figure{margin:0}.walnut-offer img{display:block;width:100%;height:auto;border-radius:12px}.walnut-offer figcaption,.walnut-offer__terms{font-size:14px;color:#c9d3d7;line-height:1.5}.walnut-offer ul{padding-left:22px;line-height:1.8}@media(max-width:700px){.walnut-offer__grid{grid-template-columns:1fr}.walnut-offer__actions .btn{white-space:normal;text-align:center}}
 </style><style id="penguin-ac-styles">
 .penguin-ac{padding:clamp(24px,5vw,56px) 0}.penguin-ac__card{overflow:hidden;border:1px solid #23c6d0;border-radius:18px;background:#10232a;color:#f5f9fa}.penguin-ac__image{display:block;width:100%;height:auto}.penguin-ac__copy{padding:clamp(20px,4vw,36px)}.penguin-ac h2{color:#fff;font-size:clamp(26px,3.6vw,42px);line-height:1.15;margin:0 0 16px}.penguin-ac p{line-height:1.65;margin:12px 0}.penguin-ac__actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}.penguin-ac__actions .btn{white-space:normal;text-align:center}.penguin-ac__note{font-size:14px;color:#c9dce0}
-</style><link rel="stylesheet" href="/booking-preferences.css?v=20261016-hero-appointment">
+</style><link rel="stylesheet" href="/bundle-page-cf3f8b74f30b.min.css?v=0b9196a2e0cd" data-css-sources="booking-preferences.css">
 </head>
 <body class="home-clean">
 
@@ -373,28 +373,19 @@
         <div class="hero-appointment" aria-labelledby="hero-appointment-title">
           <div class="hero-appointment__heading">
             <h2 id="hero-appointment-title">Choose a date and time</h2>
-            <p>Tell us when you would prefer an appointment.</p>
+            <p>Request an appointment any time, day or night. Tony confirms by phone.</p>
           </div>
           <div class="hero-appointment__inputs">
             <label for="hero-appointment-date">Preferred date
               <input type="date" id="hero-appointment-date" aria-describedby="hero-appointment-notice" required>
             </label>
             <label for="hero-appointment-time">Preferred time
-              <select id="hero-appointment-time" aria-describedby="hero-appointment-notice" required>
-                <option value="">Choose a time</option>
-                <option value="09:00">9:00 AM</option>
-                <option value="10:00">10:00 AM</option>
-                <option value="11:00">11:00 AM</option>
-                <option value="13:00">1:00 PM</option>
-                <option value="14:00">2:00 PM</option>
-                <option value="15:00">3:00 PM</option>
-                <option value="16:00">4:00 PM</option>
-              </select>
+              <input type="time" step="60" id="hero-appointment-time" aria-describedby="hero-appointment-notice" required>
             </label>
           </div>
           <div class="hero-appointment__footer">
             <a id="hero-appointment-continue" class="hero-appointment__continue" href="#contact">Continue <span aria-hidden="true">→</span></a>
-            <span id="hero-appointment-notice">Preferred times only. The shop confirms availability.</span>
+            <span id="hero-appointment-notice">24/7 requests · Penciled in only until Tony verbally confirms by phone.</span>
           </div>
           <p class="hero-appointment__error" id="hero-appointment-error" role="alert" hidden></p>
         </div>
@@ -411,7 +402,7 @@
           <li><a href="/oil-change-fort-myers">Oil changes</a> &amp; <a href="/no-start-diagnosis-fort-myers">urgent no-start diagnosis</a></li>
         </ul>
         <p class="home-start__details">Tell us where the vehicle is and whether it drives. We offer mobile repairs for suitable jobs and appointments at our temporary workshop. Some work needs a different setup; Tony confirms the job and location before booking.<br>Serving Fort Myers &amp; nearby Southwest Florida. Call Tony at <a href="tel:+12393972048">(239) 397-2048</a> to coordinate drop-off or pick-up.</p>
-        <p class="home-start__hours">Request a repair anytime · Workshop and mobile visits by appointment</p>
+        <p class="home-start__hours">Request an appointment 24/7, including nights and weekends · Verbal confirmation by Tony required</p>
       </div>
       <div class="request-panel" id="contact" role="region" aria-labelledby="request-heading">
         <form id="bookingForm" class="repair-request" method="post" action="#contact">
@@ -431,19 +422,19 @@
           </p>
           <details class="request-appointment" id="request-appointment">
             <summary>Pick a preferred appointment time <span>(optional)</span></summary>
-            <p class="request-fineprint">Choose a time that works for you. These are requests, not real-time availability. The shop confirms before any appointment is booked.</p>
+            <p class="request-fineprint">Appointment requests are accepted 24 hours a day, seven days a week, including evenings, weekends and holidays. All requested times are tentative until Tony verbally confirms by phone.</p>
             <div class="request-fields request-appointment__fields">
               <label for="request-visit-date">Preferred day<input id="request-visit-date" name="preferredDate" type="date" autocomplete="off" aria-describedby="request-visit-help"></label>
-              <label for="request-visit-time">Preferred time (Eastern)<select id="request-visit-time" name="preferredTime">
-                <option value="">I'm flexible</option><option value="09:00">9:00 AM</option><option value="10:00">10:00 AM</option>
-                <option value="11:00">11:00 AM</option><option value="13:00">1:00 PM</option><option value="14:00">2:00 PM</option>
-                <option value="15:00">3:00 PM</option><option value="16:00">4:00 PM</option>
-              </select></label>
+              <label for="request-visit-time">Preferred time (Eastern)<input type="time" id="request-visit-time" name="preferredTime" step="60" aria-describedby="request-visit-help"></label>
             </div>
-            <p id="request-visit-help" class="request-fineprint">Select a preferred day within the next 60 days. We check shop capacity, parts and service requirements before confirming.</p>
+            <p id="request-visit-help" class="request-fineprint">Any time of day is welcome. Leave the time blank if flexible. The date and time are a request, never a confirmed visit.</p>
+            <label for="request-pencil-ack" class="request-pencil-consent" hidden>
+              <input type="checkbox" id="request-pencil-ack" name="pencilAcknowledged" value="yes">
+              <span>I understand my appointment is penciled in only, not confirmed. Tony must speak with me by phone and verbally confirm the appointment before it becomes official.</span>
+            </label>
             <div class="request-appointment__contact">
               <a class="btn btn--outline" href="tel:+12393972048">Call now about this time</a>
-              <span>Or submit the request below and the shop will contact you to confirm.</span>
+              <span>Submitting a time does not confirm your visit. Call Tony to get verbal confirmation.</span>
             </div>
             <div class="request-appointment__payment">
               <button class="btn btn--outline" type="button" id="request-payment-link" aria-pressed="false">Ask for a parts-payment link</button>
@@ -498,14 +489,14 @@
           <p id="request-direct-consent" class="request-fineprint" hidden>By sending this text, you ask the shop to reply about this repair inquiry. No marketing. <a href="/privacy-policy">Privacy policy</a>.</p>
           <div class="request-honeypot" aria-hidden="true"><label>Leave this blank<input name="website" tabindex="-1" autocomplete="off"></label></div>
           <div class="request-primary-actions"><button class="btn btn--primary" id="request-submit" type="submit" disabled>Request Repair</button></div>
-          <p class="request-trust">★ 4.8 from ~70 Google reviews · Appointments confirmed by the shop</p>
+          <p class="request-trust">★ 4.8 from ~70 Google reviews · Appointments are confirmed only when Tony speaks with you by phone</p>
           <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
           <p class="request-fineprint request-privacy">Your details are used to respond to this request. <a href="/privacy-policy">Privacy policy</a>.</p>
           <details class="request-ai-help"><summary>Can my AI assistant help?</summary><p>If your browser’s AI assistant supports this form, it can help fill it out. Review the details before sending. Nothing is sent automatically.</p></details>
         </form>
       <div class="request-done" id="request-done" hidden>
         <h2 id="request-done-heading" tabindex="-1">Got it, we received your repair request.</h2>
-        <p>We’ll review it and contact you when available. The job, location and appointment are not confirmed until you hear from the shop.</p>
+        <p>We’ll review it and contact you when available. This receipt verifies your repair request, not a confirmed appointment. A requested time may be penciled into the shop calendar, but this receipt does not verify calendar placement. The job, location and appointment are not confirmed until Tony speaks with you by phone and verbally confirms them. Please do not arrive without that confirmation.</p>
         <p class="request-fineprint" id="request-done-ref"></p>
         <div class="request-actions">
           <a class="btn btn--primary" href="tel:+12393972048">Call us (239) 397-2048</a>
@@ -797,5 +788,5 @@
 
 
 
-<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: request a repair or call AI intake"><a href="#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/repair-dialog.js?v=20261016-hero-appointment" defer></script><script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261016-lm-labor50" defer></script><script src="/bay-one-config.js?v=20261012-cloud" defer></script><script src="/bay-one-widget.js?v=20261013-review" defer></script></body>
+<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: request a repair or call AI intake"><a href="#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/repair-dialog.js?v=20261016-hero-appointment" defer></script><script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261016-pencil-24x7" defer></script><script src="/bay-one-config.js?v=20261012-cloud" defer></script><script src="/bay-one-widget.js?v=20261013-review" defer></script></body>
 </html>

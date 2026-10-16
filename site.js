@@ -195,8 +195,10 @@
     const field = byId(id);
     if (field) field.addEventListener('input',()=>{field.dataset.userEdited='true';});
   }
-  // Customers propose a time. No Calendar event or payment is created by this public form.
+  // Any hour is eligible for a tentative request, not an automatic reservation.
+  // A receipt alone cannot establish that Google Calendar accepted an event.
   const visitBox = byId('request-appointment'), visitDay = byId('request-visit-date'), visitTime = byId('request-visit-time');
+  const pencilAck = byId('request-pencil-ack');
   const paymentButton = byId('request-payment-link'), paymentIntent = byId('request-payment-intent');
   if (visitDay) {
     const easternDay = date => {
@@ -206,11 +208,21 @@
     };
     const today = easternDay(new Date());
     visitDay.min = today;
-    const max = new Date(Date.UTC(Number(today.slice(0,4)), Number(today.slice(5,7))-1, Number(today.slice(8,10))+60, 12));
-    visitDay.max = max.toISOString().slice(0,10);
-    const updatePreference = () => { if (visitTime) visitTime.disabled = !visitDay.value; };
+    const updatePreference = () => {
+      if (visitTime) visitTime.disabled = !visitDay.value;
+      if (pencilAck) {
+        const needsAcknowledgement = Boolean(visitDay.value && visitTime?.value);
+        pencilAck.required = needsAcknowledgement;
+        pencilAck.checked = false; // A changed time needs a fresh acknowledgement.
+        pencilAck.closest('label').hidden = !needsAcknowledgement;
+        if (needsAcknowledgement && visitBox) visitBox.open = true;
+      }
+    };
     updatePreference();
-    visitDay.addEventListener('change', updatePreference);
+    for (const input of [visitDay,visitTime]) {
+      input?.addEventListener('change', updatePreference);
+      input?.addEventListener('input', updatePreference);
+    }
     if (new URLSearchParams(location.search).get('schedule') === '1' && visitBox) visitBox.open = true;
   }
   // The homepage is a compact preference picker. It mirrors the same canonical
@@ -223,7 +235,6 @@
     const error = byId('hero-appointment-error');
     const instructions = byId('request-instructions');
     heroDate.min = visitDay.min;
-    heroDate.max = visitDay.max;
     let copiedFromHero = false;
     let updatingForm = false;
     const nowEastern = () => {
@@ -245,19 +256,20 @@
         instructions.after(el);
       }
       if (el) {
-        const label = visitTime.selectedOptions[0]?.textContent || visitTime.value;
-        el.textContent = 'Preferred appointment: ' + visitDay.value + ' at ' + label +
-          ' Eastern. The shop must confirm availability. Complete the form to send your request.';
+        const [hour, minute] = visitTime.value.split(':').map(Number);
+        const label = (hour % 12 || 12) + ':' + String(minute).padStart(2,'0') + (hour < 12 ? ' AM' : ' PM');
+        el.textContent = 'Requested time: ' + visitDay.value + ' at ' + label +
+          ' Eastern. Penciled in only after calendar placement; never confirmed until Tony verbally confirms by phone. Complete the form to send your request.';
       }
     };
     const validate = () => {
       const now = nowEastern();
       const date = heroDate.value, time = heroTime.value;
       if (!date) return {message:'Choose a preferred date.',field:heroDate};
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < now.day || date < visitDay.min || date > visitDay.max)
-        return {message:'Choose a date within the next 60 days.',field:heroDate};
-      if (!time || !Array.from(visitTime.options).some(option => option.value === time && option.value))
-        return {message:'Choose a preferred time.',field:heroTime};
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < now.day || date < visitDay.min)
+        return {message:'Choose a future date.',field:heroDate};
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
+        return {message:'Choose a preferred time at any hour (24/7).',field:heroTime};
       if (date === now.day && time <= now.time)
         return {message:'Choose a future date or time in Fort Myers.',field:heroTime};
       return null;
@@ -291,13 +303,15 @@
       input.addEventListener('input', () => { errorText(''); copyToForm(); });
     }
     for (const field of [visitDay,visitTime]) {
-      field.addEventListener('change', () => {
+      const syncHero = () => {
         if (updatingForm) return;
         heroDate.value = visitDay.value;
         heroTime.value = visitTime.value;
         copiedFromHero = Boolean(visitDay.value && visitTime.value);
         summary();
-      });
+      };
+      field.addEventListener('change',syncHero);
+      field.addEventListener('input',syncHero);
     }
     heroContinue.addEventListener('click', event => {
       const invalid = copyToForm();
@@ -518,10 +532,15 @@
     const originalTiming = String(data.get('timing') || '').trim();
     const requestedDay = String(data.get('preferredDate') || '');
     const requestedTime = String(data.get('preferredTime') || '');
-    const dayOk = visitDay && /^\d{4}-\d{2}-\d{2}$/.test(requestedDay) && requestedDay >= visitDay.min && requestedDay <= visitDay.max;
-    const timeOk = /^(09:00|10:00|11:00|13:00|14:00|15:00|16:00)$/.test(requestedTime);
-    const preferredVisit = dayOk ? 'Preferred appointment: ' + requestedDay + (timeOk ? ' at ' + requestedTime : ' (flexible time)') + ' America/New_York; requested only, not booked' : '';
+    const dayOk = visitDay && /^\d{4}-\d{2}-\d{2}$/.test(requestedDay) && requestedDay >= visitDay.min;
+    const timeOk = /^([01]\d|2[0-3]):[0-5]\d$/.test(requestedTime);
+    const acknowledged = Boolean(dayOk && timeOk && pencilAck?.checked);
+    const preferredVisit = dayOk
+      ? 'Preferred appointment: ' + requestedDay + (timeOk ? ' at ' + requestedTime : ' (flexible time)') +
+        ' America/New_York; PENCILED-IN REQUEST ONLY; NOT CONFIRMED until Tony verbally confirms by phone'
+      : '';
     const callbackTime = preferredVisit || originalTiming;
+    const pencilAcknowledgedAt = acknowledged ? new Date().toISOString() : '';
     const wantsPartsLink = data.get('paymentIntent') === 'yes';
     const offerRequested = oilPrepayOffer && data.get('service') === 'Oil change / maintenance';
     const latitude = Number(data.get('latitude'));
@@ -546,9 +565,13 @@
       : '';
     // Keep these details useful to the existing receiver during a staged rollout.
     // Fixed categories only: where the visitor came from and the last service page viewed.
+    const pencilContext = acknowledged
+      ? 'Customer checked the penciled-in appointment disclosure at ' + pencilAcknowledgedAt +
+        '; Tony must verbally confirm by phone before the customer arrives.'
+      : '';
     const attribution = `Found via: ${draftChannel || metricSource}${sourcePage ? '; last page viewed: /' + sourcePage : ''}`;
-    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', (offerRequested ? 'Offer requested: LIQUI MOLY prepay labor50. 50% discount applies to oil-change labor ONLY once correct-spec LIQUI MOLY oil is purchased and paid for in advance; oil/filter/taxes/other repairs remain full quoted price. Shop must confirm fitment, invoice, payment and appointment; no payment taken here.' : ''), (wantsPartsLink ? 'Customer requests a secure parts payment link after quote/fitment approval. No payment collected online.' : ''), attribution].filter(Boolean).join('\n');
-    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', (offerRequested ? 'Offer requested: LIQUI MOLY prepay labor50. 50% discount applies to oil-change labor ONLY once correct-spec LIQUI MOLY oil is purchased and paid for in advance; oil/filter/taxes/other repairs remain full quoted price. Shop must confirm fitment, invoice, payment and appointment; no payment taken here.' : ''), (wantsPartsLink ? 'Customer requests a secure parts payment link after quote/fitment approval. No payment collected online.' : ''), pencilContext, attribution].filter(Boolean).join('\n');
+    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, appointmentPencilAcknowledged:acknowledged, appointmentPencilAcknowledgedAt:pencilAcknowledgedAt, appointmentPencilDisclosureVersion:acknowledged?'2026-10-16-v1':'', source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
@@ -567,7 +590,7 @@
     if (!backup.hidden) status.textContent = 'Location changed. Prepare your text or email draft again before sending.';
     preview.value = ''; refreshDraftLinks(); backup.hidden = true;
   }
-  const sameRequestContent = data => JSON.stringify({...data,smsConsentTimestamp:''});
+  const sameRequestContent = data => JSON.stringify({...data,smsConsentTimestamp:'',appointmentPencilAcknowledgedAt:''});
   const send = async (path, body, key, json = true) => {
     if (!endpoint) throw new Error('unavailable');
     const controller = new AbortController();
@@ -628,6 +651,12 @@
     // Browser autofill can insert invisible characters without an input event.
     phoneField.value = cleanPhone(phoneField.value);
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
+    if (visitDay?.value && visitTime?.value && !pencilAck?.checked) {
+      if (visitBox) visitBox.open = true;
+      status.textContent = 'Please acknowledge that this is penciled in only and Tony must verbally confirm by phone.';
+      pencilAck?.focus();
+      return;
+    }
     if (!form.reportValidity()) { track('form_validation_error', {field: form.querySelector(':invalid')?.name || 'unknown'}); return; }
     const currentData = readRequest();
     if (requestPayload && sameRequestContent(currentData) !== sameRequestContent(requestPayload)) { requestKey = uid(); requestPayload = null; sentRequestId = ''; }
