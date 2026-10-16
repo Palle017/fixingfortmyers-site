@@ -326,6 +326,18 @@ test('changing appointment time requires a new acknowledgement, and past dates c
   assert.equal(x.d.getElementById('request-visit-date').value,'2099-01-15','no arbitrary 60-day date cap');
 });
 
+test('optional VIN reaches the private repair inquiry, identified as unverified for parts preparation', async t => {
+  const x=setup(t); await settle(); x.fill();
+  x.enter('request-vin','testvin1234567890');
+  x.send(); await settle();
+  assert.equal(x.leads().length,1);
+  const lead=x.leads()[0].body;
+  assert.match(lead.details,/Customer-entered VIN \(unverified\): TESTVIN1234567890/);
+  assert.equal(lead.vehicle,'2018 Honda Civic');
+  assert.equal(lead.callbackTime,'');
+  assert.doesNotMatch(JSON.stringify(x.w.dataLayer),/TESTVIN1234567890/,'VIN must not be reported in analytics');
+});
+
 test('missing required details and invalid phone numbers never reach the receiver', async t => {
   const x = setup(t); await settle(); x.fill();
   x.enter('request-details', ''); x.send(); await settle();

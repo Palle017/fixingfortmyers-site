@@ -283,6 +283,7 @@ test('preferred time and itemized parts-payment request reach the existing intak
   assert.equal(payload.appointmentPencilAcknowledged,true);
   assert.match(payload.details,/Customer requests a secure parts payment link after quote\/fitment approval/);
   assert.match(x.d.getElementById('request-done').textContent,/appointment are not confirmed until Tony speaks with you by phone/);
+  assert.match(x.d.getElementById('request-done-call').textContent,/Call Tony to confirm/);
   assert.equal(Object.hasOwn(payload,'cardNumber'),false);
   assert.equal(Object.hasOwn(payload,'paymentAmount'),false);
 });

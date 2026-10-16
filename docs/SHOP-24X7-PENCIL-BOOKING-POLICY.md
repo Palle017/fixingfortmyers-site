@@ -1,5 +1,7 @@
 # Perfect Timing — 24/7 penciled-in appointment policy
 
+> **Source of truth:** [BOOKING-CONTRACT-V1.md](BOOKING-CONTRACT-V1.md) and its [Codex handoff](CODEX-BOOKING-ROLLOUT-HANDOFF.md) supersede stale stage descriptions in this earlier note. Staged Cloud Intake branch **13ec4fb** includes a tentative event queue and write logic, 34 mocked tests; private Google permission, D1 migration, Site deployment, production event readback and Tony verbal confirmation action are **still pending**.
+
 Owner decision, October 16, 2026. Supersedes earlier 9 AM–4 PM and standard business-hour booking assumptions.
 
 ## Business rule

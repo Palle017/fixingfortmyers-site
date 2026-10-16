@@ -1,5 +1,7 @@
 # Perfect Timing — LIQUI MOLY labor prepay & Google Calendar booking rollout
 
+> **BOOKING SECTION SUPERSEDED — OCTOBER 16, 2026:** The approved calendar product is the existing 24/7 penciled-in website flow, **not** a new Google Appointment Schedule, fixed-hours callback calendar, or second booking page. See [BOOKING-CONTRACT-V1.md](BOOKING-CONTRACT-V1.md). The distinct approved 50%-off oil-change **labor** prepay offer and supplier/payment rules below still apply.
+
 Owner-confirmed October 16, 2026. This is an operator spec, not evidence that a payment processor, supplier API, or live Calendar reservation is connected.
 
 ## Public offer — exact eligibility
