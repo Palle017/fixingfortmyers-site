@@ -317,7 +317,7 @@
 .walnut-offer{padding:clamp(24px,5vw,56px) 0}.walnut-offer__card{background:#101b20;border:1px solid #36d9dd;border-radius:18px;padding:clamp(20px,4vw,40px);color:#f5f7f8}.walnut-offer__grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:28px;align-items:center}.walnut-offer h2{font-size:clamp(28px,4vw,48px);line-height:1.12;margin:8px 0 18px;color:#fff}.walnut-offer p{line-height:1.65;margin:12px 0}.walnut-offer__badge{display:inline-block;background:#ff9b24;color:#101010;padding:8px 14px;border-radius:6px;font-weight:800}.walnut-offer code{font-family:inherit;font-weight:800;color:#5de4e7}.walnut-offer__actions{display:flex;gap:12px;flex-wrap:wrap;margin:22px 0}.walnut-offer figure{margin:0}.walnut-offer img{display:block;width:100%;height:auto;border-radius:12px}.walnut-offer figcaption,.walnut-offer__terms{font-size:14px;color:#c9d3d7;line-height:1.5}.walnut-offer ul{padding-left:22px;line-height:1.8}@media(max-width:700px){.walnut-offer__grid{grid-template-columns:1fr}.walnut-offer__actions .btn{white-space:normal;text-align:center}}
 </style><style id="penguin-ac-styles">
 .penguin-ac{padding:clamp(24px,5vw,56px) 0}.penguin-ac__card{overflow:hidden;border:1px solid #23c6d0;border-radius:18px;background:#10232a;color:#f5f9fa}.penguin-ac__image{display:block;width:100%;height:auto}.penguin-ac__copy{padding:clamp(20px,4vw,36px)}.penguin-ac h2{color:#fff;font-size:clamp(26px,3.6vw,42px);line-height:1.15;margin:0 0 16px}.penguin-ac p{line-height:1.65;margin:12px 0}.penguin-ac__actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}.penguin-ac__actions .btn{white-space:normal;text-align:center}.penguin-ac__note{font-size:14px;color:#c9dce0}
-</style><link rel="stylesheet" href="/booking-preferences.css?v=20261016">
+</style><link rel="stylesheet" href="/booking-preferences.css?v=20261016-hero-appointment">
 </head>
 <body class="home-clean">
 
@@ -370,9 +370,33 @@
         <p class="section-label">Perfect Timing Auto Repair</p>
         <h1 id="home-title">Engine, Transmission &amp; Diesel Repair in Fort Myers</h1>
         <p class="home-start__lead">Engine and transmission work, module programming, walnut blasting and professional detailing. Scheduled oil changes use LIQUI MOLY when it meets your vehicle’s oil specification. We explain the options before any work.</p>
-        <div class="home-start__actions">
-          <a class="btn btn--primary" href="#contact">Request service or a time</a>
-          <a class="btn btn--outline" href="tel:+12393972048">Call <span>(239) 397-2048</span></a>
+        <div class="hero-appointment" aria-labelledby="hero-appointment-title">
+          <div class="hero-appointment__heading">
+            <h2 id="hero-appointment-title">Choose a date and time</h2>
+            <p>Tell us when you would prefer an appointment.</p>
+          </div>
+          <div class="hero-appointment__inputs">
+            <label for="hero-appointment-date">Preferred date
+              <input type="date" id="hero-appointment-date" aria-describedby="hero-appointment-notice" required>
+            </label>
+            <label for="hero-appointment-time">Preferred time
+              <select id="hero-appointment-time" aria-describedby="hero-appointment-notice" required>
+                <option value="">Choose a time</option>
+                <option value="09:00">9:00 AM</option>
+                <option value="10:00">10:00 AM</option>
+                <option value="11:00">11:00 AM</option>
+                <option value="13:00">1:00 PM</option>
+                <option value="14:00">2:00 PM</option>
+                <option value="15:00">3:00 PM</option>
+                <option value="16:00">4:00 PM</option>
+              </select>
+            </label>
+          </div>
+          <div class="hero-appointment__footer">
+            <a id="hero-appointment-continue" class="hero-appointment__continue" href="#contact">Continue <span aria-hidden="true">→</span></a>
+            <span id="hero-appointment-notice">Preferred times only. The shop confirms availability.</span>
+          </div>
+          <p class="hero-appointment__error" id="hero-appointment-error" role="alert" hidden></p>
         </div>
         <p class="home-start__rating"><a href="https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b" target="_blank" rel="noopener"><strong>★ 4.8</strong> from ~70 Google reviews</a> — “Anthony was very honest, patient, and professional.”</p>
         <p class="home-start__tertiary">Prefer a text? <a href="sms:+12393972048">Text (239) 397-2048</a>. Need a part? <a href="/parts">Request a parts quote</a>.</p>
@@ -767,5 +791,5 @@
 
 
 
-<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: request a repair or call AI intake"><a href="#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/repair-dialog.js?v=20261011-popup" defer></script><script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261016-premium-booking" defer></script><script src="/bay-one-config.js?v=20261012-cloud" defer></script><script src="/bay-one-widget.js?v=20261013-review" defer></script></body>
+<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: request a repair or call AI intake"><a href="#contact">Request a repair</a><a href="tel:+12393972048">Call</a></div><script src="/repair-dialog.js?v=20261016-hero-appointment" defer></script><script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261016-hero-appointment" defer></script><script src="/bay-one-config.js?v=20261012-cloud" defer></script><script src="/bay-one-widget.js?v=20261013-review" defer></script></body>
 </html>
