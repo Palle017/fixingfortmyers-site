@@ -11,3 +11,22 @@
 .request-appointment__payment button[aria-pressed="true"]{border-color:#9adeff;background:#183f59}
 .request-appointment__payment .request-fineprint{margin-top:10px}
 @media(max-width:600px){.request-appointment{padding:14px}.request-appointment__contact>a{width:100%;justify-content:center}.request-appointment__fields{grid-template-columns:1fr}}
+
+
+/* Compact appointment preference in the hero; real slots are not advertised. */
+.hero-appointment{margin:20px 0 16px;padding:16px;border:1px solid #35536c;border-radius:14px;background:#111f2d}
+.hero-appointment__heading h2{font:700 19px/1.25 'Barlow',sans-serif;color:#f7fbff;letter-spacing:normal;margin:0 0 4px}
+.hero-appointment__heading p{margin:0 0 12px;color:#b7cadb;font-size:13px;line-height:1.4}
+.hero-appointment__inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.hero-appointment label{display:flex;flex-direction:column;gap:6px;min-width:0;font:600 12px/1.3 'Barlow',sans-serif;color:#d4e4f1}
+.hero-appointment input,.hero-appointment select{width:100%;min-width:0;min-height:44px;box-sizing:border-box;border:1px solid #4b657b;border-radius:8px;background:#0b1724;color:#f7fbff;color-scheme:dark;font:400 16px/1.35 'Barlow',sans-serif;padding:8px}
+.hero-appointment input:focus-visible,.hero-appointment select:focus-visible,.hero-appointment__continue:focus-visible{outline:2px solid #69d1ff;outline-offset:3px}
+.hero-appointment__footer{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px}
+.hero-appointment__continue{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 14px;border-radius:8px;background:#35b8f0;color:#071522;font:700 14px/1.25 'Barlow',sans-serif;text-decoration:none}
+.hero-appointment__continue:hover{background:#6accf6;color:#071522}
+.hero-appointment__footer>span{flex:1;min-width:130px;color:#b7cadb;font-size:12px;line-height:1.4}
+.hero-appointment__error{color:#ffca9b;font-size:13px;line-height:1.4;margin:10px 0 0}
+.request-appointment-summary{background:#123041;border-left:3px solid #51c9ff;padding:10px 12px;color:#e4f2fb;font-size:13px;line-height:1.5}
+@media(max-width:800px){.hero-appointment{margin:16px 0 12px}}
+@media(max-width:540px){.hero-appointment{padding:14px}.hero-appointment__inputs{gap:9px}}
+@media(max-width:345px){.hero-appointment__inputs{grid-template-columns:1fr}}

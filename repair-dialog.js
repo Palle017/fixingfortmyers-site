@@ -53,7 +53,7 @@
       try { history.replaceState(history.state, '', location.pathname + location.search); }
       catch (_) { /* Form closing still works when history is unavailable. */ }
     }
-    const fallback = document.querySelector('.home-start__actions a[href="#contact"], .request-page__open');
+    const fallback = document.querySelector('#hero-appointment-continue, .request-page__open');
     const target = returnTo?.isConnected && returnTo.getClientRects().length ? returnTo : fallback;
     target?.focus({preventScroll:true});
   });

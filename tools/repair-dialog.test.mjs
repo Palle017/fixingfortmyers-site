@@ -29,7 +29,7 @@ test('repair action opens the same form, then closing restores it and returns fo
   const {d, click, calls} = setup(t);
   const form = d.getElementById('bookingForm'), panel = d.getElementById('contact');
   const dialog = d.getElementById('repair-request-dialog');
-  const opener = d.querySelector('.home-start__actions a[href="#contact"]');
+  const opener = d.querySelector('#hero-appointment-continue');
   assert.equal(dialog.open, false);
   assert.ok(panel.closest('.home-start__grid'));
   assert.equal(click(opener), false);
@@ -45,7 +45,7 @@ test('repair action opens the same form, then closing restores it and returns fo
 });
 test('close and reopen preserve unsent entries, consent and location pin', t => {
   const {d, click, calls} = setup(t);
-  const opener = d.querySelector('.home-start__actions a[href="#contact"]');
+  const opener = d.querySelector('#hero-appointment-continue');
   click(opener);
   d.getElementById('request-details').value = 'Synthetic unsent no-start notes';
   d.getElementById('request-city').value = '33901';
@@ -121,7 +121,11 @@ test('asking Bay One from the repair popup closes the native modal before openin
     this.open = false;
     w.setTimeout(() => this.dispatchEvent(new w.Event('close')), 0);
   };
-  click(d.querySelector('.home-start__actions a[href="#contact"]'));
+  const min = d.getElementById('request-visit-date').min;
+  d.getElementById('hero-appointment-date').value = new Date(Date.parse(min + 'T12:00:00Z') + 86400000).toISOString().slice(0,10);
+  d.getElementById('hero-appointment-time').value = '10:00';
+  d.getElementById('hero-appointment-time').dispatchEvent(new w.Event('change',{bubbles:true}));
+  click(d.querySelector('#hero-appointment-continue'));
   const dialog = d.getElementById('repair-request-dialog'), form = d.getElementById('bookingForm');
   d.getElementById('request-details').value = 'Synthetic unsent no-start notes';
   d.getElementById('request-phone').value = '2395550100';

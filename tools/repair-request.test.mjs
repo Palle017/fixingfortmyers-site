@@ -255,6 +255,46 @@ test('optional timing and text permission use the existing receiver contract and
   assert.ok(Number.isFinite(Date.parse(lead.smsConsentTimestamp)));
 });
 
+test('hero calendar and time picker populate the existing scheduled-service lead without booking', async t => {
+  const x = setup(t); await settle(); x.fill();
+  const day = x.d.getElementById('hero-appointment-date');
+  const time = x.d.getElementById('hero-appointment-time');
+  const next = x.d.getElementById('hero-appointment-continue');
+  assert.ok(day && time && next, 'all hero controls exist');
+  assert.equal(x.d.querySelector('.home-start__actions'), null, 'no duplicate hero buttons');
+  assert.equal(next.dispatchEvent(new x.w.MouseEvent('click', {bubbles:true,cancelable:true})), false);
+  assert.match(x.d.getElementById('hero-appointment-error').textContent,/date/);
+  assert.equal(x.leads().length,0);
+  const min = x.d.getElementById('request-visit-date').min;
+  const tomorrow = new Date(Date.parse(min + 'T12:00:00Z') + 86400000).toISOString().slice(0,10);
+  x.enter('hero-appointment-date',tomorrow);
+  x.enter('hero-appointment-time','10:00');
+  assert.equal(x.d.getElementById('request-visit-date').value,tomorrow);
+  assert.equal(x.d.getElementById('request-visit-time').value,'10:00');
+  assert.equal(x.d.getElementById('request-visit-time').disabled,false);
+  assert.match(x.d.getElementById('request-appointment-summary').textContent,/shop must confirm availability/i);
+  assert.equal(x.leads().length,0,'choosing a preference never submits or books');
+  x.send(); await settle();
+  assert.equal(x.leads().length,1);
+  assert.equal(x.leads()[0].body.callbackTime,'Preferred appointment: ' + tomorrow + ' at 10:00 America/New_York; requested only, not booked');
+  assert.match(x.leads()[0].body.details,/requested only, not booked/);
+});
+
+test('changing the hero date beyond the allowed window clears an earlier preferred appointment', async t => {
+  const x = setup(t); await settle();
+  const min = x.d.getElementById('request-visit-date').min;
+  const tomorrow = new Date(Date.parse(min + 'T12:00:00Z') + 86400000).toISOString().slice(0,10);
+  x.enter('hero-appointment-date',tomorrow);
+  x.enter('hero-appointment-time','09:00');
+  assert.equal(x.d.getElementById('request-visit-date').value,tomorrow);
+  x.enter('hero-appointment-date','2099-01-15');
+  assert.equal(x.d.getElementById('request-visit-date').value,'');
+  assert.equal(x.d.getElementById('request-visit-time').value,'');
+  assert.equal(x.d.getElementById('request-appointment-summary'),null);
+  assert.equal(x.d.getElementById('hero-appointment-continue').dispatchEvent(new x.w.MouseEvent('click',{bubbles:true,cancelable:true})),false);
+  assert.match(x.d.getElementById('hero-appointment-error').textContent,/60 days/);
+});
+
 test('missing required details and invalid phone numbers never reach the receiver', async t => {
   const x = setup(t); await settle(); x.fill();
   x.enter('request-details', ''); x.send(); await settle();

@@ -213,6 +213,100 @@
     visitDay.addEventListener('change', updatePreference);
     if (new URLSearchParams(location.search).get('schedule') === '1' && visitBox) visitBox.open = true;
   }
+  // The homepage is a compact preference picker. It mirrors the same canonical
+  // preferredDate/preferredTime fields already used by the scheduled-service form.
+  // Never create a booking or add a new receiver contract here.
+  const heroDate = byId('hero-appointment-date');
+  const heroTime = byId('hero-appointment-time');
+  const heroContinue = byId('hero-appointment-continue');
+  if (heroDate && heroTime && heroContinue && visitDay && visitTime) {
+    const error = byId('hero-appointment-error');
+    const instructions = byId('request-instructions');
+    heroDate.min = visitDay.min;
+    heroDate.max = visitDay.max;
+    let copiedFromHero = false;
+    let updatingForm = false;
+    const nowEastern = () => {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone:'America/New_York',year:'numeric',month:'2-digit',
+        day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'
+      }).formatToParts(new Date());
+      const fields = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      return {day: fields.year + '-' + fields.month + '-' + fields.day, time:fields.hour + ':' + fields.minute};
+    };
+    const errorText = message => { if (error) { error.textContent = message; error.hidden = !message; } };
+    const summary = () => {
+      let el = byId('request-appointment-summary');
+      if (!copiedFromHero || !visitDay.value || !visitTime.value) { el?.remove(); return; }
+      if (!el && instructions) {
+        el = document.createElement('p');
+        el.id = 'request-appointment-summary';
+        el.className = 'request-appointment-summary';
+        instructions.after(el);
+      }
+      if (el) {
+        const label = visitTime.selectedOptions[0]?.textContent || visitTime.value;
+        el.textContent = 'Preferred appointment: ' + visitDay.value + ' at ' + label +
+          ' Eastern. The shop must confirm availability. Complete the form to send your request.';
+      }
+    };
+    const validate = () => {
+      const now = nowEastern();
+      const date = heroDate.value, time = heroTime.value;
+      if (!date) return {message:'Choose a preferred date.',field:heroDate};
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < now.day || date < visitDay.min || date > visitDay.max)
+        return {message:'Choose a date within the next 60 days.',field:heroDate};
+      if (!time || !Array.from(visitTime.options).some(option => option.value === time && option.value))
+        return {message:'Choose a preferred time.',field:heroTime};
+      if (date === now.day && time <= now.time)
+        return {message:'Choose a future date or time in Fort Myers.',field:heroTime};
+      return null;
+    };
+    const clearFromHero = () => {
+      if (!copiedFromHero) return;
+      updatingForm = true;
+      visitDay.value = '';
+      visitDay.dispatchEvent(new Event('change',{bubbles:true}));
+      visitTime.value = '';
+      visitTime.dispatchEvent(new Event('change',{bubbles:true}));
+      updatingForm = false;
+      copiedFromHero = false;
+      summary();
+    };
+    const copyToForm = () => {
+      const invalid = validate();
+      if (invalid) { clearFromHero(); return invalid; }
+      updatingForm = true;
+      visitDay.value = heroDate.value;
+      visitDay.dispatchEvent(new Event('change',{bubbles:true}));
+      visitTime.value = heroTime.value;
+      visitTime.dispatchEvent(new Event('change',{bubbles:true}));
+      updatingForm = false;
+      copiedFromHero = true;
+      summary();
+      return null;
+    };
+    for (const input of [heroDate,heroTime]) {
+      input.addEventListener('change', () => { errorText(''); copyToForm(); });
+      input.addEventListener('input', () => { errorText(''); copyToForm(); });
+    }
+    for (const field of [visitDay,visitTime]) {
+      field.addEventListener('change', () => {
+        if (updatingForm) return;
+        heroDate.value = visitDay.value;
+        heroTime.value = visitTime.value;
+        copiedFromHero = Boolean(visitDay.value && visitTime.value);
+        summary();
+      });
+    }
+    heroContinue.addEventListener('click', event => {
+      const invalid = copyToForm();
+      if (!invalid) return; // Existing repair-dialog.js opens the single repair form.
+      event.preventDefault();
+      errorText(invalid.message);
+      invalid.field.focus();
+    });
+  }
   const params = new URLSearchParams(location.search);
   const requestMore = byId('request-options');
   if (params.get('service') === 'detailing' && requestMore) requestMore.open = true;
