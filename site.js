@@ -529,6 +529,7 @@
     const starts = ['yes','no'].includes(data.get('starts')) ? data.get('starts') : 'unknown';
     const stranded = ['yes','no'].includes(data.get('stranded')) ? data.get('stranded') : 'unknown';
     const symptoms = String(data.get('details') || '').trim();
+    const enteredVin = String(data.get('vin') || '').trim().toUpperCase().slice(0,32);
     const originalTiming = String(data.get('timing') || '').trim();
     const requestedDay = String(data.get('preferredDate') || '');
     const requestedTime = String(data.get('preferredTime') || '');
@@ -570,7 +571,7 @@
         '; Tony must verbally confirm by phone before the customer arrives.'
       : '';
     const attribution = `Found via: ${draftChannel || metricSource}${sourcePage ? '; last page viewed: /' + sourcePage : ''}`;
-    const context = [carLocationText, city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', (offerRequested ? 'Offer requested: LIQUI MOLY prepay labor50. 50% discount applies to oil-change labor ONLY once correct-spec LIQUI MOLY oil is purchased and paid for in advance; oil/filter/taxes/other repairs remain full quoted price. Shop must confirm fitment, invoice, payment and appointment; no payment taken here.' : ''), (wantsPartsLink ? 'Customer requests a secure parts payment link after quote/fitment approval. No payment collected online.' : ''), pencilContext, attribution].filter(Boolean).join('\n');
+    const context = [carLocationText, enteredVin ? `Customer-entered VIN (unverified): ${enteredVin}` : '', city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', (offerRequested ? 'Offer requested: LIQUI MOLY prepay labor50. 50% discount applies to oil-change labor ONLY once correct-spec LIQUI MOLY oil is purchased and paid for in advance; oil/filter/taxes/other repairs remain full quoted price. Shop must confirm fitment, invoice, payment and appointment; no payment taken here.' : ''), (wantsPartsLink ? 'Customer requests a secure parts payment link after quote/fitment approval. No payment collected online.' : ''), pencilContext, attribution].filter(Boolean).join('\n');
     return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, preferredDate:dayOk?requestedDay:'', preferredTime:dayOk&&timeOk?requestedTime:'', appointmentPencilAcknowledged:acknowledged, appointmentPencilAcknowledgedAt:pencilAcknowledgedAt, appointmentPencilDisclosureVersion:acknowledged?'2026-10-16-v1':'', source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
@@ -677,6 +678,10 @@
     receipt = result;
     backup.hidden = true; form.hidden = true; done.hidden = false;
     byId('request-done-ref').textContent = `Reference: ${result.id}`;
+    const confirmCall = byId('request-done-call');
+    if (confirmCall) confirmCall.textContent = requestPayload?.preferredDate && requestPayload?.preferredTime
+      ? 'Call Tony to confirm (239) 397-2048'
+      : 'Call Tony about your request (239) 397-2048';
     const failed = sentMedia.total - sentMedia.sent;
     byId('request-done-status').textContent = failed
       ? `${failed} photo/video file(s) did not go through. Choose Add another photo to try again, or text them to (239) 397-2048.`

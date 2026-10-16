@@ -1,5 +1,7 @@
 # Perfect Timing: scheduled service, parts prepay and supplier integration
 
+> **BOOKING SUPERSEDED — OCTOBER 16, 2026:** This is historical implementation research. The owner-approved booking workflow is frozen in [BOOKING-CONTRACT-V1.md](BOOKING-CONTRACT-V1.md): any hour 24/7, customer penciled in after verified shop-calendar write, verbal phone confirmation by Tony required. Do not reactivate this document's managed booking-page/fixed-hours alternatives. Parts/quote/supplier guardrails remain independently applicable.
+
 ## Current public MVP (October 16, 2026)
 
 A customer can open the short existing repair form from an oil-service, detailing or walnut-blasting CTA, select a preferred day and Eastern time, choose **Call now** or submit for a callback, and optionally request a secure parts-payment link. A saved receipt means the inquiry was received, **not** a confirmed calendar reservation or a payment. The optional time and payment intent are embedded in the existing `details` / `callbackTime` contract so the cloud intake does not need a schema migration. No card details are requested.

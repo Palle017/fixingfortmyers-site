@@ -446,6 +446,7 @@
             <summary>Add photos or more details <span>(optional)</span></summary>
             <label class="request-full request-media" for="request-media" hidden>Photos or a short video of the problem <small>(up to 6)</small><input id="request-media" name="media" type="file" accept="image/*,video/*" multiple></label>
             <div class="request-fields">
+              <label class="request-full" for="request-vin">VIN <span class="field-note">(optional, if known)</span><input id="request-vin" name="vin" maxlength="32" autocomplete="off" placeholder="17-character VIN, if available"></label>
               <label class="request-full" for="request-service">Type of repair<select id="request-service" name="service"><option>Diagnosis / not sure yet</option><option>Walnut blasting / carbon cleaning</option><option>Engine</option><option>Transmission</option><option>Diesel</option><option>Oil change / maintenance</option><option>Electrical / no-start</option><option>A/C repair</option><option>Brakes</option><option>Module programming</option><option>Water damage / flood vehicle</option><option>Detailing / paint correction</option><option>Other</option><option hidden>Engine / transmission</option><option hidden>Diesel service</option><option hidden>Maintenance / other repair</option></select></label>
               <label for="request-starts">Does it drive?<select id="request-starts" name="starts"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
               <label for="request-stranded">Are you stranded?<select id="request-stranded" name="stranded"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
@@ -499,7 +500,7 @@
         <p>We’ll review it and contact you when available. This receipt verifies your repair request, not a confirmed appointment. A requested time may be penciled into the shop calendar, but this receipt does not verify calendar placement. The job, location and appointment are not confirmed until Tony speaks with you by phone and verbally confirms them. Please do not arrive without that confirmation.</p>
         <p class="request-fineprint" id="request-done-ref"></p>
         <div class="request-actions">
-          <a class="btn btn--primary" href="tel:+12393972048">Call us (239) 397-2048</a>
+          <a class="btn btn--primary" id="request-done-call" href="tel:+12393972048">Call Tony about your request (239) 397-2048</a>
           <label class="btn btn--outline request-done__photo" id="request-done-photo" hidden>Add another photo<input id="request-done-media" type="file" accept="image/*,video/*" multiple></label>
           <a class="btn btn--outline" href="/">Return home</a>
         </div>

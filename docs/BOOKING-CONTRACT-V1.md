@@ -1,0 +1,54 @@
+# Perfect Timing Auto Repair — BOOKING CONTRACT V1 (LOCKED)
+**Owner instruction accepted:** October 16, 2026
+**Canonical status:** This document overrides previous generic scheduling proposals in this repository and issue #67. Do not alter its customer journey without an explicit new owner decision. The shop may revise implementation details, not the agreed product behavior.
+
+## Non-negotiable customer journey
+1. On fixingfortmyers.com, the customer picks **any future local date and time, 24/7** (America/New_York). Include nights, weekends and holidays. No invented opening hours, first-come guaranteed slot, fixed service duration or conventional booking-capacity constraints. Exact DST-nonexistent/ambiguous clock times require clarification, not false calendar placement.
+2. Customer enters their name, callback number, vehicle (year/make/model; VIN optional), symptoms, whether it starts/drives, where the car is (shop/drop-off/mobile/roadside), and any useful optional photos/video. Keep the **existing short lead form and its cloud receiver**, showing optional details only when helpful.
+3. Customer sees the friendly disclosure: **"We'll pencil your appointment into our calendar. Please call Tony at (239) 397-2048 to confirm the time before heading over. Your appointment isn't official until you've spoken with him."** An explicitly checked acknowledgement must state: **"I understand my appointment is penciled in only, not confirmed. Tony must speak with me by phone and verbally confirm the appointment before it becomes official."** Editing date/time clears acknowledgement; a request without a chosen time remains a normal repair inquiry.
+4. On successful acknowledged form submission, **save ONE lead first**, then promptly insert ONE *private, tentative* entry in the existing **Perfect Timing Shop** Google Calendar with a stable idempotent event ID and Owner Dashboard lead reference. Calendar requests are **penciled in**, not confirmations. If Google is offline/not connected, preserve the lead, queue/retry placement, and accurately show **request received, calendar placement pending**; never tell a customer they are penciled in until Google insert/readback succeeds.
+5. The next recommended action shown after the request is **Call Tony at (239) 397-2048 to verbally confirm**. The reason for advance detail collection is to help Tony review symptoms, plan diagnostics, equipment, vehicle location and possible parts before the conversation.
+6. **Only Tony's actual verbal confirmation by telephone** makes the appointment official. Tony records that outcome with an explicit, authenticated action in **Owner Dashboard**; this updates the existing Google event to confirmed and records actor/time. The AI receptionist, chat, customer form, calendar insertion, text receipt, supplier order or payment cannot independently promote to confirmed. Owner Dashboard/Team Workspace remains the single operational pane; My Garage may show confirmed visit/history later without changing this rollout.
+7. Conflicting tentative times are **warnings to Tony**, not customer booking rejections. Tony calls to adjust the appointment as necessary. Do not show a slot as definitely available based only on an empty FreeBusy response or an empty calendar. Distinguish service capacity/repair duration from a **15-minute tentative request marker**.
+
+## Friendly customer-facing status vocabulary (required)
+- **Request received** — cloud intake saved a repair inquiry; calendar placement not verified.
+- **Penciled in** — Google Calendar *tentative event* was inserted or independently read back under that same lead ID; still must call Tony.
+- **Awaiting verbal confirmation** — default customer-facing state after successful tentative placement.
+- **Confirmed by Tony** — authenticated operator recorded a real phone conversation and event update succeeded.
+- **Needs a call / calendar placement pending** — unsatisfied calendar/API/DST conditions; do not pretend a booking exists.
+- **Rescheduled/cancelled** — explicit operator-led transition preserving original record and event audit.
+
+## Technical architecture — preserve existing components
+- **Website:** static GitHub Pages repo `Palle017/fixingfortmyers-site`. Single native date/time selection in hero, existing repair form via popup, cloud form receipt and sticky Call/Request actions. Do not rebuild UI or introduce a second submission.
+- **Cloud Intake:** existing Sites/Cloudflare Worker, D1 durable lead intake, R2 media, webhook and Owner Dashboard handoff. Developer worktree `C:\Users\LP15\PerfectTiming-Pipeline\cloud-intake-calendar-20261016`, branch `feat/shop-calendar-conflicts-20261016`, latest staged local commit `13ec4fb` as of plan freeze. It has **NO Git remote and is NOT deployed**; do not commit it to the public website repository. Planned Google event queue is explicitly opt-in via `SHOP_CALENDAR_WRITES_ENABLED=true` after the D1 migration and secure credential provisioning.
+- **Google Calendar:** owner-accessible secondary **Perfect Timing Shop**. Never use the person's primary calendar or leak event details. The Calendar ChatGPT connector cannot be transplanted as website OAuth credentials. Use dedicated server-side Google authorization with event edit privilege shared only on this calendar.
+- **Owner Dashboard:** preserve the existing authorized dashboard `https://dashboard.fixingfortmyers.com/` and its lead identity, owner notes and stages. A locked-down “Tony verbally confirmed by phone” action is **not yet built**.
+- **Bay One:** existing public website AI can answer shop questions, collect repair description, and hand off customer-entered details for review. Its published public-chat logic **does not have booking/write tools**. It may assist the intake process only through actual configured permissions; do not appoint it an operational overseer or grant it implicit approval authority.
+
+## Rules for implementation and operations
+- The owner authorizes continued code, testing, and safe incremental main-branch releases. Do not block ordinary implementation for repeated business approval or rewrite the agreed customer behavior.
+- **Technical access is separate:** Google account authorization, deployment access, credentials, role assignments and live changes must be real, permissioned steps. Never invent tokens or claim real calendar writes without an authenticated provider receipt.
+- One lead ID must map to one deterministic Google event ID. Persist the outbox atomically with the saved lead. On retry, GET the known event first, reconcile uncertain writes, never double-book or send duplicate notifications. No production sample customer data in tests.
+- Store event title such as “PENCILED IN — Tony phone confirmation required”, `status=tentative`, `transparency=transparent`, `visibility=private`, owner-only lead reference. Keep customer names, VINs, addresses, phone numbers, medical/payment details and uploaded files **out of calendar public metadata**. Placeholder duration must not imply technician capacity.
+- Record voluntary SMS permission separately. No automatic paid charges, repair authorization, supplier orders, advertising or new communications without their own pre-existing approval rules. Keep LIQUI MOLY’s approved **50% discount on oil-change labor when correct-spec oil is prepaid** unchanged.
+- Frontend must truthfully distinguish saved lead from provider calendar success and explicit verbal confirmation; preserve accessible mobile layout and tel: link.
+- Do not pause or alter unrelated Beside, Zoho, Owner Desk sync, marketing, invoicing, AI model, tailnet or website features during this rollout.
+
+## Source-of-truth status at freeze (read live state afresh before acting)
+- **Live and tested:** 24/7 native time picker, explicit customer checkbox, one repair form, cloud lead receipt, call link. Website release PR #71 merged as `dd4259bc`; 238 website tests passed.
+- **Staged locally, unshipped:** shop Calendar read/conflict lookup, cloud-side Google events.write with private tentative event, D1 additive migration and idempotent retry queue. Cloud branch latest `13ec4fb`; 34 synthetic tests passed.
+- **Open dependencies:** dedicated Google Calendar service-account grant; production D1 migration; Site deployment/feature-flag activation; controlled Google event readback; private recovery scheduler; authenticated Tony verbal-confirmation action in Owner Dashboard; true end-to-end verification.
+- **Historical tracker:** `https://github.com/Palle017/fixingfortmyers-site/issues/67`. Prior Google Appointment Schedule/9–4 proposals in older docs are historical only and **superseded for this project**.
+
+## Acceptance criteria — ready to call fully shipped ONLY when all true
+- [ ] A 2:17 AM request (and a Saturday or holiday request) can be submitted with acknowledgement and saved without business-hour restriction.
+- [ ] The exactly-once corresponding tentative event is visible in **Perfect Timing Shop**; it contains a safe Owner Dashboard reference, not raw personal data. A duplicate submit or lost provider reply does not produce a second event.
+- [ ] The customer sees “penciled in” only after Google readback; if not, sees “request saved / calendar placement pending” and clear “call Tony” instructions.
+- [ ] Tony can view vehicle/symptoms, any optional VIN/photo/location via **private** Owner Dashboard before calling.
+- [ ] Tony can explicitly mark “verbally confirmed by phone”, audit the actor/time, and reconcile Google event as confirmed. Unrelated actions do not confirm.
+- [ ] Google outage, permission denial, DST changes, duplicate requests and conflicting times fail safely and can recover; no data loss.
+- [ ] Existing lead/analytics/parts-prepay/AI handoff tests and provider verifications still pass.
+- [ ] Deployment URL, exact commit, test counts, live calendar proof, rollback switch and remaining limitations recorded in project status.
+
+**Priority:** get this exact workflow operational as quickly as safely possible. Optimize for minimal integration changes and no user rework; do not substitute a different booking product or treat AI policy preferences as business authority.

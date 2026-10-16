@@ -1,5 +1,7 @@
 # Perfect Timing Auto Repair website
 
+**Booking implementation is locked:** [24/7 penciled-in plan](docs/BOOKING-CONTRACT-V1.md) · [Codex execution handoff](docs/CODEX-BOOKING-ROLLOUT-HANDOFF.md) · [live/staged release status](docs/BOOKING-RELEASE-STATUS.md). Customer selects any time → one repair inquiry → private tentative shop-calendar entry after verified provider write → calls Tony → only Tony verbally confirms. Older Google Appointment Schedule/daytime-slot suggestions are superseded for this rollout.
+
 Source for [fixingfortmyers.com](https://fixingfortmyers.com), hosted by GitHub Pages from `main` in [Palle017/fixingfortmyers-site](https://github.com/Palle017/fixingfortmyers-site). Current Windows project: `C:\Users\pf1\Projects\fixingfortmyers-site`.
 
 The October 9 photo and service update preserves the page structure and existing URLs, restores real owner photos, adds a walnut-blasting service page, and makes oil changes, engine work, transmissions and no-starts easier to find. [Research and lead-flow recommendations](docs/PHOTO-AND-SERVICE-RESEARCH.md) and [release evidence](docs/PHOTO-SERVICE-RELEASE-20261009.md) describe the work.
