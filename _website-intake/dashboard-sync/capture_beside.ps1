@@ -3,17 +3,18 @@ param(
  [string]$ConversationId,
  [Parameter(Mandatory=$true)][string]$OutputPath,
  [string]$InventoryPath,
- [Parameter(Mandatory=$true)][string]$SettingsPath
+ [Parameter(Mandatory=$true)][string]$SettingsPath,
+ [string]$PythonExecutable="python.exe"
 )
 $ErrorActionPreference='Stop'
-$settings=Get-Content $SettingsPath -Raw | ConvertFrom-Json
+$settings=Get-Content $SettingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $private=[IO.Path]::GetFullPath($settings.private_archive_root).TrimEnd('\')+'\'
 if(-not [IO.Path]::GetFullPath($OutputPath).StartsWith($private,[StringComparison]::OrdinalIgnoreCase)){throw 'Private output path required'}
 if(Test-Path $OutputPath){throw 'Existing evidence must not be overwritten'}
 if($Mode -eq 'thread'){
  if($ConversationId -notmatch '^prv_[A-Z0-9]{26}$'){throw 'Invalid conversation identity'}
  if(-not $InventoryPath -or -not [IO.Path]::GetFullPath($InventoryPath).StartsWith($private,[StringComparison]::OrdinalIgnoreCase)){throw 'Private observed inventory required'}
- $inventory=Get-Content $InventoryPath -Raw | ConvertFrom-Json
+ $inventory=Get-Content $InventoryPath -Raw -Encoding UTF8 | ConvertFrom-Json
  $observed=@($inventory.records | Where-Object {$_.conversation_id -eq $ConversationId})
  if($observed.Count -ne 1){throw 'Conversation not uniquely observed in inventory'}
  $url=$observed[0].url
@@ -87,36 +88,97 @@ if($Mode -eq 'inventory'){
  exit 0
 }
 $target=$null
-foreach($a in $doc.FindAll([System.Windows.Automation.TreeScope]::Descendants,$lc)){try{$v=$a.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern);if($v.Current.Value -eq $url){$target=$a;break}}catch{}}
+foreach($a in $doc.FindAll([System.Windows.Automation.TreeScope]::Descendants,$lc)){
+ try{$v=$a.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern);if($v.Current.Value -eq $url){$target=$a;break}}catch{}
+}
 if(-not $target){throw 'Observed conversation link not currently present'}
 $target.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
 # Opening an unread conversation may mark it read. No sends, edits or deletions.
 $addressCondition=New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty,'Address and search bar')
-$selected=$false
-for($i=0;$i -lt 20;$i++){
- Start-Sleep -Milliseconds 200
- $address=$win.FindFirst([System.Windows.Automation.TreeScope]::Descendants,$addressCondition)
- if($address){$value=$address.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value;if($value -eq $url -or ('https://'+$value) -eq $url){$selected=$true;break}}
-}
-if(-not $selected){throw 'Selected conversation URL could not be verified'}
-Start-Sleep -Milliseconds 500
-$doc=$null
-foreach($d in $win.FindAll([System.Windows.Automation.TreeScope]::Descendants,$dc)){if($d.Current.Name -match 'Beside'){$doc=$d;break}}
-if(-not $doc){throw 'Selected thread disappeared'}
-$nodes=New-Object System.Collections.Generic.List[object]
 $walker=[System.Windows.Automation.TreeWalker]::ControlViewWalker
-function Finite-OrNull($value){if([double]::IsInfinity($value) -or [double]::IsNaN($value)){return $null};return $value}
+function Get-ObservedUrl {
+ $address=$win.FindFirst([System.Windows.Automation.TreeScope]::Descendants,$addressCondition)
+ if(-not $address){return ''}
+ $value=$address.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
+ if($value.StartsWith('app.beside.com/')){return 'https://'+$value}
+ return $value
+}
+function Finite-OrNull($value){
+ if([double]::IsInfinity($value) -or [double]::IsNaN($value)){return $null}
+ return $value
+}
 function Read-Node($node,[int]$parent,[int]$depth){
- if($nodes.Count -ge 2500 -or $depth -gt 45){throw 'Rendered capture exceeded bounds'}
- $id=$nodes.Count;$c=$node.Current;$role=$c.ControlType.ProgrammaticName;$name=$c.Name;$value=$null
+ if($script:captureNodes.Count -ge 2500 -or $depth -gt 45){throw 'Rendered capture exceeded bounds'}
+ $id=$script:captureNodes.Count;$c=$node.Current;$role=$c.ControlType.ProgrammaticName;$name=$c.Name;$value=$null
  if($role -eq 'ControlType.Edit'){$name='[editor excluded]'}
  if($role -eq 'ControlType.Hyperlink'){try{$value=$node.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value}catch{}}
  $bounds=$c.BoundingRectangle
- $nodes.Add([ordered]@{id=$id;parent=$parent;role=$role;name=$name;value=$value;left=(Finite-OrNull $bounds.Left);top=(Finite-OrNull $bounds.Top);width=(Finite-OrNull $bounds.Width);height=(Finite-OrNull $bounds.Height);offscreen=$c.IsOffscreen})
+ $script:captureNodes.Add([ordered]@{id=$id;parent=$parent;role=$role;name=$name;value=$value;left=(Finite-OrNull $bounds.Left);top=(Finite-OrNull $bounds.Top);width=(Finite-OrNull $bounds.Width);height=(Finite-OrNull $bounds.Height);offscreen=$c.IsOffscreen})
  $child=$walker.GetFirstChild($node)
  while($child){Read-Node $child $id ($depth+1);$child=$walker.GetNextSibling($child)}
 }
-Read-Node $doc -1 0
-$payload=[ordered]@{format='beside-uia-thread/v1';conversation_id=$ConversationId;source_url=$url;observed_at=[DateTime]::UtcNow.ToString('o');title=$doc.Current.Name;inventory_label=$observed[0].label;nodes=$nodes;coverage=@{complete=$false;method='authorized_browser';scope='Rendered selected thread only; no older-history paging or recording downloads.'};customer_messages_sent=$false}
-[IO.File]::WriteAllText($OutputPath,($payload|ConvertTo-Json -Depth 12),(New-Object Text.UTF8Encoding($false)))
-[pscustomobject]@{ok=$true;mode=$Mode;conversation_id=$ConversationId;captured_nodes=$nodes.Count;complete=$false;customer_messages_sent=$false}|ConvertTo-Json -Compress
+function Read-Observation {
+ $before=Get-ObservedUrl
+ if($before -ne $url){return $null}
+ $currentDoc=$null
+ foreach($d in $win.FindAll([System.Windows.Automation.TreeScope]::Descendants,$dc)){
+  if($d.Current.Name -match '^Chats - .+ - Beside$'){$currentDoc=$d;break}
+ }
+ if(-not $currentDoc){return $null}
+ $script:captureNodes=New-Object System.Collections.Generic.List[object]
+ Read-Node $currentDoc -1 0
+ $after=Get-ObservedUrl
+ return [ordered]@{
+  observed_at=[DateTime]::UtcNow.ToString('o');observed_url_before=$before;observed_url_after=$after
+  title=$currentDoc.Current.Name;nodes=$script:captureNodes.ToArray()
+ }
+}
+function Test-IdentityEvidence($candidate){
+ # The same pure Python validator rechecks native target/header identity, duplicate
+ # visible names, URL bracketing and three stable raw observations before any save.
+ $psi=New-Object System.Diagnostics.ProcessStartInfo
+ $psi.FileName=$PythonExecutable
+ $psi.Arguments='"'+(Join-Path $PSScriptRoot 'beside_uia.py')+'" --verify-stdin'
+ $psi.UseShellExecute=$false;$psi.CreateNoWindow=$true
+ $psi.RedirectStandardInput=$true;$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true
+ $process=New-Object System.Diagnostics.Process
+ $process.StartInfo=$psi
+ try{
+  [void]$process.Start()
+  $json=$candidate|ConvertTo-Json -Depth 12 -Compress
+  $bytes=(New-Object Text.UTF8Encoding($false)).GetBytes($json)
+  $process.StandardInput.BaseStream.Write($bytes,0,$bytes.Length)
+  $process.StandardInput.BaseStream.Flush();$process.StandardInput.Close()
+  if(-not $process.WaitForExit(3000)){$process.Kill();throw 'Identity validator timed out'}
+  $answer=$process.StandardOutput.ReadToEnd()
+  # Never print captured content, private paths or validator exception bodies.
+  if($process.ExitCode -ne 0){return $false}
+  $verified=$answer|ConvertFrom-Json
+  return ($verified.ok -eq $true -and $verified.identity_verified -eq $true)
+ }finally{$process.Dispose()}
+}
+$deadline=[DateTime]::UtcNow.AddSeconds(12)
+$samples=@();$payload=$null
+while([DateTime]::UtcNow -lt $deadline){
+ # This spacing establishes distinct observations, not presumed page readiness.
+ Start-Sleep -Milliseconds 300
+ try{$sample=Read-Observation}catch{$samples=@();continue}
+ if(-not $sample){$samples=@();continue}
+ $samples=@($samples|Select-Object -Last 2)+@($sample)
+ if($samples.Count -ne 3){continue}
+ $candidate=[ordered]@{
+  format='beside-uia-thread/v1';identity_format='beside-uia-identity/v1'
+  conversation_id=$ConversationId;source_url=$url;inventory_label=$observed[0].label
+  observed_at=$sample.observed_at;observed_url_before=$sample.observed_url_before;observed_url_after=$sample.observed_url_after
+  title=$sample.title;nodes=$sample.nodes;prior_samples=@($samples[0],$samples[1])
+  coverage=@{complete=$false;method='authorized_browser';scope='Three identity-matched stable rendered observations only; no older-history paging or recording downloads.'}
+  customer_messages_sent=$false
+ }
+ if(Test-IdentityEvidence $candidate){$payload=$candidate;break}
+}
+if(-not $payload){throw 'Selected conversation identity or stable content could not be verified'}
+# Create-only: an unverified read cannot replace earlier evidence or advance a checkpoint.
+$encoded=(New-Object Text.UTF8Encoding($false)).GetBytes(($payload|ConvertTo-Json -Depth 12))
+$stream=[IO.File]::Open($OutputPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+try{$stream.Write($encoded,0,$encoded.Length);$stream.Flush($true)}finally{$stream.Dispose()}
+[pscustomobject]@{ok=$true;mode=$Mode;conversation_id=$ConversationId;captured_nodes=$payload.nodes.Count;identity_verified=$true;stable_observations=3;complete=$false;customer_messages_sent=$false}|ConvertTo-Json -Compress
