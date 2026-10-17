@@ -34,6 +34,15 @@ except Exception:
 if not status['reconciliation'].get('ok'):
     status['exit_code'] = 1
 status['legacy_sync_scope'] = 'Local legacy snapshot only. Authoritative source coverage is in reconciliation.'
+# Nudge Tony, then Raj, about untouched new leads. Off until followup.enabled in the private config;
+# its failure never changes the lead-sync receipt or exit.
+try:
+    import lead_followup
+    sync_config = json.loads((PRIVATE / 'config.json').read_text(encoding='utf-8-sig'))
+    followup = lead_followup.run(sync_config, lambda: lead_followup.owner_baseline(sync_config), PRIVATE)
+    status['followup'] = {k: followup.get(k) for k in ('ok', 'enabled', 'pushes_sent', 'pushes_failed', 'error')}
+except Exception:
+    status['followup'] = {'ok': False, 'error': 'followup_failed'}
 temporary.write_text(json.dumps(status, indent=2), encoding='utf-8')
 temporary.replace(PRIVATE / 'last-run.json')
 

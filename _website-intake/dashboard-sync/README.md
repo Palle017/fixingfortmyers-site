@@ -29,3 +29,23 @@ Pushing these files to `main` does not install the Windows runner or deploy the 
 An authorized operator should back up and replace the three installed modules (`sync_dashboard.py`, `reconcile_dashboard.py`, `run_sync.py`), preserve the existing SEO collector and credentials, set only `beside_source_authority` to `browser_refresh` in the existing private sync configuration, and execute the existing task once. Confirm its local reconciliation receipt and independently read back the dashboard source descriptor. Do not clear source databases, bypass access permissions, create duplicate scheduled tasks, or label the Beside worker online without real acquisition capability.
 
 The prior authenticated record audit matched 11 website requests (one explicitly marked owner test), 19 newer Beside cards and 63 historical cards, with no missing IDs or source-field regressions. Those are saved-record counts, not a claim that all future Beside calls/texts are being captured. The scan worker was offline at that audit. Fresh Beside acquisition remains a separate activation dependency.
+
+## Lead follow-up (`lead_followup.py`)
+
+Runs at the end of each Owner Desk Sync run. It reads the same authenticated dashboard baseline as the reconciliation and pushes operator alerts to Tony and Raj only, until someone touches a new lead in Owner Desk (any stage change or note sets `owner_updated_at`).
+
+- Ladder, measured from the lead's received time, at any hour (owner decision 2026-10-17: no quiet hours): 0 min push to Tony, 15 min second push, 30 min urgent push, 60 min push to Raj. A lead that arrives late gets one push per person, not a burst.
+- Priority only changes the title: EMERGENCY (stranded or no-start), BIG JOB (overheating, coolant, knock, transmission, head gasket, no-start), or New lead.
+- If the Beside scan worker is offline for 15 minutes, both get one "Beside calls are not reaching Owner Desk" push per outage.
+- At 8 AM Eastern, one "Open leads this morning" push, only when something is open.
+- Pushes never include customer names, numbers or email addresses. No customer is ever contacted, and no lead or stage is written.
+- Leads received before `start_at` never escalate, so the existing review backlog doesn't flood anyone; it is counted in the morning push instead.
+
+Off until the private `config.json` has:
+
+```json
+"followup": {"enabled": true, "start_at": "<ISO time to start from>", "dashboard_url": "<Owner Desk URL>",
+             "tony_push_url": "https://<push service>/<Tony's private topic>", "raj_push_url": "https://<push service>/<Raj's private topic>"}
+```
+
+State (`followup-state.json`) and a counts-only receipt (`followup-status.json`) stay in the private folder. Synthetic tests: `python3 -m unittest discover -s _website-intake/dashboard-sync -p 'test_*.py'`.
