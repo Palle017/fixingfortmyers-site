@@ -10,3 +10,6 @@ exclude:
   - README.md
   - source-materials
   - SIMPLIFY-PLAN.md
+  - AGENTS.md
+  - CLAUDE.md
+  - GEMINI.md
