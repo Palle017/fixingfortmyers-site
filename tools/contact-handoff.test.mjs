@@ -256,9 +256,9 @@ test('a server whose chat failed to start is treated as unavailable',async t=>{
   await settle();assert.ok(d.getElementById('bay-one-widget'));d.querySelector('.b1-launcher').click();await settle();assert.ok(x.requests.every(r=>r.route==='/healthz'));assert.equal(d.querySelector('.b1-fallback').hidden,false);
 });
 
-test('shipped config enables optional public Bay One over HTTPS',()=>{
+test('shipped config suspends public Bay One while retaining its HTTPS rollback endpoint',()=>{
   const dom=new JSDOM('',{runScripts:'outside-only'});dom.window.eval(fs.readFileSync(new URL('bay-one-config.js',root),'utf8'));
-  assert.equal(dom.window.PT_BAYONE_CONFIG.enabled,true);assert.match(dom.window.PT_BAYONE_CONFIG.endpoint,/^https:\/\//);assert.equal(dom.window.PT_BAYONE_CONFIG.autoOpen,false);dom.window.close();
+  assert.equal(dom.window.PT_BAYONE_CONFIG.enabled,false);assert.match(dom.window.PT_BAYONE_CONFIG.endpoint,/^https:\/\//);assert.equal(dom.window.PT_BAYONE_CONFIG.autoOpen,false);dom.window.close();
 });
 
 test('public Bay One is disabled before UI/assets/network while normal contact remains available',async t=>{
