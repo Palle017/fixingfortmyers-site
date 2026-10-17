@@ -53,3 +53,8 @@ No "calendar integrated" or "penciled in" claims until one authorized synthetic 
 **Critical blocker:** Dedicated service-account event-edit access on the existing secondary shop calendar and private Site secret installation. This requires real provider/account permission; connected ChatGPT Calendar access is **not** the server OAuth credential. Only after that should Codex deploy migrations with writer OFF, test existing lead intake, activate one owner-approved synthetic tentative booking, verify Google event ID/Owner Dashboard sync/retry, and deploy the reconciled owner-only phone-confirmation action.
 
 **Frozen local entrypoint:** `C:\Users\LP15\Codex\PerfectTiming-Booking-Plan-20261016\CODEX-FINAL-EXECUTE.md`; Codex CLI is installed on P15G2 but was **NOT executed** in preparation. Once connected and deployed, update this status with actual provider receipts/IDs. Do not claim calendar writes or confirmed appointments now.
+
+
+## Correction — 2026-10-17 (read-only check of P15G2 session logs and the connected Gmail)
+- **The Bay One email was sent.** The draft mentioned above went out on 2026-10-17 at 01:09 UTC from the connected Gmail to fixingfortmyers@gmail.com. No reply as of 05:00 UTC.
+- **Codex was used on 2026-10-16**, so "Codex NOT invoked" above is true only of the booking code. Three Codex desktop sessions ran that day (01:24, 02:10 and 09:58 EDT) on the Owner Desk Google profile review and Cloud Intake health, before the booking work began. The booking commits (`808e863` through `ccbfa1b`, and `48986dc`) came from the ChatGPT chat, not Codex.
