@@ -75,6 +75,18 @@ class AuthorityTests(unittest.TestCase):
         self.assertEqual(sync.apply_source_authorities(data,{'beside_source_authority':'zoho_adapter'})['sources'],[])
 
 class TimestampTests(unittest.TestCase):
+    def test_published_timestamp_roundtrips_javascript_milliseconds(self):
+        value=check.utc_millis()
+        self.assertRegex(value,r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')
+        instant=check.instant(value)
+        self.assertEqual(instant.microsecond % 1000,0)
+        saved=instant.isoformat(timespec='milliseconds').replace('+00:00','Z')
+        expected={'name':'Beside saved scans','status':'historical','record_count':19,'detail':'Synthetic','observed_at':value}
+        self.assertTrue(check.metadata_matches({**expected,'observed_at':saved},expected))
+    def test_true_millisecond_difference_is_still_rejected(self):
+        expected={'name':'Beside saved scans','status':'historical','record_count':19,'detail':'Synthetic','observed_at':'2026-10-17T04:08:09.798Z'}
+        self.assertFalse(check.metadata_matches({**expected,'observed_at':'2026-10-17T04:08:09.799Z'},expected))
+
     def test_equivalent_utc_spellings_match(self):
         expected={'name':'Beside saved scans','status':'historical','record_count':19,'detail':'Synthetic','observed_at':'2026-10-16T12:00:00+00:00'}
         saved={**expected,'observed_at':'2026-10-16T12:00:00.000Z'}
@@ -87,5 +99,13 @@ class TimestampTests(unittest.TestCase):
         self.assertEqual(check.instant('2026-09-26'),check.instant('2026-09-26T00:00:00Z'))
     def test_ambiguous_datetime_rejected(self):
         with self.assertRaises(check.CheckError):check.instant('2026-10-16T12:00:00')
+
+class ActiveScanTests(unittest.TestCase):
+    def test_active_scan_owns_source_descriptor(self):
+        for status in ('queued','running'):
+            self.assertFalse(check.metadata_publish_allowed(True,{'status':status}))
+    def test_completed_scan_can_publish(self):
+        self.assertTrue(check.metadata_publish_allowed(True,{'status':'complete'}))
+        self.assertFalse(check.metadata_publish_allowed(False,{'status':'complete'}))
 
 if __name__=='__main__':unittest.main()

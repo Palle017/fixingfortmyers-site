@@ -53,3 +53,16 @@ No "calendar integrated" or "penciled in" claims until one authorized synthetic 
 **Critical blocker:** Dedicated service-account event-edit access on the existing secondary shop calendar and private Site secret installation. This requires real provider/account permission; connected ChatGPT Calendar access is **not** the server OAuth credential. Only after that should Codex deploy migrations with writer OFF, test existing lead intake, activate one owner-approved synthetic tentative booking, verify Google event ID/Owner Dashboard sync/retry, and deploy the reconciled owner-only phone-confirmation action.
 
 **Frozen local entrypoint:** `C:\Users\LP15\Codex\PerfectTiming-Booking-Plan-20261016\CODEX-FINAL-EXECUTE.md`; Codex CLI is installed on P15G2 but was **NOT executed** in preparation. Once connected and deployed, update this status with actual provider receipts/IDs. Do not claim calendar writes or confirmed appointments now.
+
+
+## Correction — 2026-10-17 (read-only check of P15G2 session logs and the connected Gmail)
+- **The Bay One email was sent.** The draft mentioned above went out on 2026-10-17 at 01:09 UTC from the connected Gmail to fixingfortmyers@gmail.com. No reply as of 05:00 UTC.
+- **Codex was used on 2026-10-16**, so "Codex NOT invoked" above is true only of the booking code. Three Codex desktop sessions ran that day (01:24, 02:10 and 09:58 EDT) on the Owner Desk Google profile review and Cloud Intake health, before the booking work began. The booking commits (`808e863` through `ccbfa1b`, and `48986dc`) came from the ChatGPT chat, not Codex.
+
+## Current source reconciliation — 2026-10-17, VM101 migration audit
+
+- Recovered current managed Cloud Intake version 9, source `a0fecdfba5a91be05f5f8cc343ce836de6ea3f2a`, and Owner Dashboard version 20, source `369b4534f2eccad746aca5b84ff896145178305f`. Both deployment receipts report success. Private source remains outside this public repository.
+- **Migration numbering conflict:** current Cloud already contains `0002_violet_rawhide_kid.sql` (analytics events) and `0003_funny_scorpion.sql` (stable handoff mapping version/time). Reconcile the older staged booking code and generate additive migrations only after verifying the actual production journal. The frozen staged filenames above must not be applied blindly.
+- Current source and live table-name inspection do not establish that staged calendar or verbal-confirmation work is deployed. Preserve the frozen customer journey and reconcile the Owner work into the current source rather than deploying the older checkout wholesale.
+- Actual current private source passed 35 existing Cloud tests and nine additional isolated Cloud/Owner failure scenarios, including duplicate receipt recovery and preservation of owner notes/stage/activity. These are local SQLite/transport tests, not real Google, production D1/R2, authentication or scheduler evidence. No calendar write, live intake POST or managed deployment change was performed.
+- The source audit and separate synthetic VM101 package are documented in [BAYONE-VM101-MIGRATION-2026-10-17.md](BAYONE-VM101-MIGRATION-2026-10-17.md). They do not replace the hosted Bay One pricing-quota correction or activate booking.

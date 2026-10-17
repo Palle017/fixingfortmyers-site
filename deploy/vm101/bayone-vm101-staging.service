@@ -1,0 +1,47 @@
+[Unit]
+Description=Bay One VM101 synthetic staging (reference Node service)
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=bayone-stage
+Group=bayone-stage
+WorkingDirectory=/opt/bayone-vm101-staging/current
+EnvironmentFile=/etc/bayone-vm101-staging/staging.env
+ExecStart=/opt/bayone-vm101-staging/node/bin/node --max-old-space-size=256 deploy/vm101/staging.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+KillMode=control-group
+StateDirectory=bayone-vm101-staging
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+MemoryHigh=320M
+MemoryMax=384M
+TasksMax=64
+LimitNOFILE=1024
+StandardOutput=journal
+StandardError=journal
+LogNamespace=bayone-vm101-staging
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=100
+
+[Install]
+WantedBy=multi-user.target
