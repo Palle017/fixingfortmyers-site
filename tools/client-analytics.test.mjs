@@ -206,7 +206,7 @@ test('a repair conversion waits for a positive server receipt and keeps the rece
 });
 
 test('every public content page keeps its exact approved path for page-level reporting', async t => {
-  const pages=fs.readdirSync(root).filter(file=>file.endsWith('.html') && file!=='404.html' && !/^google[a-z0-9]+\.html$/.test(file));
+  const pages=fs.readdirSync(root).filter(file=>file.endsWith('.html') && file!=='404.html' && file!=='start.html' && !/^google[a-z0-9]+\.html$/.test(file)); // start.html only redirects to the request form and loads no scripts
   for(const file of pages){
     const x=setup(t,{url:'https://fixingfortmyers.com/'+file}); await settle();
     assert.equal(x.w.PT_ANALYTICS_STATUS.page,file==='index.html'?'/':'/'+file.replace(/\.html$/,''),file);

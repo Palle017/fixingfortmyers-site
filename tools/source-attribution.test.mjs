@@ -182,3 +182,19 @@ test('new campaign/external arrivals replace acquisition while empty referrers p
   }
 });
 
+
+test('the Beside text link opens the existing request form and tags the lead as beside_sms', async t => {
+  const start = fs.readFileSync(new URL('start.html', root), 'utf8');
+  assert.match(start, /<meta http-equiv="refresh" content="0; url=\/request-a-repair\?utm_source=beside_sms">/);
+  assert.match(start, /<meta name="robots" content="noindex,follow">/);
+  assert.match(start, /<a href="\/request-a-repair\?utm_source=beside_sms">/, 'no-redirect fallback link');
+  assert.match(start, /href="tel:\+12393972048"/);
+  assert.doesNotMatch(start, /<form|<script/i, 'the link is a pointer to the one existing form, not a second intake');
+  assert.doesNotMatch(fs.readFileSync(new URL('sitemap.xml', root), 'utf8'), /\/start</, 'the text link stays out of search results');
+  const inquiry = browser(t, {file:'request-a-repair.html', url:'https://preview.invalid/request-a-repair?utm_source=beside_sms', endpoint:'https://receiver.invalid'});
+  await settle();
+  await inquiry.submit();
+  const leads = inquiry.requests.filter(request => request.path === '/hooks/lead/webform');
+  assert.equal(leads.length, 1);
+  assert.equal(leads[0].body.channel, 'beside_sms');
+});
