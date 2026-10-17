@@ -30,6 +30,8 @@ function setup(t, {handler, offline = false, geolocation, url = 'https://preview
       if (offline) throw new w.TypeError('Synthetic outage');
       return response({ok:true});
     }
+    if (address.pathname.startsWith('/hooks/calendar/status/'))
+      return handler ? handler(request, w) : response({ok:false}, 503);
     assert.equal(address.pathname, '/hooks/lead/webform');
     return handler ? handler(request, w) : response({ok:false}, 503);
   };
@@ -54,6 +56,48 @@ function setup(t, {handler, offline = false, geolocation, url = 'https://preview
   const leads = () => requests.filter(request => request.path === '/hooks/lead/webform');
   return {w, d, requests, enter, fill, send, leads, initialInstructions};
 }
+
+test('verified Google readback changes only the appointment receipt status to penciled in, never confirmed',async t=>{
+ const token='v1.'+id+'.1234567890.'+'X'.repeat(43);
+ const x=setup(t,{handler:request=>{
+  if(request.path.startsWith('/hooks/calendar/status/')){
+   assert.equal(request.path,'/hooks/calendar/status/'+id);
+   assert.equal(request.headers['X-Appointment-Status-Token'],token);
+   return response({ok:true,status:'penciled_in_call_tony',calendarPlaced:true,calendarConfirmed:false});
+  }
+  return response({ok:true,received:true,id,receivedAt:new Date().toISOString(),appointmentStatusToken:token},201);
+ }});
+ await settle();x.fill();
+ const today=x.d.getElementById('request-visit-date').min;
+ const tomorrow=new Date(Date.parse(today+'T12:00:00Z')+86400000).toISOString().slice(0,10);
+ x.enter('hero-appointment-date',tomorrow);
+ x.enter('hero-appointment-time','02:17');
+ x.d.getElementById('request-pencil-ack').click();
+ x.send();await settle();await settle();
+ assert.equal(x.leads().length,1);
+ const status=x.d.getElementById('request-done-appointment-state');
+ assert.equal(status.hidden,false);
+ assert.match(status.textContent,/penciled into the shop calendar/i);
+ assert.match(status.textContent,/call Tony/i);
+ assert.doesNotMatch(status.textContent,/confirmed appointment|already confirmed/i);
+ assert.equal(x.requests.filter(v=>v.path.startsWith('/hooks/calendar/status/')).length,1);
+ assert.match(x.d.getElementById('request-done-call').textContent,/Call Tony to confirm/);
+});
+
+test('a saved website receipt without a signed Google status token never claims calendar placement',async t=>{
+ const x=setup(t,{handler:()=>response({ok:true,received:true,id,receivedAt:new Date().toISOString()},201)});
+ await settle();x.fill();
+ const today=x.d.getElementById('request-visit-date').min;
+ const tomorrow=new Date(Date.parse(today+'T12:00:00Z')+86400000).toISOString().slice(0,10);
+ x.enter('hero-appointment-date',tomorrow);
+ x.enter('hero-appointment-time','23:47');
+ x.d.getElementById('request-pencil-ack').click();
+ x.send();await settle();
+ const status=x.d.getElementById('request-done-appointment-state');
+ assert.equal(status.hidden,false);
+ assert.match(status.textContent,/has not been verified yet/);
+ assert.equal(x.requests.filter(v=>v.path.startsWith('/hooks/calendar/status/')).length,0);
+});
 
 test('specialty service links carry the right category into the submitted repair request',async t=>{
   for(const [key,label] of [['walnut','Walnut blasting / carbon cleaning'],['maintenance','Oil change / maintenance'],['transmission','Transmission'],['no-start','Electrical / no-start']]){

@@ -674,9 +674,53 @@
   // Success replaces the form in place, so the customer never lands on an unrelated page.
   const done = byId('request-done');
   let receipt = null;
+  const appointmentNotice = byId('request-done-appointment-state');
+  function startVerifiedAppointmentStatus(result) {
+    if (!appointmentNotice || !requestPayload?.preferredDate || !requestPayload?.preferredTime) return;
+    appointmentNotice.hidden = false;
+    appointmentNotice.textContent = 'Repair request saved. Calendar placement has not been verified yet. Please call Tony at (239) 397-2048 to confirm.';
+    // This capability is returned only after an authenticated server-side receipt.
+    // No token or private detail is placed in the URL, analytics, or browser storage.
+    const proof = result?.appointmentStatusToken;
+    if (!endpoint || typeof proof !== 'string' || proof.length < 40) return;
+    let attempts = 0;
+    const verify = async () => {
+      if (receipt?.id !== result.id || done.hidden) return;
+      attempts++;
+      let finished = false;
+      try {
+        const check = await fetch(endpoint + '/hooks/calendar/status/' + encodeURIComponent(result.id), {
+          method:'GET',credentials:'omit',cache:'no-store',
+          headers:{'X-Appointment-Status-Token':proof}
+        });
+        const state = await check.json();
+        if (check.ok && state?.ok === true) {
+          if (state.status === 'confirmed_by_tony' && state.calendarConfirmed === true) {
+            appointmentNotice.textContent = 'Tony verbally confirmed your appointment. The shop calendar was updated.';
+            finished = true;
+          } else if (state.status === 'penciled_in_call_tony' && state.calendarPlaced === true) {
+            appointmentNotice.textContent = 'Your appointment is penciled into the shop calendar. Please call Tony at (239) 397-2048 to make it official before visiting.';
+            finished = true;
+          } else if (state.status === 'verbal_recorded_calendar_sync_pending') {
+            appointmentNotice.textContent = 'Tony’s phone confirmation was recorded. The calendar update is still being verified.';
+            finished = true;
+          } else if (state.status === 'call_tony_to_clarify_time') {
+            appointmentNotice.textContent = 'Your requested clock time needs clarification. Please call Tony at (239) 397-2048.';
+            finished = true;
+          }
+        }
+      } catch (_) {
+        // Provider status failed; the verified lead receipt is still valid.
+      }
+      if (!finished && attempts < 4 && receipt?.id === result.id && !done.hidden)
+        setTimeout(() => { void verify(); }, 4000);
+    };
+    void verify();
+  }
   const showDone = (result, sentMedia) => {
     receipt = result;
     backup.hidden = true; form.hidden = true; done.hidden = false;
+    startVerifiedAppointmentStatus(result);
     byId('request-done-ref').textContent = `Reference: ${result.id}`;
     const confirmCall = byId('request-done-call');
     if (confirmCall) confirmCall.textContent = requestPayload?.preferredDate && requestPayload?.preferredTime
