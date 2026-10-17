@@ -35,3 +35,21 @@ No "calendar integrated" or "penciled in" claims until one authorized synthetic 
 - **Local backup for Codex:** `C:\Users\LP15\Codex\PerfectTiming-Booking-Plan-20261016\` contains the locked specification, complete Codex handoff and status file. The Bay One email draft is saved separately there.
 - **Still NOT live:** Automatically placing tentative Google Calendar events, the private backend migration/credential/deployment, and the owner-only action that records Tony's actual phone confirmation. An ordinary webform receipt is not evidence of calendar placement or verbal confirmation.
 - **Next engineering gate:** enable dedicated server-side Google Calendar access on the **existing** Perfect Timing Shop calendar and deploy/read back one approved synthetic tentative event from the existing Cloud Intake with idempotent recovery, without changing the agreed customer workflow.
+
+
+## Freeze point — completed under regular ChatGPT tools, Codex NOT invoked (October 16, 2026)
+
+**Frozen execution handoff:** [CODEX-FINAL-EXECUTE.md](CODEX-FINAL-EXECUTE.md). The owner-approved user journey in [BOOKING-CONTRACT-V1.md](BOOKING-CONTRACT-V1.md) is unchanged. The launch/rollback instructions, exact source worktrees, accepted tests and provider prerequisites are now durable in public project docs and on P15G2.
+
+| Component | Last verified state | Tests / proof |
+| --- | --- | --- |
+| Website's 24/7 picker, single intake, VIN, phone-confirm disclaimer | **LIVE** | PRs #71/#74, no design change |
+| Customer signed “penciled in vs pending” status line | **LIVE UI; BACKEND STILL OFF** | PR #77 merged `18c388a1284aaac26b0b5981245b26da787a0dd6`; 242/242 website tests and GitHub CI passed; cache-busted live HTML/JS readback succeeded |
+| Private cloud intake Google writer, durable D1 queue, signed customer status, owner verbal-confirm event sync | **STAGED LOCAL, NOT DEPLOYED** | `C:\Users\LP15\PerfectTiming-Pipeline\cloud-intake-customer-status-20261016`; latest commit `ccbfa1b`; **40/40 tests + build passed** with mocked Google. No remote; no Site secrets or calendar writes deployed |
+| Private Owner Dashboard verbal-confirm UI/API + status guard | **STAGED LOCAL, NOT DEPLOYED** | `C:\Users\LP15\PerfectTiming-Pipeline\owner-verbal-confirm-20261016`, latest `48986dc`; **94/94 tests + TypeScript + build passed**. Based on older owner source; MUST reconcile against actual deployed source, not overwrite |
+| Existing shop Google Calendar | **OWNER VISIBLE ONLY** | Secondary Perfect Timing Shop Calendar confirmed; dedicated server-side event-editor grant not yet installed |
+| Private Site migrations, secure deployment, recovery scheduler, authorized live Google synthetic E2E | **NOT DONE** | Additive `0002_medical_blindfold.sql` and `0003_puzzling_carmella_unuscione.sql` prepared. Do not enable writers/guard until real provider proof |
+
+**Critical blocker:** Dedicated service-account event-edit access on the existing secondary shop calendar and private Site secret installation. This requires real provider/account permission; connected ChatGPT Calendar access is **not** the server OAuth credential. Only after that should Codex deploy migrations with writer OFF, test existing lead intake, activate one owner-approved synthetic tentative booking, verify Google event ID/Owner Dashboard sync/retry, and deploy the reconciled owner-only phone-confirmation action.
+
+**Frozen local entrypoint:** `C:\Users\LP15\Codex\PerfectTiming-Booking-Plan-20261016\CODEX-FINAL-EXECUTE.md`; Codex CLI is installed on P15G2 but was **NOT executed** in preparation. Once connected and deployed, update this status with actual provider receipts/IDs. Do not claim calendar writes or confirmed appointments now.
