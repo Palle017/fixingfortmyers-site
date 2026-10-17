@@ -37,6 +37,27 @@ status['legacy_sync_scope'] = 'Local legacy snapshot only. Authoritative source 
 temporary.write_text(json.dumps(status, indent=2), encoding='utf-8')
 temporary.replace(PRIVATE / 'last-run.json')
 
+# Optional real acquisition worker: the existing task polls explicit dashboard jobs.
+# Readiness is proved against the signed-in source before publishing a heartbeat.
+try:
+    worker_enabled = json.loads((PRIVATE / 'config.json').read_text(encoding='utf-8-sig')).get('beside_refresh_enabled') is True
+    if worker_enabled:
+        from beside_refresh_runner import run as refresh_beside
+        status['beside_refresh'] = refresh_beside(budget_seconds=max(0, min(145, 165-(monotonic()-RUN_STARTED))))
+        if not status['beside_refresh'].get('ok'):
+            status['exit_code'] = 1
+        elif status['beside_refresh'].get('fresh_scan_performed'):
+            status['reconciliation'] = reconcile_dashboard(budget_seconds=max(0, min(25, 170-(monotonic()-RUN_STARTED))))
+            if not status['reconciliation'].get('ok'):
+                status['exit_code'] = 1
+    else:
+        status['beside_refresh'] = {'enabled': False, 'fresh_scan_performed': False}
+except Exception:
+    status['beside_refresh'] = {'ok': False, 'error': 'beside_worker_failed', 'fresh_scan_performed': False}
+    status['exit_code'] = 1
+temporary.write_text(json.dumps(status, indent=2), encoding='utf-8')
+temporary.replace(PRIVATE / 'last-run.json')
+
 # SEO has its own daily receipt; its failure never changes the lead-sync receipt or exit.
 try:
     from collect_seo import collect

@@ -25,6 +25,11 @@ class NoRedirect(request.HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
         return None
 
+def utc_millis():
+    # The hosted TypeScript API persists JavaScript Date precision (milliseconds).
+    # Generate matching precision instead of weakening exact readback verification.
+    return datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00','Z')
+
 def canonical(value):
     return json.dumps(value,ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False)
 def load(path):
@@ -103,8 +108,12 @@ def compare(events,current,expected):
             'historical_cards':counts['beside-history'],'expected_historical_cards':prior_counts['beside-history'],'missing_ids':missing_beside},
         'field_differences':differences}
 
+def metadata_publish_allowed(publish, state):
+    # An active scan owns its source descriptor until proof and checkpoints land.
+    return publish and state.get('status') not in ('queued','running')
+
 def run(*,publish=True,budget_seconds=45):
-    started=time.monotonic();checked=datetime.now(timezone.utc).isoformat()
+    started=time.monotonic();checked=utc_millis()
     result={'checked_at':checked,'ok':False,'delivery_ok':False}
     try:
         if budget_seconds<5:raise CheckError('reconciliation_time_budget_unavailable')
@@ -149,7 +158,8 @@ def run(*,publish=True,budget_seconds=45):
         worker_online=bool(live['state'].get('worker',{}).get('online'))
         result.update(cloud_pending_handoffs=health.get('pending'),cloud_pending_owner_alerts=health.get('owner_alerts_pending'),
             all_sources_live=False,customer_messages_sent=False,inquiry_records_written=0,dashboard_status_updated=False)
-        if publish:
+        result['metadata_deferred_for_scan'] = bool(publish and not metadata_publish_allowed(publish,live['state']))
+        if metadata_publish_allowed(publish,live['state']):
             verdict='Saved-record reconciliation passed.' if result['delivery_ok'] else 'ACTION NEEDED: missing records or changed source fields. See private reconciliation receipt.'
             detail=(f"{verdict} {result['beside']['saved_cards']} newer Beside cards and {result['beside']['historical_cards']} historical cards are saved. "
                 f"Last verified scan: {proof['captured_at']}. This is a saved snapshot, not a live feed of every call/text. "
