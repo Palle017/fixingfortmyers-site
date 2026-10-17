@@ -9,14 +9,23 @@ def node(role,name,left=800,width=120,value=None):
     return {'role':role,'name':name,'left':left,'width':width,'value':value}
 
 def capture(title='(239) 555-0100',day='Yesterday',clock='11:05 PM'):
-    return {'format':'beside-uia-thread/v1','conversation_id':CID,
+    value={'format':'beside-uia-thread/v1','conversation_id':CID,
         'source_url':'https://app.beside.com/chats/'+CID,
         'observed_at':'2026-10-17T04:32:00.123Z','nodes':[
-          node('ControlType.Hyperlink','Sidebar data must not leak',left=10,width=500,value='https://app.beside.com/chats/'+CID),
+          node('ControlType.Hyperlink',title+' 2h Sidebar data must not leak',left=10,width=500,value='https://app.beside.com/chats/'+CID),
           node('ControlType.Text',title),node('ControlType.Text',clock),
           node('ControlType.Text','Customer asks about brakes.'),
           node('ControlType.Text',day),node('ControlType.Edit','UNSENT PRIVATE DRAFT'),
           node('ControlType.Text','Hidden source',left=float('inf'))]}
+    value['inventory_label']=title+' 2h Sidebar data must not leak'
+    return bind_samples(value)
+
+def bind_samples(value):
+    value['identity_format']='beside-uia-identity/v1'
+    value['observed_url_before']=value['source_url']
+    value['observed_url_after']=value['source_url']
+    value['prior_samples']=[{'observed_at':at,'observed_url_before':value['source_url'],'observed_url_after':value['source_url'],'nodes':copy.deepcopy(value['nodes'])} for at in ['2026-10-17T04:31:59.523Z','2026-10-17T04:31:59.823Z']]
+    return value
 
 class CaptureTests(unittest.TestCase):
     def test_exact_context_and_native_phone(self):
@@ -31,7 +40,7 @@ class CaptureTests(unittest.TestCase):
     def test_named_person_does_not_get_phone_from_ai_recap(self):
         value=capture('Maybe: Example')
         value['nodes'].insert(4,node('ControlType.Text','AI recap: Phone Number: +12395550999'))
-        out=uia.conversation(value,'b'*64)
+        out=uia.conversation(bind_samples(value),'b'*64)
         self.assertEqual(out['phone'],'')
         self.assertEqual(out['name'],'Maybe: Example')
     def test_provider_contact_url_does_not_become_conversation_id(self):

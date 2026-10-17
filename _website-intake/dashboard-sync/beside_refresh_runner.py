@@ -92,7 +92,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
         def capture(mode,output,*,cid=None,inventory=None):
             if remaining()<10:raise ScanError('CAPTURE_INCOMPLETE')
             args=['powershell.exe','-NoProfile','-File',str(ROOT/'capture_beside.ps1'),'-Mode',mode,
-                '-OutputPath',str(output),'-SettingsPath',str(settings_path)]
+                '-OutputPath',str(output),'-SettingsPath',str(settings_path),'-PythonExecutable',sys.executable]
             if cid:args+=['-ConversationId',cid,'-InventoryPath',str(inventory)]
             for attempt in range(2):
                 completed=subprocess.run(args,capture_output=True,text=True,timeout=min(25,remaining()-3),

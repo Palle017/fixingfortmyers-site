@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import math
 import re
+import unicodedata
 from zoneinfo import ZoneInfo
 
 ID = re.compile(r'^prv_[A-Z0-9]{26}$')
@@ -28,21 +29,86 @@ def sanitize_raw(value):
         return {key:sanitize_raw(item) for key,item in value.items()}
     return value
 
-def selected_text(capture):
+# A URL change is not proof that the rendered conversation has changed.
+PHONE = re.compile(r'^(?:\+?1[ .-]?)?\(?[0-9]{3}\)?[ .-]?[0-9]{3}[ .-]?[0-9]{4}$')
+CAPTION = re.compile(r'^(?P<title>.+?)\s+(?:[0-9]+\s*[smhdw]|Just now|Now|Today|Yesterday|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+[0-9]{1,2}(?:,\s+[0-9]{4})?)(?=\s|$)', re.I)
+LOADING = re.compile(r'^(?:loading|loading messages|loading conversation|please wait)[.\s\u2026]*$', re.I)
+
+def contact_identity(title):
+    if not isinstance(title,str) or not title.strip():
+        raise CaptureError('contact_identity_missing')
+    clean=' '.join(unicodedata.normalize('NFC',title).split())
+    if PHONE.fullmatch(clean):
+        digits=re.sub(r'[^0-9]','',clean)
+        return 'phone:'+digits[-10:]
+    return 'name:'+clean.casefold()
+
+def caption_identity(label):
+    if not isinstance(label,str):
+        raise CaptureError('inventory_identity_missing')
+    match=CAPTION.match(' '.join(unicodedata.normalize('NFC',label).split()))
+    if not match:
+        raise CaptureError('inventory_identity_unreadable')
+    return contact_identity(match['title'])
+
+def _observation_text(capture,observation):
     cid=capture.get('conversation_id','')
-    if capture.get('format')!='beside-uia-thread/v1' or not ID.fullmatch(cid) or capture.get('source_url')!='https://app.beside.com/chats/'+cid:
+    if capture.get('format')!='beside-uia-thread/v1' or not isinstance(cid,str) or not ID.fullmatch(cid) or capture.get('source_url')!='https://app.beside.com/chats/'+cid:
         raise CaptureError('capture_identity_mismatch')
-    nodes=capture.get('nodes')
-    if not isinstance(nodes,list) or not nodes or len(nodes)>2500:
+    if not isinstance(observation,dict):
+        raise CaptureError('invalid_capture_observation')
+    expected=capture['source_url']
+    if observation.get('observed_url_before')!=expected or observation.get('observed_url_after')!=expected:
+        raise CaptureError('navigation_changed_during_capture')
+    nodes=observation.get('nodes')
+    if not isinstance(nodes,list) or not nodes or len(nodes)>2500 or any(not isinstance(n,dict) for n in nodes):
         raise CaptureError('invalid_capture_nodes')
-    sidebar=[n for n in nodes if n.get('role')=='ControlType.Hyperlink' and URL.fullmatch(n.get('value') or '') and finite(n.get('left')) and finite(n.get('width'))]
-    if not sidebar:
-        raise CaptureError('sidebar_boundary_unverified')
+    sidebar=[n for n in nodes if n.get('role')=='ControlType.Hyperlink' and isinstance(n.get('value'),str) and URL.fullmatch(n['value']) and finite(n.get('left')) and finite(n.get('width')) and n['width']>0]
+    targets=[n for n in sidebar if n['value']==expected]
+    if len(targets)!=1:
+        raise CaptureError('target_link_not_unique')
+    intended=caption_identity(capture.get('inventory_label'))
+    if caption_identity(targets[0].get('name'))!=intended:
+        raise CaptureError('inventory_target_changed')
+    identities=[caption_identity(n.get('name')) for n in sidebar]
+    if identities.count(intended)!=1:
+        raise CaptureError('ambiguous_visible_contact_identity')
     boundary=max(n['left']+n['width'] for n in sidebar)
-    chosen=[n for n in nodes if finite(n.get('left')) and n['left']>=boundary and n.get('role') in ('ControlType.Text','ControlType.ListItem') and n.get('name')]
+    chosen=[n for n in nodes if finite(n.get('left')) and n['left']>=boundary and n.get('role') in ('ControlType.Text','ControlType.ListItem') and isinstance(n.get('name'),str) and n['name']]
     if len(chosen)<3:
         raise CaptureError('selected_thread_not_substantive')
+    if contact_identity(chosen[0]['name'])!=intended:
+        raise CaptureError('rendered_contact_does_not_match_target')
+    if any(LOADING.fullmatch(n['name'].strip()) for n in chosen):
+        raise CaptureError('conversation_still_loading')
     return chosen
+
+def selected_text(capture):
+    """Validate the final observation; conversation() additionally requires stability."""
+    return _observation_text(capture,capture)
+
+def verified_text(capture):
+    if capture.get('identity_format')!='beside-uia-identity/v1':
+        raise CaptureError('capture_identity_unverified')
+    prior=capture.get('prior_samples')
+    if not isinstance(prior,list) or len(prior)!=2:
+        raise CaptureError('three_observations_required')
+    times=[]; fingerprints=[]; result=None
+    for observation in [*prior,capture]:
+        result=_observation_text(capture,observation)
+        fingerprints.append(tuple(n['name'] for n in result))
+        try:
+            instant=datetime.fromisoformat(observation['observed_at'].replace('Z','+00:00'))
+            if instant.tzinfo is None:raise ValueError('timezone missing')
+        except (KeyError,TypeError,ValueError,AttributeError) as exc:
+            raise CaptureError('invalid_observation_timestamp') from exc
+        times.append(instant)
+    if len(set(fingerprints))!=1:
+        raise CaptureError('conversation_pane_not_stable')
+    gaps=[(b-a).total_seconds() for a,b in zip(times,times[1:])]
+    if any(gap<0.2 for gap in gaps) or (times[-1]-times[0]).total_seconds()>30:
+        raise CaptureError('observations_not_independent')
+    return result
 
 def displayed_activity(capture,text_nodes):
     observed=datetime.fromisoformat(capture['observed_at'].replace('Z','+00:00'))
@@ -73,7 +139,7 @@ def displayed_activity(capture,text_nodes):
     return instant.astimezone(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00','Z')
 
 def conversation(capture,raw_sha256):
-    text_nodes=selected_text(capture)
+    text_nodes=verified_text(capture)
     title=text_nodes[0]['name']
     phone=''
     if re.fullmatch(r'(?:\+1[ .-]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}',title):
@@ -95,3 +161,27 @@ def generic_review(capture,observed_at):
         'category':'Captured conversation - review needed',
         'summary':'New or changed Beside conversation captured for review. Check the original thread before following up.',
         'uncertainties':['Repair intent and current follow-up state are not automatically qualified.','Activity date is from the visible thread, not proof of original receipt.','Only the rendered thread was read; recordings and older paged history are not included.']}
+
+
+def validate_stdin():
+    """Read-only validator used by the PowerShell capture loop; no PII in output."""
+    import json
+    import sys
+    try:
+        raw=sys.stdin.buffer.read(2_000_001)
+        if len(raw)>2_000_000:
+            raise CaptureError('capture_too_large')
+        value=json.loads(raw)
+        if not isinstance(value,dict):raise CaptureError('invalid_capture')
+        conversation(value,hashlib.sha256(raw).hexdigest())
+    except (CaptureError,ValueError,TypeError,KeyError,AttributeError):
+        print('{"ok":false,"code":"CAPTURE_IDENTITY_UNVERIFIED"}')
+        return 1
+    print('{"ok":true,"identity_verified":true}')
+    return 0
+
+if __name__=='__main__':
+    import sys
+    if sys.argv[1:]!=['--verify-stdin']:
+        raise SystemExit('Only --verify-stdin is supported; no source or dashboard writes.')
+    raise SystemExit(validate_stdin())
