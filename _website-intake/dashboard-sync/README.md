@@ -48,3 +48,23 @@ At activation, 59 synthetic Python tests and 242 website tests passed. A real da
 A push to `main` preserves source; it does not itself install Windows files or redeploy the hosted Owner Dashboard. Installed modules are `sync_dashboard.py`, `reconcile_dashboard.py`, `run_sync.py`, `beside_uia.py`, `beside_refresh_runner.py` and `capture_beside.ps1`. Preserve the existing `collect_seo` module and private credentials/settings. Set only the relevant authority/enable flags in the existing private config, and keep the existing task repetition at one minute so the two-minute readiness contract is satisfied.
 
 Before updating, back up the installed modules, private config and exported task definition. Verify files against the intended Git revision and run synthetic tests. After activation, execute the existing task once, inspect `last-run.json`, `dashboard-reconciliation-status.json` and `refresh/uia-worker-status.json`, then verify the dashboard's actual saved records and last-success receipt. For rollback, restore the recorded module/config/task backups; do not clear databases, delete raw history or remove owner decisions.
+
+## Lead follow-up (`lead_followup.py`)
+
+Runs at the end of each Owner Desk Sync run, after the Beside refresh, so a newly scanned call is pushed the same minute. It reads the same authenticated dashboard baseline as the reconciliation and pushes operator alerts to Tony and Raj only, until someone touches a new lead in Owner Desk (any stage change or note sets `owner_updated_at`).
+
+- Ladder, measured from the lead's received time, at any hour (owner decision 2026-10-17: no quiet hours): 0 min push to Tony, 15 min second push, 30 min urgent push, 60 min push to Raj. A lead that arrives late gets one push per person, not a burst.
+- Priority only changes the title: EMERGENCY (stranded or no-start), BIG JOB (overheating, coolant, knock, transmission, head gasket, no-start), or New lead.
+- If the Beside scan worker is offline for 15 minutes, both get one "Beside calls are not reaching Owner Desk" push per outage.
+- At 8 AM Eastern, one "Open leads this morning" push, only when something is open.
+- Pushes never include customer names, numbers or email addresses. No customer is ever contacted, and no lead or stage is written.
+- Leads received before `start_at` never escalate, so the existing review backlog doesn't flood anyone; it is counted in the morning push instead.
+
+Off until the private `config.json` has:
+
+```json
+"followup": {"enabled": true, "start_at": "<ISO time to start from>", "dashboard_url": "<Owner Desk URL>",
+             "tony_push_url": "https://<push service>/<Tony's private topic>", "raj_push_url": "https://<push service>/<Raj's private topic>"}
+```
+
+State (`followup-state.json`) and a counts-only receipt (`followup-status.json`) stay in the private folder. Synthetic tests: `python3 -m unittest discover -s _website-intake/dashboard-sync -p 'test_*.py'`.
