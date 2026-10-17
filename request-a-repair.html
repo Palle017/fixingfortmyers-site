@@ -166,6 +166,7 @@
         <h2 id="request-done-heading" tabindex="-1">Got it, we received your repair request.</h2>
         <p>We’ll review it and contact you when available. This receipt verifies your repair request, not a confirmed appointment. A requested time may be penciled into the shop calendar, but this receipt does not verify calendar placement. The job, location and appointment are not confirmed until Tony speaks with you by phone and verbally confirms them. Please do not arrive without that confirmation.</p>
         <p class="request-fineprint" id="request-done-ref"></p>
+        <p class="request-status" id="request-done-appointment-state" role="status" aria-live="polite" hidden></p>
         <div class="request-actions">
           <a class="btn btn--primary" id="request-done-call" href="tel:+12393972048">Call Tony about your request (239) 397-2048</a>
           <label class="btn btn--outline request-done__photo" id="request-done-photo" hidden>Add another photo<input id="request-done-media" type="file" accept="image/*,video/*" multiple></label>
@@ -252,6 +253,6 @@
   <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Repairs and mobile visits are by confirmed appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
 </footer>
   <script src="/repair-dialog.js?v=20261011-popup" defer></script>
-  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261016-pencil-24x7" defer></script>
+  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/site.js?v=20261016-verified-pencil-status" defer></script>
 </body>
 </html>
