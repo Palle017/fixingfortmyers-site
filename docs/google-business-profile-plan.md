@@ -2,6 +2,17 @@
 
 Prepared September 28, 2026. **This is a plan for review, not a set of applied changes.** It makes no website edits, no Google Business Profile edits and no publication. Any customer-facing wording below is a **draft** until Tony approves it.
 
+## Owner correction, October 19, 2026 (latest: this wins over everything below)
+
+PRs #34 and #88 wrongly removed the mobile and 24/7 claims from the website. The facts are:
+
+- **Shop plus mobile.** Perfect Timing Auto Repair is a shop (Tony's temporary workshop, named only as based at Bayshore Ranch, North Fort Myers area) that **also does mobile auto repair from a service van loaded with what the repair needs**, when the job suits it. Pickup is also offered. Tony confirms the scope, equipment and location of every job.
+- **24/7 requests.** Repair requests and penciled-in appointment requests are accepted **24/7** by the website form, call or text (see `BOOKING-CONTRACT-V1.md`). A requested time is penciled in only; it is official only after Tony verbally confirms by phone. 24/7 means requests are taken around the clock, not that a visit is guaranteed at any hour.
+- **Hours: keep Open 24 hours** on Google (unchanged). The website's `AutoRepair` schema matches: all seven days, 00:00–23:59.
+- **Bay One is retired** from the website (PRs #84, #86, #87). Anything below that says "after hours Bay One answers" is out of date: after hours, customers use the form, call or text, and Tony follows up.
+- **Address: still hidden.** Never publish the street address or map coordinates. Phone stays (239) 397-2048.
+- **Listings:** keep "mobile" and 24/7 wording where it is accurate (for example BBB's "Mobile Auto Repair" category can stay). "Mobile" still never goes in the business **name** field, and "Mobile mechanic" is still not a Google category; describe mobile service in the description, services and the "Onsite services" attribute instead.
+
 ## Owner decisions, October 1, 2026 (latest: these win over anything below)
 
 - **Positioning: a mobile repair shop.** Tony has all the tools: he is mobile equipped and also has a fully equipped workshop at Bayshore Ranch. Use "mobile repair shop" (not "mobile mechanic", which is also not a Google category). This replaces the workshop-only wording from September 28.
@@ -89,7 +100,7 @@ That comes to 9 of the 10 allowed. Set the primary category and all secondary on
 
 **Categories to avoid:**
 
-- **"Mobile mechanic"**: Google has no such category (Google's Business Profile community forum has confirmed this repeatedly), and Tony is a repair workshop, not a mobile mechanic. Don't use "mobile" anywhere on the profile.
+- **"Mobile mechanic"**: Google has no such category (Google's Business Profile community forum has confirmed this repeatedly). *(Corrected Oct 19: Tony does do mobile repair from an equipped van. Say so in the description, services and the Onsite services attribute, just not in the name or as a category.)*
 - **"Mechanic"**: generic, and it adds little on top of "Auto repair shop".
 - **"Auto machine shop"**: only if the tool list shows that machining (boring, honing, decking, valve work) is done **in-house**. Tolerance measurement alone is not a machine shop.
 - **"Auto body shop"**: implies collision repair. Use it only if Tony does that work.
@@ -157,9 +168,9 @@ Do not add a service the site doesn't back up or Tony doesn't want to do.
 
 ### 1.5 Business description (draft, 750-character limit)
 
-> Perfect Timing Auto Repair is a mobile repair shop serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Tony is mobile equipped and has a fully equipped workshop at Bayshore Ranch for the bigger jobs: engine and transmission rebuilds and replacements, engine assembly with tolerance and timing checks, walnut blasting to clean carbon from intake valves, diesel repair, hot rods and restoration. He also handles no-start problems, diagnostics, A/C, electrical and brakes, plus paint work, buffing, paint correction and detailing. Call Tony to coordinate drop-off or pick-up. Available 24 hours: after normal business hours our AI assistant answers, and Tony takes emergencies when he can.
+> Perfect Timing Auto Repair is a mobile repair shop serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Tony is mobile equipped and has a fully equipped workshop at Bayshore Ranch for the bigger jobs: engine and transmission rebuilds and replacements, engine assembly with tolerance and timing checks, walnut blasting to clean carbon from intake valves, diesel repair, hot rods and restoration. He also handles no-start problems, diagnostics, A/C, electrical and brakes, plus paint work, buffing, paint correction and detailing. Mobile repairs come to you in a service van loaded with what the job needs, and pickup is available. Requests are taken 24/7 by web form, call or text; Tony confirms every appointment by phone.
 
-About 710 characters, under the 750 limit (owner's Oct 1 positioning). It has no URL, no price, no promotional language and no phone number (the phone has its own field). All the services named are owner-confirmed.
+About 744 characters, under the 750 limit (owner's Oct 1 positioning, corrected Oct 19 for mobile van service and 24/7 requests). It has no URL, no price, no promotional language and no phone number (the phone has its own field). All the services named are owner-confirmed.
 
 ### 1.6 Other profile fields
 
@@ -176,7 +187,7 @@ Set **only** those the owner confirms. The ones likely to apply:
 
 | Attribute | Default until confirmed |
 | --- | --- |
-| Onsite services (serves customers at their location) | **Yes, for emergencies** Tony can manage (owner, Oct 1). Confirm with Tony before turning it on. |
+| Onsite services (serves customers at their location) | **Yes** (owner, Oct 19): mobile repairs from the equipped service van when the job suits it. |
 | Online appointments / requests | Yes, if the website request path is kept as the booking link |
 | Payments: credit cards, debit cards, NFC/mobile pay, cash, checks | Ask. Set only the methods Tony accepts. |
 | Self-identified attributes (veteran-owned, family-owned, Black-owned, women-owned, Latino-owned, etc.) | **Only** if the owner chooses to self-identify |
@@ -449,7 +460,7 @@ A public web search shows other directories with details that conflict with the 
 
 | Listing | What it shows | Fix |
 | --- | --- | --- |
-| [BBB](https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208) | Phone **(239) 271-4854**; category "Mobile Auto Repair"; Fort Myers 33905 | Change the phone to (239) 397-2048 if 271-4854 is no longer the business line, and the category to "Auto Repair" (the business is not mobile) |
+| [BBB](https://www.bbb.org/us/fl/fort-myers/profile/mobile-auto-repair/perfect-timing-auto-repair-llc-0653-90459208) | Phone **(239) 271-4854**; category "Mobile Auto Repair"; Fort Myers 33905 | Change the phone to (239) 397-2048 if 271-4854 is no longer the business line, and keep the "Mobile Auto Repair" category (corrected Oct 19: the business is a shop that also does mobile repair) |
 | [Yahoo Local](https://local.yahoo.com/info-235950242-perfect-timing-auto-repair-fort-myers/) | Phone **(239) 271-4854** | Same (Yahoo pulls from Yext/data partners) |
 | [Yelp](https://www.yelp.com/biz/perfect-timing-auto-repair-fort-myers) | Couldn't be read (blocked); search snippets show it active with photos | Owner to check phone and service-area settings in Yelp for Business |
 | [fortmyersdirections.com](https://www.fortmyersdirections.com/s/perfect-timing-auto-repair-llc--13037-second-street-fort-myers-fl-33905) | A **street address (13037 Second St)** | Ask for removal or correction if that address shouldn't be public |

@@ -34,7 +34,7 @@ export function checkCleanPage(name,html){
       assert.ok(text(hero.querySelector('.service-hero__desc')),`${name}: keep a useful workshop description`);
       if(name==='workshop.html'){
         assert.match(text(hero.querySelector('.service-hero__desc')),/temporary workshop/i,`${name}: describe the current workshop`);
-        assert.doesNotMatch(text(hero.querySelector('.service-hero__desc')),/mobile (service|repair)/i,`${name}: not a mobile shop (pickup only for no-starts)`);
+        assert.match(text(hero.querySelector('.service-hero__desc')),/mobile repairs from a service van/i,`${name}: include mobile repairs from the equipped van`);
         assert.doesNotMatch(text(hero.querySelector('.service-hero__desc')),/fully equipped|all repairs|all work is done/i,`${name}: do not promise every job can be accommodated`);
       }
       const actions=[...hero.querySelectorAll('.service-hero__actions a')];
