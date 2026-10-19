@@ -944,3 +944,71 @@
   window.addEventListener('pageshow', event => { if (event.persisted) registerRepairTool(); });
 })();
 
+
+(() => {
+  'use strict';
+  // Optional "Sign in with Google" that only pre-fills the repair form. Dormant until
+  // PT_CONTACT_CONFIG.googleClientId is set: no button, no Google script. The ID token is
+  // decoded in the browser to fill fields and is never sent; submit and intake are unchanged.
+  const clientId = String(window.PT_CONTACT_CONFIG?.googleClientId || '').trim();
+  const form = document.getElementById('bookingForm');
+  const anchor = document.getElementById('request-instructions');
+  if (!/^[\w-]+\.apps\.googleusercontent\.com$/.test(clientId) || !form || !anchor) return;
+  const box = document.createElement('div');
+  box.className = 'request-fineprint request-google';
+  box.id = 'request-google';
+  box.style.margin = '0 0 18px';
+  const slot = document.createElement('div');
+  slot.id = 'request-google-button';
+  const note = document.createElement('p');
+  note.id = 'request-google-note';
+  note.style.margin = '6px 0 0';
+  note.textContent = 'Optional: sign in with Google to fill in your name. You can also just type it.';
+  box.append(slot, note);
+  anchor.after(box);
+  const claimsOf = token => {
+    try {
+      const part = String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const bytes = atob(part + '='.repeat((4 - part.length % 4) % 4));
+      return JSON.parse(decodeURIComponent([...bytes].map(c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join('')));
+    } catch (_) { return null; }
+  };
+  const prefill = (field, value) => {
+    if (!field || typeof value !== 'string' || !value.trim() || field.value.trim()) return false;
+    field.value = value.trim().slice(0, field.maxLength > 0 ? field.maxLength : 200);
+    field.dispatchEvent(new Event('input', {bubbles:true}));
+    return true;
+  };
+  const onCredential = response => {
+    const claims = claimsOf(response?.credential);
+    if (!claims || claims.aud !== clientId) return;
+    const named = prefill(form.querySelector('#request-name'), claims.name);
+    // The form has no email field today; this only applies if one is added later.
+    if (claims.email_verified) prefill(form.querySelector('input[name="email"]'), claims.email);
+    note.textContent = named ? 'Name filled in from Google. Check it, then finish the form.' : 'Signed in. Finish the form below.';
+  };
+  const start = () => {
+    const gsi = window.google?.accounts?.id;
+    if (!gsi) { box.remove(); return; }
+    gsi.initialize({client_id:clientId, callback:onCredential, auto_select:false, cancel_on_tap_outside:true, context:'use', ux_mode:'popup', itp_support:true});
+    gsi.renderButton(slot, {type:'standard', theme:'outline', size:'medium', text:'signin_with', shape:'pill', logo_alignment:'left'});
+  };
+  let loading = false;
+  const load = () => {
+    if (loading) return;
+    loading = true;
+    const tag = document.createElement('script');
+    tag.src = 'https://accounts.google.com/gsi/client';
+    tag.async = true;
+    tag.onload = start;
+    tag.onerror = () => box.remove();
+    document.head.append(tag);
+  };
+  // Load Google's script only when the form is near the screen or someone starts typing.
+  form.addEventListener('focusin', load, {once:true});
+  if ('IntersectionObserver' in window) {
+    const watch = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) { watch.disconnect(); load(); } }, {rootMargin:'200px'});
+    watch.observe(form);
+  } else if (document.readyState === 'complete') load();
+  else window.addEventListener('load', load, {once:true});
+})();
