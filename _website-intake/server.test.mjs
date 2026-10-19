@@ -47,7 +47,8 @@ test('public API has strict origin checks, preflight, and no unauthenticated own
   assert.equal((await fetch(x.publicUrl+'/chat/widget.js')).status,200);
   assert.equal((await fetch(x.publicUrl+'/healthz')).status,200);
   const health=await fetch(x.publicUrl+'/healthz',{headers:{Origin:origin}});assert.equal(health.headers.get('access-control-allow-origin'),origin);
-  assert.deepEqual(await health.json(),{ok:true,service:'Perfect Timing website requests',chat:'ready',media:'ready',contracts:['sender-v1']});
+  assert.deepEqual(await health.json(),{ok:true,service:'Perfect Timing website requests',media:'ready',contracts:['sender-v1']});
+  for(const route of ['/chat/session','/chat/message'])assert.equal((await fetch(x.publicUrl+route,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:'{}'})).status,404,'the retired Bay One chat is not served');
   assert.equal((await fetch(x.publicUrl+'/healthz',{headers:{Origin:'https://evil.example'}})).headers.get('access-control-allow-origin'),null);
 });
 

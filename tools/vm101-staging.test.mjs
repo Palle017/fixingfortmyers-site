@@ -85,22 +85,16 @@ test('VM101 staging is isolated from website origins and inherited provider/inte
     headers: {Origin: 'https://fixingfortmyers.com', 'Content-Type': 'application/json'}, body: JSON.stringify(payload())});
   assert.equal(denied.status, 403);
   assert.equal((await fetch(x.url + '/api/leads')).status, 404);
-  const session = await (await post(x.url, '/chat/session', {})).json();
-  assert.equal(session.capabilities.modelStatus, 'unavailable');
-  assert.equal(session.usage.limit, null);
+  assert.equal((await post(x.url, '/chat/session', {})).status, 404, 'the retired Bay One chat is not served');
   assert.equal((await rows(x)).length, 0);
   assert.equal(fs.existsSync(path.join(x.dir, MARKER)), true);
 });
 
-test('VM101 model outage preserves reviewed intake and never fabricates a price or booking', async t => {
+test('VM101 serves no chat or price endpoint and a reviewed intake is saved without a booking', async t => {
   const x = await start(t, directory(t));
-  const session = await (await post(x.url, '/chat/session', {})).json();
-  const answer = await (await post(x.url, '/chat/message', {visitor_token: session.visitor_token,
-    request_id: randomUUID(), message: 'How much to replace front brake pads on a 2015 Honda Civic?'})).json();
-  assert.equal(answer.ok, true);
-  assert.equal(answer.assist, 'scripted');
-  assert.equal(answer.estimate, undefined);
-  assert.equal((await rows(x)).length, 0, 'chat alone cannot create a submitted lead');
+  const answer = await post(x.url, '/chat/message', {request_id: randomUUID(), message: 'How much to replace front brake pads on a 2015 Honda Civic?'});
+  assert.equal(answer.status, 404);
+  assert.equal((await rows(x)).length, 0, 'a chat request cannot create a submitted lead');
   const result = await submit(x, payload(), randomUUID());
   const receipt = await result.json();
   assert.equal(result.status, 201);
@@ -155,26 +149,18 @@ test('VM101 concurrent duplicate retries create one inquiry and reject changed c
   assert.equal((await submit(x, {...body, details: 'Changed synthetic scope'}, key)).status, 409);
 });
 
-test('VM101 abrupt process death preserves receipt, owner state, chat identity and cached answer', async t => {
+test('VM101 abrupt process death preserves receipt and owner state', async t => {
   const dir = directory(t), x = await start(t, dir), body = payload(), key = randomUUID();
   const receipt = await (await submit(x, body, key)).json();
   const changed = await fetch(x.inbox + `/api/leads/${receipt.id}/status`, {method: 'POST',
     headers: {Origin: x.inbox, 'Content-Type': 'application/json'}, body: JSON.stringify({status: 'contacted'})});
   assert.equal(changed.status, 200);
-  const session = await (await post(x.url, '/chat/session', {})).json();
-  const message = {visitor_token: session.visitor_token, request_id: randomUUID(), message: 'Synthetic car will not start'};
-  const answer = await (await post(x.url, '/chat/message', message)).json();
-  const signingKey = fs.readFileSync(path.join(dir, 'public-chat/public-chat-signing.key'));
   await x.stop('SIGKILL');
   await assert.rejects(fetch(x.url + '/healthz'));
   const reopened = await start(t, dir);
   const retry = await submit(reopened, body, key); assert.equal(retry.status, 200);
   assert.equal((await retry.json()).id, receipt.id);
   assert.equal((await rows(reopened))[0].status, 'contacted');
-  const cached = await (await post(reopened.url, '/chat/message', message)).json();
-  assert.equal(cached.duplicate, true);
-  assert.equal(cached.reply, answer.reply);
-  assert.deepEqual(fs.readFileSync(path.join(dir, 'public-chat/public-chat-signing.key')), signingKey);
 });
 
 test('VM101 failed durable transaction cannot return a success receipt', async t => {
@@ -187,11 +173,10 @@ test('VM101 failed durable transaction cannot return a success receipt', async t
   assert.equal(db.prepare('SELECT count(*) n FROM leads').get().n, 0);
 });
 
-test('VM101 offline checkpoint restores the same receipt and signing identity into separate state', async t => {
+test('VM101 offline checkpoint restores the same receipt and staging identity into separate state', async t => {
   const dir = directory(t), x = await start(t, dir), body = payload(), key = randomUUID();
   const receipt = await (await submit(x, body, key)).json();
-  await post(x.url, '/chat/session', {});
-  const secret = fs.readFileSync(path.join(dir, 'public-chat/public-chat-signing.key'));
+  const secret = fs.readFileSync(path.join(dir, MARKER));
   await x.stop();
   const parent = directory(t), snapshot = path.join(parent, 'snapshot');
   const manifest = await snapshotStaging(dir, snapshot);
@@ -203,12 +188,12 @@ test('VM101 offline checkpoint restores the same receipt and signing identity in
   const y = await start(t, restored);
   const retry = await submit(y, body, key); assert.equal(retry.status, 200);
   assert.equal((await retry.json()).id, receipt.id);
-  assert.deepEqual(fs.readFileSync(path.join(restored, 'public-chat/public-chat-signing.key')), secret);
+  assert.deepEqual(fs.readFileSync(path.join(restored, MARKER)), secret);
   await y.stop();
   const nextSnapshot = path.join(parent, 'next-snapshot');
   await snapshotStaging(restored, nextSnapshot);
   await verifySnapshot(nextSnapshot);
   await assert.rejects(snapshotStaging(dir, snapshot), /must be new/);
-  fs.appendFileSync(path.join(snapshot, 'public-chat/public-chat-signing.key'), 'damaged');
+  fs.appendFileSync(path.join(snapshot, MARKER), 'damaged');
   await assert.rejects(verifySnapshot(snapshot), /checksum/);
 });

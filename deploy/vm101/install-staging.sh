@@ -48,7 +48,7 @@ fi
 
 # No globs: do not copy tests, runtime.json, databases, Windows state or private backend source.
 stage_files=(
-  _website-intake/server.mjs _website-intake/public-chat.mjs _website-intake/lead-routing.mjs
+  _website-intake/server.mjs _website-intake/lead-routing.mjs
   _website-intake/urgent-alerts.mjs _website-intake/lead-notify.mjs _website-intake/lead-desk.mjs
   _website-intake/zoho-estimates.mjs _website-intake/lead-media.mjs _website-intake/car-location.mjs
   _website-intake/customer-texts.mjs _website-intake/inbox.html _website-intake/inbox.css

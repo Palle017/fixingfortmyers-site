@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {createLeadServers} from '../../_website-intake/server.mjs';
-import {createOllamaProvider} from '../../_website-intake/public-chat.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const PURPOSE = 'bayone-vm101-synthetic-staging-v1';
@@ -72,16 +71,14 @@ export function ensureStagingData(dataDir) {
 
 export async function startStaging(config = readConfig()) {
   ensureStagingData(config.dataDir);
-  const chat = {providerName: 'deepseek', apiKey: '', timeoutMs: 25000, maxConcurrent: 1};
-  if (config.model === 'ollama') {
-    chat.provider = createOllamaProvider({baseUrl: config.modelUrl, model: config.modelName, timeoutMs: 24000, keepAlive: '5m'});
-  }
+  // The Bay One chat was retired on 2026-10-19; the receiver no longer runs any model, so the
+  // validated model settings are accepted for compatibility but unused.
   // Explicit factory options prevent any inherited notification, Beside, Zoho, or provider credentials
   // from activating production integrations. No public website origin is accepted.
   const app = createLeadServers({
     dataDir: config.dataDir,
     origins: [`http://127.0.0.1:${config.publicPort || 28795}`, `http://localhost:${config.publicPort || 28795}`],
-    chat, besideToken: '', operatorToken: '',
+    besideToken: '', operatorToken: '',
     alerts: {enabled: false}, notifyChannels: [], customerTextAdapter: null,
     zohoReader: null, deskDigest: null, alertWorker: false,
   });
