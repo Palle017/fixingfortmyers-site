@@ -502,7 +502,7 @@
   const voice = document.querySelector('.request-voice'); if (voice) voice.hidden = !endpoint;
   const heading = byId('request-heading'); if (heading) heading.textContent = endpoint ? 'How can we help with your car?' : 'Prepare a repair message';
   if (!sending && !sentRequestId) submit.textContent = endpoint ? 'Request Repair' : 'Prepare text to the shop';
-  // Preserve the current page's guidance (and any Bay One handoff) while online.
+  // Preserve the current page's guidance while online.
   if (!endpoint) byId('request-instructions').textContent = 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
   };
   let mediaReady = false;

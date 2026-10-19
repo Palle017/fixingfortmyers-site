@@ -1,4 +1,4 @@
-// Loopback-only review with synthetic storage, mock Bay One, and no real alerts.
+// Loopback-only review with synthetic storage, and no real alerts.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -35,7 +35,6 @@ http.createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Robots-Tag','noindex, nofollow');
   // Never expose production endpoints from a local preview, including the default SMS-only mode.
   if(url.pathname==='/contact-config.js'){res.setHeader('Content-Type',types['.js']);res.end(`window.PT_CONTACT_CONFIG=${JSON.stringify({endpoint:receiver?origin:''})};`);return;}
-  if(url.pathname==='/bay-one-config.js'){res.setHeader('Content-Type',types['.js']);res.end(`window.PT_BAYONE_CONFIG=${JSON.stringify({enabled:receiver,autoOpen:false,endpoint:origin})};`);return;}
   if(url.pathname==='/robots.txt'){res.end('User-agent: *\nDisallow: /\n');return;}
   let name;try{name=decodeURIComponent(url.pathname).replace(/^\//,'')||'index.html';}catch{res.writeHead(400);res.end();return;}
   if(!path.extname(name))name+='.html';
