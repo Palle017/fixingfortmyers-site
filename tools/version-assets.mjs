@@ -24,14 +24,12 @@ function versioned(value){
 let pages=0,references=0,schemas=0,changedFiles=0;
 for(const name of fs.readdirSync(root).filter(name=>name.endsWith('.html'))){
   const target=path.join(root,name),original=fs.readFileSync(target,'utf8');
-  // Every page loading Bay One also loads its explicit public activation flag.
-  const prepared=original.includes('bay-one-widget.js')&&!original.includes('bay-one-config.js')?original.replace(/(<script\b[^>]*\bsrc=['"](?:\/|\.\/)?bay-one-widget\.js[^>]*>)/i,`<script src="/bay-one-config.js?v=${version}" defer></script>$1`):original;
-  const revised=prepared.replace(/<(?:link|script)\b[^>]*>/gi,tag=>tag.replace(/\b(href|src)=(['"])(.*?)\2/gi,(match,attribute,quote,value)=>isLocalAsset(value)?`${attribute}=${quote}${versioned(value)}${quote}`:match));
+  const revised=original.replace(/<(?:link|script)\b[^>]*>/gi,tag=>tag.replace(/\b(href|src)=(['"])(.*?)\2/gi,(match,attribute,quote,value)=>isLocalAsset(value)?`${attribute}=${quote}${versioned(value)}${quote}`:match));
   if(!check&&revised!==original){fs.writeFileSync(target,revised);changedFiles++;}
   const dom=new JSDOM(check?original:revised),document=dom.window.document;pages++;
   const ids=[...document.querySelectorAll('[id]')].map(node=>node.id);assert.equal(new Set(ids).size,ids.length,name+': duplicate IDs');
-  const scripts=[...document.querySelectorAll('script[src]')],widgetIndex=scripts.findIndex(node=>node.src.includes('bay-one-widget.js'));
-  if(widgetIndex>=0){const configIndex=scripts.findIndex(node=>node.src.includes('bay-one-config.js'));assert.ok(configIndex>=0&&configIndex<widgetIndex,name+': Bay One public config must load first');}
+  // The Bay One chat was removed from the public site; no page may load it again.
+  assert.ok(![...document.querySelectorAll('script[src],link[href]')].some(node=>/bay-one/i.test(node.getAttribute('src')||node.getAttribute('href'))),name+': Bay One chat assets must not be loaded');
   for(const node of document.querySelectorAll('script[type="application/ld+json"]')){JSON.parse(node.textContent);schemas++;}
   for(const node of document.querySelectorAll('link[href],script[src]')){
     const value=node.getAttribute('href')||node.getAttribute('src');if(!isLocalAsset(value))continue;
@@ -40,10 +38,4 @@ for(const name of fs.readdirSync(root).filter(name=>name.endsWith('.html'))){
   }
   dom.window.close();
 }
-const widgetPath=path.join(root,'bay-one-widget.js'),widget=fs.readFileSync(widgetPath,'utf8');
-const matches=[...widget.matchAll(/(['"])(bay-one-widget\.css(?:\?[^'"]*)?)\1/g)];
-assert.equal(matches.length,1,'Expected exactly one dynamic Bay One stylesheet reference.');
-const revised=widget.replace(matches[0][0],matches[0][1]+versioned(matches[0][2])+matches[0][1]);
-if(!check&&revised!==widget){fs.writeFileSync(widgetPath,revised);changedFiles++;}
-assert.ok((check?widget:revised).includes(`bay-one-widget.css?v=${version}`),'Dynamic Bay One stylesheet version is stale.');
-console.log(JSON.stringify({version,mode:check?'check':'apply',pages,schemas,localAssetReferences:references,dynamicStylesheets:1,changedFiles},null,2));
+console.log(JSON.stringify({version,mode:check?'check':'apply',pages,schemas,localAssetReferences:references,changedFiles},null,2));

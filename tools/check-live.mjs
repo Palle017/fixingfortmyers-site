@@ -13,7 +13,7 @@ const build=JSON.parse(execFileSync('gh',['api','repos/Palle017/fixingfortmyers-
 assert.equal(build.status,'built','Pages build is not complete');
 if(expected)assert.equal(build.commit,expected,'Pages has not published expected commit');
 const pageFiles=fs.readdirSync(root).filter(name=>name.endsWith('.html'));
-const assets=['base.css','style.css','site-updates.css','clean-layout.css','home-clean.css','service-pages.css','proof.css','repair-guides.css','site.js','bay-one-config.js','bay-one-widget.js','bay-one-widget.css','contact-config.js'];
+const assets=['base.css','style.css','site-updates.css','clean-layout.css','home-clean.css','service-pages.css','proof.css','repair-guides.css','site.js','contact-config.js'];
 const checks=[],pageChecks=[];
 const hash=text=>createHash('sha256').update(text.replace(/\r\n/g,'\n')).digest('hex');
 async function read(urlPath,status=200){
@@ -33,16 +33,12 @@ for(const file of pageFiles){
 for(const file of assets){
   const body=await read('/'+file+'?v='+version);
   assert.equal(hash(body),hash(fs.readFileSync(path.join(root,file),'utf8')),`${file}: published asset differs from this release`);
-  if(file==='bay-one-config.js'){
-    assert.match(body,/enabled:\s*true/);assert.match(body,/autoOpen:\s*false/);
-    assert.match(body,/p15g2\.tail68bd87\.ts\.net:10000/);
-  }
   if(file==='contact-config.js')assert.match(body,/endpoint:\s*'https:\/\/perfect-timing-cloud-intake\.prudhvi-pallempati\.chatgpt\.site'/);
 }
 const sitemap=await read('/sitemap.xml');
 assert.match(sitemap,/repair-guide-battery-keeps-dying/);assert.match(sitemap,/repair-guide-car-overheating/);
-for(const urlPath of ['/_website-intake/server.mjs','/tools/check-clean-structure.mjs','/docs/COMPANY-UPDATE.md','/source-materials/inventory.json'])await read(urlPath,404);
-const evidence={at:new Date().toISOString(),site:'https://fixingfortmyers.com',commit:build.commit,pagesStatus:build.status,version,checks,pages:pageChecks,bayOne:'enabled; opens only when requested',contact:'online receiver configured; customer-sent native message fallback',productionSubmissionVerified:false,realMessagesSent:false,backendChanged:false};
+for(const urlPath of ['/_website-intake/server.mjs','/tools/check-clean-structure.mjs','/docs/COMPANY-UPDATE.md','/source-materials/inventory.json','/deploy/vm101/README.md','/bay-one-widget.js','/bay-one-config.js'])await read(urlPath,404);
+const evidence={at:new Date().toISOString(),site:'https://fixingfortmyers.com',commit:build.commit,pagesStatus:build.status,version,checks,pages:pageChecks,bayOne:'removed from the public site',contact:'online receiver configured; customer-sent native message fallback',productionSubmissionVerified:false,realMessagesSent:false,backendChanged:false};
 fs.mkdirSync(path.join(root,'docs/evidence'),{recursive:true});
 fs.writeFileSync(path.join(root,'docs/evidence/production.json'),JSON.stringify(evidence,null,2)+'\n');
-console.log(JSON.stringify({at:evidence.at,commit:evidence.commit,pages:pageChecks.length,compactServiceHeroes:pageChecks.filter(page=>page.serviceHero).length,assets:assets.length,privatePathsExcluded:4,productionSubmissionVerified:false,realMessagesSent:false},null,2));
+console.log(JSON.stringify({at:evidence.at,commit:evidence.commit,pages:pageChecks.length,compactServiceHeroes:pageChecks.filter(page=>page.serviceHero).length,assets:assets.length,privatePathsExcluded:7,productionSubmissionVerified:false,realMessagesSent:false},null,2));

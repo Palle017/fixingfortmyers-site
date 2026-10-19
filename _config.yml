@@ -3,6 +3,7 @@ exclude:
   - _website-intake
   - tools
   - docs
+  - deploy
   - tests
   - node_modules
   - package.json

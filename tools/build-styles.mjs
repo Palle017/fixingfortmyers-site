@@ -63,7 +63,7 @@ for(const filename of fs.readdirSync(root).filter(file=>file.endsWith('.html')).
     const href=node.getAttribute('href')||'';
     const match=/^(?:\.\/|\/)?([a-z0-9][a-z0-9.-]*\.css)(?:[?#].*)?$/i.exec(href);
     const unsupported=[...node.attributes].some(attr=>!['rel','href','data-css-sources'].includes(attr.name));
-    if(!match || unsupported || match[1]==='bay-one-widget.css'){flush();continue;}
+    if(!match || unsupported){flush();continue;}
     const sources=node.hasAttribute('data-css-sources')?node.getAttribute('data-css-sources').split(' ').filter(Boolean).map(sourceName):[sourceName(match[1])];
     const location=dom.nodeLocation(node);
     if(!location)throw new Error(filename+': missing HTML source offsets');
