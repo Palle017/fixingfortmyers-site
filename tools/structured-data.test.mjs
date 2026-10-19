@@ -40,11 +40,17 @@ test('the business entity is identical on every page and keeps the street addres
       seen.add(strip(n));
       assert.equal(n.telephone, '+12393972048', `${f} phone`);
       assert.ok(n.address?.addressLocality && n.areaServed?.length && n.url && n.name, `${f} incomplete business node`);
-      // Owner-confirmed 2026-10-19: shop hours Mon-Sat 08:00-20:00; requests accepted anytime; not a mobile shop.
+      // Owner correction 2026-10-19 (supersedes #34/#88): Perfect Timing is a shop that also does mobile repair
+      // from an equipped van, plus pickup. Repair and penciled-in appointment requests are accepted 24/7
+      // (docs/BOOKING-CONTRACT-V1.md, docs/google-business-profile-plan.md "Open 24 hours").
       assert.deepEqual(n.openingHoursSpecification, [{ '@type': 'OpeningHoursSpecification',
-        dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], opens: '08:00', closes: '20:00' }], `${f} shop hours`);
+        dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], opens: '00:00', closes: '23:59' }], `${f} 24/7 request hours`);
       assert.match(n.description, /workshop in Bayshore Ranch/i, `${f} identifies the workshop`);
-      assert.doesNotMatch(n.description, /mobile service|24\/7|24 hours/i, `${f} must not describe mobile service or 24/7 hours`);
+      assert.match(n.description, /mobile repairs from a service van/i, `${f} describes the mobile van service`);
+      assert.match(n.description, /pickup/i, `${f} mentions pickup`);
+      assert.match(n.description, /accepted 24\/7 by form, call or text/i, `${f} describes 24/7 requests`);
+      assert.match(n.description, /Tony confirms every appointment by phone/i, `${f} requests stay unconfirmed until Tony calls`);
+      assert.doesNotMatch(n.description, /only for vehicles that won't start|not a mobile/i, `${f} must not deny mobile service`);
       assert.equal(n.aggregateRating, undefined, `${f} self-serving review markup is not eligible for stars`);
       assert.equal(n.geo, undefined, `${f} no geo coordinates for a hidden-address business`);
       assert.match(n.description, /appointment/i, `${f} service requires an appointment`);
@@ -95,4 +101,17 @@ test('pages load fonts and responsive images from the site itself, and the sitem
   const lastmods = [...read('sitemap.xml').matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map(m => m[1]);
   assert.equal(lastmods.length, sitemap.length, 'every sitemap URL has a lastmod');
   for (const d of lastmods) assert.match(d, /^\d{4}-\d{2}-\d{2}$/, `sitemap lastmod ${d}`);
+});
+
+test('every page states the corrected service model: shop, mobile van and pickup, with 24/7 requests and no street address', () => {
+  for (const f of pages) {
+    const html = read(f);
+    const visible = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    assert.doesNotMatch(html, /13037|Second St(?:reet)?\b|"geo"|"latitude":\s*-?\d/i, `${f}: never publish the street address or coordinates`);
+    assert.doesNotMatch(visible, /Mon–Sat, 8 AM–8 PM|pickup is (?:available|offered) only|not a mobile (?:shop|mechanic)/i, `${f}: stale #88 wording`);
+    if (!/<footer/.test(html)) continue;
+    assert.match(visible, /24\/7/, `${f}: visible 24/7 request wording`);
+    assert.match(visible, /mobile repairs? from (?:his |an |a )?(?:equipped )?service van|mobile (?:service )?van/i, `${f}: visible mobile van wording`);
+    assert.match(visible, /\(239\) 397-2048/, `${f}: business phone`);
+  }
 });
