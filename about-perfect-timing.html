@@ -15,9 +15,9 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://fixingfortmyers.com/about-perfect-timing">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Barlow:wght@400;600;700;800&amp;family=Russo+One&amp;display=swap" rel="stylesheet">
+  <link rel="preload" href="/assets/fonts/barlow-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/bebas-neue-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <style id="self-hosted-fonts">@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/barlow-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/barlow-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/barlow-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:800;font-display:swap;src:url(/assets/fonts/barlow-800-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/bebas-neue-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Russo One';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/russo-one-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
   <link rel="stylesheet" href="/bundle-core.min.css?v=c3dcf1f49fc0" data-css-sources="base.css style.css">
 <link rel="stylesheet" href="/bundle-page-1404ba6ddcc2.min.css?v=380ad8891fdf" data-css-sources="service-pages.css proof.css site-updates.css clean-layout.css">
 
@@ -35,7 +35,7 @@
       "name": "Perfect Timing Auto Repair LLC",
       "legalName": "Perfect Timing Auto Repair LLC",
       "alternateName": "Perfect Timing Auto Repair",
-      "description": "Auto repair serving Fort Myers, Cape Coral, Lehigh Acres and North Fort Myers by appointment. Temporary workshop at Bayshore Ranch and mobile service for suitable jobs. Repair location, equipment needs and availability are confirmed before booking.",
+      "description": "Auto repair by appointment at Tony's workshop in Bayshore Ranch, North Fort Myers area, serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Request a repair anytime; Tony confirms every appointment. Pickup is available only for vehicles that won't start.",
       "url": "https://fixingfortmyers.com/",
       "logo": "https://fixingfortmyers.com/assets/pt-logo-new.webp",
       "image": "https://fixingfortmyers.com/assets/og-card-20260906.jpg",
@@ -49,6 +49,21 @@
         "addressCountry": "US"
       },
       "hasMap": "https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "08:00",
+          "closes": "20:00"
+        }
+      ],
       "areaServed": [
         {
           "@type": "City",
@@ -173,7 +188,7 @@
         <p class="proof-kicker">Perfect Timing Auto Repair</p>
         <h1>Meet Tony. <span>Owner &amp; Mechanic.</span></h1>
         <p class="proof-hero__lead">Tony runs Perfect Timing Auto Repair LLC in Fort Myers. His work covers engine, transmission and diesel repairs, electrical diagnosis, supported module programming and everyday maintenance. He reviews the problem, explains the repair options and checks the approved work before the vehicle is returned.</p>
-        <p class="proof-hero__lead">Service combines a <a href="/workshop">temporary workshop at Bayshore Ranch</a> with mobile repairs for suitable jobs. Not every repair can be done at the temporary workshop or at a customer’s location. Tony confirms the vehicle, work, equipment needs and location before booking. Ask about engine work, walnut blasting, welding, classics or <a href="/paint-correction-detailing-fort-myers">paint correction and detailing</a> for your vehicle.</p>
+        <p class="proof-hero__lead">Service combines a <a href="/workshop">temporary workshop at Bayshore Ranch</a> by appointment. Not every repair can be done at the temporary workshop, and pickup is offered only for vehicles that won’t start. Tony confirms the vehicle, work, equipment needs and location before booking. Ask about engine work, walnut blasting, welding, classics or <a href="/paint-correction-detailing-fort-myers">paint correction and detailing</a> for your vehicle.</p>
         <div class="entity-license">PUBLIC LICENSE LISTING • MV113437 • EXPIRATION SHOWN AS 12/27/2026</div>
         <p>Calls go to AI intake. Texts go straight to the mechanic.</p>
         <div class="proof-actions">
@@ -190,7 +205,7 @@
             <p class="proof-kicker">About the Shop</p>
             <h2 id="official-facts">Book a repair</h2>
           </div>
-          <p>Tell Tony what the vehicle needs so he can confirm workshop or mobile service. Call Tony at <a href="tel:+12393972048">(239) 397-2048</a> to coordinate drop-off or pick-up.</p>
+          <p>Tell Tony what the vehicle needs so he can confirm the repair and an appointment. Call Tony at <a href="tel:+12393972048">(239) 397-2048</a> to coordinate drop-off or pick-up.</p>
         </div>
         <div class="entity-facts">
           <article class="entity-fact">
@@ -201,7 +216,7 @@
           <article class="entity-fact">
             <p class="proof-card__eyebrow">Service Arrangements</p>
             <h3>Fort Myers &amp; Southwest Florida</h3>
-            <p>Repairs are arranged at the temporary workshop in Bayshore Ranch or at your location when the job is suitable for mobile service. Some work cannot be accommodated at the temporary workshop. Tony confirms the scope, equipment needs and repair location before booking.</p>
+            <p>Repairs are done by appointment at the temporary workshop in Bayshore Ranch, North Fort Myers area. Some work cannot be accommodated at the temporary workshop. Tony confirms the scope, equipment needs and appointment before booking. If the vehicle won’t start, ask about pickup.</p>
           </article>
           <article class="entity-fact">
             <p class="proof-card__eyebrow">Contact</p>
@@ -310,7 +325,7 @@
           </ul>
         </div>
       </div>
-      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · Fort Myers &amp; Southwest Florida · <a href="tel:+12393972048">(239) 397-2048</a> · Workshop and mobile service by appointment. Location and suitability confirmed for each job.</p>
+      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · Fort Myers &amp; Southwest Florida · <a href="tel:+12393972048">(239) 397-2048</a> · By appointment at Tony's workshop in Bayshore Ranch (North Fort Myers area). Mon–Sat, 8 AM–8 PM.</p>
       <p class="footer__nap footer__areas">Service area: <a href="/auto-repair-fort-myers">Fort Myers</a> · <a href="/auto-repair-cape-coral">Cape Coral</a> · <a href="/auto-repair-lehigh-acres">Lehigh Acres</a> · <a href="/auto-repair-north-fort-myers">North Fort Myers</a></p>
       <div class="footer__bottom">
         <p class="footer__copy">© 2026 Perfect Timing Auto Repair LLC. All rights reserved.</p>
@@ -318,7 +333,7 @@
         <div class="footer__bang">A <span>BANG</span> Industries Company</div>
       </div>
     </div>
-  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Repairs and mobile visits are by confirmed appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
+  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Shop hours: Mon–Sat, 8 AM–8 PM. Repairs are by appointment, and Tony confirms every appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
 </footer>
 
 

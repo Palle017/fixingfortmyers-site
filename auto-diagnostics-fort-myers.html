@@ -22,9 +22,9 @@
   <meta name="twitter:image" content="https://fixingfortmyers.com/assets/og-card-20260906.jpg">
   <link rel="canonical" href="https://fixingfortmyers.com/auto-diagnostics-fort-myers">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Barlow:wght@400;600;700;800&amp;family=Russo+One&amp;display=swap" rel="stylesheet">
+  <link rel="preload" href="/assets/fonts/barlow-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/bebas-neue-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <style id="self-hosted-fonts">@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/barlow-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/barlow-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/barlow-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:800;font-display:swap;src:url(/assets/fonts/barlow-800-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/bebas-neue-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Russo One';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/russo-one-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
 
   <link rel="stylesheet" href="/bundle-core.min.css?v=c3dcf1f49fc0" data-css-sources="base.css style.css">
 <link rel="stylesheet" href="/bundle-page-9472b1e932f1.min.css?v=67b4e61f8edb" data-css-sources="service-pages.css site-updates.css clean-layout.css">
@@ -41,7 +41,7 @@
       "name": "Perfect Timing Auto Repair LLC",
       "legalName": "Perfect Timing Auto Repair LLC",
       "alternateName": "Perfect Timing Auto Repair",
-      "description": "Auto repair serving Fort Myers, Cape Coral, Lehigh Acres and North Fort Myers by appointment. Temporary workshop at Bayshore Ranch and mobile service for suitable jobs. Repair location, equipment needs and availability are confirmed before booking.",
+      "description": "Auto repair by appointment at Tony's workshop in Bayshore Ranch, North Fort Myers area, serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Request a repair anytime; Tony confirms every appointment. Pickup is available only for vehicles that won't start.",
       "url": "https://fixingfortmyers.com/",
       "logo": "https://fixingfortmyers.com/assets/pt-logo-new.webp",
       "image": "https://fixingfortmyers.com/assets/og-card-20260906.jpg",
@@ -55,6 +55,21 @@
         "addressCountry": "US"
       },
       "hasMap": "https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "08:00",
+          "closes": "20:00"
+        }
+      ],
       "areaServed": [
         {
           "@type": "City",
@@ -308,7 +323,7 @@
         <h1 class="service-hero__title" id="service-title">Auto Diagnostics in Fort Myers</h1>
         <p class="service-hero__desc">A fault code gives us a starting point. Testing tells us what needs attention.</p>
 
-        <p class="service-hours">Requests welcome anytime<span>Repairs by appointment. Mobile availability confirmed per job.</span></p>
+        <p class="service-hours">Requests welcome anytime<span>Repairs by appointment. Tony confirms every appointment.</span></p>
         <div class="service-hero__actions"><a href="/?service=diagnostics#contact" class="btn btn--primary">Request Repair</a><a href="tel:+12393972048" class="btn btn--outline">Call</a></div>
       </div>
       <div class="service-hero__aside reveal reveal-delay-1"><h2 class="service-hero__card-label">How we approach it</h2><ul class="service-proof-list"><li>Review the concern, when it happens, and previous repairs.</li><li>Read relevant codes, stored data, and freeze-frame information where available.</li><li>Compare live data and system behavior with the reported symptoms.</li></ul></div>
@@ -394,7 +409,7 @@
                 </div>
                 <div>
                   <div class="contact-detail__label">Where</div>
-                  <div class="contact-detail__value">Temporary workshop at Bayshore Ranch, Fort Myers, plus mobile service for suitable jobs. Confirm the repair location and appointment with Tony before arranging travel.</div>
+                  <div class="contact-detail__value">By appointment at Tony's workshop in Bayshore Ranch (North Fort Myers area). Won’t start? Ask about pickup. Tony confirms every appointment.</div>
                 </div>
               </div>
               <a href="/?service=diagnostics#contact" class="btn btn--primary">Request Repair</a>
@@ -462,7 +477,7 @@
             </div>
           </div>
           <p class="footer__brand-desc">
-            Engine, transmission and diesel repair in Fort Myers, with workshop and mobile options confirmed for each job. Test first, explain the options, then repair.
+            Engine, transmission and diesel repair in Fort Myers, by appointment at Tony's workshop in Bayshore Ranch (North Fort Myers area). Test first, explain the options, then repair.
           </p>
           <div class="footer__social">
             <a href="https://www.facebook.com/profile.php?id=61574375434643" aria-label="Facebook">
@@ -501,7 +516,7 @@
         </div>
       </div>
 
-      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · Fort Myers &amp; Southwest Florida · <a href="tel:+12393972048">(239) 397-2048</a> · Workshop and mobile service by appointment. Location and suitability confirmed for each job.</p>
+      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · Fort Myers &amp; Southwest Florida · <a href="tel:+12393972048">(239) 397-2048</a> · By appointment at Tony's workshop in Bayshore Ranch (North Fort Myers area). Mon–Sat, 8 AM–8 PM.</p>
       <p class="footer__nap footer__areas">Service area: <a href="/auto-repair-fort-myers">Fort Myers</a> · <a href="/auto-repair-cape-coral">Cape Coral</a> · <a href="/auto-repair-lehigh-acres">Lehigh Acres</a> · <a href="/auto-repair-north-fort-myers">North Fort Myers</a></p>
       <div class="footer__bottom">
         <p class="footer__copy">© 2026 Perfect Timing Auto Repair LLC. All rights reserved.</p>
@@ -511,7 +526,7 @@
         </div>
       </div>
     </div>
-  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Repairs and mobile visits are by confirmed appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
+  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Shop hours: Mon–Sat, 8 AM–8 PM. Repairs are by appointment, and Tony confirms every appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
 </footer>
 
 
