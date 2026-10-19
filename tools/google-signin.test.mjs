@@ -117,3 +117,74 @@ test('a blocked Google script removes the sign-in and leaves the form alone', as
   assert.equal(x.d.getElementById('request-google'), null);
   assert.ok(x.d.getElementById('request-name'));
 });
+
+// ---------- optional email field ----------
+for (const page of ['index.html', 'request-a-repair.html']) {
+  test(`${page}: optional email field sits right after phone and is not required`, async t => {
+    const x = setup(t, {page}); await settle();
+    const field = x.d.querySelector('#bookingForm input[name="email"]');
+    assert.ok(field);
+    assert.equal(field.type, 'email');
+    assert.equal(field.autocomplete, 'email');
+    assert.equal(field.required, false);
+    assert.match(field.closest('label').textContent.replace(/\s+/g, ' ').trim(), /^Email \(optional\)$/);
+    assert.equal(field.closest('label').previousElementSibling.getAttribute('for'), 'request-phone');
+  });
+}
+
+const fillCore = x => {
+  x.enter('request-vehicle', '2015 BMW 335i');
+  x.enter('request-details', 'Rough idle and misfire when cold.');
+  x.enter('request-name', 'Synthetic Customer');
+  x.enter('request-phone', '239-555-0100');
+};
+
+test('a filled email is included in the lead payload', async t => {
+  const x = setup(t); await settle(); fillCore(x);
+  x.enter('request-customer-email', ' customer@example.invalid ');
+  x.send(); await settle();
+  assert.equal(x.leads().length, 1);
+  assert.equal(x.leads()[0].body.email, 'customer@example.invalid');
+});
+
+test('a blank email is left out of the payload', async t => {
+  const x = setup(t); await settle(); fillCore(x); x.send(); await settle();
+  assert.equal(x.leads().length, 1);
+  assert.equal(Object.hasOwn(x.leads()[0].body, 'email'), false);
+});
+
+test('an invalid email blocks submit with the browser message and nothing is sent', async t => {
+  const x = setup(t); await settle(); fillCore(x);
+  x.enter('request-customer-email', 'not-an-email');
+  x.send(); await settle();
+  assert.equal(x.d.getElementById('request-customer-email').validity.valid, false);
+  assert.equal(x.leads().length, 0);
+  x.enter('request-customer-email', '');
+  x.send(); await settle();
+  assert.equal(x.leads().length, 1, 'clearing the optional field lets the request go');
+  assert.equal(Object.hasOwn(x.leads()[0].body, 'email'), false);
+});
+
+const signIn = (x, claims) => {
+  x.d.getElementById('bookingForm').dispatchEvent(new x.w.FocusEvent('focusin', {bubbles:true}));
+  let options;
+  x.w.google = {accounts:{id:{initialize:o => { options = o; }, renderButton:() => {}}}};
+  x.gsiTags()[0].dispatchEvent(new x.w.Event('load'));
+  options.callback({credential:idToken({aud:clientId, name:'Google Name', ...claims})});
+};
+
+test('Google prefill fills an empty email only when Google marks it verified', async t => {
+  const verified = setup(t, {googleClientId:clientId}); await settle();
+  signIn(verified, {email:'verified@example.invalid', email_verified:true});
+  assert.equal(verified.d.getElementById('request-customer-email').value, 'verified@example.invalid');
+  const unverified = setup(t, {googleClientId:clientId}); await settle();
+  signIn(unverified, {email:'unverified@example.invalid', email_verified:false});
+  assert.equal(unverified.d.getElementById('request-customer-email').value, '');
+});
+
+test('Google prefill never overwrites an email the customer typed', async t => {
+  const x = setup(t, {googleClientId:clientId}); await settle();
+  x.enter('request-customer-email', 'typed@example.invalid');
+  signIn(x, {email:'google@example.invalid', email_verified:true});
+  assert.equal(x.d.getElementById('request-customer-email').value, 'typed@example.invalid');
+});

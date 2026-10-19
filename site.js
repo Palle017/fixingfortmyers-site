@@ -572,7 +572,10 @@
       : '';
     const attribution = `Found via: ${draftChannel || metricSource}${sourcePage ? '; last page viewed: /' + sourcePage : ''}`;
     const context = [carLocationText, enteredVin ? `Customer-entered VIN (unverified): ${enteredVin}` : '', city ? `City / ZIP: ${city}` : '', senderPinText, `Does it drive: ${starts}`, `Stranded: ${stranded}`, callbackTime ? `Preferred timing: ${callbackTime}` : '', (offerRequested ? 'Offer requested: LIQUI MOLY prepay labor50. 50% discount applies to oil-change labor ONLY once correct-spec LIQUI MOLY oil is purchased and paid for in advance; oil/filter/taxes/other repairs remain full quoted price. Shop must confirm fitment, invoice, payment and appointment; no payment taken here.' : ''), (wantsPartsLink ? 'Customer requests a secure parts payment link after quote/fitment approval. No payment collected online.' : ''), pencilContext, attribution].filter(Boolean).join('\n');
-    return { name: String(data.get('name') || '').trim(), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, preferredDate:dayOk?requestedDay:'', preferredTime:dayOk&&timeOk?requestedTime:'', appointmentPencilAcknowledged:acknowledged, appointmentPencilAcknowledgedAt:pencilAcknowledgedAt, appointmentPencilDisclosureVersion:acknowledged?'2026-10-16-v1':'', source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
+    // Optional email: sent only when it looks like a real address (the browser also blocks an invalid one on submit).
+    const email = String(data.get('email') || '').trim().slice(0, 254);
+    const emailOk = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email);
+    return { name: String(data.get('name') || '').trim(), ...(emailOk ? {email} : {}), phone: String(data.get('phone') || '').replace(/[^\d+()\s.-]/g, '').trim(), ...(emailOk ? {email} : {}), ...(window.PT_LEAD_CHANNEL ? {channel: window.PT_LEAD_CHANNEL} : {}), vehicle: String(data.get('vehicle') || '').trim() || 'Not provided; see request details', service: String(data.get('service') || ''), details: symptoms ? `${symptoms}\n\n${context}` : '', ...(carLocation ? {carLocation} : {}), city: city || 'Not provided', ...(senderPin ? {latitude: senderPin.latitude, longitude: senderPin.longitude, mapsLink: senderPin.mapsLink, ...senderMetadata} : {}), starts, stranded, callbackTime, preferredDate:dayOk?requestedDay:'', preferredTime:dayOk&&timeOk?requestedTime:'', appointmentPencilAcknowledged:acknowledged, appointmentPencilAcknowledgedAt:pencilAcknowledgedAt, appointmentPencilDisclosureVersion:acknowledged?'2026-10-16-v1':'', source:'form', locationContract:'sender-v1', website: String(data.get('website') || ''), smsConsent: consent, smsConsentTimestamp: consent ? new Date().toISOString() : '', smsConsentVersion: '2026-09-06-v1', smsConsentSource: 'website-repair-request', smsConsentPage: location.origin + location.pathname, smsConsentDisclosure: consentDisclosure };
   };
   const makeBackup = data => {
     const callback = data.phone || 'Please reply to this text';
@@ -963,7 +966,7 @@
   const note = document.createElement('p');
   note.id = 'request-google-note';
   note.style.margin = '6px 0 0';
-  note.textContent = 'Optional: sign in with Google to fill in your name. You can also just type it.';
+  note.textContent = 'Optional: sign in with Google to fill in your name and email. You can also just type them.';
   box.append(slot, note);
   anchor.after(box);
   const claimsOf = token => {
@@ -983,7 +986,7 @@
     const claims = claimsOf(response?.credential);
     if (!claims || claims.aud !== clientId) return;
     const named = prefill(form.querySelector('#request-name'), claims.name);
-    // The form has no email field today; this only applies if one is added later.
+    // Fills the optional email field only with a Google-verified address, and only if it is empty.
     if (claims.email_verified) prefill(form.querySelector('input[name="email"]'), claims.email);
     note.textContent = named ? 'Name filled in from Google. Check it, then finish the form.' : 'Signed in. Finish the form below.';
   };

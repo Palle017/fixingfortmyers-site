@@ -29,6 +29,7 @@ export function summarize(lead, id, decision) {
     big ? 'BIG JOB: sounds like engine, transmission or other workshop work. Call back first.' : null,
     `Name: ${lead.name}`,
     lead.phone ? `Callback: ${lead.phone} (${lead.smsConsent ? 'text OK' : 'call only, no text permission'})` : 'Callback: no number given',
+    lead.email ? `Email: ${lead.email}` : null,
     `Vehicle: ${lead.vehicle || 'Not provided'}`,
     `Location: ${lead.carLocation ? carLocationLabel(lead.carLocation) : lead.city || 'Not provided'}`,
     lead.city && lead.carLocation ? `City / ZIP: ${lead.city}` : null,
