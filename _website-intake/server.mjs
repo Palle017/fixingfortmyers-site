@@ -1,5 +1,4 @@
 import http from 'node:http';
-import {createPublicChat,routePublicChat} from './public-chat.mjs';
 import {createRuleEvaluator,loadRules} from './lead-routing.mjs';
 import {createUrgentAlerts} from './urgent-alerts.mjs';
 import {createLeadNotifier,channelsFromEnv,isBigJob} from './lead-notify.mjs';
@@ -176,9 +175,6 @@ export function createLeadServers(options = {}) {
   // Factory callers (tests/previews) never reach Zoho unless they pass a reader in.
   const zoho=createZohoEstimateSync(db,{reader:options.zohoReader||null,desk});
   const origins = new Set(options.origins ?? ['https://fixingfortmyers.com', 'https://www.fixingfortmyers.com', ...(process.env.LEAD_DEV_ORIGINS ?? '').split(',').map(x => x.trim()).filter(Boolean)]);
-  let publicChat = null;
-  try { publicChat = createPublicChat({dataDir:path.join(dataDir,'public-chat'),...(options.chat||{})}); }
-  catch { console.error(JSON.stringify({event:'public_chat_unavailable'})); }
   const windowMs = options.rateWindowMs ?? 60000;
   const maxPerIp = options.maxPerIp ?? 12;
   const maxGlobal = options.maxGlobal ?? 120;
@@ -228,7 +224,7 @@ export function createLeadServers(options = {}) {
       db.exec('COMMIT');
     } catch(err) { db.exec('ROLLBACK');throw err; }
   };
-  const readMetrics = (chatDb) => {
+  const readMetrics = () => {
     const day = utcDay(Date.now());
     const totals = db.prepare('SELECT COUNT(*) AS total, COALESCE(SUM(total_visits),0) AS events FROM website_visitors').get() || {};
     const todayVisitsUnique = db.prepare('SELECT COUNT(*) AS total FROM website_visitor_daily WHERE day = ?').get(day) || {};
@@ -237,26 +233,14 @@ export function createLeadServers(options = {}) {
     const status = {};
     for (const row of appointments) status[row.status || 'unknown'] = row.total;
     const totalLeads = db.prepare('SELECT COUNT(*) AS total FROM leads').get() || {};
-    let ai = { total_messages: 0, today_messages: 0, chat_messages: 0, estimate_messages: 0, today_chat_messages: 0, today_estimate_messages: 0 };
-      if (chatDb) {
-        const total = chatDb.prepare("SELECT SUM(messages) AS total, SUM(estimates) AS estimates FROM chat_metric_days").get() || {};
-        const today = chatDb.prepare("SELECT SUM(messages) AS total, SUM(estimates) AS estimates FROM chat_metric_days WHERE day = ?").get(day) || {};
-      ai = {
-        total_messages: Number(total.total || 0),
-        today_messages: Number(today.total || 0),
-        chat_messages: Math.max(0, Number(total.total || 0) - Number(total.estimates || 0)),
-        estimate_messages: Number(total.estimates || 0),
-        today_chat_messages: Math.max(0, Number(today.total || 0) - Number(today.estimates || 0)),
-        today_estimate_messages: Number(today.estimates || 0),
-      };
-    }
     return {
       ok: true,
       metrics: {
         timezone: 'America/New_York',
         visitors: { total_unique: Number(totals.total || 0), total_events: Number(totals.events || 0), today_unique: Number(todayVisitsUnique.total || 0), today_events: Number(todayVisits.total || 0), updated_at: new Date().toISOString() },
         appointments: { total: Number(totalLeads.total || 0), new: Number(status.new || 0), contacted: Number(status.contacted || 0), closed: Number(status.closed || 0), pending: Number(status.pending || 0) },
-        ai: chatDb ? ai : null,
+        // The retired Bay One chat no longer produces AI counts.
+        ai: null,
       },
     };
   };
@@ -301,15 +285,9 @@ export function createLeadServers(options = {}) {
     try {
       const url = new URL(req.url, 'http://localhost');
       if (req.method === 'GET' && url.pathname === '/healthz') {
-        // The site's widget checks this before showing Bay One, so the shop origins may read it.
+        // The shop origins may read receiver health.
         if (origins.has(req.headers.origin)) { res.setHeader('Access-Control-Allow-Origin', req.headers.origin); res.setHeader('Vary', 'Origin'); }
-        return json(res, 200, { ok: true, service: 'Perfect Timing website requests', chat: publicChat ? 'ready' : 'unavailable', media: 'ready', contracts: ['sender-v1'] });
-      }
-      if (['/chat/session','/chat/message'].includes(url.pathname)) {
-        const forwarded = String(req.headers['x-forwarded-for'] ?? '').split(',').at(-1).trim();
-        const ip = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && isIP(forwarded) ? forwarded : req.socket.remoteAddress;
-        await routePublicChat(publicChat,req,res,{origins,ip,readBody,json});
-        return;
+        return json(res, 200, { ok: true, service: 'Perfect Timing website requests', media: 'ready', contracts: ['sender-v1'] });
       }
       if (req.method === 'GET' && url.pathname === '/chat/widget.js') {
         res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=300', 'X-Content-Type-Options': 'nosniff' });
@@ -550,7 +528,7 @@ export function createLeadServers(options = {}) {
         return json(res, result.changes ? 200 : 404, { ok: Boolean(result.changes) });
       }
       if (req.method === 'GET' && url.pathname === '/api/metrics') {
-        return json(res, 200, readMetrics(publicChat?.db));
+        return json(res, 200, readMetrics());
       }
       const assets = { '/': ['inbox.html', 'text/html'], '/inbox.js': ['inbox.js', 'application/javascript'], '/inbox.css': ['inbox.css', 'text/css'] };
       if (req.method === 'GET' && assets[url.pathname]) {
@@ -578,7 +556,6 @@ export function createLeadServers(options = {}) {
       desk.close();
       zoho.close();
       await Promise.all([publicServer, adminServer].map(server => new Promise(resolve => { server.close(resolve); server.closeIdleConnections(); })));
-      publicChat?.close();
       db.close();
     },
   };
