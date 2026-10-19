@@ -1,0 +1,18 @@
+/* Dedicated campaign art keeps the complete headlines visible at every size. */
+.repair-campaign{padding:48px 0;background:#0d1621;border-block:1px solid #263d50;scroll-margin-top:96px}
+.repair-campaign__card{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);overflow:hidden;border:1px solid #385066;border-radius:12px;background:#111d2a;box-shadow:0 16px 42px #0002}
+.repair-campaign__art{display:block;overflow:hidden;align-self:center;min-width:0;margin:0;background:#090d12;aspect-ratio:3/2}
+.repair-campaign__art img{display:block;width:100%;height:auto;aspect-ratio:3/2;margin:0;border:0}
+.repair-campaign:has(.repair-campaign__art--transmission) .repair-campaign__art{order:2}
+.repair-campaign:has(.repair-campaign__art--transmission){background:#0a121c}
+.repair-campaign__copy{align-self:center;padding:clamp(24px,3vw,40px);min-width:0}
+.repair-campaign__eyebrow{color:#ffb073;font:700 12px/1.5 'Barlow',sans-serif;text-transform:uppercase;letter-spacing:.14em;margin:0 0 12px}
+.repair-campaign h2{font:400 clamp(32px,3.4vw,48px)/1.08 'Bebas Neue',sans-serif;letter-spacing:.015em;color:#f5f8fc;margin:0 0 16px}
+.repair-campaign__copy>p:not(.repair-campaign__eyebrow){color:#d0dce7;font-size:16px;line-height:1.65;margin:0 0 16px}
+.repair-campaign__actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:22px 0 16px}
+.repair-campaign__actions .btn{min-height:48px;padding:12px 18px;font-size:15px;white-space:normal;text-align:center}
+.repair-campaign__copy .repair-campaign__note{color:#aebfd0!important;font-size:13px!important;margin:0!important;line-height:1.6}
+.repair-campaign__art:focus-visible,.repair-campaign a:focus-visible{outline:3px solid #8cdbff;outline-offset:-4px}
+@media(max-width:760px){.repair-campaign{padding:32px 0}.repair-campaign__card{grid-template-columns:minmax(0,1fr)}.repair-campaign__copy{padding:24px}.repair-campaign h2{font-size:36px}.repair-campaign__art{width:100%;order:0!important}.repair-campaign__actions{align-items:stretch}.repair-campaign__actions .btn{flex:1 1 190px}}
+@media(prefers-reduced-motion:reduce){.repair-campaign a{transition:none}}
+
