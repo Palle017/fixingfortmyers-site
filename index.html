@@ -28,9 +28,9 @@
   <link rel="canonical" href="https://fixingfortmyers.com/">
 
   <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Barlow:wght@400;600;700;800&amp;family=Russo+One&amp;display=swap" rel="stylesheet">
+  <link rel="preload" href="/assets/fonts/barlow-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/bebas-neue-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <style id="self-hosted-fonts">@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/barlow-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/barlow-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/barlow-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:800;font-display:swap;src:url(/assets/fonts/barlow-800-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/bebas-neue-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Russo One';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/russo-one-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
 
   <link rel="stylesheet" href="/bundle-core.min.css?v=c3dcf1f49fc0" data-css-sources="base.css style.css">
 <link rel="stylesheet" href="/bundle-page-f6bf60ffcb33.min.css?v=bf5b4abd6128" data-css-sources="service-pages.css proof.css site-updates.css home-clean.css repair-dialog.css">
@@ -49,7 +49,7 @@
       "name": "Perfect Timing Auto Repair LLC",
       "legalName": "Perfect Timing Auto Repair LLC",
       "alternateName": "Perfect Timing Auto Repair",
-      "description": "Auto repair serving Fort Myers, Cape Coral, Lehigh Acres and North Fort Myers by appointment. Temporary workshop at Bayshore Ranch and mobile service for suitable jobs. Repair location, equipment needs and availability are confirmed before booking.",
+      "description": "Auto repair by appointment at Tony's workshop in Bayshore Ranch, North Fort Myers area, serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Request a repair anytime; Tony confirms every appointment. Pickup is available only for vehicles that won't start.",
       "url": "https://fixingfortmyers.com/",
       "logo": "https://fixingfortmyers.com/assets/pt-logo-new.webp",
       "image": "https://fixingfortmyers.com/assets/og-card-20260906.jpg",
@@ -63,6 +63,14 @@
         "addressCountry": "US"
       },
       "hasMap": "https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          "opens": "08:00",
+          "closes": "20:00"
+        }
+      ],
       "areaServed": [
         {
           "@type": "City",
@@ -289,7 +297,7 @@
       "name": "Do I bring my vehicle to your shop?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Mobile repairs are available for suitable jobs, and workshop appointments are arranged at our temporary location. Neither setting can accommodate every repair. Tell us the vehicle, problem, location and whether it drives safely. Tony confirms the scope, equipment needs, location and timing before a mobile visit or drop-off."
+        "text": "Yes. Repairs are done by appointment at Tony's temporary workshop in Bayshore Ranch, North Fort Myers area, and it cannot accommodate every repair. If the vehicle won’t start, ask about pickup. Tell us the vehicle, problem, location and whether it drives safely. Tony confirms the scope, equipment needs and timing before a drop-off or pickup."
       }
     },
     {
@@ -402,7 +410,7 @@
           <li><a href="/engine-rebuild-vs-replacement-fort-myers">Engine rebuilds</a>, <a href="/transmission-repair-fort-myers">transmissions</a> &amp; <a href="/diesel-repair-fort-myers">diesel repair</a></li>
           <li><a href="/oil-change-fort-myers">Oil changes</a> &amp; <a href="/no-start-diagnosis-fort-myers">urgent no-start diagnosis</a></li>
         </ul>
-        <p class="home-start__details">Tell us where the vehicle is and whether it drives. We offer mobile repairs for suitable jobs and appointments at our temporary workshop. Some work needs a different setup; Tony confirms the job and location before booking.<br>Serving Fort Myers &amp; nearby Southwest Florida. Call Tony at <a href="tel:+12393972048">(239) 397-2048</a> to coordinate drop-off or pick-up.</p>
+        <p class="home-start__details">Tell us where the vehicle is and whether it drives. Repairs are by appointment at our temporary workshop in Bayshore Ranch; if the vehicle won’t start, ask about pickup. Some work needs a different setup; Tony confirms the job and location before booking.<br>Serving Fort Myers &amp; nearby Southwest Florida. Call Tony at <a href="tel:+12393972048">(239) 397-2048</a> to coordinate drop-off or pick-up.</p>
         <p class="home-start__hours">Request an appointment 24/7, including nights and weekends · Verbal confirmation by Tony required</p>
       </div>
       <div class="request-panel" id="contact" role="region" aria-labelledby="request-heading">
@@ -524,7 +532,7 @@
     <div class="container">
       <div class="repair-campaign__card">
         <a class="repair-campaign__art repair-campaign__art--engine" href="/?service=engine#contact">
-          <img src="/assets/campaign-engine.webp" width="1536" height="1024" alt="Perfect Timing engine repair ad showing a timing chain. Bad timing? Perfect Timing. Car trouble has terrible timing. Luckily, you’ve got Perfect Timing." loading="lazy" decoding="async">
+          <img src="/assets/campaign-engine.webp" srcset="/assets/campaign-engine-768.webp 768w, /assets/campaign-engine.webp 1536w" sizes="(max-width: 760px) calc(100vw - 48px), 570px" width="1536" height="1024" alt="Perfect Timing engine repair ad showing a timing chain. Bad timing? Perfect Timing. Car trouble has terrible timing. Luckily, you’ve got Perfect Timing." loading="lazy" decoding="async">
         </a>
         <div class="repair-campaign__copy">
           <p class="repair-campaign__eyebrow">Perfect Timing Auto Repair · Fort Myers</p>
@@ -540,7 +548,7 @@
     </div>
   </section>
 
-  <section class="penguin-ac" id="penguin-ac" aria-labelledby="penguin-ac-title"><div class="container"><div class="penguin-ac__card"><a href="/ac-repair-fort-myers#penguin-ac" aria-label="Explore our auto air conditioning service"><img class="penguin-ac__image" src="/assets/penguin-ac-corrected.webp" width="1448" height="1086" alt="Perfect Timing Auto Repair A/C ad: a penguin in sunglasses surrounded by snow on a sunny beach. We’ll leave you feeling cooler than a penguin in sunglasses. Call (239) 397-2048." loading="lazy" decoding="async"></a><div class="penguin-ac__copy"><h2 id="penguin-ac-title">We’ll leave you feeling cooler than a penguin in sunglasses.</h2><p>Florida’s hot enough. Your car shouldn’t feel like a sauna.</p><p>A/C blowing warm? Weak airflow? Only cools while you’re driving? Perfect Timing Auto Repair will find the problem, explain your options, and get your approval before repairs begin.</p><p><strong>Stay cool, Fort Myers. Let’s get your A/C working right.</strong></p><div class="penguin-ac__actions"><a class="btn btn--primary" href="/?service=ac#contact">Request A/C service</a><a class="btn btn--outline" href="tel:+12393972048">Call (239) 397-2048</a><a class="btn btn--outline" href="/ac-repair-fort-myers">Explore A/C repairs</a></div><p class="penguin-ac__note">Fort Myers · Service by appointment. Repair location and availability confirmed for your vehicle.</p></div></div></div></section>
+  <section class="penguin-ac" id="penguin-ac" aria-labelledby="penguin-ac-title"><div class="container"><div class="penguin-ac__card"><a href="/ac-repair-fort-myers#penguin-ac" aria-label="Explore our auto air conditioning service"><img class="penguin-ac__image" src="/assets/penguin-ac-corrected.webp" srcset="/assets/penguin-ac-corrected-768.webp 768w, /assets/penguin-ac-corrected.webp 1448w" sizes="(max-width: 760px) calc(100vw - 48px), 1150px" width="1448" height="1086" alt="Perfect Timing Auto Repair A/C ad: a penguin in sunglasses surrounded by snow on a sunny beach. We’ll leave you feeling cooler than a penguin in sunglasses. Call (239) 397-2048." loading="lazy" decoding="async"></a><div class="penguin-ac__copy"><h2 id="penguin-ac-title">We’ll leave you feeling cooler than a penguin in sunglasses.</h2><p>Florida’s hot enough. Your car shouldn’t feel like a sauna.</p><p>A/C blowing warm? Weak airflow? Only cools while you’re driving? Perfect Timing Auto Repair will find the problem, explain your options, and get your approval before repairs begin.</p><p><strong>Stay cool, Fort Myers. Let’s get your A/C working right.</strong></p><div class="penguin-ac__actions"><a class="btn btn--primary" href="/?service=ac#contact">Request A/C service</a><a class="btn btn--outline" href="tel:+12393972048">Call (239) 397-2048</a><a class="btn btn--outline" href="/ac-repair-fort-myers">Explore A/C repairs</a></div><p class="penguin-ac__note">Fort Myers · Service by appointment. Repair location and availability confirmed for your vehicle.</p></div></div></div></section>
 
 <section class="walnut-offer" aria-labelledby="home-walnut-offer"><div class="container"><div class="walnut-offer__card"><span class="walnut-offer__badge">10% OFF · CODE WALNUT10</span><h2 id="home-walnut-offer">Let your engine breathe.</h2><p>Walnut blasting removes stubborn intake-valve carbon on eligible engines. Rough idle, hesitation or lost performance? Find out whether carbon cleaning is right for your vehicle.</p><div class="walnut-offer__actions"><a class="btn btn--primary" href="/walnut-blasting-fort-myers#walnut10">See the walnut blasting offer</a><a class="btn btn--outline" href="/?service=walnut#contact">Request walnut blasting</a></div><p>Mention <code>WALNUT10</code> when booking or include it in your request details.</p><p class="walnut-offer__terms">Vehicle-specific estimate. Discount applies to walnut blasting service before tax. Cannot combine offers. Results depend on engine condition; other causes of symptoms may require separate repairs.</p></div></div></section>
 
@@ -549,7 +557,7 @@
     <div class="container">
       <div class="home-method__heading"><p class="section-label">Inside the workshop</p><h2 id="home-method-title">The person behind the repair.</h2><p>Tell us what happened, what you’ve already tried and what you need the car for. That’s where the work starts.</p></div>
       <div class="home-method__photos">
-        <figure><img src="/assets/owner-engine-stand.jpg" width="768" height="1024" alt="Engine on a stand with front accessories installed" loading="lazy" decoding="async"><figcaption>Engine work, with the assembly out where it can be inspected.</figcaption></figure><figure><img src="/assets/owner-transmission-open.jpg" width="768" height="1024" alt="Opened transmission case with internal components visible" loading="lazy" decoding="async"><figcaption>Inside a transmission during disassembly.</figcaption></figure>
+        <figure><img src="/assets/owner-engine-stand.jpg" srcset="/assets/owner-engine-stand-480.webp 480w, /assets/owner-engine-stand.jpg 768w" sizes="(max-width: 760px) calc(100vw - 48px), 470px" width="768" height="1024" alt="Engine on a stand with front accessories installed" loading="lazy" decoding="async"><figcaption>Engine work, with the assembly out where it can be inspected.</figcaption></figure><figure><img src="/assets/owner-transmission-open.jpg" srcset="/assets/owner-transmission-open-480.webp 480w, /assets/owner-transmission-open.jpg 768w" sizes="(max-width: 760px) calc(100vw - 48px), 470px" width="768" height="1024" alt="Opened transmission case with internal components visible" loading="lazy" decoding="async"><figcaption>Inside a transmission during disassembly.</figcaption></figure>
         <figure><img src="/assets/workshop-fabrication.webp" srcset="/assets/workshop-fabrication-768.webp 768w, /assets/workshop-fabrication.webp 1536w" sizes="(max-width: 760px) calc(100vw - 48px), 570px" width="1536" height="1024" alt="Tony stick welding in the workshop" loading="lazy" decoding="async"><figcaption>Hands-on repair and fabrication work.</figcaption></figure>
       </div>
       <div class="home-method__grid">
@@ -565,7 +573,7 @@
     <div class="container">
       <div class="repair-campaign__card">
         <a class="repair-campaign__art repair-campaign__art--transmission" href="/?service=transmission#contact">
-          <img src="/assets/campaign-transmission.webp" width="1536" height="1024" alt="Perfect Timing transmission repair ad showing a mechanic at a transmission workbench. Get your shift together. Car trouble has terrible timing. Luckily, you’ve got Perfect Timing." loading="lazy" decoding="async">
+          <img src="/assets/campaign-transmission.webp" srcset="/assets/campaign-transmission-768.webp 768w, /assets/campaign-transmission.webp 1536w" sizes="(max-width: 760px) calc(100vw - 48px), 570px" width="1536" height="1024" alt="Perfect Timing transmission repair ad showing a mechanic at a transmission workbench. Get your shift together. Car trouble has terrible timing. Luckily, you’ve got Perfect Timing." loading="lazy" decoding="async">
         </a>
         <div class="repair-campaign__copy">
           <p class="repair-campaign__eyebrow">Perfect Timing Auto Repair · Fort Myers</p>
@@ -600,7 +608,7 @@
     <div class="container">
       <div class="repair-campaign__card">
         <a class="repair-campaign__art repair-campaign__art--truck" href="/engine-rebuild-vs-replacement-fort-myers">
-          <img src="/assets/campaign-truck.webp" width="1536" height="1024" alt="Perfect Timing Auto Repair ad with a pickup in a Florida driveway. Keep the truck. Fix the problem. Car trouble has terrible timing. Luckily, you’ve got Perfect Timing." loading="lazy" decoding="async">
+          <img src="/assets/campaign-truck.webp" srcset="/assets/campaign-truck-768.webp 768w, /assets/campaign-truck.webp 1536w" sizes="(max-width: 760px) calc(100vw - 48px), 570px" width="1536" height="1024" alt="Perfect Timing Auto Repair ad with a pickup in a Florida driveway. Keep the truck. Fix the problem. Car trouble has terrible timing. Luckily, you’ve got Perfect Timing." loading="lazy" decoding="async">
         </a>
         <div class="repair-campaign__copy">
           <p class="repair-campaign__eyebrow">Perfect Timing Auto Repair · Fort Myers</p>
@@ -616,7 +624,7 @@
     </div>
   </section>
 
-  <section class="mobile-faq" aria-labelledby="mobile-faq-title"><div class="container"><p class="section-label">Before you book</p><h2 class="section-title" id="mobile-faq-title">Mobile and shop repair questions</h2><div class="faq-grid"><div class="faq-item"><h3>Do I bring my vehicle to your shop?</h3><p>Mobile repairs are available for suitable jobs, and workshop appointments are arranged at our temporary location. Neither setting can accommodate every repair. Tell us the vehicle, problem, location and whether it drives safely. Tony confirms the scope, equipment needs, location and timing before a mobile visit or drop-off.</p></div><div class="faq-item"><h3>What kind of work does the shop handle?</h3><p>The shop handles engine rebuilds and repairs, transmissions, diesel work and walnut blasting, along with oil changes, no-starts, brakes, A/C and electrical problems. We discuss the findings and repair options before work starts.</p></div><div class="faq-item"><h3>What should I send when requesting a repair?</h3><p>Send your vehicle year, make and model, the symptoms, location and whether it can be driven safely. Especially after hours, describe the situation as best you can. Call or text <a href="tel:+12393972048">(239) 397-2048</a>, or use the repair request form. The shop will call back to clarify and plan the next steps. Response timing and appointments depend on availability.</p></div></div></div></section>
+  <section class="mobile-faq" aria-labelledby="mobile-faq-title"><div class="container"><p class="section-label">Before you book</p><h2 class="section-title" id="mobile-faq-title">Shop repair questions</h2><div class="faq-grid"><div class="faq-item"><h3>Do I bring my vehicle to your shop?</h3><p>Yes. Repairs are done by appointment at Tony's temporary workshop in Bayshore Ranch, North Fort Myers area, and it cannot accommodate every repair. If the vehicle won’t start, ask about pickup. Tell us the vehicle, problem, location and whether it drives safely. Tony confirms the scope, equipment needs and timing before a drop-off or pickup.</p></div><div class="faq-item"><h3>What kind of work does the shop handle?</h3><p>The shop handles engine rebuilds and repairs, transmissions, diesel work and walnut blasting, along with oil changes, no-starts, brakes, A/C and electrical problems. We discuss the findings and repair options before work starts.</p></div><div class="faq-item"><h3>What should I send when requesting a repair?</h3><p>Send your vehicle year, make and model, the symptoms, location and whether it can be driven safely. Especially after hours, describe the situation as best you can. Call or text <a href="tel:+12393972048">(239) 397-2048</a>, or use the repair request form. The shop will call back to clarify and plan the next steps. Response timing and appointments depend on availability.</p></div></div></div></section>
 
   <!-- ============ SERVICE AREAS ============ -->
   <section class="areas" id="areas">
@@ -624,7 +632,7 @@
       <div class="areas__header">
         <p class="section-label reveal">Where We Serve</p>
         <h2 class="section-title reveal reveal-delay-1">Service Area</h2>
-        <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto;">Serving drivers from Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers and nearby Southwest Florida. Workshop or mobile arrangements depend on the job and must be confirmed before a visit.</p>
+        <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto;">Serving drivers from Fort Myers, Cape Coral, Lehigh Acres, North Fort Myers and nearby Southwest Florida. Repairs are by appointment at Tony's workshop in Bayshore Ranch and must be confirmed before a visit.</p>
       </div>
       <div class="areas__tags reveal reveal-delay-3">
         <span class="area-tag">Fort Myers</span>
@@ -793,7 +801,7 @@
             </div>
           </div>
           <p class="footer__brand-desc">
-            Auto repair and maintenance in Fort Myers, from brakes and A/C to diagnostics and major repairs. Workshop and mobile options confirmed for each job. Test first, explain the options, then repair.
+            Auto repair and maintenance in Fort Myers, from brakes and A/C to diagnostics and major repairs. By appointment at Tony's workshop in Bayshore Ranch. Test first, explain the options, then repair.
           </p>
           <div class="footer__social">
             <a href="https://www.facebook.com/profile.php?id=61574375434643" target="_blank" rel="noopener" aria-label="Perfect Timing Auto Repair on Facebook">
@@ -835,7 +843,7 @@
         </div>
       </div>
 
-      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · Fort Myers &amp; Southwest Florida · <a href="tel:+12393972048">(239) 397-2048</a> · <a href="sms:+12393972048">Text us</a> · Workshop and mobile service by appointment. Location and suitability confirmed for each job.</p>
+      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · Fort Myers &amp; Southwest Florida · <a href="tel:+12393972048">(239) 397-2048</a> · <a href="sms:+12393972048">Text us</a> · By appointment at Tony's workshop in Bayshore Ranch (North Fort Myers area). Mon–Sat, 8 AM–8 PM.</p>
       <p class="footer__nap footer__areas">Service area: <a href="/auto-repair-fort-myers">Fort Myers</a> · <a href="/auto-repair-cape-coral">Cape Coral</a> · <a href="/auto-repair-lehigh-acres">Lehigh Acres</a> · <a href="/auto-repair-north-fort-myers">North Fort Myers</a></p>
       <div class="footer__bottom">
         <p class="footer__copy">© 2026 Perfect Timing Auto Repair LLC. All rights reserved.</p>
@@ -845,7 +853,7 @@
         </div>
       </div>
     </div>
-  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Repairs and mobile visits are by confirmed appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
+  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Shop hours: Mon–Sat, 8 AM–8 PM. Repairs are by appointment, and Tony confirms every appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
 </footer>
 
   <!-- ============ JAVASCRIPT ============ -->

@@ -16,7 +16,9 @@ for(const file of fs.readdirSync('.').filter(name=>name.endsWith('.html')&&name!
   assert.ok(!/Mon.{0,8}Sat.{0,30}7.?AM|"opens":\s*"07:00"|Monday through Saturday, 7am/i.test(html),file+': obsolete hours');
   if(d.querySelector('footer')){
     const footer=d.querySelector('footer').textContent;
-    assert.match(footer,/Repairs and mobile visits are by confirmed appointment/,file+': missing appointment and mobile-service disclosure');
+    // request-a-repair/request-received keep the older wording until the concurrent intake work lands.
+    if(/^request-(a-repair|received)\.html$/.test(file))assert.match(footer,/by confirmed appointment|Tony confirms every appointment/,file+': missing appointment disclosure');
+    else assert.match(footer,/Shop hours: Mon–Sat, 8 AM–8 PM\. Repairs are by appointment, and Tony confirms every appointment/,file+': missing hours and appointment disclosure');
     assert.match(footer,/An immediate reply or visit is not guaranteed/,file+': missing response-time limitation');
     assert.doesNotMatch(footer,/Available 24\/7|24\/7 availability/i,file+': do not advertise around-the-clock repairs');
   }

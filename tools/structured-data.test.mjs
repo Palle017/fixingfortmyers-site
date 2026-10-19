@@ -40,9 +40,13 @@ test('the business entity is identical on every page and keeps the street addres
       seen.add(strip(n));
       assert.equal(n.telephone, '+12393972048', `${f} phone`);
       assert.ok(n.address?.addressLocality && n.areaServed?.length && n.url && n.name, `${f} incomplete business node`);
-      assert.equal(n.openingHoursSpecification, undefined, `${f} must not publish unconfirmed operating hours`);
-      assert.match(n.description, /temporary workshop/i, `${f} identifies the current workshop arrangement`);
-      assert.match(n.description, /mobile service for suitable jobs/i, `${f} keeps mobile service conditional on the job`);
+      // Owner-confirmed 2026-10-19: shop hours Mon-Sat 08:00-20:00; requests accepted anytime; not a mobile shop.
+      assert.deepEqual(n.openingHoursSpecification, [{ '@type': 'OpeningHoursSpecification',
+        dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], opens: '08:00', closes: '20:00' }], `${f} shop hours`);
+      assert.match(n.description, /workshop in Bayshore Ranch/i, `${f} identifies the workshop`);
+      assert.doesNotMatch(n.description, /mobile service|24\/7|24 hours/i, `${f} must not describe mobile service or 24/7 hours`);
+      assert.equal(n.aggregateRating, undefined, `${f} self-serving review markup is not eligible for stars`);
+      assert.equal(n.geo, undefined, `${f} no geo coordinates for a hidden-address business`);
       assert.match(n.description, /appointment/i, `${f} service requires an appointment`);
     }
   }
@@ -66,3 +70,29 @@ test('repair guides carry the article fields search engines read', () => {
   }
 });
 
+
+test('FAQ structured data only describes questions that are visible on the page', () => {
+  const norm = s => s.replace(/<\/?(?:a|strong|em|b|i|span)\b[^>]*>/g, '').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/[’']/g, "'").replace(/\s+/g, ' ').trim();
+  for (const f of pages) {
+    const html = read(f);
+    const visible = norm(html.replace(/<script[\s\S]*?<\/script>/g, ''));
+    for (const n of ld(html).filter(n => n['@type'] === 'FAQPage')) for (const q of n.mainEntity) {
+      assert.ok(visible.includes(norm(q.name)), `${f}: FAQ question not visible: ${q.name}`);
+      assert.ok(visible.includes(norm(q.acceptedAnswer.text).slice(0, 80)), `${f}: FAQ answer not visible: ${q.name}`);
+    }
+  }
+});
+
+test('pages load fonts and responsive images from the site itself, and the sitemap dates are valid', () => {
+  for (const f of pages) {
+    const html = read(f);
+    assert.doesNotMatch(html, /fonts\.(googleapis|gstatic)\.com/, `${f}: third-party font CSS blocks first paint; use /assets/fonts`);
+    for (const m of html.matchAll(/srcset="([^"]+)"/g)) for (const part of m[1].split(',')) {
+      const src = part.trim().split(/\s+/)[0].replace(/^\.?\//, '');
+      if (!/^https?:/.test(src)) assert.ok(fs.existsSync(new URL(src, root)), `${f}: missing srcset file ${src}`);
+    }
+  }
+  const lastmods = [...read('sitemap.xml').matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map(m => m[1]);
+  assert.equal(lastmods.length, sitemap.length, 'every sitemap URL has a lastmod');
+  for (const d of lastmods) assert.match(d, /^\d{4}-\d{2}-\d{2}$/, `sitemap lastmod ${d}`);
+});

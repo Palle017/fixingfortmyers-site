@@ -22,9 +22,9 @@
   <meta name="twitter:image" content="https://fixingfortmyers.com/assets/og-card-20260906.jpg">
   <link rel="canonical" href="https://fixingfortmyers.com/walnut-blasting-fort-myers">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Barlow:wght@400;600;700;800&amp;family=Russo+One&amp;display=swap" rel="stylesheet">
+  <link rel="preload" href="/assets/fonts/barlow-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/bebas-neue-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <style id="self-hosted-fonts">@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/barlow-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/barlow-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/barlow-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:800;font-display:swap;src:url(/assets/fonts/barlow-800-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/bebas-neue-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Russo One';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/russo-one-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
 
   <link rel="stylesheet" href="/bundle-core.min.css?v=c3dcf1f49fc0" data-css-sources="base.css style.css">
 <link rel="stylesheet" href="/bundle-page-9472b1e932f1.min.css?v=67b4e61f8edb" data-css-sources="service-pages.css site-updates.css clean-layout.css">
@@ -41,7 +41,7 @@
       "name": "Perfect Timing Auto Repair LLC",
       "legalName": "Perfect Timing Auto Repair LLC",
       "alternateName": "Perfect Timing Auto Repair",
-      "description": "Auto repair serving Fort Myers, Cape Coral, Lehigh Acres and North Fort Myers by appointment. Temporary workshop at Bayshore Ranch and mobile service for suitable jobs. Repair location, equipment needs and availability are confirmed before booking.",
+      "description": "Auto repair by appointment at Tony's workshop in Bayshore Ranch, North Fort Myers area, serving Fort Myers, Cape Coral, Lehigh Acres and nearby Southwest Florida. Request a repair anytime; Tony confirms every appointment. Pickup is available only for vehicles that won't start.",
       "url": "https://fixingfortmyers.com/",
       "logo": "https://fixingfortmyers.com/assets/pt-logo-new.webp",
       "image": "https://fixingfortmyers.com/assets/og-card-20260906.jpg",
@@ -55,6 +55,21 @@
         "addressCountry": "US"
       },
       "hasMap": "https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "08:00",
+          "closes": "20:00"
+        }
+      ],
       "areaServed": [
         {
           "@type": "City",
@@ -325,6 +340,10 @@
 <section><div class="container"><p class="section-label reveal">Why it happens</p><h2 class="section-title reveal reveal-delay-1">Fuel no longer washes the valves</h2><div class="service-grid" style="margin-top:2rem;"><div class="service-panel reveal reveal-delay-1"><h3>The problem</h3><p class="section-sub" style="max-width:none; margin:0;">On engines with direct injection only, fuel sprays into the cylinder instead of washing the backs of the intake valves. Oil vapor can contribute to carbon deposits that interfere with airflow and engine operation. A fuel-tank additive does not reach those valve backs. Engines with both port and direct injection have a different cleaning effect from fuel.</p></div><div class="service-panel reveal reveal-delay-2"><h3>Why it matters</h3><p class="section-sub" style="max-width:none; margin:0;">Heavy deposits can contribute to rough running, hesitation and misfires. When carbon is the cause, cleaning removes those deposits and can restore lost performance. Ignition, fuel and mechanical faults can cause similar symptoms, so testing comes first.</p></div></div></div></section>
 <section><div class="container"><p class="section-label reveal">The process</p><h2 class="section-title reveal reveal-delay-1">Test first, then clean</h2><div class="service-grid" style="margin-top:2rem;"><div class="service-panel reveal reveal-delay-1"><h3>How the job is done</h3><ol class="process-list"><li><span>Confirm the cause with codes, live data and misfire tests. Ignition, fuel and mechanical faults can look the same.</span></li><li><span>Remove the intake to reach the valves.</span></li><li><span>With the valves for the port fully closed, clean using walnut-shell media and suction to collect debris, following the engine-specific procedure.</span></li><li><span>Reassemble, clear the codes and check how the engine runs.</span></li></ol></div><div class="service-panel reveal reveal-delay-2"><h3>What you get</h3><ul class="service-list"><li>An answer on whether carbon is the cause before you pay for cleaning</li><li>The work explained and approved before it starts</li><li>Clean intake ports and restored airflow when carbon is the problem</li><li>A straight answer if testing points somewhere else</li></ul></div></div></div></section>
 <section><div class="container"><div class="service-grid"><div class="service-panel reveal"><p class="section-label">Request walnut blasting</p><h2 class="section-title" style="font-size:var(--text-2xl);">Tell us about your engine</h2><p class="section-sub" style="max-width:none; margin:0 0 1.5rem;">Send the year, make, model, mileage and what the engine does. Mention any codes, recent plugs or coils, or an existing estimate. Tony confirms whether your engine is a fit and when it can be done. The shop confirms every appointment.</p><div class="service-hero__actions"><a href="/?service=walnut#contact" class="btn btn--primary">Request Repair</a><a href="tel:+12393972048" class="btn btn--outline">Call (239) 397-2048</a></div></div><div class="service-panel reveal reveal-delay-1"><p class="section-label">Common questions</p><h3>Will it fix my misfire?</h3><p class="section-sub" style="max-width:none; margin:0 0 1.25rem;">Only if carbon is causing it. That is why testing comes first.</p><h3>Is every engine a candidate?</h3><p class="section-sub" style="max-width:none; margin:0 0 1.25rem;">No. It is mainly for direct-injection gasoline engines. Port-injected engines rarely build up this kind of carbon. Send the engine size if you know it.</p><h3>Already told you need a carbon clean?</h3><p class="section-sub" style="max-width:none; margin:0;">Send the estimate or findings with your request and Tony will review them.</p></div></div></div></section>
+<section><div class="container"><p class="section-label reveal">FAQ</p><h2 class="section-title reveal reveal-delay-1">Walnut Blasting Questions</h2><div class="faq-grid" style="margin-top: 2rem;"><div class="faq-item"><h3>Is walnut blasting right for every engine?</h3><p>No. Engine design, access, deposits and the cause of the symptoms determine whether it is appropriate. Send the year, make, model and engine size if known so we can review the request.</p></div>
+<div class="faq-item"><h3>Will it fix my misfire?</h3><p>Only if deposits are causing or contributing to the problem. Ignition, fuel delivery and mechanical faults can produce similar symptoms. Testing comes before a cleaning recommendation.</p></div>
+<div class="faq-item"><h3>What is involved in intake-valve cleaning?</h3><p>On suitable engines, the intake is accessed and walnut-shell media removes deposits with suction to collect the material. The procedure must protect the engine from debris. Access and reassembly requirements vary by vehicle.</p></div>
+<div class="faq-item"><h3>What should I send when I request service?</h3><p>Include the vehicle, mileage, symptoms, any diagnostic codes and what has already been tried. An existing diagnosis or estimate is helpful. The shop confirms the next step and appointment availability.</p></div></div></div></section>
 <section><div class="container"><p class="section-label reveal">Related services</p><h2 class="section-title reveal reveal-delay-1">Something else going on?</h2><div class="related-services__grid" style="margin-top:2rem;"><a class="service-card reveal" href="/auto-diagnostics-fort-myers"><h3 class="service-card__title">Diagnostics</h3><p class="service-card__desc">Find the cause of warning lights, rough running or loss of power.</p></a><a class="service-card reveal" href="/engine-repair-fort-myers"><h3 class="service-card__title">Engine repair</h3><p class="service-card__desc">Leaks, overheating, timing concerns and internal engine problems.</p></a><a class="service-card reveal" href="/engine-rebuild-vs-replacement-fort-myers"><h3 class="service-card__title">Engine rebuild or replacement</h3><p class="service-card__desc">Measured tolerances and timing checks before a big engine decision.</p></a></div></div></section>
 </main>
 
@@ -341,7 +360,7 @@
             </div>
           </div>
           <p class="footer__brand-desc">
-            Engine, transmission and diesel repair in Fort Myers, with workshop and mobile options confirmed for each job. Test first, explain the options, then repair.
+            Engine, transmission and diesel repair in Fort Myers, by appointment at Tony's workshop in Bayshore Ranch (North Fort Myers area). Test first, explain the options, then repair.
           </p>
           <div class="footer__social">
             <a href="https://www.facebook.com/profile.php?id=61574375434643" aria-label="Facebook">
@@ -382,7 +401,7 @@
         </div>
       </div>
 
-      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · Fort Myers &amp; Southwest Florida · <a href="tel:+12393972048">(239) 397-2048</a> · Workshop and mobile service by appointment. Location and suitability confirmed for each job.</p>
+      <p class="footer__nap"><strong>Perfect Timing Auto Repair LLC</strong> · Fort Myers &amp; Southwest Florida · <a href="tel:+12393972048">(239) 397-2048</a> · By appointment at Tony's workshop in Bayshore Ranch (North Fort Myers area). Mon–Sat, 8 AM–8 PM.</p>
       <p class="footer__nap footer__areas">Service area: <a href="/auto-repair-fort-myers">Fort Myers</a> · <a href="/auto-repair-cape-coral">Cape Coral</a> · <a href="/auto-repair-lehigh-acres">Lehigh Acres</a> · <a href="/auto-repair-north-fort-myers">North Fort Myers</a></p>
       <div class="footer__bottom">
         <p class="footer__copy">© 2026 Perfect Timing Auto Repair LLC. All rights reserved.</p>
@@ -392,7 +411,7 @@
         </div>
       </div>
     </div>
-  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Repairs and mobile visits are by confirmed appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
+  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Request a repair anytime</strong><br>Shop hours: Mon–Sat, 8 AM–8 PM. Repairs are by appointment, and Tony confirms every appointment. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
 </footer>
 
 
