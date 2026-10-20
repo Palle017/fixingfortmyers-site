@@ -8,6 +8,7 @@ import hashlib
 import importlib
 import json
 import os
+import re
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -142,7 +143,8 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
             backup=sqlite3.connect(str(run_dir/'archive-before.sqlite3'));database.backup(backup);backup.close()
             for cap in captures:
                 cid=cap['conversation_id'];raw=(run_dir/('thread-'+cid+'.json')).read_bytes()
-                try:item=conversation(cap,hashlib.sha256(raw).hexdigest())
+                try:item=conversation(cap,hashlib.sha256(raw).hexdigest(),details=settings.get('beside_parse_details') is True,
+                    call_markers=re.compile(settings['beside_call_markers'],re.I) if settings.get('beside_call_markers') else None)
                 except CaptureError:
                     held.append(cid);continue
                 old=by_id.get('beside:chat:'+cid)
