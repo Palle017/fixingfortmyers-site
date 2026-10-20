@@ -26,7 +26,7 @@ export function checkCleanPage(name,html){
       assert.equal(actions.length,2,`${name}: two service actions`);
       const requestLabel=name==='oil-change-fort-myers.html'?'Request an oil change':'Request Repair';
       assert.equal(text(actions[0]),requestLabel,`${name}: service request is the first action`);
-      assert.match(text(actions[1]),/^Call(?: [\u2014-] AI intake| \(239\) 397-2048)?$/,`${name}: clear alternative call label`);
+      assert.match(text(actions[1]),/^Call(?: [\u2014-] AI intake| \(239\) 397-2048| the shop \(239\) 397-2048)?$/,`${name}: clear alternative call label`);
       assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: published call number`);
     }
     if(hero&&photoGalleryPage){
