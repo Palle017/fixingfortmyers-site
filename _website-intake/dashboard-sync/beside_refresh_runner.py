@@ -16,6 +16,7 @@ import time
 from urllib import request
 from urllib.parse import urlsplit
 from beside_uia import CaptureError, conversation, generic_review
+import beside_intake
 
 ROOT=Path(__file__).resolve().parent
 SETTINGS=Path(r'C:\Users\LP15\PerfectTiming-Pipeline-private\beside-recovery-20261013\refresh\settings.json')
@@ -209,6 +210,11 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
             if row['conversation_id'] in good:checkpoint.setdefault('records',{})[row['conversation_id']]=row
         checkpoint.update(last_job_id=lease['state']['jobId'],updated_at=readback)
         write(checkpoint_path,checkpoint)
+        # Optional (beside_intake_post_enabled): also deliver verified new conversations to the intake hook.
+        try:
+            report['intake_post']=beside_intake.post_new([c for c in conversations if c['id'] in good],set(by_id),settings,refresh/'intake-posted.json')
+        except Exception as exc:
+            report['intake_post']={'enabled':True,'error':str(exc) if isinstance(exc,ValueError) else type(exc).__name__}
         report.update(ok=True,fresh_scan_performed=True,worker_ready=True,job_id=lease['state']['jobId'],counts=counts,
             dashboard_records=len(after['leads']),scope=scope,full_account_export=False)
     except Exception as exc:
