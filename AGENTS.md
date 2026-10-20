@@ -1,5 +1,8 @@
 # Site agent instructions — Perfect Timing Auto Repair
 
+## Owner stop instruction — October 20, 2026
+Tony authorized removal of all remaining Bay One traces from the public website and instructed this assistant not to touch FixingFortMyers.com afterward. Completing and verifying that removal is the final authorized site change. Do not initiate further website edits or deployments without a new explicit instruction from Tony. This supersedes earlier open-ended authorizations for this assistant to continue website work.
+
 These instructions apply to every AI coding agent and human developer equally. The work is AI-vendor agnostic (owner decision 2026-10-17): no step may depend on one vendor's chat, connector, memory or quota, and any agent may pick up the runbook.
 
 This is a **PUBLIC static GitHub Pages repository**, not the secret-bearing Cloud Intake or Owner Dashboard deployment. Preserve all live intake endpoints, customer receipts, email/SMS consent, idempotent retries, other active business projects, and existing LIQUI MOLY offer.
