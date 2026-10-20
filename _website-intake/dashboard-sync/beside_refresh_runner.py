@@ -16,6 +16,7 @@ import time
 from urllib import request
 from urllib.parse import urlsplit
 from beside_uia import CaptureError, conversation, generic_review
+import beside_extract
 
 ROOT=Path(__file__).resolve().parent
 SETTINGS=Path(r'C:\Users\LP15\PerfectTiming-Pipeline-private\beside-recovery-20261013\refresh\settings.json')
@@ -146,6 +147,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
                 except CaptureError:
                     held.append(cid);continue
                 old=by_id.get('beside:chat:'+cid)
+                if settings.get('beside_extract_fields') is True:item=beside_extract.apply(item)
                 item=preserve_known_fields(item,old)
                 archived=database.execute('SELECT parent_id FROM conversations WHERE mailbox_id=? AND provider_id=?',(settings['mailbox_id'],cid)).fetchone()
                 if archived and archived['parent_id']:item['contact_id']=archived['parent_id']
