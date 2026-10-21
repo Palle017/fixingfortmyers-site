@@ -666,7 +666,7 @@
     const data = requestPayload || currentData;
     if (data.website) return;
     if ((endpoint || data.phone) && !validPhone(data.phone)) { status.textContent = endpoint ? 'Please include a valid phone number with its area code.' : 'Please include a valid phone number with its area code, or leave the optional callback field blank when texting.'; phoneField.focus(); return; }
-    if (!data.name || !data.details) { status.textContent = 'Please enter your name and a description of the problem. Incomplete vehicle details are okay.'; return; }
+    if (!data.name) { status.textContent = 'Please enter your name. Vehicle and problem details are optional.'; return; }
     makeBackup(data);
     requestPayload = data;
     if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app, attach photos or a short video of the problem if you have them, and tap Send. Nothing has been sent yet. You can also copy the text, email it or call the shop.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
@@ -927,7 +927,7 @@
   // Agent assistance fills the visible form. The customer reviews and submits it
   // through the same handler above; this tool never contacts the receiver.
   const repairToolFields = {
-    details: ['request-details', 'The repair problem in the customer’s own words. Required before sending.'],
+    details: ['request-details', 'The repair problem in the customer’s own words. Optional; Tony asks on the callback.'],
     service: ['request-service', 'The type of repair, or Diagnosis / not sure yet.'],
     starts: ['request-starts', 'Whether the vehicle can be driven: yes, no, or unknown.'],
     vehicle: ['request-vehicle', 'Vehicle year, make and model, if known.'],

@@ -88,7 +88,7 @@ test('with a client ID the button loads Google lazily, pre-fills the name, and s
   options.callback({credential:idToken({aud:clientId, name:'José Synthetic', email:'jose@example.invalid', email_verified:true})});
   assert.equal(x.d.getElementById('request-name').value, 'José Synthetic');
   assert.equal(x.d.querySelector('input[name="google_id_token"]'), null, 'raw credential is not placed in the form');
-  for (const fieldId of ['request-details', 'request-name', 'request-phone']) assert.equal(x.d.getElementById(fieldId).required, true, `${fieldId} stays required`);
+  for (const fieldId of ['request-name', 'request-phone']) assert.equal(x.d.getElementById(fieldId).required, true, `${fieldId} stays required`);
   x.enter('request-vehicle', '2015 BMW 335i');
   x.enter('request-details', 'Rough idle and misfire when cold.');
   x.enter('request-phone', '239-555-0100');
@@ -120,7 +120,7 @@ test('a blocked Google script removes the sign-in and leaves the form alone', as
 
 // ---------- optional email field ----------
 for (const page of ['index.html', 'request-a-repair.html']) {
-  test(`${page}: optional email field sits right after phone and is not required`, async t => {
+  test(`${page}: optional email field sits right after name and is not required`, async t => {
     const x = setup(t, {page}); await settle();
     const field = x.d.querySelector('#bookingForm input[name="email"]');
     assert.ok(field);
@@ -130,7 +130,7 @@ for (const page of ['index.html', 'request-a-repair.html']) {
     assert.match(field.closest('label').textContent.replace(/\s+/g, ' ').trim(), /^Email \(optional\)$/);
     let prev = field.closest('label').previousElementSibling;
     while (prev && prev.matches('.request-error')) prev = prev.previousElementSibling;
-    assert.equal(prev.getAttribute('for'), 'request-phone');
+    assert.equal(prev.getAttribute('for'), 'request-name');
   });
 }
 
