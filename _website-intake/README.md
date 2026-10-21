@@ -81,7 +81,7 @@ A webform receipt includes a `mediaToken` (valid 2 hours; resending the same req
 
 ### Customer confirmation text
 
-When a customer ticks text permission, the receiver can text them within seconds: "Perfect Timing Auto Repair: Hi Maria, Tony got your repair request for your 2012 F-150. He'll call or text you from (239) 397-2048… Reply STOP to opt out, HELP for help." It is **off** until both are true: `LEAD_CUSTOMER_TEXTS=true` and the Twilio variables (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `LEAD_ALERT_FROM`) are set. US carriers also require the sending number to be A2P 10DLC registered first. At most one text per phone number per day and 60 per day overall. An uncertain send is never repeated (Twilio has no idempotency key); it shows as "may not have gone out" in the inbox. Replies go to the Twilio number, so the text points customers to (239) 397-2048.
+When a customer ticks text permission, the receiver can text them within seconds: "Perfect Timing Auto Repair: Hi Maria, we got your repair request for the 2012 Ford F-150 (Won’t start). Tony will call you to set up an appointment. If it can't wait, call (239) 397-2048. Reply STOP to opt out, HELP for help." It is **off** until both are true: `LEAD_CUSTOMER_TEXTS=true` and the Twilio variables (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `LEAD_ALERT_FROM`) are set. US carriers also require the sending number to be A2P 10DLC registered first. At most one text per phone number per day and 60 per day overall. An uncertain send is never repeated (Twilio has no idempotency key); it shows as "may not have gone out" in the inbox. Replies go to the Twilio number, so the text points customers to (239) 397-2048.
 
 ### Zoho estimate status
 

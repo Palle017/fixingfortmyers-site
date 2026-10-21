@@ -8,6 +8,7 @@ import hashlib
 import importlib
 import json
 import os
+import re
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -17,6 +18,7 @@ from urllib import request
 from urllib.parse import urlsplit
 from beside_uia import CaptureError, conversation, generic_review
 import beside_extract
+from beside_schedule import auto_scan_reason
 
 ROOT=Path(__file__).resolve().parent
 SETTINGS=Path(r'C:\Users\LP15\PerfectTiming-Pipeline-private\beside-recovery-20261013\refresh\settings.json')
@@ -52,6 +54,25 @@ def preserve_known_fields(incoming,old):
                 result[key]=old[key]
         result['received_at']=old['received_at']
     return result
+
+def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0):
+    """Read selected threads. Default: stop at the first failure (previous behavior).
+    With skip_failed, a failed thread is skipped with exponential backoff and the pass continues,
+    up to max_failures. Failed threads are never checkpointed, so they stay pending."""
+    captures=[];failures=[]
+    for row in selected:
+        if remaining()<35:break
+        cid=row['conversation_id']
+        try:
+            captures.append(read_one(cid))
+            if len(captures)%3==0:progress()
+        except ScanError:
+            failures.append(cid)
+            if not skip_failed or len(failures)>=max_failures:break
+            delay=min(max_delay,base_delay*(2**(len(failures)-1)))
+            if remaining()-delay<35:break
+            sleep(delay)
+    return captures,failures
 
 def run(*,settings_path=SETTINGS,budget_seconds=80):
     started=time.monotonic();lease=None;run_dir=None;phase='reading';last_error='WORKER_FAILED'
@@ -110,6 +131,20 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
         capture('inventory',probe_path)
         worker('heartbeat')
         state=worker('baseline')['state']
+        if state['status']!='queued' and settings.get('beside_auto_scan_minutes'):
+            # Optional scheduled scan (off by default): ask the dashboard queue for a job;
+            # the next task run claims it through the normal lease path.
+            auto_path=refresh/'uia-auto-scan.json'
+            auto_state=load(auto_path) if auto_path.exists() else {}
+            checkpoint_path=refresh/'uia-checkpoint.json'
+            reason=auto_scan_reason(datetime.now(timezone.utc),settings,auto_state,
+                load(probe_path),load(checkpoint_path) if checkpoint_path.exists() else {'records':{}})
+            if reason and state['status'] in ('idle','complete','failed',None):
+                requested=worker(settings.get('beside_auto_scan_action','request'),reason='scheduled:'+reason)
+                auto_state.update(last_requested_at=stamp(),last_reason=reason)
+                write(auto_path,auto_state)
+                report['auto_scan_requested']=reason
+                state=requested.get('state') or state
         if state['status']!='queued':
             report.update(ok=True,worker_ready=True,queue_status=state['status'],scan_trigger='Owner Dashboard Refresh Beside')
             write(refresh/'uia-worker-status.json',report)
@@ -123,16 +158,13 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
         checkpoint_path=refresh/'uia-checkpoint.json'
         checkpoint=load(checkpoint_path) if checkpoint_path.exists() else {'records':{}}
         selected,total_changed=selected_changes(inventory,checkpoint,min(25,int(settings.get('maximum_changed_threads_per_pass',25))))
-        captures=[];capture_failures=[]
-        for row in selected:
-            if remaining()<35:break
-            cid=row['conversation_id']
-            try:
-                value=capture('thread',run_dir/('thread-'+cid+'.json'),cid=cid,inventory=run_dir/'inventory.json')
-                captures.append(value)
-                if len(captures)%3==0:worker('progress',phase='reading')
-            except ScanError:
-                capture_failures.append(cid);break
+        def read_one(cid):
+            return capture('thread',run_dir/('thread-'+cid+'.json'),cid=cid,inventory=run_dir/'inventory.json')
+        captures,capture_failures=read_threads(selected,read_one,remaining,
+            lambda:worker('progress',phase='reading'),
+            skip_failed=settings.get('beside_skip_failed_threads') is True,
+            max_failures=int(settings.get('beside_max_thread_failures',5)))
+        report['thread_failures']=len(capture_failures)
         if selected and not captures:raise ScanError('CAPTURE_INCOMPLETE')
         worker('progress',phase='checking');phase='checking'
         baseline=worker('baseline')['baseline'];archive.validate_baseline(baseline)
@@ -143,7 +175,8 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
             backup=sqlite3.connect(str(run_dir/'archive-before.sqlite3'));database.backup(backup);backup.close()
             for cap in captures:
                 cid=cap['conversation_id'];raw=(run_dir/('thread-'+cid+'.json')).read_bytes()
-                try:item=conversation(cap,hashlib.sha256(raw).hexdigest())
+                try:item=conversation(cap,hashlib.sha256(raw).hexdigest(),details=settings.get('beside_parse_details') is True,
+                    call_markers=re.compile(settings['beside_call_markers'],re.I) if settings.get('beside_call_markers') else None)
                 except CaptureError:
                     held.append(cid);continue
                 old=by_id.get('beside:chat:'+cid)
