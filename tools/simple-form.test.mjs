@@ -7,12 +7,13 @@ import {JSDOM, VirtualConsole} from 'jsdom';
 const root = new URL('../', import.meta.url);
 const html = fs.readFileSync(new URL('index.html', root), 'utf8');
 const script = fs.readFileSync(new URL('site.js', root), 'utf8');
+const calmScript = fs.readFileSync(new URL('repair-form-calm.js', root), 'utf8');
 const id = '12345678-1234-4234-8234-123456789012';
 const settle = async () => { for (let n = 0; n < 6; n++) await new Promise(setImmediate); };
 const response = (body, status = 200) => ({ok:status >= 200 && status < 300, status, json:async () => body});
 const saved = (extra = {}) => response({ok:true, received:true, id, receivedAt:new Date().toISOString(), ...extra}, 201);
 
-function setup(t, {handler, mediaHandler, media = false, url = 'https://preview.invalid/', referrer} = {}) {
+function setup(t, {handler, mediaHandler, media = false, url = 'https://preview.invalid/', referrer, calm = false} = {}) {
   const errors = [], virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', error => { if (!/Not implemented: navigation/.test(error.message)) errors.push(error); });
   const dom = new JSDOM(html, {url, ...(referrer ? {referrer} : {}), runScripts:'outside-only', pretendToBeVisual:true, virtualConsole});
@@ -38,6 +39,7 @@ function setup(t, {handler, mediaHandler, media = false, url = 'https://preview.
     assert.equal(address.pathname, '/hooks/lead/webform');
     return handler ? handler(request, w) : saved();
   };
+  if (calm) w.eval(calmScript);
   w.eval(script);
   const enter = (fieldId, value) => {
     const field = d.getElementById(fieldId);
@@ -81,16 +83,51 @@ test('success replaces the form in place with the receipt and three useful next 
   const done = x.d.getElementById('request-done');
   assert.equal(done.hidden, false);
   assert.equal(x.d.getElementById('bookingForm').hidden, true);
-  assert.match(done.querySelector('h2').textContent, /we received your repair request/);
-  assert.match(done.textContent, /We’ll review it and contact you when available/);
-  assert.match(done.textContent, /appointment are not confirmed until Tony speaks with you by phone/, 'saved receipt is not a booking');
+  assert.match(done.querySelector('h2').textContent, /Your request is in/);
+  assert.match(done.textContent, /Send Tony a quick text so he has your number/);
+  assert.doesNotMatch(done.querySelector('#request-done-lead').textContent, /!/);
+  assert.match(done.textContent, /isn’t official until Tony confirms it with you by phone/, 'saved receipt is not a booking');
+  const textLink = x.d.getElementById('request-done-text');
+  assert.equal(textLink.textContent, 'Text Tony now');
+  assert.ok(textLink.getAttribute('href').startsWith('sms:+12393972048?&body='));
+  const textBody = decodeURIComponent(textLink.getAttribute('href').slice('sms:+12393972048?&body='.length));
+  assert.equal(textBody, `Hi, I filled out the repair form on your website. This is Synthetic Customer texting about my 2015 BMW 335i: Rough idle and misfire when cold. Reference: ${id}.`);
+  assert.doesNotMatch(textBody, /!|13037|Second St/);
+  assert.equal(x.d.getElementById('request-done-copy').textContent, 'Copy text');
   assert.match(x.d.getElementById('request-done-ref').textContent, new RegExp(id));
   assert.equal(x.d.activeElement, x.d.getElementById('request-done-heading'));
+  let copied = '';
+  x.w.navigator.clipboard = {writeText: async value => { copied = value; }};
+  x.d.getElementById('request-done-copy').click();
+  await settle();
+  assert.equal(copied, textBody);
   assert.ok(done.querySelector('a[href="tel:+12393972048"]'));
   assert.ok(done.querySelector('a[href="/"]'));
   assert.equal(x.d.getElementById('request-done-photo').hidden, false);
   assert.doesNotMatch(done.textContent, /24\/7|24 hours|immediately/i, 'no response-time promise');
   assert.equal(x.d.getElementById('request-backup').hidden, true);
+});
+
+test('year, make, model and the problem line prefill Text Tony now after the lead is saved', async t => {
+  const x = setup(t, {calm: true}); await settle();
+  x.enter('request-name', 'Maria Synthetic');
+  x.enter('request-phone', '239-555-0100');
+  x.enter('request-vehicle-year', '2012');
+  x.enter('request-vehicle-make', 'Ford');
+  x.enter('request-vehicle-model', 'F-150');
+  x.enter('request-details', 'Clicks when I turn the key.');
+  x.d.querySelector('.request-chip').click();
+  x.send(); await settle();
+  assert.equal(x.leads().length, 1);
+  assert.equal(x.leads()[0].body.vehicle, '2012 Ford F-150');
+  assert.match(x.leads()[0].headers['Idempotency-Key'], /^\S{8,160}$/);
+  const issue = x.d.querySelector('.request-chip').dataset.issue;
+  const href = x.d.getElementById('request-done-text').getAttribute('href');
+  const body = decodeURIComponent(href.slice('sms:+12393972048?&body='.length));
+  assert.equal(body, `Hi, I filled out the repair form on your website. This is Maria Synthetic texting about my 2012 Ford F-150: ${issue}. Clicks when I turn the key. Reference: ${id}.`);
+  assert.doesNotMatch(body, /13037|Second St|!/);
+  assert.match(x.d.getElementById('request-done').textContent, /Your request is in/);
+  assert.match(x.d.getElementById('request-done-lead').textContent, /Send Tony a quick text so he has your number/);
 });
 
 test('photo button stays hidden when the intake cannot take uploads', async t => {
@@ -187,6 +224,17 @@ test('background retries stop after two attempts and leave the manual fallbacks'
   assert.equal(x.timers.length, 0);
   assert.match(x.statusText(), /could not confirm receipt[\s\S]*call \(239\) 397-2048/);
   assert.equal(x.d.getElementById('request-backup').hidden, false);
+  assert.equal(x.d.getElementById('request-done').hidden, false);
+  assert.match(x.d.getElementById('request-done-heading').textContent, /The online request didn't go through/);
+  assert.match(x.d.getElementById('request-done-lead').textContent, /A text is the way to reach Tony/);
+  assert.doesNotMatch(x.d.getElementById('request-done-lead').textContent, /!/);
+  const failedHref = x.d.getElementById('request-done-text').getAttribute('href');
+  assert.ok(failedHref.startsWith('sms:+12393972048?&body='));
+  const failedBody = decodeURIComponent(failedHref.slice('sms:+12393972048?&body='.length));
+  assert.equal(failedBody, 'Hi, I filled out the repair form on your website. This is Synthetic Customer texting about my 2015 BMW 335i: Rough idle and misfire when cold.');
+  assert.doesNotMatch(failedBody, /Reference:|13037|Second St/);
+  assert.ok(x.d.getElementById('request-done-copy'));
+  assert.ok(x.d.getElementById('request-done-call'));
   assert.equal(x.d.getElementById('request-name').value, 'Synthetic Customer');
   assert.equal(x.d.getElementById('request-submit').disabled, false);
 });
@@ -206,6 +254,10 @@ test('a clear rejection shows the intake’s message, keeps the entries and does
   assert.equal(x.timers.length, 0);
   assert.equal(x.d.getElementById('request-details').value, 'Rough idle and misfire when cold.');
   assert.equal(x.events('form_submit_error')[0].reason, 'http_400');
+  assert.equal(x.leads().length, 1);
+  assert.equal(x.d.getElementById('request-done').hidden, false);
+  assert.match(x.d.getElementById('request-done-lead').textContent, /A text is the way to reach Tony/);
+  assert.doesNotMatch(decodeURIComponent(x.d.getElementById('request-done-text').getAttribute('href')), /Reference:/);
 });
 
 test('double taps while sending create one lead', async t => {
@@ -282,7 +334,7 @@ test('preferred time and itemized parts-payment request reach the existing intak
   assert.match(payload.callbackTime,/Preferred appointment: \d{4}-\d{2}-\d{2} at 14:00 America\/New_York; PENCILED-IN REQUEST ONLY; NOT CONFIRMED until Tony verbally confirms by phone/);
   assert.equal(payload.appointmentPencilAcknowledged,true);
   assert.match(payload.details,/Customer requests a secure parts payment link after quote\/fitment approval/);
-  assert.match(x.d.getElementById('request-done').textContent,/appointment are not confirmed until Tony speaks with you by phone/);
+  assert.match(x.d.getElementById('request-done').textContent,/isn’t official until Tony confirms it with you by phone/);
   assert.match(x.d.getElementById('request-done-call').textContent,/Call Tony to confirm/);
   assert.equal(Object.hasOwn(payload,'cardNumber'),false);
   assert.equal(Object.hasOwn(payload,'paymentAmount'),false);
@@ -321,7 +373,7 @@ test('LIQUI MOLY prepay URL selects 50% labor-only offer and requests secure oil
   assert.match(lead.details,/Customer requests a secure parts payment link/);
   assert.equal(Object.hasOwn(lead,'paymentAmount'),false);
   assert.equal(Object.hasOwn(lead,'cardNumber'),false);
-  assert.match(x.d.getElementById('request-done').textContent,/appointment are not confirmed/);
+  assert.match(x.d.getElementById('request-done').textContent,/isn’t official until Tony confirms it/);
 });
 
 test('LIQUI MOLY labor discount never attaches when customer switches away from oil change', async t => {
