@@ -213,10 +213,11 @@ test('online form initializes the short request flow and enables the safe submit
   assert.equal(x.d.getElementById('request-submit').textContent, 'Request Repair');
   assert.equal(x.d.getElementById('request-phone-label').textContent, 'Best number');
   // The first screen is four fields; everything else waits behind the optional step.
-  const core = [...x.d.querySelectorAll('.request-fields--core :is(input,textarea,select)')].map(field => field.name);
-  assert.deepEqual(core, ['vehicle', 'details', 'name', 'phone']);
+  const core = [...x.d.querySelectorAll('.request-fields--core :is(input,textarea,select)')].map(field => field.name).filter(Boolean);
+  // Name and phone first; vehicle year/make/model feed the one "vehicle" field; repairWhere drives locationChoice.
+  assert.deepEqual(core, ['name', 'phone', 'vehicle', 'details', 'repairWhere', 'repairWhere']);
   assert.equal(x.d.getElementById('request-options').open, false);
-  assert.match(x.d.querySelector('#request-options > summary').textContent, /Add photos or more details/);
+  assert.match(x.d.querySelector('#request-options > summary').textContent, /Add a photo or more details/);
   assert.equal(x.d.getElementById('request-submit').disabled, false);
   assert.doesNotMatch(x.d.getElementById('request-instructions').textContent, /prepare (?:a )?(?:text|message)|text draft/i);
   for (const field of ['name', 'phone', 'details']) assert.equal(x.d.getElementById(`request-${field}`).required, true);

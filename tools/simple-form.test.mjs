@@ -81,9 +81,9 @@ test('success replaces the form in place with the receipt and three useful next 
   const done = x.d.getElementById('request-done');
   assert.equal(done.hidden, false);
   assert.equal(x.d.getElementById('bookingForm').hidden, true);
-  assert.match(done.querySelector('h2').textContent, /we received your repair request/);
-  assert.match(done.textContent, /We’ll review it and contact you when available/);
-  assert.match(done.textContent, /appointment are not confirmed until Tony speaks with you by phone/, 'saved receipt is not a booking');
+  assert.match(done.querySelector('h2').textContent, /Your request is in/);
+  assert.match(done.textContent, /Tony has your details and will call you to set up an appointment/);
+  assert.match(done.textContent, /isn’t official until Tony confirms it with you by phone/, 'saved receipt is not a booking');
   assert.match(x.d.getElementById('request-done-ref').textContent, new RegExp(id));
   assert.equal(x.d.activeElement, x.d.getElementById('request-done-heading'));
   assert.ok(done.querySelector('a[href="tel:+12393972048"]'));
@@ -282,7 +282,7 @@ test('preferred time and itemized parts-payment request reach the existing intak
   assert.match(payload.callbackTime,/Preferred appointment: \d{4}-\d{2}-\d{2} at 14:00 America\/New_York; PENCILED-IN REQUEST ONLY; NOT CONFIRMED until Tony verbally confirms by phone/);
   assert.equal(payload.appointmentPencilAcknowledged,true);
   assert.match(payload.details,/Customer requests a secure parts payment link after quote\/fitment approval/);
-  assert.match(x.d.getElementById('request-done').textContent,/appointment are not confirmed until Tony speaks with you by phone/);
+  assert.match(x.d.getElementById('request-done').textContent,/isn’t official until Tony confirms it with you by phone/);
   assert.match(x.d.getElementById('request-done-call').textContent,/Call Tony to confirm/);
   assert.equal(Object.hasOwn(payload,'cardNumber'),false);
   assert.equal(Object.hasOwn(payload,'paymentAmount'),false);
@@ -321,7 +321,7 @@ test('LIQUI MOLY prepay URL selects 50% labor-only offer and requests secure oil
   assert.match(lead.details,/Customer requests a secure parts payment link/);
   assert.equal(Object.hasOwn(lead,'paymentAmount'),false);
   assert.equal(Object.hasOwn(lead,'cardNumber'),false);
-  assert.match(x.d.getElementById('request-done').textContent,/appointment are not confirmed/);
+  assert.match(x.d.getElementById('request-done').textContent,/isn’t official until Tony confirms it/);
 });
 
 test('LIQUI MOLY labor discount never attaches when customer switches away from oil change', async t => {
