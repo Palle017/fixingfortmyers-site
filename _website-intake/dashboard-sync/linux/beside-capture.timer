@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the Beside capture every 12 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=12min
+AccuracySec=30s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

@@ -11,7 +11,7 @@ RUN_STARTED = monotonic()
 ROOT = Path(__file__).resolve().parent
 PRIVATE = ROOT.parent / 'dashboard-sync-private'
 try:
-    result = subprocess.run([sys.executable, str(ROOT / 'sync_dashboard.py'), '--config', str(PRIVATE / 'config.json')], capture_output=True, text=True, timeout=150, creationflags=subprocess.CREATE_NO_WINDOW)
+    result = subprocess.run([sys.executable, str(ROOT / 'sync_dashboard.py'), '--config', str(PRIVATE / 'config.json')], capture_output=True, text=True, timeout=150, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     raw = result.stdout.strip() or result.stderr.strip()
     try:
         detail = json.loads(raw)
