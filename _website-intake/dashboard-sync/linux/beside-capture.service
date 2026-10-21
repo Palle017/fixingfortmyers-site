@@ -17,5 +17,4 @@ MemoryHigh=900M
 CPUQuota=150%
 Nice=10
 NoNewPrivileges=yes
-PrivateTmp=yes
 UMask=0077
