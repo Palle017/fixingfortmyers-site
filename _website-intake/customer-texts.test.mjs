@@ -30,7 +30,7 @@ test('a customer who ticked text permission gets one confirmation text right awa
   await new Promise(resolve => setTimeout(resolve, 50));
   assert.equal(twilio.sent.length, 1);
   assert.equal(twilio.sent[0].to, '+12395550142');
-  assert.match(twilio.sent[0].body, /^Perfect Timing Auto Repair: Hi Maria, Tony got your repair request for your 2012 F-150\. He'll call or text you from \(239\) 397-2048/);
+  assert.match(twilio.sent[0].body, /^Perfect Timing Auto Repair: Hi Maria, we got your repair request for the 2012 F-150 \(Synthetic test only\.\)\. Tony will call you to set up an appointment\. If it can't wait, call \(239\) 397-2048\./);
   assert.match(twilio.sent[0].body, /Reply STOP to opt out, HELP for help\.$/);
   assert.equal((await x.inbox()).find(row => row.id === receipt.id).customerText.state, 'sent');
 });
@@ -67,9 +67,9 @@ test('an uncertain send is never repeated; a rate limit is retried', async t => 
 
 test('message wording, phone normalization and adapter guard rails', () => {
   assert.equal(customerNumber('239-555-0142'), '+12395550142'); assert.equal(customerNumber('1 (239) 555-0142'), '+12395550142'); assert.equal(customerNumber('+44 20 7946 0958'), '');
-  assert.match(confirmationText({name: 'Al', vehicle: 'Not provided; see request details'}), /^Perfect Timing Auto Repair: Hi Al, Tony got your repair request\. /);
+  assert.match(confirmationText({name: 'Al', vehicle: 'Not provided; see request details'}), /^Perfect Timing Auto Repair: Hi Al, we got your repair request\. /);
   assert.match(confirmationText({name: 'Al'}, {urgent: true}), /marked urgent\. If you're somewhere unsafe, call 911\./);
-  assert.ok(confirmationText({name: 'A'.repeat(200), vehicle: 'V'.repeat(200)}).length < 400);
+  assert.ok(confirmationText({name: 'A'.repeat(200), vehicle: 'V'.repeat(200)}).length <= 320);
   assert.throws(() => createTwilioCustomerAdapter({accountSid: 'bad', authToken: 'x', fromNumber: '+12395550000'}), /Invalid customer text configuration/);
 });
 
@@ -85,4 +85,12 @@ test('marking a job won schedules one Google review text two hours later, only w
   await x.app.customerTexts.tick();
   assert.equal(twilio.sent.at(-1).to, '+12395550142'); assert.match(twilio.sent.at(-1).body, /Google review/);
   assert.equal((await x.inbox()).find(r => r.id === yes.id).reviewText.state, 'sent');
+});
+
+test('confirmation text stays calm and under 320 characters at maximum field lengths', () => {
+  const long = confirmationText({name: 'A'.repeat(100), vehicle: 'V'.repeat(160), details: 'Problem: ' + 'Won’t start, Overheating, AC not cooling, Strange noise, Warning light on'}, {urgent: true});
+  assert.ok(long.length <= 320, long.length + ' chars');
+  const plain = confirmationText({name: 'Maria Synthetic', vehicle: '2012 Ford F-150', details: 'Problem: Won’t start\nClicks when I turn the key.'});
+  assert.equal(plain, "Perfect Timing Auto Repair: Hi Maria, we got your repair request for the 2012 Ford F-150 (Won’t start). Tony will call you to set up an appointment. If it can't wait, call (239) 397-2048. Reply STOP to opt out, HELP for help.");
+  for (const body of [long, plain]) assert.doesNotMatch(body, /!|review|discount|offer|\p{Extended_Pictographic}/u);
 });
