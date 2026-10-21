@@ -19,7 +19,7 @@ from urllib.parse import urlsplit
 from beside_uia import CaptureError, conversation, generic_review
 import beside_intake
 import beside_extract
-from beside_schedule import auto_scan_reason
+from beside_schedule import auto_scan_reason, attention_scan_allowed, REQUESTABLE
 
 ROOT=Path(__file__).resolve().parent
 # BESIDE_REFRESH_SETTINGS lets the Linux service point at its own private settings; Windows default unchanged.
@@ -74,6 +74,16 @@ def capture_timeout(settings,remaining):
         return min(float(settings.get('beside_linux_capture_timeout_seconds',90)),remaining-3)
     return min(25,remaining-3)
 
+def attention_evidence(runs,job_id):
+    """Local proof about an attention job: did this worker claim it, and did it try an import?"""
+    if not job_id:return {'found':False}
+    for lease_path in Path(runs).glob('*/lease.json'):
+        try:lease=load(lease_path)
+        except (OSError,ValueError):continue
+        if (lease.get('state') or {}).get('jobId')==job_id:
+            return {'found':True,'import_attempted':(lease_path.parent/'apply-journal.json').exists()}
+    return {'found':False}
+
 def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0):
     """Read selected threads. Default: stop at the first failure (previous behavior).
     With skip_failed, a failed thread is skipped with exponential backoff and the pass continues,
@@ -93,7 +103,7 @@ def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_fa
             sleep(delay)
     return captures,failures
 
-def run(*,settings_path=SETTINGS,budget_seconds=80):
+def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
     started=time.monotonic();lease=None;run_dir=None;phase='reading';last_error='WORKER_FAILED'
     report={'ok':False,'checked_at':stamp(),'fresh_scan_performed':False,'customer_messages_sent':False}
     def remaining():return budget_seconds-(time.monotonic()-started)
@@ -149,20 +159,37 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
         capture('inventory',probe_path)
         worker('heartbeat')
         state=worker('baseline')['state']
-        if state['status']!='queued' and settings.get('beside_auto_scan_minutes'):
-            # Optional scheduled scan (off by default): ask the dashboard queue for a job;
-            # the next task run claims it through the normal lease path.
+        if state['status']!='queued' and (manual or settings.get('beside_auto_scan_minutes')):
+            # Optional scheduled scan (off by default) or --scan-now: ask the dashboard queue for a
+            # job; this run then claims it through the normal lease path (same as Refresh Beside).
             auto_path=refresh/'uia-auto-scan.json'
             auto_state=load(auto_path) if auto_path.exists() else {}
             checkpoint_path=refresh/'uia-checkpoint.json'
-            reason=auto_scan_reason(datetime.now(timezone.utc),settings,auto_state,
+            now=datetime.now(timezone.utc)
+            if state['status']=='attention':
+                if auto_state.get('attention_job')!=state.get('jobId'):
+                    auto_state.update(attention_job=state.get('jobId'),attention_since=stamp());write(auto_path,auto_state)
+            else:
+                auto_state.pop('attention_job',None);auto_state.pop('attention_since',None)
+            reason='manual' if manual else auto_scan_reason(now,settings,auto_state,
                 load(probe_path),load(checkpoint_path) if checkpoint_path.exists() else {'records':{}})
-            if reason and state['status'] in ('idle','complete','failed',None):
-                requested=worker(settings.get('beside_auto_scan_action','request'),reason='scheduled:'+reason)
+            allowed=state['status'] in REQUESTABLE
+            if reason and state['status']=='attention':
+                allowed,why=attention_scan_allowed(now,state,auto_state,attention_evidence(runs,state.get('jobId')),
+                    float(settings.get('beside_attention_stale_minutes',60)))
+                report['attention_rule']=why
+            if reason and allowed:
+                requested=worker(settings.get('beside_auto_scan_action','request'),reason=('manual:cli' if manual else 'scheduled:'+reason))
                 auto_state.update(last_requested_at=stamp(),last_reason=reason)
                 write(auto_path,auto_state)
                 report['auto_scan_requested']=reason
                 state=requested.get('state') or state
+            elif manual:
+                report['scan_now_refused']=state['status']
+        if manual and state['status']!='queued':
+            report.update(ok=False,worker_ready=True,queue_status=state['status'],error='SCAN_NOW_REFUSED')
+            write(refresh/'uia-worker-status.json',report)
+            return report
         if state['status']!='queued':
             report.update(ok=True,worker_ready=True,queue_status=state['status'],scan_trigger='Owner Dashboard Refresh Beside')
             write(refresh/'uia-worker-status.json',report)
@@ -280,5 +307,29 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
     except OSError:pass
     return report
 
+def main(argv=None):
+    import argparse
+    parser=argparse.ArgumentParser(description='Beside refresh worker. Without options: one queue poll (Windows task behaviour).')
+    parser.add_argument('--scan-now',action='store_true',help='Request and run a full scan + Owner Desk import now (same path as Refresh Beside). Never messages customers.')
+    parser.add_argument('--settings',type=Path,default=None,help='Private settings file (default: BESIDE_REFRESH_SETTINGS or the Windows path).')
+    parser.add_argument('--budget-seconds',type=int,default=None)
+    args=parser.parse_args(argv)
+    settings_path=args.settings or SETTINGS
+    if not args.scan_now:
+        outcome=run(settings_path=settings_path,**({'budget_seconds':args.budget_seconds} if args.budget_seconds else {}))
+    else:
+        lock=None
+        try:
+            import beside_heartbeat_linux  # shared capture.lock (Linux; fcntl)
+            lock=beside_heartbeat_linux.capture_lock(load(settings_path))
+            if lock is None:
+                print(json.dumps({'ok':False,'error':'capture_already_running','customer_messages_sent':False}));return 1
+        except ImportError:
+            pass
+        try:outcome=run(settings_path=settings_path,budget_seconds=args.budget_seconds or 600,manual=True)
+        finally:
+            if lock:lock.close()
+    print(json.dumps(outcome));return 0 if outcome['ok'] else 1
+
 if __name__=='__main__':
-    outcome=run();print(json.dumps(outcome));raise SystemExit(0 if outcome['ok'] else 1)
+    raise SystemExit(main())
