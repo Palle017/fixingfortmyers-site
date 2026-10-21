@@ -54,6 +54,25 @@ def preserve_known_fields(incoming,old):
         result['received_at']=old['received_at']
     return result
 
+def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0):
+    """Read selected threads. Default: stop at the first failure (previous behavior).
+    With skip_failed, a failed thread is skipped with exponential backoff and the pass continues,
+    up to max_failures. Failed threads are never checkpointed, so they stay pending."""
+    captures=[];failures=[]
+    for row in selected:
+        if remaining()<35:break
+        cid=row['conversation_id']
+        try:
+            captures.append(read_one(cid))
+            if len(captures)%3==0:progress()
+        except ScanError:
+            failures.append(cid)
+            if not skip_failed or len(failures)>=max_failures:break
+            delay=min(max_delay,base_delay*(2**(len(failures)-1)))
+            if remaining()-delay<35:break
+            sleep(delay)
+    return captures,failures
+
 def run(*,settings_path=SETTINGS,budget_seconds=80):
     started=time.monotonic();lease=None;run_dir=None;phase='reading';last_error='WORKER_FAILED'
     report={'ok':False,'checked_at':stamp(),'fresh_scan_performed':False,'customer_messages_sent':False}
@@ -138,16 +157,13 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
         checkpoint_path=refresh/'uia-checkpoint.json'
         checkpoint=load(checkpoint_path) if checkpoint_path.exists() else {'records':{}}
         selected,total_changed=selected_changes(inventory,checkpoint,min(25,int(settings.get('maximum_changed_threads_per_pass',25))))
-        captures=[];capture_failures=[]
-        for row in selected:
-            if remaining()<35:break
-            cid=row['conversation_id']
-            try:
-                value=capture('thread',run_dir/('thread-'+cid+'.json'),cid=cid,inventory=run_dir/'inventory.json')
-                captures.append(value)
-                if len(captures)%3==0:worker('progress',phase='reading')
-            except ScanError:
-                capture_failures.append(cid);break
+        def read_one(cid):
+            return capture('thread',run_dir/('thread-'+cid+'.json'),cid=cid,inventory=run_dir/'inventory.json')
+        captures,capture_failures=read_threads(selected,read_one,remaining,
+            lambda:worker('progress',phase='reading'),
+            skip_failed=settings.get('beside_skip_failed_threads') is True,
+            max_failures=int(settings.get('beside_max_thread_failures',5)))
+        report['thread_failures']=len(capture_failures)
         if selected and not captures:raise ScanError('CAPTURE_INCOMPLETE')
         worker('progress',phase='checking');phase='checking'
         baseline=worker('baseline')['baseline'];archive.validate_baseline(baseline)
