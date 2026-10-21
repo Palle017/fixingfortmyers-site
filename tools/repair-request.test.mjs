@@ -215,13 +215,14 @@ test('online form initializes the short request flow and enables the safe submit
   // The first screen is four fields plus one optional email; everything else waits behind the optional step.
   const core = [...x.d.querySelectorAll('.request-fields--core :is(input,textarea,select)')].map(field => field.name).filter(Boolean);
   // Name, phone and optional email first; vehicle year/make/model feed the one "vehicle" field; repairWhere drives locationChoice.
-  assert.deepEqual(core, ['name', 'phone', 'email', 'vehicle', 'details', 'repairWhere', 'repairWhere']);
+  assert.deepEqual(core, ['phone', 'name', 'email', 'vehicle', 'details', 'repairWhere', 'repairWhere']);
   assert.equal(x.d.querySelector('.request-fields--core [name="email"]').required, false);
   assert.equal(x.d.getElementById('request-options').open, false);
   assert.match(x.d.querySelector('#request-options > summary').textContent, /Add a photo or more details/);
   assert.equal(x.d.getElementById('request-submit').disabled, false);
   assert.doesNotMatch(x.d.getElementById('request-instructions').textContent, /prepare (?:a )?(?:text|message)|text draft/i);
-  for (const field of ['name', 'phone', 'details']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
+  for (const field of ['name', 'phone']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
+  assert.equal(x.d.getElementById('request-details').required, false);
   for (const field of ['vehicle', 'timing', 'city', 'location-choice']) assert.equal(x.d.getElementById(`request-${field}`).required, false);
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="tel:"]').textContent, 'Call');
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href="#contact"]').textContent, 'Request a repair');
@@ -384,11 +385,11 @@ test('optional VIN reaches the private repair inquiry, identified as unverified 
   assert.doesNotMatch(JSON.stringify(x.w.dataLayer),/TESTVIN1234567890/,'VIN must not be reported in analytics');
 });
 
-test('missing required details and invalid phone numbers never reach the receiver', async t => {
+test('a missing name and invalid phone numbers never reach the receiver', async t => {
   const x = setup(t); await settle(); x.fill();
-  x.enter('request-details', ''); x.send(); await settle();
+  x.enter('request-name', ''); x.send(); await settle();
   assert.equal(x.leads().length, 0);
-  x.enter('request-details', 'The brakes grind.');
+  x.enter('request-name', 'Synthetic Customer');
   for (const phone of ['239555', '1234567890123456', '239+5550100']) {
     x.enter('request-phone', phone); x.send(); await settle();
     assert.equal(x.leads().length, 0);

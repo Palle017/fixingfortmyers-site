@@ -81,10 +81,10 @@
           <h2 id="request-heading">How can we help with your car?</h2>
           <p id="request-instructions">Four quick things and you’re done. No account needed. Tony reads every request and calls you back.</p>
           <div class="request-fields request-fields--core">
-            <label for="request-name">Your name<input id="request-name" name="name" autocomplete="name" maxlength="100" required enterkeyhint="next" aria-describedby="request-name-error"></label>
-            <p class="request-error" id="request-name-error" hidden></p>
             <label for="request-phone"><span id="request-phone-label">Best number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required enterkeyhint="next" placeholder="(239) 555-0123" aria-describedby="request-phone-error"></label>
             <p class="request-error" id="request-phone-error" hidden></p>
+            <label for="request-name">Your name <span class="field-note">(first name is fine)</span><input id="request-name" name="name" autocomplete="name" autocapitalize="words" maxlength="100" required enterkeyhint="next" aria-describedby="request-name-error"></label>
+            <p class="request-error" id="request-name-error" hidden></p>
             <label for="request-customer-email">Email <span class="field-note">(optional)</span><input id="request-customer-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" enterkeyhint="next"></label>
             <fieldset class="request-full request-vehicle-parts">
               <legend>Vehicle <span class="field-note">(as much as you know)</span></legend>
@@ -106,7 +106,7 @@
                 <button type="button" class="request-chip" aria-pressed="false" data-issue="Warning light on">Warning light</button>
                 <button type="button" class="request-chip" aria-pressed="false" data-issue="Something else">Other</button>
               </div>
-              <label class="request-full" for="request-details">In your own words<textarea id="request-details" name="details" rows="3" maxlength="4000" placeholder="e.g. Grinding noise when I brake, started last week." required aria-describedby="request-details-error"></textarea></label>
+              <label class="request-full" for="request-details">In your own words <span class="field-note">(optional)</span><textarea id="request-details" name="details" rows="3" maxlength="4000" placeholder="e.g. Grinding noise when I brake, started last week." aria-describedby="request-details-error"></textarea></label>
               <p class="request-error" id="request-details-error" hidden></p>
             </fieldset>
             <fieldset class="request-full request-where">

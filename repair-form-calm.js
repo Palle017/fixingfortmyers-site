@@ -80,7 +80,6 @@
     const rules = {
       'request-name': v => v.trim() ? '' : 'Please add your name so Tony knows who to ask for.',
       'request-phone': v => !v.trim() ? 'Please add a phone number so Tony can call you back.' : digits(v).length !== 10 ? 'That number looks short. Please include the area code, like 239 555 0123.' : '',
-      'request-details': v => v.replace(PREFIX, '').trim() ? '' : 'Tap a problem above or add a few words about what’s happening.',
       'request-vehicle-year': v => !v.trim() || /^(19|20)\d{2}$/.test(v.trim()) ? '' : 'Year should be four digits, like 2018. Leave it blank if you’re not sure.',
     };
     const errorFor = el => $(el.getAttribute('aria-describedby')?.split(' ').find(id => id.endsWith('-error')) || '');
