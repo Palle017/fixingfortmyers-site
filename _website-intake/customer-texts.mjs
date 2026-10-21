@@ -9,12 +9,29 @@ const SHOP_NUMBER_TEXT = '(239) 397-2048';
 const issue = (code, {retryable = false} = {}) => Object.assign(new Error(code), {code, retryable});
 export const customerNumber = phone => { const d = String(phone || '').replace(/\D/g, ''); return d.length === 10 ? '+1' + d : d.length === 11 && d[0] === '1' ? '+' + d : ''; };
 
+// Plain mechanic's-note receipt: confirms the request, repeats the vehicle and problem,
+// says Tony will call to set the appointment, and gives the shop number. Always <= 320 chars.
+export const issueSummary = lead => {
+  const first = String(lead.details || '').split('\n')[0].replace(/[\u0000-\u001f]/g, ' ').trim();
+  const text = first.startsWith('Problem: ') ? first.slice(9) : first;
+  return text.length > 50 ? text.slice(0, 49).replace(/\s+\S*$/, '') + '…' : text;
+};
 export function confirmationText(lead, {urgent = false} = {}) {
   const first = String(lead.name || '').trim().split(/\s+/)[0].replace(/[^\p{L}'-]/gu, '').slice(0, 30);
-  const vehicle = String(lead.vehicle || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 60);
-  return [`Perfect Timing Auto Repair: Hi${first ? ' ' + first : ''}, Tony got your repair request${vehicle && !/^Not provided/i.test(vehicle) ? ' for your ' + vehicle : ''}.`,
-    urgent ? `You said you're stranded, so it's marked urgent. If you're somewhere unsafe, call 911.` : `He'll call or text you from ${SHOP_NUMBER_TEXT} to go over it.`,
-    `Questions or photos? Text Tony at ${SHOP_NUMBER_TEXT}. Reply STOP to opt out, HELP for help.`].join(' ');
+  const raw = String(lead.vehicle || '').replace(/[\u0000-\u001f]/g, ' ').trim();
+  const vehicle = /^Not provided/i.test(raw) ? '' : raw.slice(0, 60);
+  const issue = issueSummary(lead);
+  const build = (v, i) => {
+    const about = v ? ` for the ${v}${i ? ' (' + i + ')' : ''}` : i ? ` (${i})` : '';
+    return [`Perfect Timing Auto Repair: Hi${first ? ' ' + first : ''}, we got your repair request${about}.`,
+      urgent ? `You said you're stranded, so it's marked urgent. If you're somewhere unsafe, call 911.` : `Tony will call you to set up an appointment.`,
+      `If it can't wait, call ${SHOP_NUMBER_TEXT}. Reply STOP to opt out, HELP for help.`].join(' ');
+  };
+  // Keep one SMS-sized note: drop the problem first, then shorten the vehicle.
+  let body = build(vehicle, issue);
+  if (body.length > 320) body = build(vehicle, '');
+  if (body.length > 320) body = build(vehicle.slice(0, Math.max(0, vehicle.length - (body.length - 320))).trim(), '');
+  return body;
 }
 
 export function createTwilioCustomerAdapter({accountSid, authToken, fromNumber, fetchImpl = fetch} = {}) {
