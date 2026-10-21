@@ -75,9 +75,24 @@ DOM_NODES_JS = r"""
   };
   const ownText = el => Array.from(el.childNodes).filter(n => n.nodeType === 3)
     .map(n => n.textContent).join('').replace(/\s+/g, ' ').trim();
+  const decorativeHeaderAvatar = el => {
+    // The live contact header exposes its fallback initials as ordinary DOM text,
+    // unlike UIA. Recognize the rendered avatar container, not arbitrary short text.
+    const link = el.parentElement, row = link && link.parentElement;
+    if (el.tagName !== 'SPAN' || !link || link.tagName !== 'A' || !link.hasAttribute('href') ||
+        /\/chats\/prv_/.test(link.href) || !row || !['DIV', 'HEADER'].includes(row.tagName)) return false;
+    const s = getComputedStyle(el), r = el.getBoundingClientRect(), header = row.getBoundingClientRect();
+    if (s.flexShrink !== '0' || s.overflow !== 'hidden' || r.width < 16 || r.width > 64 ||
+        Math.abs(r.width - r.height) > 1 || header.height < r.height || header.height > 96 ||
+        r.top < header.top || r.bottom > header.bottom || !(parseFloat(getComputedStyle(row).borderBottomWidth) > 0))
+      return false;
+    const text = (el.innerText || '').replace(/\s+/g, ' ').trim();
+    return /^\p{L}{1,2}$/u.test(text) && Array.from(link.children).some(sibling =>
+      sibling !== el && (sibling.innerText || '').trim() && sibling.getBoundingClientRect().width > 0);
+  };
   const walk = (el, parent, depth) => {
     if (depth > maxDepth) throw new Error('Rendered capture exceeded bounds');
-    if (hidden(el)) return;
+    if (hidden(el) || decorativeHeaderAvatar(el)) return;
     const tag = el.tagName;
     if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'TEMPLATE') return;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable) {

@@ -16,5 +16,7 @@ MemoryHigh=900M
 CPUQuota=150%
 Nice=10
 NoNewPrivileges=yes
-PrivateTmp=yes
+# The signed-in persistent Chrome profile times out navigating with a private /tmp.
+# Keep its shared runtime resources visible; captures/settings remain owner-only.
+PrivateTmp=no
 UMask=0077
