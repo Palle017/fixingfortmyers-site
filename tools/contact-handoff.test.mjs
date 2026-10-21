@@ -119,7 +119,7 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
 test('mobile bar keeps only the request and call actions',async t=>{
   const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar');
   assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'#contact');assert.equal(bar.children[1].getAttribute('href'),'tel:+12393972048');
-  assert.deepEqual([...bar.children].map(node=>node.textContent),['Request a repair','Call']);
+  assert.deepEqual([...bar.children].map(node=>node.textContent),['Request a repair','Call the shop']);
 });
 
 test('careers preserves the applicant-specific mobile introduction action',t=>{
