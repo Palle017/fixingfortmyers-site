@@ -360,6 +360,17 @@ def service(settings_path):
     settings = load_settings(settings_path)
     if settings.get('beside_linux_capture_enabled') is not True:
         return {'ok': True, 'enabled': False}
+    import beside_heartbeat_linux
+    lock = beside_heartbeat_linux.capture_lock(settings)
+    if lock is None:
+        return {'ok': True, 'enabled': True, 'skipped': 'capture_already_running'}
+    try:
+        return _service_locked(settings_path, settings)
+    finally:
+        lock.close()
+
+
+def _service_locked(settings_path, settings):
     os.environ['BESIDE_REFRESH_SETTINGS'] = str(Path(settings_path).resolve())
     import beside_refresh_runner
     status = {'checked_at': stamp(), 'keepalive': keepalive(settings)}

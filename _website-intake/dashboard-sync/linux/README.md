@@ -100,15 +100,35 @@ Each run: optional keep-alive check → `beside_refresh_runner.run()` (heartbeat
 capture, archive, plan, apply, readback) → optional `beside_alerts`. Status goes to
 `refresh/uia-worker-status.json` like on Windows.
 
-Note: the Owner Dashboard treats the worker as offline when no heartbeat arrives for two minutes,
-and the Windows task runs every minute for that reason. At 12 minutes the dashboard will show the
-Linux worker as offline between runs, and a queued "Refresh Beside" waits up to 12 minutes.
+## Heartbeat (every minute, no browser)
+
+The dashboard marks the worker offline after two minutes without a heartbeat, so a small
+browser-free timer runs every minute (`beside_heartbeat_linux.py`, `MemoryMax=64M`):
+
+- sends the same `heartbeat` to `/api/beside-refresh/worker` as the Windows task, **only if** the
+  last capture status (`refresh/uia-worker-status.json`) is ok/worker_ready and at most
+  `beside_heartbeat_max_age_minutes` old (default 15). Otherwise it sends nothing (no fake
+  readiness) and starts a capture to re-prove sign-in;
+- reads the queue state; if a "Refresh Beside" job is `queued`, starts `beside-capture.service`
+  right away;
+- never claims or completes jobs and never opens Beside.
+
+Captures share a lock (`refresh/capture.lock`, `flock`): a capture started by the heartbeat and the
+12-minute timer can never overlap. Same off switch: `beside_linux_capture_enabled`.
+
+```sh
+cp linux/beside-heartbeat.service linux/beside-heartbeat.timer ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now beside-heartbeat.timer
+```
+
+Rollback: `systemctl --user disable --now beside-heartbeat.timer`.
 
 Do not run the Windows and Linux workers against the same queue at the same time.
 
 ## Rollback
 
-`systemctl --user disable --now beside-capture.timer`, or set `beside_linux_capture_enabled` to
+`systemctl --user disable --now beside-capture.timer beside-heartbeat.timer`, or set `beside_linux_capture_enabled` to
 false. The Windows path is untouched.
 
 ## Still needs a live check (TODO-verify)
