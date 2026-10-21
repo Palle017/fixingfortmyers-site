@@ -23,7 +23,7 @@
 
 
 
-  <link rel="stylesheet" href="/repair-form-calm.css?v=20261020">
+  <link rel="stylesheet" href="/repair-form-calm.css?v=20261021-text-tony">
 </head>
 <body class="home-clean" data-repair-popup>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -199,13 +199,15 @@
         </form>
       <div class="request-done" id="request-done" hidden>
         <h2 id="request-done-heading" tabindex="-1">Your request is in.</h2>
-        <p class="request-done__lead">Tony has your details and will call you to set up an appointment. You don’t need to do anything else right now.</p>
+        <p class="request-done__lead" id="request-done-lead">Send Tony a quick text so he has your number.</p>
         <p id="request-done-summary" class="request-done__summary" hidden></p>
-        <p>If you’re stuck or it can’t wait, call (239) 397-2048. Any time you asked for is penciled in only; it isn’t official until Tony confirms it with you by phone, so please wait for his call before heading over.</p>
+        <p id="request-done-note">If you’re stuck or it can’t wait, call (239) 397-2048. Any time you asked for is penciled in only; it isn’t official until Tony confirms it with you by phone, so please wait for his call before heading over.</p>
         <p class="request-fineprint" id="request-done-ref"></p>
         <p class="request-status" id="request-done-appointment-state" role="status" aria-live="polite" hidden></p>
         <div class="request-actions">
-          <a class="btn btn--primary" id="request-done-call" href="tel:+12393972048">Call Tony about your request (239) 397-2048</a>
+          <a class="btn btn--primary" id="request-done-text" href="sms:+12393972048?&amp;body=">Text Tony now</a>
+          <button class="btn btn--outline" type="button" id="request-done-copy">Copy text</button>
+          <a class="btn btn--outline" id="request-done-call" href="tel:+12393972048">Call Tony about your request (239) 397-2048</a>
           <label class="btn btn--outline request-done__photo" id="request-done-photo" hidden>Add another photo<input id="request-done-media" type="file" accept="image/*,video/*" multiple></label>
           <a class="btn btn--outline" href="/">Return home</a>
         </div>
@@ -290,6 +292,6 @@
   <p class="hours-disclaimer" id="hours-disclaimer"><strong>Repair requests 24/7</strong><br>Repair requests and appointment requests are taken 24/7, including nights, weekends and holidays, by form, call or text. Shop repairs at Tony's workshop, mobile repairs from his equipped service van, and pickup are all by appointment; requested times are penciled in until Tony confirms by phone. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop and the service van cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
 </footer>
   <script src="/repair-dialog.js?v=20261011-popup" defer></script>
-  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/repair-form-calm.js?v=20261020" defer></script><script src="/site.js?v=20261016-verified-pencil-status" defer></script>
+  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/repair-form-calm.js?v=20261021-text-tony" defer></script><script src="/site.js?v=20261021-text-tony" defer></script>
 </body>
 </html>

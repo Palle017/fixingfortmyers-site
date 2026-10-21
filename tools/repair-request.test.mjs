@@ -263,7 +263,7 @@ test('unconfirmed receiver response preserves entries and exposes manual contact
   assert.match(x.d.getElementById('request-status').textContent, /could not confirm receipt[\s\S]*call/);
   assert.equal(x.d.getElementById('request-backup').hidden, false);
   assert.match(x.d.getElementById('request-preview').value, /Vehicle: 2018 Honda Civic[\s\S]*brakes grind/);
-  assert.match(x.d.getElementById('request-text').getAttribute('href'), /^sms:\+12393972048\?body=/);
+  assert.match(x.d.getElementById('request-text').getAttribute('href'), /^sms:\+12393972048\?&body=/);
   assert.match(x.d.getElementById('request-email').getAttribute('href'), /^mailto:fixingfortmyers@gmail\.com\?/);
   assert.ok(x.d.querySelector('a[href="tel:+12393972048"]'));
   assert.equal(x.d.getElementById('request-submit').disabled, false);
