@@ -193,6 +193,16 @@ class SafetyAndWiring(unittest.TestCase):
         self.assertTrue(lin[1].endswith('capture_beside_linux.py'))
         self.assertEqual(lin[2:], ['-Mode', 'thread', '-OutputPath', '/p/o.json', '-SettingsPath', '/p/s.json'])
 
+    def test_capture_timeout_linux_longer_windows_unchanged(self):
+        self.assertEqual(R.capture_timeout({}, 150), 25)
+        self.assertEqual(R.capture_timeout({}, 20), 17)
+        lin = {'beside_capture_backend': 'linux'}
+        self.assertEqual(R.capture_timeout(lin, 150), 90)
+        self.assertEqual(R.capture_timeout(lin, 50), 47)
+        self.assertEqual(R.capture_timeout({**lin, 'beside_linux_capture_timeout_seconds': 120}, 150), 120)
+        svc = (HERE / 'linux' / 'beside-capture.service').read_text()
+        self.assertGreaterEqual(int(re.search(r'TimeoutStartSec=(\d+)', svc)[1]), 150 + 60)
+
     def test_cli_accepts_the_runner_arguments(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / 's.json'; p.write_text(json.dumps({'private_archive_root': d}))
