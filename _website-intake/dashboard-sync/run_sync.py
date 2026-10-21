@@ -58,6 +58,16 @@ except Exception:
 temporary.write_text(json.dumps(status, indent=2), encoding='utf-8')
 temporary.replace(PRIVATE / 'last-run.json')
 
+# Optional Beside failure alerts (off until beside_alerts.enabled); never changes the exit code.
+try:
+    import beside_alerts
+    status['beside_alerts'] = beside_alerts.run(json.loads((PRIVATE / 'config.json').read_text(encoding='utf-8-sig')),
+                                                status.get('beside_refresh'), PRIVATE)
+except Exception:
+    status['beside_alerts'] = {'ok': False, 'error': 'beside_alerts_failed'}
+temporary.write_text(json.dumps(status, indent=2), encoding='utf-8')
+temporary.replace(PRIVATE / 'last-run.json')
+
 # Nudge Tony, then Raj, about untouched new leads. Off until followup.enabled in the private config;
 # its failure never changes the lead-sync receipt or exit.
 try:
