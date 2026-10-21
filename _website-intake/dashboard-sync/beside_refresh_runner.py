@@ -66,6 +66,14 @@ def capture_command(settings,mode,output,settings_path):
     return ['powershell.exe','-NoProfile','-File',str(ROOT/'capture_beside.ps1'),'-Mode',mode,
         '-OutputPath',str(output),'-SettingsPath',str(settings_path),'-PythonExecutable',sys.executable]
 
+def capture_timeout(settings,remaining):
+    # Windows UIA capture: unchanged 25 s. Linux/Playwright: cold Chromium start + read takes ~30 s
+    # on the 2-vCPU VM, so allow beside_linux_capture_timeout_seconds (default 90). Always capped
+    # by the remaining run budget minus 3 s.
+    if settings.get('beside_capture_backend')=='linux':
+        return min(float(settings.get('beside_linux_capture_timeout_seconds',90)),remaining-3)
+    return min(25,remaining-3)
+
 def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0):
     """Read selected threads. Default: stop at the first failure (previous behavior).
     With skip_failed, a failed thread is skipped with exponential backoff and the pass continues,
@@ -127,7 +135,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
             args=capture_command(settings,mode,output,settings_path)
             if cid:args+=['-ConversationId',cid,'-InventoryPath',str(inventory)]
             for attempt in range(2):
-                completed=subprocess.run(args,capture_output=True,text=True,timeout=min(25,remaining()-3),
+                completed=subprocess.run(args,capture_output=True,text=True,timeout=capture_timeout(settings,remaining()),
                     creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
                 if completed.returncode==0:return load(output)
                 report['source_read_failure'] = (completed.stderr.splitlines() or ['Source read failed'])[0][:180]
