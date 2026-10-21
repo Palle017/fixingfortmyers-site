@@ -128,7 +128,9 @@ for (const page of ['index.html', 'request-a-repair.html']) {
     assert.equal(field.autocomplete, 'email');
     assert.equal(field.required, false);
     assert.match(field.closest('label').textContent.replace(/\s+/g, ' ').trim(), /^Email \(optional\)$/);
-    assert.equal(field.closest('label').previousElementSibling.getAttribute('for'), 'request-phone');
+    let prev = field.closest('label').previousElementSibling;
+    while (prev && prev.matches('.request-error')) prev = prev.previousElementSibling;
+    assert.equal(prev.getAttribute('for'), 'request-phone');
   });
 }
 
