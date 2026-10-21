@@ -1,0 +1,20 @@
+# systemd *user* unit for the `beside` user. Install: see linux/README.md. Not enabled by default.
+[Unit]
+Description=Perfect Timing Beside capture (Playwright, read-only)
+After=network-online.target
+
+[Service]
+Type=oneshot
+# Private settings live outside Git (mode 0600). Capture refuses unless
+# "beside_linux_capture_enabled": true is set there.
+Environment=BESIDE_REFRESH_SETTINGS=%h/beside-private/refresh/settings.json
+WorkingDirectory=%h/fixingfortmyers-site/_website-intake/dashboard-sync
+ExecStart=/usr/bin/xvfb-run -a -s "-screen 0 1280x900x24" %h/venv/bin/python capture_beside_linux.py --service -SettingsPath ${BESIDE_REFRESH_SETTINGS}
+TimeoutStartSec=170
+MemoryMax=1G
+MemoryHigh=900M
+CPUQuota=150%
+Nice=10
+NoNewPrivileges=yes
+PrivateTmp=yes
+UMask=0077

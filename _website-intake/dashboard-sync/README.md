@@ -68,3 +68,7 @@ Off until the private `config.json` has:
 ```
 
 State (`followup-state.json`) and a counts-only receipt (`followup-status.json`) stay in the private folder. Synthetic tests: `python3 -m unittest discover -s _website-intake/dashboard-sync -p 'test_*.py'`.
+
+## Linux capture (optional, off by default)
+
+`capture_beside_linux.py` is a Playwright port of `capture_beside.ps1` for the Ubuntu VM, with the same output files and validator. Enable with `beside_capture_backend: "linux"` and `beside_linux_capture_enabled: true` in the private settings. Setup, systemd timer and live-check list: [`linux/README.md`](linux/README.md).

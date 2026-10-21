@@ -22,7 +22,8 @@ import beside_extract
 from beside_schedule import auto_scan_reason
 
 ROOT=Path(__file__).resolve().parent
-SETTINGS=Path(r'C:\Users\LP15\PerfectTiming-Pipeline-private\beside-recovery-20261013\refresh\settings.json')
+# BESIDE_REFRESH_SETTINGS lets the Linux service point at its own private settings; Windows default unchanged.
+SETTINGS=Path(os.environ.get('BESIDE_REFRESH_SETTINGS') or r'C:\Users\LP15\PerfectTiming-Pipeline-private\beside-recovery-20261013\refresh\settings.json')
 ALLOWED_ORIGINS={'https://dashboard.fixingfortmyers.com','https://perfect-timing-owner-desk.prudhvi-pallempati.chatgpt.site'}
 
 class ScanError(RuntimeError):
@@ -55,6 +56,15 @@ def preserve_known_fields(incoming,old):
                 result[key]=old[key]
         result['received_at']=old['received_at']
     return result
+
+def capture_command(settings,mode,output,settings_path):
+    # Default: the Windows UI Automation capture. Opt-in Linux/Playwright capture with the same
+    # arguments and output format (beside_capture_backend: "linux").
+    if settings.get('beside_capture_backend')=='linux':
+        return [sys.executable,str(ROOT/'capture_beside_linux.py'),'-Mode',mode,
+            '-OutputPath',str(output),'-SettingsPath',str(settings_path)]
+    return ['powershell.exe','-NoProfile','-File',str(ROOT/'capture_beside.ps1'),'-Mode',mode,
+        '-OutputPath',str(output),'-SettingsPath',str(settings_path),'-PythonExecutable',sys.executable]
 
 def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0):
     """Read selected threads. Default: stop at the first failure (previous behavior).
@@ -114,8 +124,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
             return call('/api/beside-refresh/worker',body)
         def capture(mode,output,*,cid=None,inventory=None):
             if remaining()<10:raise ScanError('CAPTURE_INCOMPLETE')
-            args=['powershell.exe','-NoProfile','-File',str(ROOT/'capture_beside.ps1'),'-Mode',mode,
-                '-OutputPath',str(output),'-SettingsPath',str(settings_path),'-PythonExecutable',sys.executable]
+            args=capture_command(settings,mode,output,settings_path)
             if cid:args+=['-ConversationId',cid,'-InventoryPath',str(inventory)]
             for attempt in range(2):
                 completed=subprocess.run(args,capture_output=True,text=True,timeout=min(25,remaining()-3),
