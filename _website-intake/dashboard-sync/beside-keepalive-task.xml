@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<!-- Import on p15g2 (interactive user only):
+     schtasks /Create /TN "Perfect Timing Beside Keep-Alive" /XML beside-keepalive-task.xml
+     Edit the two paths in <Arguments> first. The task runs only while LP15 is logged on. -->
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo><Description>Reopens app.beside.com/chats in the dedicated Chrome profile if missing. Never handles passwords.</Description></RegistrationInfo>
+  <Triggers>
+    <LogonTrigger><Enabled>true</Enabled><Delay>PT1M</Delay>
+      <Repetition><Interval>PT5M</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition>
+    </LogonTrigger>
+  </Triggers>
+  <Principals><Principal id="Author"><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <ExecutionTimeLimit>PT1M</ExecutionTimeLimit>
+    <Enabled>true</Enabled>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-NoProfile -WindowStyle Hidden -File "C:\Users\LP15\PerfectTiming-Pipeline\_website-intake\dashboard-sync\beside_keepalive.ps1" -SettingsPath "C:\Users\LP15\PerfectTiming-Pipeline-private\beside-recovery-20261013\refresh\settings.json"</Arguments>
+    </Exec>
+  </Actions>
+</Task>

@@ -506,12 +506,11 @@
   if (!endpoint) byId('request-instructions').textContent = 'Online requests are unavailable right now. Fill in what you know to prepare a text or email, then send it yourself. Nothing is sent from this page.';
   };
   let mediaReady = false;
-  // Messages uses a different body separator on Apple mobile devices. Keep copy/email
-  // available because support still depends on the device's registered texting app.
-  const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const smsBodySeparator = appleMobile ? '&' : '?';
+  // sms:+number?&body= opens a prefilled message on both iOS and Android.
+  // Copy and email stay available when a device has no texting app.
+  const smsHref = body => `sms:+12393972048?&body=${encodeURIComponent(body)}`;
   const refreshDraftLinks = () => {
-    if (textDraft) textDraft.href = `sms:+12393972048${smsBodySeparator}body=${encodeURIComponent(preview.value)}`;
+    if (textDraft) textDraft.href = smsHref(preview.value);
     byId('request-email').href = `mailto:fixingfortmyers@gmail.com?subject=${encodeURIComponent('Repair inquiry for Perfect Timing Auto Repair')}&body=${encodeURIComponent(preview.value)}`;
   };
   preview.addEventListener('input',refreshDraftLinks);
@@ -674,7 +673,66 @@
   // Success replaces the form in place, so the customer never lands on an unrelated page.
   const done = byId('request-done');
   let receipt = null;
+  let tonyTextReference = '';
   const appointmentNotice = byId('request-done-appointment-state');
+  const clip = (value, max) => String(value || '').replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+  const problemFromDetails = details => {
+    const symptoms = String(details || '').split('\n\n')[0];
+    const lines = symptoms.split('\n').map(line => line.trim()).filter(Boolean);
+    if (!lines.length) return '';
+    const first = lines[0].replace(/^Problem:\s*/, '');
+    const rest = lines.slice(1).join(' ');
+    return [first, rest].filter(Boolean).join('. ');
+  };
+  // Short text Tony can read on his phone. The long draft stays available for the offline fallback.
+  const tonyTextBody = (data, reference) => {
+    const summary = typeof window.ptCalmRepairSummary === 'function' ? window.ptCalmRepairSummary() : null;
+    const name = clip(summary?.name || data?.name, 80);
+    const vehicleRaw = clip(summary?.vehicle || data?.vehicle, 80);
+    const vehicle = !vehicleRaw || /^not provided/i.test(vehicleRaw) ? 'car' : vehicleRaw;
+    let problem = clip(summary?.problem || problemFromDetails(data?.details), 140).replace(/!/g, '');
+    if (!problem) problem = 'a repair';
+    if (!/\.$/.test(problem)) problem += '.';
+    const ref = clip(reference, 80);
+    const body = `Hi, I filled out the repair form on your website. This is ${name || 'a customer'} texting about my ${vehicle}: ${problem}`;
+    return (ref ? `${body} Reference: ${ref}.` : body).replace(/!/g, '');
+  };
+  const fillTonyText = reference => {
+    tonyTextReference = reference || '';
+    const link = byId('request-done-text');
+    if (!link) return;
+    const body = tonyTextBody(requestPayload, tonyTextReference);
+    link.href = smsHref(body);
+    link.dataset.body = body;
+  };
+  window.ptRefreshTonyText = () => {
+    if (done?.hidden) return;
+    fillTonyText(tonyTextReference);
+  };
+  const setTonyCopy = saved => {
+    const heading = byId('request-done-heading');
+    const lead = byId('request-done-lead');
+    const note = byId('request-done-note');
+    if (saved) {
+      if (heading) heading.textContent = 'Your request is in.';
+      if (lead) lead.textContent = 'Send Tony a quick text so he has your number.';
+      if (note) note.hidden = false;
+    } else {
+      if (heading) heading.textContent = "The online request didn't go through.";
+      if (lead) lead.textContent = 'A text is the way to reach Tony.';
+      if (note) note.hidden = true;
+      const ref = byId('request-done-ref');
+      if (ref) ref.textContent = '';
+      if (appointmentNotice) appointmentNotice.hidden = true;
+    }
+  };
+  const showFailedHandoff = () => {
+    setTonyCopy(false);
+    fillTonyText('');
+    done.hidden = false;
+    byId('request-done-text')?.focus({preventScroll:true});
+    done.scrollIntoView({behavior:'auto', block:'nearest'});
+  };
   function startVerifiedAppointmentStatus(result) {
     if (!appointmentNotice || !requestPayload?.preferredDate || !requestPayload?.preferredTime) return;
     appointmentNotice.hidden = false;
@@ -719,6 +777,8 @@
   }
   const showDone = (result, sentMedia) => {
     receipt = result;
+    setTonyCopy(true);
+    fillTonyText(result.id);
     backup.hidden = true; form.hidden = true; done.hidden = false;
     startVerifiedAppointmentStatus(result);
     byId('request-done-ref').textContent = `Reference: ${result.id}`;
@@ -779,6 +839,7 @@
       } else if (error.status && !retryable(error)) {
         status.textContent = `${error.reason || 'The shop’s system could not accept this request.'} Your details are still here: correct them and send again, or call (239) 397-2048.`;
         submit.textContent = 'Retry repair request';
+        showFailedHandoff();
       } else if (autoRetries < 2) {
         autoRetries++;
         status.textContent = 'We could not confirm receipt yet. Your details are safe on this page, and we’re trying again in a few seconds. You can also call (239) 397-2048.';
@@ -787,6 +848,7 @@
       } else {
         status.textContent = 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the text/email draft and send it yourself.';
         submit.textContent = 'Retry repair request';
+        showFailedHandoff();
       }
     } finally { sending = false; submit.disabled = form.hidden; }
   }
@@ -795,6 +857,16 @@
   byId('request-copy').addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(preview.value); status.textContent = 'Request copied. Paste it into your email or text message and send it to the shop.'; }
     catch (_) { preview.focus(); preview.select(); status.textContent = 'Select and copy the message above, then paste it into your email or text.'; }
+  });
+  byId('request-done-copy')?.addEventListener('click', async () => {
+    const text = byId('request-done-text')?.dataset.body || '';
+    const doneStatus = byId('request-done-status');
+    try {
+      await navigator.clipboard.writeText(text);
+      if (doneStatus) doneStatus.textContent = 'Text copied. Paste it into your messages app and send it to Tony.';
+    } catch (_) {
+      if (doneStatus) doneStatus.textContent = 'Select the message and paste it into your messages app, or call (239) 397-2048.';
+    }
   });
   let recorder, stream, chunks = [], recording, recordingUrl, stopTimer, voiceKey;
   const start = byId('voice-start'), stop = byId('voice-stop'), voiceSend = byId('voice-send'), voiceStatus = byId('voice-status');

@@ -138,7 +138,50 @@ def displayed_activity(capture,text_nodes):
         raise CaptureError('future_displayed_activity')
     return instant.astimezone(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00','Z')
 
-def conversation(capture,raw_sha256):
+# Assumed Beside wording for call activity; unverified against every Beside layout. Override with
+# beside_call_markers (regex) in the refresh settings if the shop's threads use other labels.
+CALL_MARKERS=re.compile(r'\b(?:incoming call|outgoing call|missed call|voicemail|call ended|call summary|call recap|answered by|phone call|call transcript|recording)\b',re.I)
+
+def _day_for(marker,local):
+    if marker=='Today':return local.date()
+    if marker=='Yesterday':return local.date()-timedelta(days=1)
+    month,number=marker.split()
+    if month not in MONTHS:raise CaptureError('unrecognized_activity_month')
+    day=local.date().replace(month=MONTHS[month],day=int(number))
+    return day.replace(year=day.year-1) if day>local.date() else day
+
+def message_events(capture,text_nodes,call_markers=None):
+    """Per-message timestamps: each visible clock is dated by the next day separator after it
+    (the layout displayed_activity() already relies on), else the closest one before it.
+    Clocks without any day separator are held (no invented dates)."""
+    observed=datetime.fromisoformat(capture['observed_at'].replace('Z','+00:00'))
+    if observed.tzinfo is None:raise CaptureError('capture_timezone_missing')
+    local=observed.astimezone(ZoneInfo('America/New_York'))
+    markers=call_markers if call_markers is not None else CALL_MARKERS
+    names=[n['name'] for n in text_nodes[1:]]
+    days=[(i,name) for i,name in enumerate(names) if DAY.fullmatch(name)]
+    events=[];current=None
+    for i,name in enumerate(names):
+        if CLOCK.fullmatch(name):
+            after=next((d for j,d in days if j>i),None)
+            before=next((d for j,d in reversed(days) if j<i),None)
+            marker=after or before
+            if marker is None:raise CaptureError('displayed_activity_day_missing')
+            clock=datetime.strptime(name,'%I:%M %p').time()
+            instant=datetime.combine(_day_for(marker,local),clock,tzinfo=ZoneInfo('America/New_York'))
+            if instant>local+timedelta(minutes=1):raise CaptureError('future_displayed_activity')
+            current={'at':instant.astimezone(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00','Z'),'text':[]}
+            events.append(current)
+        elif DAY.fullmatch(name):
+            continue
+        elif current is not None:
+            current['text'].append(name)
+    for event in events:
+        body=' '.join(event['text'])
+        event['kind']='call' if markers.search(body) else 'text'
+    return events
+
+def conversation(capture,raw_sha256,*,details=False,call_markers=None):
     text_nodes=verified_text(capture)
     title=text_nodes[0]['name']
     phone=''
@@ -147,10 +190,20 @@ def conversation(capture,raw_sha256):
         phone='+'+(digits if len(digits)==11 else '1'+digits)
         title='Name not provided'
     body='\n'.join(n['name'] for n in text_nodes[1:])
-    return {'id':capture['conversation_id'],'name':title,'phone':phone,'email':'','vehicle':'',
+    item={'id':capture['conversation_id'],'name':title,'phone':phone,'email':'','vehicle':'',
         'concern':body,'received_at':displayed_activity(capture,text_nodes),'updated_at':None,
         'time_basis':'Latest rendered activity clock and following day separator, America/New_York; not first-ever receipt.',
         'raw':{'capture_sha256':raw_sha256,'capture':sanitize_raw(capture)}}
+    if details:
+        # Optional (beside_parse_details): earliest visible message time and call/text split.
+        events=message_events(capture,text_nodes,call_markers)
+        if events:
+            times=sorted(e['at'] for e in events)
+            item.update(received_at=times[0],updated_at=times[-1] if times[-1]!=times[0] else None,
+                time_basis='Earliest rendered message clock in the visible thread, America/New_York; older paged history not read.')
+        item['source']='beside_call' if any(e['kind']=='call' for e in events) else 'beside_text'
+        item['messages']=[{'at':e['at'],'kind':e['kind']} for e in events]
+    return item
 
 def generic_review(capture,observed_at):
     cid=capture['conversation_id']
