@@ -224,7 +224,7 @@ test('online form initializes the short request flow and enables the safe submit
   for (const field of ['name', 'phone']) assert.equal(x.d.getElementById(`request-${field}`).required, true);
   assert.equal(x.d.getElementById('request-details').required, false);
   for (const field of ['vehicle', 'timing', 'city', 'location-choice']) assert.equal(x.d.getElementById(`request-${field}`).required, false);
-  assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="tel:"]').textContent, 'Call');
+  assert.equal(x.d.querySelector('.mobile-contact-bar a[href^="tel:"]').textContent, 'Call the shop');
   assert.equal(x.d.querySelector('.mobile-contact-bar a[href="#contact"]').textContent, 'Request a repair');
   assert.ok(x.d.querySelector('a[href^="sms:"]'), 'texting remains available in the page');
   assert.equal(x.leads().length, 0);
