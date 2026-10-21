@@ -102,6 +102,22 @@ class LadderTests(unittest.TestCase):
         h = Harness([lead('h', source='beside-history'), lead('s', classification='spam'), lead('o', historical=True)])
         self.assertEqual(h.tick(60)[1], [])
 
+    def test_junk_stops_ladder_and_restore_keeps_sent_steps(self):
+        row = lead(minutes=0)
+        h = Harness([row])
+        self.assertEqual([who for who, _ in h.tick(0)[1]], ['tony'])
+        row['folder'] = 'junk'
+        self.assertEqual(h.tick(15)[1], [])
+        self.assertEqual(h.tick(30)[1], [])
+        row['folder'] = 'inbox'
+        pushes = h.tick(31)[1]
+        self.assertEqual([who for who, _ in pushes], ['tony'])
+        self.assertIn('not contacted (30 min)', pushes[0][1]['title'])
+        self.assertEqual(h.tick(32)[1], [])
+        state = json.loads((Path(h.dir.name) / 'followup-state.json').read_text())
+        self.assertEqual(state['sent'][row['id'] + ':0'], at(0).isoformat())
+        self.assertEqual(set(state['sent']), {row['id'] + ':' + str(m) for m in (0, 15, 30)})
+
     def test_failed_send_retries_next_run(self):
         h = Harness([lead(minutes=0)], fail=True)
         receipt, _ = h.tick(0)
@@ -153,6 +169,15 @@ class AlarmAndDigestTests(unittest.TestCase):
         self.assertEqual(sent.count('Open leads this morning'), 2)
         self.assertNotIn('Open leads this morning', [m['title'] for _, m in h.tick(morning + 2)[1]])
 
+    def test_junk_never_enters_current_or_older_review_digest(self):
+        h = Harness([lead('current', minutes=0, folder='junk'),
+                     lead('older', minutes=-6000, folder='junk')])
+        self.assertEqual(h.tick(7 * 60)[1], [])
+        h.rows[1]['folder'] = 'inbox'
+        messages = h.tick(7 * 60 + 1)[1]
+        self.assertEqual(len(messages), 2)
+        self.assertTrue(all(message['body'].startswith('1 older card(s)') for _, message in messages))
+
     def test_eastern_time_handles_dst(self):
         self.assertEqual(fu.eastern(datetime(2026, 7, 1, 12, tzinfo=timezone.utc)).hour, 8)
         self.assertEqual(fu.eastern(datetime(2026, 12, 1, 13, tzinfo=timezone.utc)).hour, 8)
@@ -167,6 +192,14 @@ class CounterAndConfigTests(unittest.TestCase):
         self.assertEqual(stats, {'leads_since_start': 3, 'uncontacted_now': 1, 'touched_within_15_min_pct': 33,
                                  'touched_within_60_min_pct': 67, 'median_minutes_to_first_touch': 27.5,
                                  'quoted': 1, 'booked': 0})
+
+    def test_junk_does_not_change_followup_totals_or_first_touch_metrics(self):
+        inbox = lead('active', 0, folder='inbox')
+        rows = [inbox, lead('junk-open', 0, folder='junk'),
+                lead('junk-quote', 0, folder='junk', stage='send_quote', owner_updated_at=at(2).isoformat()),
+                lead('junk-booked', 0, folder='junk', stage='scheduled', owner_updated_at=at(3).isoformat())]
+        self.assertEqual(fu.counters(rows, START, at(120)), fu.counters([inbox], START, at(120)))
+        self.assertEqual(fu.counters(rows, START, at(120))['leads_since_start'], 1)
 
     def test_off_by_default(self):
         h = Harness([lead(minutes=0)])
