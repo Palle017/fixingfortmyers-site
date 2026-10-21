@@ -17,6 +17,7 @@ import time
 from urllib import request
 from urllib.parse import urlsplit
 from beside_uia import CaptureError, conversation, generic_review
+from beside_schedule import auto_scan_reason
 
 ROOT=Path(__file__).resolve().parent
 SETTINGS=Path(r'C:\Users\LP15\PerfectTiming-Pipeline-private\beside-recovery-20261013\refresh\settings.json')
@@ -110,6 +111,20 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
         capture('inventory',probe_path)
         worker('heartbeat')
         state=worker('baseline')['state']
+        if state['status']!='queued' and settings.get('beside_auto_scan_minutes'):
+            # Optional scheduled scan (off by default): ask the dashboard queue for a job;
+            # the next task run claims it through the normal lease path.
+            auto_path=refresh/'uia-auto-scan.json'
+            auto_state=load(auto_path) if auto_path.exists() else {}
+            checkpoint_path=refresh/'uia-checkpoint.json'
+            reason=auto_scan_reason(datetime.now(timezone.utc),settings,auto_state,
+                load(probe_path),load(checkpoint_path) if checkpoint_path.exists() else {'records':{}})
+            if reason and state['status'] in ('idle','complete','failed',None):
+                requested=worker(settings.get('beside_auto_scan_action','request'),reason='scheduled:'+reason)
+                auto_state.update(last_requested_at=stamp(),last_reason=reason)
+                write(auto_path,auto_state)
+                report['auto_scan_requested']=reason
+                state=requested.get('state') or state
         if state['status']!='queued':
             report.update(ok=True,worker_ready=True,queue_status=state['status'],scan_trigger='Owner Dashboard Refresh Beside')
             write(refresh/'uia-worker-status.json',report)

@@ -156,23 +156,23 @@ test('with cloud intake offline, the public form falls back to an editable nativ
   x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
   d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
   assert.equal(x.requests.length,0);assert.equal(d.getElementById('request-backup').hidden,false);assert.equal(d.getElementById('request-preview').readOnly,false);
-  const link=d.getElementById('request-text');assert.ok(link.getAttribute('href').startsWith('sms:+12393972048?body='));
-  assert.match(decodeURIComponent(link.getAttribute('href').split('?body=')[1]),/Synthetic vehicle will not start\./);
+  const link=d.getElementById('request-text');assert.ok(link.getAttribute('href').startsWith('sms:+12393972048?&body='));
+  assert.match(decodeURIComponent(link.getAttribute('href').slice('sms:+12393972048?&body='.length)),/Synthetic vehicle will not start\./);
   assert.match(d.getElementById('request-preview').value,/Callback: Please reply to this text/);
   assert.doesNotMatch(d.getElementById('request-preview').value,/No; please call/);
   assert.match(d.getElementById('request-preview').value,/Please reply about this repair inquiry\.\nWebsite page context: \/$/);
   assert.match(d.getElementById('request-status').textContent,/Nothing has been sent yet/);assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null);
-  x.enter('request-preview','Customer edited message for Tony.');assert.equal(decodeURIComponent(link.getAttribute('href').split('?body=')[1]),'Customer edited message for Tony.');
+  x.enter('request-preview','Customer edited message for Tony.');assert.equal(decodeURIComponent(link.getAttribute('href').slice('sms:+12393972048?&body='.length)),'Customer edited message for Tony.');
   assert.equal(x.w.location.href,'https://fixingfortmyers.com/');assert.equal(x.requests.length,0);
 });
 
-test('iPhone text draft uses the Apple body separator and keeps edited customer words with a fixed recipient',async t=>{
+test('iPhone text draft uses the shared ?&body= separator and keeps edited customer words with a fixed recipient',async t=>{
   const x=setup(t,{publicContact:true,handler:async()=>{throw new TypeError('offline');},userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1'}),d=x.w.document;
   await settle();x.requests.length=0;
   const message='Edited symptoms & location? Please reply.\nNo diagnosis requested.';
   x.enter('request-preview',message);
   const url=d.getElementById('request-text').getAttribute('href');
-  assert.equal(url,`sms:+12393972048&body=${encodeURIComponent(message)}`);
+  assert.equal(url,`sms:+12393972048?&body=${encodeURIComponent(message)}`);
   assert.ok(d.getElementById('request-email').getAttribute('href').includes(encodeURIComponent(message)));
   assert.equal(x.requests.length,0);
 });
@@ -194,7 +194,7 @@ test('draft source carries only known page categories, never URL or session-inje
     assert.ok(draft.endsWith('Website page context: /'+input.source+(input.source?' (last guide or service viewed)':'')));
     assert.doesNotMatch(draft,/PrivatePerson|2395550199/);assert.equal(x.requests.length,0);
     if(input.url.includes('service=cooling'))assert.equal(d.getElementById('request-service').value,'Engine');
-    assert.ok(d.getElementById('request-text').getAttribute('href').startsWith('sms:+12393972048?body='));
+    assert.ok(d.getElementById('request-text').getAttribute('href').startsWith('sms:+12393972048?&body='));
   }
 });
 test('the site form stores the exact SMS consent wording shown beside the site checkbox',t=>{
