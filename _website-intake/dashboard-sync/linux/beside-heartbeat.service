@@ -1,0 +1,13 @@
+# Browser-free heartbeat (every minute). Not enabled by default; see linux/README.md.
+[Unit]
+Description=Perfect Timing Beside worker heartbeat (no browser)
+
+[Service]
+Type=oneshot
+Environment=BESIDE_REFRESH_SETTINGS=%h/beside-private/refresh/settings.json
+WorkingDirectory=%h/fixingfortmyers-site/_website-intake/dashboard-sync
+ExecStart=%h/venv/bin/python beside_heartbeat_linux.py -SettingsPath ${BESIDE_REFRESH_SETTINGS}
+TimeoutStartSec=30
+MemoryMax=64M
+NoNewPrivileges=yes
+UMask=0077
