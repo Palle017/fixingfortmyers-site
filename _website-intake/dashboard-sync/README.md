@@ -72,3 +72,11 @@ State (`followup-state.json`) and a counts-only receipt (`followup-status.json`)
 ## Linux capture (optional, off by default)
 
 `capture_beside_linux.py` is a Playwright port of `capture_beside.ps1` for the Ubuntu VM, with the same output files and validator. Enable with `beside_capture_backend: "linux"` and `beside_linux_capture_enabled: true` in the private settings. Setup, systemd timer and live-check list: [`linux/README.md`](linux/README.md).
+
+## Manual scan and auto-scan
+
+`python beside_refresh_runner.py --scan-now` runs one full scan + Owner Desk import now, the same
+path as Refresh Beside, under the shared capture lock, with no customer messages. With no options
+the runner behaves exactly as before (one queue poll; the Windows task is unchanged). Auto-scan
+(`beside_auto_scan_minutes`) now runs at any hour when `beside_shop_hours` is unset, and only steps
+past a stale `attention` job when that job never attempted an import. See `linux/README.md`.
