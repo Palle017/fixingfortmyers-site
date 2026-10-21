@@ -441,3 +441,8 @@ test('normal SMS preserves city and sender link with maximum Unicode fields and 
   const short=sent[1];assert.ok(short.length<=1500);
   assert.deepEqual(short.match(/https:\/\/\S+/g),[senderMap,'https://www.google.com/maps/search/?api=1&query=123%20Example%20St']);
 });
+
+test('summarize: shows the optional customer email only when the lead has one', () => {
+  assert.match(summarize(lead({email:'customer@example.invalid'}), 'L-E1', NORMAL).text, /\nEmail: customer@example\.invalid\n/);
+  assert.doesNotMatch(summarize(lead(), 'L-E2', NORMAL).text, /Email:/);
+});

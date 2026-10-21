@@ -86,8 +86,12 @@ function normalize(input, kind) {
       }
     }
   }
+  // Optional customer email: kept only when it looks valid; a bad one is dropped, never a reason to lose the lead.
+  const email = typeof input.email === 'string' ? input.email.replace(/[\u0000-\u001f\u007f]/g, '').trim() : '';
+  const emailOk = email.length <= 254 && /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email);
   return {
     kind, name: clean(input.name, 100, true), phone,
+    ...(emailOk ? { email } : {}),
     requestId: kind === 'voicenote' ? clean(input.requestId, 36) : '',
     vehicle: clean(input.vehicle, 160), service: clean(input.service, 160),
     details: clean(input.details ?? input.message, 6000),

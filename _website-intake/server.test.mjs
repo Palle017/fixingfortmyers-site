@@ -123,3 +123,15 @@ test('sender pin rejects coercion, canonicalizes maps, requires city for new cli
   assert.equal((await submit(x.publicUrl,payload,key)).status,200);
   assert.equal((await submit(x.publicUrl,body())).status,201);
 });
+
+test('optional customer email is stored when valid and dropped (not rejected) when invalid', async t => {
+  const x = await setup(t);
+  assert.equal((await submit(x.publicUrl, body({email:' Customer@Example.invalid '}))).status, 201);
+  assert.equal((await submit(x.publicUrl, body({details:'Second synthetic request.', email:'not-an-email'}))).status, 201);
+  assert.equal((await submit(x.publicUrl, body({details:'Third synthetic request.'}))).status, 201);
+  const leads = (await (await fetch(x.inboxUrl+'/api/leads')).json()).leads;
+  const by = text => leads.find(lead => lead.details.startsWith(text));
+  assert.equal(by('Synthetic local').email, 'Customer@Example.invalid');
+  assert.equal(Object.hasOwn(by('Second'), 'email'), false);
+  assert.equal(Object.hasOwn(by('Third'), 'email'), false);
+});
