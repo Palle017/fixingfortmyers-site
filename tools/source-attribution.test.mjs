@@ -43,9 +43,9 @@ function browser(t, {file = 'index.html', url = 'https://preview.invalid/', refe
 function draftMessages(x) {
   const sms = x.d.getElementById('request-text').getAttribute('href');
   const mail = new URL(x.d.getElementById('request-email').getAttribute('href'));
-  assert.ok(sms.startsWith('sms:+12393972048?body='));
+  assert.ok(sms.startsWith('sms:+12393972048?&body='));
   assert.equal(mail.pathname,'fixingfortmyers@gmail.com');
-  const smsBody = decodeURIComponent(sms.split('?body=')[1]);
+  const smsBody = decodeURIComponent(sms.slice('sms:+12393972048?&body='.length));
   assert.equal(smsBody,x.d.getElementById('request-preview').value);
   assert.equal(mail.searchParams.get('body'),smsBody);
   assert.equal(x.d.getElementById('request-preview').readOnly,false);

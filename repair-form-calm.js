@@ -3,6 +3,22 @@
 // cloud intake already reads (vehicle, details, service, locationChoice).
 (() => {
   'use strict';
+  const field = id => document.getElementById(id);
+  // Visible year / make / model and the problem line, for the short text to Tony.
+  window.ptCalmRepairSummary = () => {
+    const year = field('request-vehicle-year')?.value.trim() || '';
+    const make = field('request-vehicle-make')?.value.trim() || '';
+    const model = field('request-vehicle-model')?.value.trim() || '';
+    const joined = [year, make, model].filter(Boolean).join(' ');
+    const lines = String(field('request-details')?.value || '').split('\n').map(line => line.trim()).filter(Boolean);
+    const first = (lines[0] || '').replace(/^Problem:\s*/, '');
+    const rest = lines.slice(1).join(' ');
+    return {
+      name: field('request-name')?.value || '',
+      vehicle: joined || field('request-vehicle')?.value || '',
+      problem: [first, rest].filter(Boolean).join('. ')
+    };
+  };
   const init = () => {
     const form = document.getElementById('bookingForm');
     if (!form || form.dataset.calm) return;
@@ -89,6 +105,7 @@
       const issue = (details?.value.split('\n')[0] || '').replace(PREFIX, '').trim().slice(0, 120);
       summary.textContent = [v && 'Vehicle: ' + v, issue && 'Problem: ' + issue].filter(Boolean).join(' · ');
       summary.hidden = !summary.textContent;
+      if (typeof window.ptRefreshTonyText === 'function') window.ptRefreshTonyText();
     }).observe(done, {attributes: true, attributeFilter: ['hidden']});
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
