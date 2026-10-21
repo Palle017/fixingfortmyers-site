@@ -1,0 +1,38 @@
+/* Calm, mobile-first repair request (#bookingForm). Loaded after the page bundle. */
+#bookingForm input:not([type=checkbox]):not([type=radio]):not([type=file]),#bookingForm textarea,#bookingForm select{min-height:48px;font-size:16px;padding:.7rem .85rem;border-radius:var(--radius-md,8px)}
+#bookingForm label{font-weight:600}
+#bookingForm fieldset{border:0;margin:0;padding:0;min-width:0}
+#bookingForm legend{font-weight:600;padding:0;margin-bottom:.5rem;color:var(--color-text,#e8e8ec)}
+#bookingForm .request-fields--core{display:grid;grid-template-columns:1fr;gap:.9rem}
+#bookingForm .request-fields--core>*{grid-column:1/-1}
+@media (min-width:600px){#bookingForm .request-fields--core{grid-template-columns:1fr 1fr}#request-name-error{grid-row:2;grid-column:1}#request-phone-error{grid-row:2;grid-column:2}}
+.request-vehicle-row{display:grid;grid-template-columns:5.5rem 1fr 1fr;gap:.5rem}
+.request-vehicle-row label{font-weight:500;font-size:.9rem;color:var(--color-text-muted,#A9AEB5)}
+.request-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem}
+.request-chip{min-height:48px;padding:.6rem 1rem;border-radius:999px;border:1px solid var(--color-border,#2a2a30);background:var(--color-surface,#111114);color:var(--color-text,#e8e8ec);font:600 1rem var(--font-body);cursor:pointer;touch-action:manipulation}
+.request-chip[aria-pressed=true]{border-color:#3ABEFF;background:rgba(58,190,255,.16);color:#fff}
+.request-chip[aria-pressed=true]::before{content:"\2713\00a0"}
+.request-chip:focus-visible,.request-where__option:focus-within{outline:3px solid #3ABEFF;outline-offset:2px}
+.request-where__options{display:grid;grid-template-columns:1fr;gap:.6rem}
+.request-where__option{display:flex;gap:.75rem;align-items:flex-start;min-height:56px;padding:.85rem 1rem;border:1px solid var(--color-border,#2a2a30);border-radius:var(--radius-md,8px);background:var(--color-surface,#111114);cursor:pointer}
+.request-where__option input{width:22px;height:22px;margin-top:.15rem;accent-color:#3ABEFF;flex:none}
+.request-where__option span{display:flex;flex-direction:column}
+.request-where__option small{font-weight:400;color:var(--color-text-muted,#A9AEB5)}
+.request-where__option:has(input:checked){border-color:#3ABEFF;background:rgba(58,190,255,.1)}
+.request-where .request-car-location,.request-where #request-dropoff{margin-top:.75rem}
+.request-error{margin:-.4rem 0 0;color:#ffb38a;font-size:.95rem}
+#bookingForm [aria-invalid=true]{border-color:#ff6a1a}
+#bookingForm #request-submit{width:100%;min-height:56px;font-size:1.15rem}
+#bookingForm details>summary{min-height:48px;display:flex;align-items:center;cursor:pointer}
+.request-call{display:flex;flex-direction:column;gap:.5rem;padding:1rem;margin-bottom:1rem;border:1px solid var(--color-border,#2a2a30);border-radius:var(--radius-lg,16px);background:var(--color-surface,#111114)}
+.request-call p{margin:0;color:var(--color-text-muted,#A9AEB5)}
+.request-call__btn{box-sizing:border-box;width:100%;max-width:100%;white-space:normal;text-align:center;min-height:56px;display:flex;align-items:center;justify-content:center;font-size:1rem;letter-spacing:.04em;background:#ff6a1a;border-color:#ff6a1a;color:#0a0a0b}
+.request-done__lead{font-size:1.15rem;color:var(--color-text,#e8e8ec)}
+#request-done-text{flex:1 1 100%;min-height:56px;font-size:1.15rem}
+.request-done__summary{padding:.75rem 1rem;border-left:3px solid #3ABEFF;background:rgba(58,190,255,.08)}
+@media (min-width:700px){
+  .request-call{flex-direction:row;align-items:center;justify-content:space-between;gap:1rem;position:sticky;top:5rem;z-index:2}
+  .request-call__btn{width:auto;flex:none;padding-inline:1.5rem}
+  .request-where__options{grid-template-columns:1fr 1fr}
+}
+
