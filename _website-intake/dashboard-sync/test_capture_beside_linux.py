@@ -235,6 +235,8 @@ class SafetyAndWiring(unittest.TestCase):
         svc = (HERE / 'linux' / 'beside-capture.service').read_text()
         timer = (HERE / 'linux' / 'beside-capture.timer').read_text()
         self.assertIn('MemoryMax=1G', svc); self.assertIn('--service', svc); self.assertIn('xvfb-run', svc)
+        self.assertNotIn('PrivateTmp=yes', svc)
+        self.assertIn('NoNewPrivileges=yes', svc); self.assertIn('UMask=0077', svc)
         self.assertIn('OnUnitActiveSec=12min', timer)
         self.assertIn('%h/venv/bin/python', svc)
         self.assertEqual((HERE / 'linux' / 'requirements.txt').read_text().split(), ['playwright==1.64.0'])
