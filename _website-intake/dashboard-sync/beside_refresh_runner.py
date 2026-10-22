@@ -17,7 +17,7 @@ import sys
 import time
 from urllib import error, request
 from urllib.parse import urlsplit
-from beside_uia import CaptureError, conversation, generic_review
+from beside_uia import CaptureError, OTP_MESSAGE, OTP_WARNING, conversation, generic_review, review_content
 import beside_intake
 import beside_extract
 import beside_attempt
@@ -41,13 +41,37 @@ def write(path,value):
     data=(json.dumps(value,ensure_ascii=False,sort_keys=True,indent=2,allow_nan=False)+'\n').encode()
     with Path(path).open('wb') as stream:
         stream.write(data);stream.flush();os.fsync(stream.fileno())
+RELATIVE_LABEL=re.compile(r'^(.*?)\s+(Just now|Now|\d+\s*[smhdw])(?:\s+(.*))?$',re.I)
+
+def relative_label(label):
+    match=RELATIVE_LABEL.fullmatch(' '.join(str(label or '').split()))
+    if not match:return None
+    age=match[2].lower().replace(' ','')
+    seconds=0 if age in ('justnow','now') else int(age[:-1])*{'s':1,'m':60,'h':3600,'d':86400,'w':604800}[age[-1]]
+    return (match[1],match[3] or ''),seconds
+
 def selected_changes(inventory,checkpoint,maximum):
     records=inventory.get('records')
     if not isinstance(records,list) or not records or len(records)>200:raise ScanError('CAPTURE_INCOMPLETE')
     ids=[row.get('conversation_id') for row in records]
     if len(ids)!=len(set(ids)):raise ScanError('SOURCE_IDENTITY_MISMATCH')
     prior=checkpoint.get('records',{})
-    changed=[row for row in records if prior.get(row['conversation_id'],{}).get('label')!=row.get('label')]
+    # Relative age text is presentation, but a reset can be a new identical call.
+    # Recheck unchanged relative previews periodically as an additional safety net.
+    now=inventory.get('captured_at');changed=[];recheck=[]
+    for row in records:
+        previous=prior.get(row['conversation_id'],{})
+        old=relative_label(previous.get('label'));new=relative_label(row.get('label'))
+        if old and new and old[0]==new[0] and new[1]>=old[1]:
+            try:
+                age=(datetime.fromisoformat(now.replace('Z','+00:00'))-datetime.fromisoformat(previous['checked_at'].replace('Z','+00:00'))).total_seconds()
+            except (KeyError,ValueError,TypeError,AttributeError):age=900
+            if age>=900 or age<0:recheck.append(row)
+        elif previous.get('label')!=row.get('label'):
+            changed.append(row)
+    # New previews and age resets go first; oldest checked relative rows rotate.
+    recheck.sort(key=lambda row:prior.get(row['conversation_id'],{}).get('checked_at',''))
+    changed+=recheck
     return changed[:maximum],len(changed)
 def preserve_known_fields(incoming,old):
     result=dict(incoming)
@@ -57,6 +81,51 @@ def preserve_known_fields(incoming,old):
                 result[key]=old[key]
         result['received_at']=old['received_at']
     return result
+
+def capture_fields_fingerprint(item):
+    # Re-observing the same rendered words is not a new source update. Preserve
+    # clocks/dates within concern so a repeated call with new activity still changes.
+    facts={key:item.get(key) for key in ('name','phone','email','vehicle','concern','received_at')}
+    return hashlib.sha256(json.dumps(facts,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
+
+CONTEXT_BLOCK=re.compile(r'^(Earlier saved context(?: \(source observed \d{4}-\d{2}-\d{2}\))?): (.*?)(?:\nLatest capture(?: \([^\n]*\))?: .*)?$',re.S)
+NON_CONTEXT=('New or changed Beside conversation captured for review.','Call captured; name and repair details still needed.',
+    'Conversation captured; name and repair details still needed.','Call captured; repair details still needed.',
+    'Conversation captured; repair details still needed.',
+    'No customer message details are visible','Automated verification message only;',
+    'Previously reviewed archive-only conversation;','Updated source observations are archived;')
+
+def saved_context(old):
+    """Retain the earlier useful summary once, never the full formatted concern."""
+    first=str((old or {}).get('concern') or '').split('\n\n',1)[0].strip()
+    if not first or any(marker in first for marker in NON_CONTEXT):return None
+    parsed=CONTEXT_BLOCK.fullmatch(first)
+    if parsed:return parsed[1],parsed[2][:280]
+    if first.startswith('Captured text: '):first=first[len('Captured text: '):]
+    first=' '.join(first.split())
+    date=str((old or {}).get('source_updated_at') or '')[:10]
+    label='Earlier saved context'+(' (source observed '+date+')' if re.fullmatch(r'\d{4}-\d{2}-\d{2}',date) else '')
+    return label,first[:280]
+
+def source_review(capture,observed,item,old,prior_class=None,previous_fingerprint=None):
+    decision=generic_review(capture,observed,item=item)
+    if prior_class in ('spam','operational','personal'):
+        decision.update(classification=prior_class,include_in_dashboard=False,
+            summary='Previously reviewed archive-only conversation; fresh source preserved without changing its classification.')
+    elif prior_class=='repair':
+        decision.update(classification='repair',include_in_dashboard=True,category='Previously reviewed repair conversation')
+    context=saved_context(old)
+    if context and prior_class not in ('spam','operational','personal'):
+        useful=[line for line in review_content(item) if not OTP_MESSAGE.fullmatch(line) and not OTP_WARNING.fullmatch(line)]
+        latest=' '.join(useful)
+        label,earlier=context
+        decision['summary']=label+': '+earlier
+        if latest!=earlier:
+            latest=latest[:300] if latest else 'No new repair details visible; earlier context retained.'
+            decision['summary']+='\nLatest capture ('+observed[:10]+'): '+latest
+    if old and previous_fingerprint==capture_fields_fingerprint(item):
+        decision['include_in_dashboard']=False
+    return decision
 
 def capture_command(settings,mode,output,settings_path):
     # Default: the Windows UI Automation capture. Opt-in Linux/Playwright capture with the same
@@ -82,8 +151,10 @@ def minimum_claim_budget(settings):
     # Respect explicitly low settings by deferring; never silently extend a caller's slot.
     return HTTP_TIMEOUT_SECONDS+2*capture_ceiling(settings)+FINALIZATION_RESERVE_SECONDS+3
 
-def capture_timeout(settings,remaining,reserve_seconds=3):
-    return min(capture_ceiling(settings),remaining-reserve_seconds)
+def capture_timeout(settings,remaining,reserve_seconds=0):
+    available=remaining-reserve_seconds-3
+    if available<=0:raise ScanError('CAPTURE_INCOMPLETE')
+    return min(capture_ceiling(settings),available)
 
 def validate_claim(value,expected):
     # The backend has no token recovery endpoint. Only the exact CAS winner may proceed.
@@ -112,6 +183,13 @@ def failure_code(code):
     # Private v27 fail enum does not accept transport-local diagnostic codes.
     return code if code in beside_attempt.FAILURE_CODES else 'WORKER_FAILED'
 
+# Existing import/readback gate remains independently enforced.
+IMPORT_RESERVE_SECONDS=60
+PREPARATION_RESERVE_SECONDS=15
+FINISH_RESERVE_SECONDS=PREPARATION_RESERVE_SECONDS+IMPORT_RESERVE_SECONDS
+READBACK_RESERVE_SECONDS=38
+
+
 OWNER_REQUEST_MESSAGE=('No Refresh Beside job is queued. Workers cannot request jobs directly; press Refresh Beside '
     'in Owner Desk (or enable Owner Desk automatic refresh), then run --scan-now or let the timer pick it up.')
 
@@ -126,6 +204,110 @@ def server_code(value):
         if isinstance(v,str) and v in beside_attempt.SERVER_CODES:return v
     return None
 
+WORKER_REQUEST_SECONDS=12
+QUEUE_ERROR_CODES=frozenset(('BROWSER_UNAVAILABLE','BESIDE_SIGN_IN_REQUIRED','SOURCE_IDENTITY_MISMATCH','CAPTURE_INCOMPLETE',
+    'REVIEW_REQUIRED','VERIFICATION_REQUIRED','VALIDATION_FAILED','BASELINE_UNAVAILABLE','IMPORT_REJECTED',
+    'IMPORT_RESULT_UNCERTAIN','READBACK_MISMATCH','LOCAL_STORAGE_UNAVAILABLE','WORKER_FAILED'))
+WORKER_DIAGNOSTIC_KEYS=('worker_action','worker_http_status','worker_error_code','worker_transport_error')
+
+def retryable_worker_action(body):
+    # Reuse the identical encoded request. Never replay a claim, completion,
+    # failure, heartbeat (which may enqueue), resolution or source import.
+    return body=={'action':'baseline'} or (set(body)=={'action','jobId','claimToken','phase'} and
+        body['action']=='progress' and body['phase'] in ('reading','checking','importing','verifying') and
+        all(isinstance(body[key],str) and body[key] for key in ('jobId','claimToken')))
+
+def worker_retry_reserve(body,phase):
+    target=body.get('phase') if body.get('action')=='progress' else phase
+    if target=='verifying':
+        # After progress: baseline + completion + proof writes; after baseline:
+        # only completion + proof writes. These consume the readback allowance.
+        return (2 if body['action']=='progress' else 1)*WORKER_REQUEST_SECONDS+2
+    if target=='importing':return READBACK_RESERVE_SECONDS+WORKER_REQUEST_SECONDS
+    return FINISH_RESERVE_SECONDS
+
+def transport_diagnostic(exc):
+    detail={'exception_type':type(exc).__name__}
+    reason=exc.reason if isinstance(exc,error.URLError) else exc
+    if isinstance(reason,BaseException):
+        detail['reason_type']=type(reason).__name__
+        number=getattr(reason,'errno',None)
+        if isinstance(number,int):detail['errno']=number
+    return detail
+
+def worker_response(opener,req,body,remaining,report,phase,*,minimum_budget=0,finish_reserve=None):
+    endpoint=urlsplit(req.full_url)
+    safe=(endpoint.scheme+'://'+endpoint.netloc in ALLOWED_ORIGINS and endpoint.path=='/api/beside-refresh/worker'
+        and not endpoint.query and not endpoint.fragment and retryable_worker_action(body))
+    reserve=worker_retry_reserve(body,phase)
+    target=body.get('phase') if body.get('action')=='progress' else phase
+    if finish_reserve is not None and target in ('reading','checking'):
+        reserve=max(reserve,finish_reserve)
+    for attempt in range(2 if safe else 1):
+        budget=remaining()
+        # Final guard is after request serialization and all durable journal writes.
+        # Returning None here is known to precede the sole claim POST.
+        if not attempt and body.get('action')=='claim' and budget<minimum_budget:return None
+        if budget<2:raise ScanError('CAPTURE_INCOMPLETE')
+        if attempt and budget<reserve+WORKER_REQUEST_SECONDS:raise ScanError('WORKER_UNREACHABLE')
+        timeout=min(WORKER_REQUEST_SECONDS,budget-(reserve if attempt else 0))
+        try:
+            report['worker_step']='request'
+            with opener.open(req,timeout=timeout) as response:
+                report['worker_step']='response_read'
+                raw=response.read(4_000_001)
+                if response.status!=200 or len(raw)>4_000_000:raise ScanError('BASELINE_UNAVAILABLE')
+                report['worker_step']='response_decode'
+                value=json.loads(raw)
+        except error.HTTPError as exc:
+            report['worker_exception']='HTTPError'
+            report['worker_http_status']=exc.code
+            try:code=server_code(exc.read(4096))
+            except Exception:code=None
+            finally:exc.close()
+            if code:report['worker_error_code']=code
+            raise ScanError('WORKER_HTTP_'+str(exc.code)) from None
+        except (error.URLError,TimeoutError,OSError) as exc:
+            name=type(exc).__name__
+            report['worker_exception']=name if name in beside_attempt.EXCEPTION_TYPES else 'Exception'
+            report['worker_transport_error']=transport_diagnostic(exc)
+            if not attempt and safe and remaining()>=reserve+WORKER_REQUEST_SECONDS:
+                report.setdefault('worker_transport_retries',[]).append({'action':body['action'],
+                    **({'phase':body['phase']} if body['action']=='progress' else {}),**transport_diagnostic(exc)})
+                continue
+            raise ScanError('WORKER_UNREACHABLE') from None
+        except ValueError as exc:
+            report['worker_exception']='JSONDecodeError' if isinstance(exc,json.JSONDecodeError) else 'ValueError'
+            raise ScanError('WORKER_RESPONSE_INVALID') from None
+        report['worker_step']='response_validate'
+        if not isinstance(value,dict):raise ScanError('WORKER_RESPONSE_INVALID')
+        if value.get('ok') is not True:
+            code=server_code(value)
+            if code:report['worker_error_code']=code
+            raise ScanError('BASELINE_UNAVAILABLE')
+        return value
+
+def queue_failure_code(code,phase):
+    if code in QUEUE_ERROR_CODES:return code
+    return 'IMPORT_RESULT_UNCERTAIN' if phase in ('importing','verifying') else 'WORKER_FAILED'
+
+def report_queue_failure(worker,report,code,phase):
+    original={key:report[key] for key in WORKER_DIAGNOSTIC_KEYS if key in report}
+    report['original_failure']={'error':code,'phase':phase,**original}
+    wire_code=queue_failure_code(code,phase)
+    try:
+        worker('fail',errorCode=wire_code)
+        report['failure_reporting']={'accepted':True,'errorCode':wire_code}
+    except Exception as exc:
+        report['queue_failure_unconfirmed']=True
+        report['failure_reporting']={'accepted':False,'errorCode':wire_code,
+            'exception_type':type(exc).__name__,**{key:report[key] for key in WORKER_DIAGNOSTIC_KEYS if key in report}}
+    finally:
+        # Reporting must not replace the action/status/type that caused failure.
+        for key in WORKER_DIAGNOSTIC_KEYS:
+            if key in original:report[key]=original[key]
+            else:report.pop(key,None)
+
 def attention_evidence(runs,job_id):
     """Local proof about an attention job: did this worker claim it, and did it try an import?"""
     if not job_id:return {'found':False}
@@ -136,13 +318,38 @@ def attention_evidence(runs,job_id):
             return {'found':True,'import_attempted':(lease_path.parent/'apply-journal.json').exists()}
     return {'found':False}
 
-def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0,minimum_remaining=35):
+def require_captured_changes(selected,captures):
+    if selected and not captures:raise ScanError('CAPTURE_INCOMPLETE')
+
+def sample_when_unchanged(inventory,checkpoint,selected):
+    if selected:return selected
+    # A queued no-change refresh still reads one actual thread. Rotate the oldest
+    # checked visible row; its content fingerprint prevents an unchanged card write.
+    return [min(inventory['records'],key=lambda row:checkpoint.get('records',{}).get(row['conversation_id'],{}).get('checked_at',''))]
+
+def capture_change_count(captures,plan,unchanged_probe):
+    # A sampled unchanged preview can reveal new content. The receipt must still
+    # cover any resulting card changes; a genuinely unchanged sample reports zero.
+    card_changes=len(plan['proposed']['new'])+len(plan['proposed']['updated'])
+    return max(card_changes,0 if unchanged_probe else len(captures))
+
+def begin_import(remaining,progress):
+    # Refuse before the remote phase changes: no POST has been attempted yet.
+    if remaining()<IMPORT_RESERVE_SECONDS:raise ScanError('CAPTURE_INCOMPLETE')
+    progress()
+    return min(30,remaining()-READBACK_RESERVE_SECONDS)
+
+def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0,reserve_seconds=0,minimum_remaining=None):
+    minimum_remaining=max(35+reserve_seconds,minimum_remaining if minimum_remaining is not None else 35)
+
     """Read selected threads. Default: stop at the first failure (previous behavior).
     With skip_failed, a failed thread is skipped with exponential backoff and the pass continues,
-    up to max_failures. Failed threads are never checkpointed, so they stay pending."""
+    up to max_failures. Failed threads are never checkpointed, so they stay pending.
+    The caller can reserve time for archive/import/readback before starting another read."""
     captures=[];failures=[]
     for row in selected:
         if remaining()<minimum_remaining:break
+
         cid=row['conversation_id']
         try:
             captures.append(read_one(cid))
@@ -152,6 +359,7 @@ def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_fa
             if not skip_failed or len(failures)>=max_failures:break
             delay=min(max_delay,base_delay*(2**(len(failures)-1)))
             if remaining()-delay<minimum_remaining:break
+
             sleep(delay)
     return captures,failures
 
@@ -182,6 +390,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             nonlocal operation,operation_started
             operation=name;operation_started=time.monotonic()
             report.pop('worker_exception',None)
+            report.pop('worker_transport_error',None)
             attempt.event(name,phase=phase,remaining=remaining(),**extra)
         def defer_budget(ready):
             report.update(ok=True,worker_ready=ready,readiness_deferred=True,
@@ -192,42 +401,16 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             write(refresh/'uia-worker-status.json',report)
             return report
         def call(path,body):
-            if remaining()<2:raise ScanError('CAPTURE_INCOMPLETE')
+            report.pop('worker_http_status',None);report.pop('worker_error_code',None)
             req=request.Request(origin+path,data=archive.canonical(body).encode(),headers={
                 'Content-Type':'application/json','Accept':'application/json',
                 'OAI-Sites-Authorization':'Bearer '+config['service_token'],'x-owner-sync-token':config['sync_token']})
-            report.pop('worker_http_status',None);report.pop('worker_error_code',None)
             began=time.monotonic();report['worker_step']='request'
-            try:
-                with opener.open(req,timeout=min(HTTP_TIMEOUT_SECONDS,remaining())) as response:
-                    report['worker_step']='response_read'
-                    raw=response.read(4_000_001)
-                    if response.status!=200 or len(raw)>4_000_000:raise ScanError('BASELINE_UNAVAILABLE')
-                    report['worker_step']='response_decode'
-                    value=json.loads(raw)
-            except error.HTTPError as exc:
-                report['worker_exception']='HTTPError'
-                report['worker_http_status']=exc.code
-                # Neither a body read failure nor an unknown server code may mask the HTTP error.
-                try:code=server_code(exc.read(4096))
-                except Exception:code=None
-                if code:report['worker_error_code']=code
-                raise ScanError('WORKER_HTTP_'+str(exc.code)) from None
-            except (error.URLError,TimeoutError,OSError) as exc:
-                name=type(exc).__name__
-                report['worker_exception']=name if name in beside_attempt.EXCEPTION_TYPES else 'Exception'
-                raise ScanError('WORKER_UNREACHABLE') from None
-            except ValueError as exc:
-                report['worker_exception']='JSONDecodeError' if isinstance(exc,json.JSONDecodeError) else 'ValueError'
-                raise ScanError('WORKER_RESPONSE_INVALID') from None
-            report['worker_step']='response_validate'
-            if not isinstance(value,dict):raise ScanError('WORKER_RESPONSE_INVALID')
-            if value.get('ok') is not True:
-                code=server_code(value)
-                if code:report['worker_error_code']=code
-                raise ScanError('BASELINE_UNAVAILABLE')
-            attempt.event(operation,phase=phase,elapsed=time.monotonic()-began,remaining=remaining(),
-                stage='response_validate')
+            value=worker_response(opener,req,body,remaining,report,phase,
+                minimum_budget=minimum_claim_budget(settings) if body.get('action')=='claim' else 0,
+                finish_reserve=FINALIZATION_RESERVE_SECONDS)
+            if value is not None:
+                attempt.event(operation,phase=phase,elapsed=time.monotonic()-began,remaining=remaining(),stage='response_validate')
             return value
         def worker(action,**extra):
             body={'action':action,**extra}
@@ -236,7 +419,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             report['worker_action']=action
             event('worker.'+action)
             return call('/api/beside-refresh/worker',body)
-        def capture(mode,output,*,cid=None,inventory=None,reserve_seconds=3):
+        def capture(mode,output,*,cid=None,inventory=None,reserve_seconds=0):
             event('capture.'+mode)
             report.pop('worker_http_status',None);report.pop('worker_error_code',None)
             args=capture_command(settings,mode,output,settings_path)
@@ -321,6 +504,9 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             attempt.claim('refused')
             return defer_budget(True)
         reply=worker('claim')
+        if reply is None:
+            attempt.claim('refused')
+            return defer_budget(True)
         report['worker_step']='claim_validate';operation='worker.claim'
         granted=validate_claim(reply,state)
         if granted is None:
@@ -340,6 +526,8 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
         checkpoint_path=refresh/'uia-checkpoint.json'
         checkpoint=load(checkpoint_path) if checkpoint_path.exists() else {'records':{}}
         selected,total_changed=selected_changes(inventory,checkpoint,min(25,int(settings.get('maximum_changed_threads_per_pass',25))))
+        unchanged_probe=not selected
+        selected=sample_when_unchanged(inventory,checkpoint,selected)
         def read_one(cid):
             return capture('thread',run_dir/('thread-'+cid+'.json'),cid=cid,inventory=run_dir/'inventory.json',
                 reserve_seconds=FINALIZATION_RESERVE_SECONDS)
@@ -348,13 +536,15 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             skip_failed=settings.get('beside_skip_failed_threads') is True,
             max_failures=int(settings.get('beside_max_thread_failures',5)),
             minimum_remaining=capture_ceiling(settings)+FINALIZATION_RESERVE_SECONDS)
+
         report['thread_failures']=len(capture_failures)
-        if selected and not captures:raise ScanError('CAPTURE_INCOMPLETE')
+        require_captured_changes(selected,captures)
         worker('progress',phase='checking');phase='checking'
         baseline=worker('baseline')['baseline'];archive.validate_baseline(baseline)
         by_id={row['id']:row for row in baseline['leads']}
-        observed=stamp();review={'format':'beside-review/v1','classifications':{},'crosswalks':[]};conversations=[];held=[]
+        observed=stamp();review={'format':'beside-review/v1','classifications':{},'crosswalks':[]};conversations=[];held=[];capture_hashes={}
         event('archive.plan')
+
         database=archive.connect(settings['persistent_archive'])
         try:
             backup=sqlite3.connect(str(run_dir/'archive-before.sqlite3'));database.backup(backup);backup.close()
@@ -365,21 +555,18 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
                 except CaptureError:
                     held.append(cid);continue
                 old=by_id.get('beside:chat:'+cid)
-                if settings.get('beside_extract_fields') is True:item=beside_extract.apply(item)
                 item=preserve_known_fields(item,old)
+                item=beside_extract.apply(item,explicit_only=settings.get('beside_extract_fields') is not True)
                 archived=database.execute('SELECT parent_id FROM conversations WHERE mailbox_id=? AND provider_id=?',(settings['mailbox_id'],cid)).fetchone()
                 if archived and archived['parent_id']:item['contact_id']=archived['parent_id']
-                decision=generic_review(cap,observed)
                 prior=database.execute('SELECT classification FROM conversation_classifications WHERE mailbox_id=? AND conversation_id=? ORDER BY reviewed_at DESC LIMIT 1',(settings['mailbox_id'],cid)).fetchone()
-                if prior and prior['classification'] in ('spam','operational','personal'):
-                    decision.update(classification=prior['classification'],include_in_dashboard=False,
-                        summary='Previously reviewed archive-only conversation; fresh source preserved without changing its classification.')
-                if prior and prior['classification']=='repair':
-                    decision.update(classification='repair',category='Previously reviewed repair conversation')
-                if old and old.get('concern'):
-                    decision['summary']=old['concern'][:700]+'\nUpdated source observations are archived; review the original thread for the latest context.'
+                decision=source_review(cap,observed,item,old,prior['classification'] if prior else None,
+                    checkpoint.get('records',{}).get(cid,{}).get('content_sha256'))
+                capture_hashes[cid]=capture_fields_fingerprint(item)
                 review['classifications'][cid]=decision;conversations.append(item)
-            scope=f"{len(inventory['records'])} recent visible All-list conversations inventoried; {len(captures)} selected rendered threads read. {total_changed-len(captures)} changed/uninspected visible conversations remain outside this bounded pass. Not a full account export."
+            require_captured_changes(selected,conversations)
+            scope=f"{len(inventory['records'])} recent visible All-list conversations inventoried; {len(captures)} selected rendered threads read. {max(0,total_changed-len(captures))} changed/uninspected visible conversations remain outside this bounded pass. Not a full account export."
+            if unchanged_probe:scope+=' No changed preview was detected; one oldest checked visible thread was sampled.'
             snapshot={'format':'beside-snapshot/v1','account':{'provider_id':settings['mailbox_id'],'mailbox_id':settings['mailbox_id']},
                 'collected_at':observed,'coverage':{'complete':False,'method':'authorized_browser','scope':scope,
                     'limitations':['Rendered recent window only; no older paging, Spam-tab export, recording audio or transcript downloads.',
@@ -393,16 +580,19 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
         write(run_dir/'ownerdesk-before.json',baseline);write(run_dir/'review.json',review);write(run_dir/'plan.json',plan)
         # Existing sender validates exact plan, latest baseline and source-only fields.
         latest=worker('baseline')['baseline'];write(run_dir/'latest-before.json',latest)
-        worker('progress',phase='importing');phase='importing'
         if plan['batches']:
-            if remaining()<20:raise ScanError('CAPTURE_INCOMPLETE')
+            import_timeout=begin_import(remaining,lambda:worker('progress',phase='importing'));phase='importing'
             command=[sys.executable,str(dependency/'apply_reviewed_plan.py'),'--plan',str(run_dir/'plan.json'),
                 '--approved-plan-sha256',plan['plan_sha256'],'--baseline',str(run_dir/'ownerdesk-before.json'),
                 '--latest-baseline',str(run_dir/'latest-before.json'),'--private-config',settings['private_sync_config'],
                 '--journal',str(run_dir/'apply-journal.json'),'--private-directory-confirmed','--apply']
             event('import.apply')
             attempt.claim('write_uncertain')
-            applied=subprocess.run(command,capture_output=True,text=True,timeout=min(30,remaining()-10),creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+            # Journal writes happen after phase progress; keep readback time intact.
+            import_timeout=min(import_timeout,remaining()-READBACK_RESERVE_SECONDS)
+            if import_timeout<=0:raise ScanError('CAPTURE_INCOMPLETE')
+            applied=subprocess.run(command,capture_output=True,text=True,timeout=import_timeout,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+
             if applied.returncode:raise ScanError('IMPORT_RESULT_UNCERTAIN')
             journal=load(run_dir/'apply-journal.json')
         else:journal=None
@@ -410,7 +600,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
         after=worker('baseline')['baseline'];event('readback.verify');verified=archive.verify_after(baseline,after,plan)
         write(run_dir/'ownerdesk-after.json',after);write(run_dir/'readback-verification.json',verified)
         if not verified['ok']:raise ScanError('READBACK_MISMATCH')
-        readback=stamp();counts={'conversationsRead':len(inventory['records']),'conversationsChanged':len(captures),
+        readback=stamp();counts={'conversationsRead':len(inventory['records']),'conversationsChanged':capture_change_count(captures,plan,unchanged_probe),
             'archivedObservations':len(conversations),'newCards':len(plan['proposed']['new']),'updatedCards':len(plan['proposed']['updated']),
             'heldCards':len(plan['gaps'])+len(held),'skippedConversations':len(inventory['records'])-len(captures),'confirmedBatches':len(plan['batches'])}
         proof={'job_id':lease['state']['jobId'],'requested_at':lease['state']['requestedAt'],'captured_at':observed,'readback_at':readback,
@@ -429,7 +619,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
         # Only inspected, verified rows advance. Skipped/held rows remain pending.
         good={item['id'] for item in conversations}-{g.get('conversation_id') for g in plan['gaps']}
         for row in inventory['records']:
-            if row['conversation_id'] in good:checkpoint.setdefault('records',{})[row['conversation_id']]=row
+            if row['conversation_id'] in good:checkpoint.setdefault('records',{})[row['conversation_id']]={**row,'checked_at':readback,'content_sha256':capture_hashes[row['conversation_id']]}
         checkpoint.update(last_job_id=lease['state']['jobId'],updated_at=readback)
         write(checkpoint_path,checkpoint)
         # Optional (beside_intake_post_enabled): also deliver verified new conversations to the intake hook.
@@ -447,7 +637,8 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
         report.update(error=code,phase=phase,requires_review=phase in ('importing','verifying'),
             failure_operation=operation,failure_operation_seconds=round(time.monotonic()-operation_started,3))
         # Preserve the original action, stage and evidence before a secondary fail/reconcile request.
-        original_diagnostic={key:report[key] for key in ('worker_action','worker_step','worker_http_status','worker_error_code','worker_exception') if key in report}
+        original_diagnostic={key:report[key] for key in ('worker_action','worker_step','worker_http_status','worker_error_code','worker_exception','worker_transport_error') if key in report}
+        report['original_failure']={'error':code,'phase':phase,**{key:report[key] for key in WORKER_DIAGNOSTIC_KEYS if key in report}}
         primary_operation=operation
         try:
             if attempt:
@@ -456,14 +647,18 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
         except OSError:report['attempt_evidence_unavailable']=True
         if lease and lease.get('claimed') is True:
             try:
-                failed=worker('fail',errorCode=failure_code(code))
+                wire_code=queue_failure_code(code,phase)
+                failed=worker('fail',errorCode=wire_code)
                 failed_state=failed.get('state')
                 if (not isinstance(failed_state,dict) or failed_state.get('jobId')!=lease['state']['jobId']
                     or failed_state.get('status') not in ('failed','attention')):
                     raise ScanError('WORKER_RESPONSE_INVALID')
+                report['failure_reporting']={'accepted':True,'errorCode':wire_code}
                 attempt.claim('write_uncertain' if phase in ('importing','verifying') else 'failed')
-            except Exception:
+            except Exception as failure_exc:
                 report['queue_failure_unconfirmed']=True
+                report['failure_reporting']={'accepted':False,'errorCode':queue_failure_code(code,phase),
+                    'exception_type':type(failure_exc).__name__,**{key:report[key] for key in WORKER_DIAGNOSTIC_KEYS if key in report}}
                 try:attempt.claim('write_uncertain' if phase in ('importing','verifying') else 'uncertain')
                 except OSError:report['attempt_evidence_unavailable']=True
         elif attempt and attempt.data.get('claim_state') in ('pending','uncertain'):
@@ -476,6 +671,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
         for key in ('worker_action','worker_step','worker_http_status','worker_error_code','worker_exception'):
             report.pop(key,None)
         report.update(original_diagnostic)
+
     report['duration_seconds']=round(time.monotonic()-started,3)
     try:write(Path(settings_path).parent/'uia-worker-status.json',report)
     except OSError:pass

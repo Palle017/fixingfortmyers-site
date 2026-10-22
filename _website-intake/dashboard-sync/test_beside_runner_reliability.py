@@ -191,7 +191,7 @@ class BudgetTests(unittest.TestCase):
         self.assertEqual(R.minimum_claim_budget({}), 185)
         self.assertEqual(R.minimum_claim_budget({'beside_capture_backend': 'linux'}), 315)
         self.assertEqual(R.run.__kwdefaults__['budget_seconds'], 240)
-        self.assertEqual(R.capture_timeout({'beside_capture_backend': 'linux'}, 100, 63), 37)
+        self.assertEqual(R.capture_timeout({'beside_capture_backend': 'linux'}, 100, 63), 34)
         for value in (float('nan'), float('inf'), 2, -1):
             with self.subTest(value=value), self.assertRaises(R.ScanError):
                 R.capture_ceiling({'beside_capture_backend': 'linux', 'beside_linux_capture_timeout_seconds': value})
@@ -261,6 +261,46 @@ class BudgetTests(unittest.TestCase):
             out = fixture.run()
             self.assertTrue(out['ok'], out)
             self.assertEqual(fixture.actions.count('claim'), 1)
+
+    def test_slow_claim_event_defers_at_post_boundary_without_releasing_old_hold(self):
+        with tempfile.TemporaryDirectory() as root:
+            fixture = Fixture(root)
+            old = A.Attempt(fixture.refresh, fixture.clock)
+            old.claim('uncertain', queued())
+            original = A.Attempt.event
+            def slow_claim_event(attempt, operation, **extra):
+                original(attempt, operation, **extra)
+                if operation == 'worker.claim' and 'elapsed' not in extra:
+                    fixture.clock.advance(60)
+            with mock.patch.object(A.Attempt, 'event', slow_claim_event):
+                out = fixture.run(budget=240, manual=True)
+            self.assertTrue(out['ok'], out)
+            self.assertEqual(out['deferred_reason'], 'INSUFFICIENT_CAPTURE_BUDGET')
+            self.assertNotIn('claim', fixture.actions)
+            self.assertNotIn('fail', fixture.actions)
+            self.assertEqual(fixture.imports, 0)
+            self.assertEqual(json.loads(old.path.read_text())['claim_state'], 'uncertain')
+            other = [row for row in fixture.attempts() if row['attempt_id'] != old.path.stem]
+            self.assertEqual(other[0]['claim_state'], 'refused')
+            out = fixture.run()
+            self.assertEqual(out['deferred_reason'], 'CLAIM_REVIEW_REQUIRED')
+            self.assertNotIn('claim', fixture.actions)
+
+    def test_read_retry_cannot_spend_runner_finalization_reserve(self):
+        body = {'action': 'baseline'}
+        req = R.request.Request('https://dashboard.fixingfortmyers.com/api/beside-refresh/worker',
+                                data=json.dumps(body).encode())
+        remaining = [132]
+        opened = []
+        def lost(*args, **extra):
+            opened.append(extra['timeout'])
+            remaining[0] -= 12
+            raise TimeoutError(SENTINEL)
+        with self.assertRaisesRegex(R.ScanError, 'WORKER_UNREACHABLE'):
+            R.worker_response(mock.Mock(open=lost), req, body, lambda: remaining[0],
+                              {}, 'checking', finish_reserve=R.FINALIZATION_RESERVE_SECONDS)
+        self.assertEqual(len(opened), 1)
+        self.assertEqual(remaining[0], R.FINALIZATION_RESERVE_SECONDS)
 
     def test_linux_internal_stability_retry_is_not_multiplied(self):
         with tempfile.TemporaryDirectory() as root:
