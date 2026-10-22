@@ -166,6 +166,95 @@ def server_code(value):
         if isinstance(v,str) and re.fullmatch(r'[A-Za-z0-9_.:-]{1,64}',v):return v
     return None
 
+WORKER_REQUEST_SECONDS=12
+QUEUE_ERROR_CODES=frozenset(('BROWSER_UNAVAILABLE','BESIDE_SIGN_IN_REQUIRED','SOURCE_IDENTITY_MISMATCH','CAPTURE_INCOMPLETE',
+    'REVIEW_REQUIRED','VERIFICATION_REQUIRED','VALIDATION_FAILED','BASELINE_UNAVAILABLE','IMPORT_REJECTED',
+    'IMPORT_RESULT_UNCERTAIN','READBACK_MISMATCH','LOCAL_STORAGE_UNAVAILABLE','WORKER_FAILED'))
+WORKER_DIAGNOSTIC_KEYS=('worker_action','worker_http_status','worker_error_code','worker_transport_error')
+
+def retryable_worker_action(body):
+    # Reuse the identical encoded request. Never replay a claim, completion,
+    # failure, heartbeat (which may enqueue), resolution or source import.
+    return body=={'action':'baseline'} or (set(body)=={'action','jobId','claimToken','phase'} and
+        body['action']=='progress' and body['phase'] in ('reading','checking','importing','verifying') and
+        all(isinstance(body[key],str) and body[key] for key in ('jobId','claimToken')))
+
+def worker_retry_reserve(body,phase):
+    target=body.get('phase') if body.get('action')=='progress' else phase
+    if target=='verifying':
+        # After progress: baseline + completion + proof writes; after baseline:
+        # only completion + proof writes. These consume the readback allowance.
+        return (2 if body['action']=='progress' else 1)*WORKER_REQUEST_SECONDS+2
+    if target=='importing':return READBACK_RESERVE_SECONDS+WORKER_REQUEST_SECONDS
+    return FINISH_RESERVE_SECONDS
+
+def transport_diagnostic(exc):
+    detail={'exception_type':type(exc).__name__}
+    reason=exc.reason if isinstance(exc,error.URLError) else exc
+    if isinstance(reason,BaseException):
+        detail['reason_type']=type(reason).__name__
+        number=getattr(reason,'errno',None)
+        if isinstance(number,int):detail['errno']=number
+    return detail
+
+def worker_response(opener,req,body,remaining,report,phase):
+    endpoint=urlsplit(req.full_url)
+    safe=(endpoint.scheme+'://'+endpoint.netloc in ALLOWED_ORIGINS and endpoint.path=='/api/beside-refresh/worker'
+        and not endpoint.query and not endpoint.fragment and retryable_worker_action(body))
+    reserve=worker_retry_reserve(body,phase)
+    for attempt in range(2 if safe else 1):
+        budget=remaining()
+        if budget<2:raise ScanError('CAPTURE_INCOMPLETE')
+        if attempt and budget<reserve+WORKER_REQUEST_SECONDS:raise ScanError('WORKER_UNREACHABLE')
+        timeout=min(WORKER_REQUEST_SECONDS,budget-(reserve if attempt else 0))
+        try:
+            with opener.open(req,timeout=timeout) as response:
+                raw=response.read(4_000_001)
+                if response.status!=200 or len(raw)>4_000_000:raise ScanError('BASELINE_UNAVAILABLE')
+                value=json.loads(raw)
+        except error.HTTPError as exc:
+            report['worker_http_status']=exc.code
+            try:code=server_code(exc.read(4096))
+            except OSError:code=None
+            finally:exc.close()
+            if code:report['worker_error_code']=code
+            raise ScanError('WORKER_HTTP_'+str(exc.code)) from None
+        except (error.URLError,TimeoutError,OSError) as exc:
+            report['worker_transport_error']=transport_diagnostic(exc)
+            if not attempt and safe and remaining()>=reserve+WORKER_REQUEST_SECONDS:
+                report.setdefault('worker_transport_retries',[]).append({'action':body['action'],
+                    **({'phase':body['phase']} if body['action']=='progress' else {}),**transport_diagnostic(exc)})
+                continue
+            raise ScanError('WORKER_UNREACHABLE') from None
+        except ValueError:raise ScanError('WORKER_RESPONSE_INVALID') from None
+        if not isinstance(value,dict):raise ScanError('WORKER_RESPONSE_INVALID')
+        if value.get('ok') is not True:
+            code=server_code(value)
+            if code:report['worker_error_code']=code
+            raise ScanError('BASELINE_UNAVAILABLE')
+        return value
+
+def queue_failure_code(code,phase):
+    if code in QUEUE_ERROR_CODES:return code
+    return 'IMPORT_RESULT_UNCERTAIN' if phase in ('importing','verifying') else 'WORKER_FAILED'
+
+def report_queue_failure(worker,report,code,phase):
+    original={key:report[key] for key in WORKER_DIAGNOSTIC_KEYS if key in report}
+    report['original_failure']={'error':code,'phase':phase,**original}
+    wire_code=queue_failure_code(code,phase)
+    try:
+        worker('fail',errorCode=wire_code)
+        report['failure_reporting']={'accepted':True,'errorCode':wire_code}
+    except Exception as exc:
+        report['queue_failure_unconfirmed']=True
+        report['failure_reporting']={'accepted':False,'errorCode':wire_code,
+            'exception_type':type(exc).__name__,**{key:report[key] for key in WORKER_DIAGNOSTIC_KEYS if key in report}}
+    finally:
+        # Reporting must not replace the action/status/type that caused failure.
+        for key in WORKER_DIAGNOSTIC_KEYS:
+            if key in original:report[key]=original[key]
+            else:report.pop(key,None)
+
 def attention_evidence(runs,job_id):
     """Local proof about an attention job: did this worker claim it, and did it try an import?"""
     if not job_id:return {'found':False}
@@ -239,30 +328,10 @@ def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
             if not isinstance(config.get(key),str) or len(config[key])<16 or any(c.isspace() for c in config[key]):raise ScanError('LOCAL_STORAGE_UNAVAILABLE')
         opener=request.build_opener(request.ProxyHandler({}),NoRedirect())
         def call(path,body):
-            if remaining()<2:raise ScanError('CAPTURE_INCOMPLETE')
             req=request.Request(origin+path,data=archive.canonical(body).encode(),headers={
                 'Content-Type':'application/json','Accept':'application/json',
                 'OAI-Sites-Authorization':'Bearer '+config['service_token'],'x-owner-sync-token':config['sync_token']})
-            try:
-                with opener.open(req,timeout=min(12,remaining())) as response:
-                    raw=response.read(4_000_001)
-                    if response.status!=200 or len(raw)>4_000_000:raise ScanError('BASELINE_UNAVAILABLE')
-                    value=json.loads(raw)
-            except error.HTTPError as exc:
-                # Keep only the status and a short server error code; never the body or headers.
-                report['worker_http_status']=exc.code
-                code=server_code(exc.read(4096))
-                if code:report['worker_error_code']=code
-                raise ScanError('WORKER_HTTP_'+str(exc.code)) from None
-            except (error.URLError,TimeoutError,OSError):
-                raise ScanError('WORKER_UNREACHABLE') from None
-            except ValueError:
-                raise ScanError('WORKER_RESPONSE_INVALID') from None
-            if value.get('ok') is not True:
-                code=server_code(value)
-                if code:report['worker_error_code']=code
-                raise ScanError('BASELINE_UNAVAILABLE')
-            return value
+            return worker_response(opener,req,body,remaining,report,phase)
         def worker(action,**extra):
             body={'action':action,**extra}
             if action in ('progress','complete','fail'):
@@ -423,8 +492,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
         if not isinstance(exc,ScanError):report['exception']=type(exc).__name__
         report.update(error=code,phase=phase,requires_review=phase in ('importing','verifying'))
         if lease and lease.get('claimed'):
-            try:worker('fail',errorCode=code)
-            except Exception:report['queue_failure_unconfirmed']=True
+            report_queue_failure(worker,report,code,phase)
     report['duration_seconds']=round(time.monotonic()-started,3)
     try:write(Path(settings_path).parent/'uia-worker-status.json',report)
     except OSError:pass
