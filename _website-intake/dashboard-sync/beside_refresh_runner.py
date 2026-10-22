@@ -16,7 +16,7 @@ import sys
 import time
 from urllib import error, request
 from urllib.parse import urlsplit
-from beside_uia import CaptureError, conversation, generic_review
+from beside_uia import CaptureError, OTP_MESSAGE, OTP_WARNING, conversation, generic_review, review_content
 import beside_intake
 import beside_extract
 
@@ -39,13 +39,37 @@ def write(path,value):
     data=(json.dumps(value,ensure_ascii=False,sort_keys=True,indent=2,allow_nan=False)+'\n').encode()
     with Path(path).open('wb') as stream:
         stream.write(data);stream.flush();os.fsync(stream.fileno())
+RELATIVE_LABEL=re.compile(r'^(.*?)\s+(Just now|Now|\d+\s*[smhdw])(?:\s+(.*))?$',re.I)
+
+def relative_label(label):
+    match=RELATIVE_LABEL.fullmatch(' '.join(str(label or '').split()))
+    if not match:return None
+    age=match[2].lower().replace(' ','')
+    seconds=0 if age in ('justnow','now') else int(age[:-1])*{'s':1,'m':60,'h':3600,'d':86400,'w':604800}[age[-1]]
+    return (match[1],match[3] or ''),seconds
+
 def selected_changes(inventory,checkpoint,maximum):
     records=inventory.get('records')
     if not isinstance(records,list) or not records or len(records)>200:raise ScanError('CAPTURE_INCOMPLETE')
     ids=[row.get('conversation_id') for row in records]
     if len(ids)!=len(set(ids)):raise ScanError('SOURCE_IDENTITY_MISMATCH')
     prior=checkpoint.get('records',{})
-    changed=[row for row in records if prior.get(row['conversation_id'],{}).get('label')!=row.get('label')]
+    # Relative age text is presentation, but a reset can be a new identical call.
+    # Recheck unchanged relative previews periodically as an additional safety net.
+    now=inventory.get('captured_at');changed=[];recheck=[]
+    for row in records:
+        previous=prior.get(row['conversation_id'],{})
+        old=relative_label(previous.get('label'));new=relative_label(row.get('label'))
+        if old and new and old[0]==new[0] and new[1]>=old[1]:
+            try:
+                age=(datetime.fromisoformat(now.replace('Z','+00:00'))-datetime.fromisoformat(previous['checked_at'].replace('Z','+00:00'))).total_seconds()
+            except (KeyError,ValueError,TypeError,AttributeError):age=900
+            if age>=900 or age<0:recheck.append(row)
+        elif previous.get('label')!=row.get('label'):
+            changed.append(row)
+    # New previews and age resets go first; oldest checked relative rows rotate.
+    recheck.sort(key=lambda row:prior.get(row['conversation_id'],{}).get('checked_at',''))
+    changed+=recheck
     return changed[:maximum],len(changed)
 def preserve_known_fields(incoming,old):
     result=dict(incoming)
@@ -55,6 +79,51 @@ def preserve_known_fields(incoming,old):
                 result[key]=old[key]
         result['received_at']=old['received_at']
     return result
+
+def capture_fields_fingerprint(item):
+    # Re-observing the same rendered words is not a new source update. Preserve
+    # clocks/dates within concern so a repeated call with new activity still changes.
+    facts={key:item.get(key) for key in ('name','phone','email','vehicle','concern','received_at')}
+    return hashlib.sha256(json.dumps(facts,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
+
+CONTEXT_BLOCK=re.compile(r'^(Earlier saved context(?: \(source observed \d{4}-\d{2}-\d{2}\))?): (.*?)(?:\nLatest capture(?: \([^\n]*\))?: .*)?$',re.S)
+NON_CONTEXT=('New or changed Beside conversation captured for review.','Call captured; name and repair details still needed.',
+    'Conversation captured; name and repair details still needed.','Call captured; repair details still needed.',
+    'Conversation captured; repair details still needed.',
+    'No customer message details are visible','Automated verification message only;',
+    'Previously reviewed archive-only conversation;','Updated source observations are archived;')
+
+def saved_context(old):
+    """Retain the earlier useful summary once, never the full formatted concern."""
+    first=str((old or {}).get('concern') or '').split('\n\n',1)[0].strip()
+    if not first or any(marker in first for marker in NON_CONTEXT):return None
+    parsed=CONTEXT_BLOCK.fullmatch(first)
+    if parsed:return parsed[1],parsed[2][:280]
+    if first.startswith('Captured text: '):first=first[len('Captured text: '):]
+    first=' '.join(first.split())
+    date=str((old or {}).get('source_updated_at') or '')[:10]
+    label='Earlier saved context'+(' (source observed '+date+')' if re.fullmatch(r'\d{4}-\d{2}-\d{2}',date) else '')
+    return label,first[:280]
+
+def source_review(capture,observed,item,old,prior_class=None,previous_fingerprint=None):
+    decision=generic_review(capture,observed,item=item)
+    if prior_class in ('spam','operational','personal'):
+        decision.update(classification=prior_class,include_in_dashboard=False,
+            summary='Previously reviewed archive-only conversation; fresh source preserved without changing its classification.')
+    elif prior_class=='repair':
+        decision.update(classification='repair',include_in_dashboard=True,category='Previously reviewed repair conversation')
+    context=saved_context(old)
+    if context and prior_class not in ('spam','operational','personal'):
+        useful=[line for line in review_content(item) if not OTP_MESSAGE.fullmatch(line) and not OTP_WARNING.fullmatch(line)]
+        latest=' '.join(useful)
+        label,earlier=context
+        decision['summary']=label+': '+earlier
+        if latest!=earlier:
+            latest=latest[:300] if latest else 'No new repair details visible; earlier context retained.'
+            decision['summary']+='\nLatest capture ('+observed[:10]+'): '+latest
+    if old and previous_fingerprint==capture_fields_fingerprint(item):
+        decision['include_in_dashboard']=False
+    return decision
 
 def capture_command(settings,mode,output,settings_path):
     # Default: the Windows UI Automation capture. Opt-in Linux/Playwright capture with the same
@@ -234,7 +303,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
         worker('progress',phase='checking');phase='checking'
         baseline=worker('baseline')['baseline'];archive.validate_baseline(baseline)
         by_id={row['id']:row for row in baseline['leads']}
-        observed=stamp();review={'format':'beside-review/v1','classifications':{},'crosswalks':[]};conversations=[];held=[]
+        observed=stamp();review={'format':'beside-review/v1','classifications':{},'crosswalks':[]};conversations=[];held=[];capture_hashes={}
         database=archive.connect(settings['persistent_archive'])
         try:
             backup=sqlite3.connect(str(run_dir/'archive-before.sqlite3'));database.backup(backup);backup.close()
@@ -245,19 +314,14 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
                 except CaptureError:
                     held.append(cid);continue
                 old=by_id.get('beside:chat:'+cid)
-                if settings.get('beside_extract_fields') is True:item=beside_extract.apply(item)
                 item=preserve_known_fields(item,old)
+                item=beside_extract.apply(item,explicit_only=settings.get('beside_extract_fields') is not True)
                 archived=database.execute('SELECT parent_id FROM conversations WHERE mailbox_id=? AND provider_id=?',(settings['mailbox_id'],cid)).fetchone()
                 if archived and archived['parent_id']:item['contact_id']=archived['parent_id']
-                decision=generic_review(cap,observed)
                 prior=database.execute('SELECT classification FROM conversation_classifications WHERE mailbox_id=? AND conversation_id=? ORDER BY reviewed_at DESC LIMIT 1',(settings['mailbox_id'],cid)).fetchone()
-                if prior and prior['classification'] in ('spam','operational','personal'):
-                    decision.update(classification=prior['classification'],include_in_dashboard=False,
-                        summary='Previously reviewed archive-only conversation; fresh source preserved without changing its classification.')
-                if prior and prior['classification']=='repair':
-                    decision.update(classification='repair',category='Previously reviewed repair conversation')
-                if old and old.get('concern'):
-                    decision['summary']=old['concern'][:700]+'\nUpdated source observations are archived; review the original thread for the latest context.'
+                decision=source_review(cap,observed,item,old,prior['classification'] if prior else None,
+                    checkpoint.get('records',{}).get(cid,{}).get('content_sha256'))
+                capture_hashes[cid]=capture_fields_fingerprint(item)
                 review['classifications'][cid]=decision;conversations.append(item)
             scope=f"{len(inventory['records'])} recent visible All-list conversations inventoried; {len(captures)} selected rendered threads read. {total_changed-len(captures)} changed/uninspected visible conversations remain outside this bounded pass. Not a full account export."
             snapshot={'format':'beside-snapshot/v1','account':{'provider_id':settings['mailbox_id'],'mailbox_id':settings['mailbox_id']},
@@ -306,7 +370,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
         # Only inspected, verified rows advance. Skipped/held rows remain pending.
         good={item['id'] for item in conversations}-{g.get('conversation_id') for g in plan['gaps']}
         for row in inventory['records']:
-            if row['conversation_id'] in good:checkpoint.setdefault('records',{})[row['conversation_id']]=row
+            if row['conversation_id'] in good:checkpoint.setdefault('records',{})[row['conversation_id']]={**row,'checked_at':readback,'content_sha256':capture_hashes[row['conversation_id']]}
         checkpoint.update(last_job_id=lease['state']['jobId'],updated_at=readback)
         write(checkpoint_path,checkpoint)
         # Optional (beside_intake_post_enabled): also deliver verified new conversations to the intake hook.

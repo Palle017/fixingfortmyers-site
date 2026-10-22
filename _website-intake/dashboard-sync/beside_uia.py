@@ -205,14 +205,50 @@ def conversation(capture,raw_sha256,*,details=False,call_markers=None):
         item['messages']=[{'at':e['at'],'kind':e['kind']} for e in events]
     return item
 
-def generic_review(capture,observed_at):
+REVIEW_CHROME=re.compile(r'^(?:AI recap|AI summary|Summary|Transcript|Call details|Conversation details|Read|Unread|Delivered|Sent|Show more|Show less|View transcript|View recording|Play recording|Audio\s*Call|Receptionist\s*Call|No\s*Answer|Incoming call|Outgoing call|Missed call|Voicemail|Message|Ask\s*Beside\s*AI)$',re.I)
+CALL_EVENT=re.compile(r'^(?:Audio\s*Call|Receptionist\s*Call|No\s*Answer|Incoming call|Outgoing call|Missed call|Voicemail)$',re.I)
+DISPLAY_TIME=re.compile(r'^\d{1,2}:\d{2}(?::\d{2})?$')
+DISPLAY_DATE=re.compile(r'^(?:(?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rsday)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?),?\s+)?(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:,?\s+\d{4})?$',re.I)
+SHOP_AUTOTEXTS=(
+    "Sorry we missed your call. Feel free to text us here, or we'll follow up shortly.",
+    'Thanks for calling Perfect Timing Auto Repair. Please text your name, your vehicle’s year, make and model, and a short description of the issue so Tony can prepare before calling you back.',
+)
+SHOP_SIGNATURE='– Tony - Perfect Timing'
+def _shop_text(value):return ' '.join(value.replace('’',"'").split())
+SHOP_BOILERPLATE={_shop_text(text) for text in (*SHOP_AUTOTEXTS,SHOP_SIGNATURE,*(body+' '+SHOP_SIGNATURE for body in SHOP_AUTOTEXTS))}
+OTP_MESSAGE=re.compile(r"^(?:Your (?:[A-Za-z][A-Za-z '&.-]{0,35} )?(?:verification|login|sign-in|one-time) code(?: is)?\s*:?\s*\d{4,8}[.!]?|\d{4,8} is your (?:[A-Za-z][A-Za-z '&.-]{0,35} )?(?:verification|login|sign-in|one-time) code[.!]?)$",re.I)
+OTP_WARNING=re.compile(r"^(?:Do not share (?:this|your) code(?: with anyone)?[.!]?|This code expires in \d+ minutes?[.!]?)$",re.I)
+
+def review_content(item):
+    """Summarize captured words, without turning a recap into an owner decision."""
+    lines=[]
+    for line in str(item.get('concern') or '').splitlines():
+        line=' '.join(line.split())
+        if not line or CLOCK.fullmatch(line) or DAY.fullmatch(line) or DISPLAY_TIME.fullmatch(line) or DISPLAY_DATE.fullmatch(line) or REVIEW_CHROME.fullmatch(line) or _shop_text(line) in SHOP_BOILERPLATE:continue
+        if line not in lines:lines.append(line)
+    return lines
+
+def generic_review(capture,observed_at,*,item=None):
     cid=capture['conversation_id']
-    # Every automatic projection stays in owner review; no payment, repair, spam or
-    # booking outcome is inferred from keywords or an AI-generated recap.
-    return {'classification':'uncertain','include_in_dashboard':True,'reviewer':'Owner-authorized source-capture automation (not owner qualification)',
+    item=item if item is not None else conversation(capture,'0'*64)
+    lines=review_content(item)
+    # A complete, exact OTP template can be archived without creating an inquiry.
+    # It remains uncertain, so a later actual customer message is reviewed afresh.
+    has_call_event=any(CALL_EVENT.fullmatch(' '.join(line.split())) for line in str(item.get('concern') or '').splitlines())
+    otp=not has_call_event and bool(lines) and any(OTP_MESSAGE.fullmatch(line) for line in lines) and all(OTP_MESSAGE.fullmatch(line) or OTP_WARNING.fullmatch(line) for line in lines)
+    useful=[line for line in lines if not OTP_MESSAGE.fullmatch(line) and not OTP_WARNING.fullmatch(line)]
+    missing='name and repair details' if not item.get('name') or item.get('name')=='Name not provided' else 'repair details'
+    fallback=('Call' if has_call_event else 'Conversation')+' captured; '+missing+' still needed. Check the original conversation before following up.'
+    summary=('Automated verification message only; no repair request is visible.' if otp else
+        'Captured text: '+' '.join(useful) if useful else
+        fallback)
+    if len(summary)>500:summary=summary[:499].rstrip()+'…'
+    # Unknown, missed and silent callers remain owner-review items. No payment,
+    # repair, spam or booking outcome is inferred from keywords or an AI recap.
+    return {'classification':'uncertain','include_in_dashboard':not otp,'reviewer':'Owner-authorized source-capture automation (not owner qualification)',
         'reviewed_at':observed_at,'evidence':[{'kind':'conversations','id':cid}],
-        'category':'Captured conversation - review needed',
-        'summary':'New or changed Beside conversation captured for review. Check the original thread before following up.',
+        'category':'Automated verification message' if otp else 'Captured conversation - review needed',
+        'summary':summary,
         'uncertainties':['Repair intent and current follow-up state are not automatically qualified.','Activity date is from the visible thread, not proof of original receipt.','Only the rendered thread was read; recordings and older paged history are not included.']}
 
 
