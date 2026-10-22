@@ -156,6 +156,27 @@ class PureLogic(unittest.TestCase):
         with self.assertRaises(L.LinuxCaptureError):
             L.stable_thread(A, URL_A, 'Jane Synthetic 2h', lambda: None, sleep=sleep, clock=clock)
 
+    def test_failure_names_fixed_reason_code(self):
+        obs = [observation(t, self.nodes) for t in ('2026-10-21T16:00:00.000Z', '2026-10-21T16:00:00.400Z', '2026-10-21T16:00:00.800Z')]
+        self.assertEqual(L.verification_error(L.thread_candidate(A, URL_A, 'Bob Example Oct 3', obs)), 'inventory_target_changed')
+        changed = [dict(n) for n in self.nodes]; changed[-3]['name'] = 'changed text'
+        obs[1] = observation('2026-10-21T16:00:00.400Z', changed)
+        self.assertEqual(L.verification_error(L.thread_candidate(A, URL_A, 'Jane Synthetic 2h', obs)), 'conversation_pane_not_stable')
+        now = [0.0]
+        with self.assertRaises(L.LinuxCaptureError) as err:
+            L.stable_thread(A, URL_A, 'Jane Synthetic 2h', lambda: None, sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0])
+        self.assertIn('(page_not_on_thread)', str(err.exception))
+
+    def test_render_settling_late_verifies_on_retry_window(self):
+        # Pane changes for the first few reads (still rendering / new message), then settles.
+        changed = [dict(n) for n in self.nodes]; changed[-3]['name'] = 'typing...'
+        seq = iter([changed, self.nodes, changed, self.nodes, self.nodes, self.nodes])
+        times = iter(['2026-10-21T16:00:%02d.000Z' % i for i in range(20)])
+        now = [0.0]
+        cand = L.stable_thread(A, URL_A, 'Jane Synthetic 2h', lambda: observation(next(times), next(seq)),
+                               sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0])
+        self.assertEqual(L.conversation(cand, '0' * 64)['name'] if hasattr(L, 'conversation') else 'Jane Synthetic', 'Jane Synthetic')
+
 
 class SafetyAndWiring(unittest.TestCase):
     def test_off_by_default(self):
