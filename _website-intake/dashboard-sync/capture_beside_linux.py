@@ -225,34 +225,44 @@ def thread_candidate(cid, url, label, samples):
             'customer_messages_sent': False, 'capture_backend': 'linux-playwright'}
 
 
-def identity_verified(candidate):
-    """Same pure validator the PowerShell loop calls through `beside_uia.py --verify-stdin`."""
+def verification_error(candidate):
+    """None if the candidate verifies, else a short fixed reason code (never page text).
+    Same pure validator the PowerShell loop calls through `beside_uia.py --verify-stdin`."""
     raw = json.dumps(candidate, ensure_ascii=False).encode()
     try:
         conversation(candidate, hashlib.sha256(raw).hexdigest())
-        return True
-    except (CaptureError, ValueError, TypeError, KeyError, AttributeError):
-        return False
+        return None
+    except CaptureError as exc:
+        code = str(exc)
+        return code if re.fullmatch(r'[a-z_]{1,64}', code) else 'capture_error'
+    except (ValueError, TypeError, KeyError, AttributeError) as exc:
+        return type(exc).__name__
+
+
+def identity_verified(candidate):
+    return verification_error(candidate) is None
 
 
 def stable_thread(cid, url, label, observe, *, deadline_seconds=12, spacing=0.3, sleep=time.sleep, clock=time.monotonic):
     """Collect observations until three consecutive ones verify (same loop as the PS1)."""
-    end = clock() + deadline_seconds; samples = []
+    end = clock() + deadline_seconds; samples = []; reason = 'no_observation'
     while clock() < end:
         sleep(spacing)
         try:
             sample = observe()
         except Exception:
-            samples = []; continue
+            samples = []; reason = 'observe_failed'; continue
         if not sample:
-            samples = []; continue
+            samples = []; reason = 'page_not_on_thread'; continue
         samples = samples[-2:] + [sample]
         if len(samples) != 3:
             continue
         candidate = thread_candidate(cid, url, label, samples)
-        if identity_verified(candidate):
+        reason = verification_error(candidate)
+        if reason is None:
             return candidate
-    raise LinuxCaptureError('Selected conversation identity or stable content could not be verified')
+    # The fixed reason code (e.g. conversation_pane_not_stable) makes failures diagnosable without page text.
+    raise LinuxCaptureError('Selected conversation identity or stable content could not be verified (' + reason + ')')
 
 
 # ---------- browser ----------
@@ -328,7 +338,18 @@ def capture(mode, output, settings, *, cid=None, inventory_path=None):
         if not links:
             raise LinuxCaptureError('Observed conversation link not currently present')
         links[0].click()  # opens the thread; may mark it read. No sends, edits or deletions.
-        payload = stable_thread(cid, url, observed['label'], lambda: observe_page(page, url))
+        seconds = float(settings.get('beside_linux_thread_stable_seconds', 20))
+        try:
+            payload = stable_thread(cid, url, observed['label'], lambda: observe_page(page, url), deadline_seconds=seconds)
+        except LinuxCaptureError:
+            # One retry for a thread that was still rendering or got a new message mid-read:
+            # short wait, open it again, and require three fresh matching observations.
+            page.wait_for_timeout(1500)
+            links = [a for a in page.query_selector_all('a[href*="/chats/prv_"]') if a.evaluate('a => a.href') == url]
+            if not links:
+                raise LinuxCaptureError('Observed conversation link not currently present')
+            links[0].click()
+            payload = stable_thread(cid, url, observed['label'], lambda: observe_page(page, url), deadline_seconds=seconds)
         write_create_only(out, payload)
         return {'ok': True, 'mode': mode, 'conversation_id': cid, 'captured_nodes': len(payload['nodes']),
                 'identity_verified': True, 'stable_observations': 3, 'complete': False, 'customer_messages_sent': False}

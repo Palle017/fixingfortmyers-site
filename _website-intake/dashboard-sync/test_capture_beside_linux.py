@@ -156,6 +156,27 @@ class PureLogic(unittest.TestCase):
         with self.assertRaises(L.LinuxCaptureError):
             L.stable_thread(A, URL_A, 'Jane Synthetic 2h', lambda: None, sleep=sleep, clock=clock)
 
+    def test_failure_names_fixed_reason_code(self):
+        obs = [observation(t, self.nodes) for t in ('2026-10-21T16:00:00.000Z', '2026-10-21T16:00:00.400Z', '2026-10-21T16:00:00.800Z')]
+        self.assertEqual(L.verification_error(L.thread_candidate(A, URL_A, 'Bob Example Oct 3', obs)), 'inventory_target_changed')
+        changed = [dict(n) for n in self.nodes]; changed[-3]['name'] = 'changed text'
+        obs[1] = observation('2026-10-21T16:00:00.400Z', changed)
+        self.assertEqual(L.verification_error(L.thread_candidate(A, URL_A, 'Jane Synthetic 2h', obs)), 'conversation_pane_not_stable')
+        now = [0.0]
+        with self.assertRaises(L.LinuxCaptureError) as err:
+            L.stable_thread(A, URL_A, 'Jane Synthetic 2h', lambda: None, sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0])
+        self.assertIn('(page_not_on_thread)', str(err.exception))
+
+    def test_render_settling_late_verifies_on_retry_window(self):
+        # Pane changes for the first few reads (still rendering / new message), then settles.
+        changed = [dict(n) for n in self.nodes]; changed[-3]['name'] = 'typing...'
+        seq = iter([changed, self.nodes, changed, self.nodes, self.nodes, self.nodes])
+        times = iter(['2026-10-21T16:00:%02d.000Z' % i for i in range(20)])
+        now = [0.0]
+        cand = L.stable_thread(A, URL_A, 'Jane Synthetic 2h', lambda: observation(next(times), next(seq)),
+                               sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0])
+        self.assertEqual(L.conversation(cand, '0' * 64)['name'] if hasattr(L, 'conversation') else 'Jane Synthetic', 'Jane Synthetic')
+
 
 class SafetyAndWiring(unittest.TestCase):
     def test_off_by_default(self):
@@ -193,6 +214,16 @@ class SafetyAndWiring(unittest.TestCase):
         self.assertTrue(lin[1].endswith('capture_beside_linux.py'))
         self.assertEqual(lin[2:], ['-Mode', 'thread', '-OutputPath', '/p/o.json', '-SettingsPath', '/p/s.json'])
 
+    def test_capture_timeout_linux_longer_windows_unchanged(self):
+        self.assertEqual(R.capture_timeout({}, 150), 25)
+        self.assertEqual(R.capture_timeout({}, 20), 17)
+        lin = {'beside_capture_backend': 'linux'}
+        self.assertEqual(R.capture_timeout(lin, 150), 90)
+        self.assertEqual(R.capture_timeout(lin, 50), 47)
+        self.assertEqual(R.capture_timeout({**lin, 'beside_linux_capture_timeout_seconds': 120}, 150), 120)
+        svc = (HERE / 'linux' / 'beside-capture.service').read_text()
+        self.assertGreaterEqual(int(re.search(r'TimeoutStartSec=(\d+)', svc)[1]), 150 + 60)
+
     def test_cli_accepts_the_runner_arguments(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / 's.json'; p.write_text(json.dumps({'private_archive_root': d}))
@@ -204,7 +235,7 @@ class SafetyAndWiring(unittest.TestCase):
         svc = (HERE / 'linux' / 'beside-capture.service').read_text()
         timer = (HERE / 'linux' / 'beside-capture.timer').read_text()
         self.assertIn('MemoryMax=1G', svc); self.assertIn('--service', svc); self.assertIn('xvfb-run', svc)
-        self.assertIn('PrivateTmp=no', svc); self.assertNotIn('PrivateTmp=yes', svc)
+        self.assertNotIn('PrivateTmp=yes', svc)
         self.assertIn('NoNewPrivileges=yes', svc); self.assertIn('UMask=0077', svc)
         self.assertIn('OnUnitActiveSec=12min', timer)
         self.assertIn('%h/venv/bin/python', svc)

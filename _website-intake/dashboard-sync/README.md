@@ -72,3 +72,13 @@ State (`followup-state.json`) and a counts-only receipt (`followup-status.json`)
 ## Linux capture (optional, off by default)
 
 `capture_beside_linux.py` is a Playwright port of `capture_beside.ps1` for the Ubuntu VM, with the same output files and validator. Enable with `beside_capture_backend: "linux"` and `beside_linux_capture_enabled: true` in the private settings. Setup, systemd timer and live-check list: [`linux/README.md`](linux/README.md).
+
+## Manual scan and auto-scan
+
+Workers cannot request jobs (`400 INVALID_REQUEST`). Jobs come from the owner's **Refresh Beside**
+button or from Owner Desk's automatic refresh, which runs server-side on the worker heartbeat when
+the deployment sets `BESIDE_AUTO_REFRESH_INTERVAL_MINUTES` (e.g. 15). `beside_refresh_runner.py
+--scan-now` runs an already-queued job immediately under the shared capture lock, with no customer
+messages; with nothing queued it exits with `OWNER_REQUEST_REQUIRED` and leaves the worker's ready
+status alone. With no options the runner behaves as before (the Windows task is unchanged). See
+`linux/README.md`.

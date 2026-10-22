@@ -60,9 +60,8 @@ function verifies(value) {
 
 const textNames = nodes => nodes.filter(n => n.role === 'ControlType.Text').map(n => n.name);
 
-test('capture unit preserves Chrome runtime visibility and existing security/resource bounds', () => {
+test('capture unit omits PrivateTmp=yes and keeps existing security/resource bounds', () => {
   const unit = fs.readFileSync(path.join(root, '_website-intake/dashboard-sync/linux/beside-capture.service'), 'utf8');
-  assert.match(unit, /^PrivateTmp=no$/m);
   assert.doesNotMatch(unit, /^PrivateTmp=yes$/m);
   for (const line of ['NoNewPrivileges=yes', 'UMask=0077', 'MemoryMax=1G', 'CPUQuota=150%'])
     assert.ok(unit.split(/\r?\n/).includes(line));

@@ -14,12 +14,11 @@ import sqlite3
 import subprocess
 import sys
 import time
-from urllib import request
+from urllib import error, request
 from urllib.parse import urlsplit
 from beside_uia import CaptureError, conversation, generic_review
 import beside_intake
 import beside_extract
-from beside_schedule import auto_scan_reason
 
 ROOT=Path(__file__).resolve().parent
 # BESIDE_REFRESH_SETTINGS lets the Linux service point at its own private settings; Windows default unchanged.
@@ -66,6 +65,38 @@ def capture_command(settings,mode,output,settings_path):
     return ['powershell.exe','-NoProfile','-File',str(ROOT/'capture_beside.ps1'),'-Mode',mode,
         '-OutputPath',str(output),'-SettingsPath',str(settings_path),'-PythonExecutable',sys.executable]
 
+def capture_timeout(settings,remaining):
+    # Windows UIA capture: unchanged 25 s. Linux/Playwright: cold Chromium start + read takes ~30 s
+    # on the 2-vCPU VM, so allow beside_linux_capture_timeout_seconds (default 90). Always capped
+    # by the remaining run budget minus 3 s.
+    if settings.get('beside_capture_backend')=='linux':
+        return min(float(settings.get('beside_linux_capture_timeout_seconds',90)),remaining-3)
+    return min(25,remaining-3)
+
+OWNER_REQUEST_MESSAGE=('No Refresh Beside job is queued. Workers cannot request jobs directly; press Refresh Beside '
+    'in Owner Desk (or enable Owner Desk automatic refresh), then run --scan-now or let the timer pick it up.')
+
+def server_code(value):
+    """A short server error code (e.g. INVALID_ACTION) from a JSON reply, or None. Never free text."""
+    if isinstance(value,(bytes,bytearray)):
+        try:value=json.loads(value)
+        except ValueError:return None
+    if not isinstance(value,dict):return None
+    for key in ('code','errorCode','error'):
+        v=value.get(key)
+        if isinstance(v,str) and re.fullmatch(r'[A-Za-z0-9_.:-]{1,64}',v):return v
+    return None
+
+def attention_evidence(runs,job_id):
+    """Local proof about an attention job: did this worker claim it, and did it try an import?"""
+    if not job_id:return {'found':False}
+    for lease_path in Path(runs).glob('*/lease.json'):
+        try:lease=load(lease_path)
+        except (OSError,ValueError):continue
+        if (lease.get('state') or {}).get('jobId')==job_id:
+            return {'found':True,'import_attempted':(lease_path.parent/'apply-journal.json').exists()}
+    return {'found':False}
+
 def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0):
     """Read selected threads. Default: stop at the first failure (previous behavior).
     With skip_failed, a failed thread is skipped with exponential backoff and the pass continues,
@@ -85,7 +116,7 @@ def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_fa
             sleep(delay)
     return captures,failures
 
-def run(*,settings_path=SETTINGS,budget_seconds=80):
+def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
     started=time.monotonic();lease=None;run_dir=None;phase='reading';last_error='WORKER_FAILED'
     report={'ok':False,'checked_at':stamp(),'fresh_scan_performed':False,'customer_messages_sent':False}
     def remaining():return budget_seconds-(time.monotonic()-started)
@@ -111,23 +142,38 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
             req=request.Request(origin+path,data=archive.canonical(body).encode(),headers={
                 'Content-Type':'application/json','Accept':'application/json',
                 'OAI-Sites-Authorization':'Bearer '+config['service_token'],'x-owner-sync-token':config['sync_token']})
-            with opener.open(req,timeout=min(12,remaining())) as response:
-                raw=response.read(4_000_001)
-                if response.status!=200 or len(raw)>4_000_000:raise ScanError('BASELINE_UNAVAILABLE')
-                value=json.loads(raw)
-                if value.get('ok') is not True:raise ScanError('BASELINE_UNAVAILABLE')
-                return value
+            try:
+                with opener.open(req,timeout=min(12,remaining())) as response:
+                    raw=response.read(4_000_001)
+                    if response.status!=200 or len(raw)>4_000_000:raise ScanError('BASELINE_UNAVAILABLE')
+                    value=json.loads(raw)
+            except error.HTTPError as exc:
+                # Keep only the status and a short server error code; never the body or headers.
+                report['worker_http_status']=exc.code
+                code=server_code(exc.read(4096))
+                if code:report['worker_error_code']=code
+                raise ScanError('WORKER_HTTP_'+str(exc.code)) from None
+            except (error.URLError,TimeoutError,OSError):
+                raise ScanError('WORKER_UNREACHABLE') from None
+            except ValueError:
+                raise ScanError('WORKER_RESPONSE_INVALID') from None
+            if value.get('ok') is not True:
+                code=server_code(value)
+                if code:report['worker_error_code']=code
+                raise ScanError('BASELINE_UNAVAILABLE')
+            return value
         def worker(action,**extra):
             body={'action':action,**extra}
             if action in ('progress','complete','fail'):
                 body.update(jobId=lease['state']['jobId'],claimToken=lease['claimToken'])
+            report['worker_action']=action
             return call('/api/beside-refresh/worker',body)
         def capture(mode,output,*,cid=None,inventory=None):
             if remaining()<10:raise ScanError('CAPTURE_INCOMPLETE')
             args=capture_command(settings,mode,output,settings_path)
             if cid:args+=['-ConversationId',cid,'-InventoryPath',str(inventory)]
             for attempt in range(2):
-                completed=subprocess.run(args,capture_output=True,text=True,timeout=min(25,remaining()-3),
+                completed=subprocess.run(args,capture_output=True,text=True,timeout=capture_timeout(settings,remaining()),
                     creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
                 if completed.returncode==0:return load(output)
                 report['source_read_failure'] = (completed.stderr.splitlines() or ['Source read failed'])[0][:180]
@@ -135,26 +181,35 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
                 if attempt or output.exists() or remaining()<12:break
                 time.sleep(0.4)
             raise ScanError('BROWSER_UNAVAILABLE')
+        if manual:
+            # Fail fast, before opening a browser, when there is no owner-requested job to run.
+            state=worker('baseline')['state']
+            if state['status']!='queued':
+                report.update(ok=False,queue_status=state['status'],error='OWNER_REQUEST_REQUIRED',
+                    owner_request_required=OWNER_REQUEST_MESSAGE)
+                # Separate file: a refusal says nothing about source access, so it must not overwrite
+                # uia-worker-status.json (the Linux heartbeat reads that to decide if it is ready).
+                write(refresh/'uia-scan-now-status.json',report)
+                return report
         # Real signed-in source access must succeed before a readiness heartbeat.
         probe_dir=refresh/'uia-readiness';probe_dir.mkdir(exist_ok=True)
         probe_path=probe_dir/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')+'.json')
         capture('inventory',probe_path)
-        worker('heartbeat')
+        beat=worker('heartbeat')
+        # With BESIDE_AUTO_REFRESH_INTERVAL_MINUTES set on Owner Desk, the heartbeat itself may queue
+        # an automatic job (requested_by automatic:beside-ready-worker); the baseline below sees it.
+        if isinstance(beat.get('automatic'),dict):
+            report['automatic']={k:beat['automatic'].get(k) for k in ('enabled','intervalMinutes','queued','reason')}
         state=worker('baseline')['state']
-        if state['status']!='queued' and settings.get('beside_auto_scan_minutes'):
-            # Optional scheduled scan (off by default): ask the dashboard queue for a job;
-            # the next task run claims it through the normal lease path.
-            auto_path=refresh/'uia-auto-scan.json'
-            auto_state=load(auto_path) if auto_path.exists() else {}
-            checkpoint_path=refresh/'uia-checkpoint.json'
-            reason=auto_scan_reason(datetime.now(timezone.utc),settings,auto_state,
-                load(probe_path),load(checkpoint_path) if checkpoint_path.exists() else {'records':{}})
-            if reason and state['status'] in ('idle','complete','failed',None):
-                requested=worker(settings.get('beside_auto_scan_action','request'),reason='scheduled:'+reason)
-                auto_state.update(last_requested_at=stamp(),last_reason=reason)
-                write(auto_path,auto_state)
-                report['auto_scan_requested']=reason
-                state=requested.get('state') or state
+        if state['status']!='queued' and (manual or settings.get('beside_auto_scan_minutes')):
+            # Workers cannot request jobs. Jobs come from the owner's Refresh Beside button or from Owner
+            # Desk's own automatic refresh, which runs server-side on this worker's heartbeat when
+            # BESIDE_AUTO_REFRESH_INTERVAL_MINUTES is set. beside_auto_scan_minutes is informational only.
+            report['owner_request_required']=OWNER_REQUEST_MESSAGE
+        if manual and state['status']!='queued':
+            report.update(ok=False,worker_ready=True,queue_status=state['status'],error='OWNER_REQUEST_REQUIRED')
+            write(refresh/'uia-worker-status.json',report)
+            return report
         if state['status']!='queued':
             report.update(ok=True,worker_ready=True,queue_status=state['status'],scan_trigger='Owner Dashboard Refresh Beside')
             write(refresh/'uia-worker-status.json',report)
@@ -263,6 +318,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
             dashboard_records=len(after['leads']),scope=scope,full_account_export=False)
     except Exception as exc:
         code=str(exc) if isinstance(exc,ScanError) else 'WORKER_FAILED'
+        if not isinstance(exc,ScanError):report['exception']=type(exc).__name__
         report.update(error=code,phase=phase,requires_review=phase in ('importing','verifying'))
         if lease and lease.get('claimed'):
             try:worker('fail',errorCode=code)
@@ -272,5 +328,29 @@ def run(*,settings_path=SETTINGS,budget_seconds=80):
     except OSError:pass
     return report
 
+def main(argv=None):
+    import argparse
+    parser=argparse.ArgumentParser(description='Beside refresh worker. Without options: one queue poll (Windows task behaviour).')
+    parser.add_argument('--scan-now',action='store_true',help='Request and run a full scan + Owner Desk import now (same path as Refresh Beside). Never messages customers.')
+    parser.add_argument('--settings',type=Path,default=None,help='Private settings file (default: BESIDE_REFRESH_SETTINGS or the Windows path).')
+    parser.add_argument('--budget-seconds',type=int,default=None)
+    args=parser.parse_args(argv)
+    settings_path=args.settings or SETTINGS
+    if not args.scan_now:
+        outcome=run(settings_path=settings_path,**({'budget_seconds':args.budget_seconds} if args.budget_seconds else {}))
+    else:
+        lock=None
+        try:
+            import beside_heartbeat_linux  # shared capture.lock (Linux; fcntl)
+            lock=beside_heartbeat_linux.capture_lock(load(settings_path))
+            if lock is None:
+                print(json.dumps({'ok':False,'error':'capture_already_running','customer_messages_sent':False}));return 1
+        except ImportError:
+            pass
+        try:outcome=run(settings_path=settings_path,budget_seconds=args.budget_seconds or 600,manual=True)
+        finally:
+            if lock:lock.close()
+    print(json.dumps(outcome));return 0 if outcome['ok'] else 1
+
 if __name__=='__main__':
-    outcome=run();print(json.dumps(outcome));raise SystemExit(0 if outcome['ok'] else 1)
+    raise SystemExit(main())

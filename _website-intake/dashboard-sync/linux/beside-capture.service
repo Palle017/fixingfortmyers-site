@@ -10,13 +10,11 @@ Type=oneshot
 Environment=BESIDE_REFRESH_SETTINGS=%h/beside-private/refresh/settings.json
 WorkingDirectory=%h/fixingfortmyers-site/_website-intake/dashboard-sync
 ExecStart=/usr/bin/xvfb-run -a -s "-screen 0 1280x900x24" %h/venv/bin/python capture_beside_linux.py --service -SettingsPath ${BESIDE_REFRESH_SETTINGS}
-TimeoutStartSec=170
+# Runner budget is 150 s (beside_linux_budget_seconds) plus an optional keep-alive Chromium check.
+TimeoutStartSec=240
 MemoryMax=1G
 MemoryHigh=900M
 CPUQuota=150%
 Nice=10
 NoNewPrivileges=yes
-# The signed-in persistent Chrome profile times out navigating with a private /tmp.
-# Keep its shared runtime resources visible; captures/settings remain owner-only.
-PrivateTmp=no
 UMask=0077

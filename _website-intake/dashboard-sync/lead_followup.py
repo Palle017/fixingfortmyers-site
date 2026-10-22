@@ -67,6 +67,7 @@ def is_open(lead, start_at):
     received = instant(lead.get('received_at'))
     return (received is not None and received >= start_at and not lead.get('historical')
             and lead.get('source') != 'beside-history' and lead.get('classification') != 'spam'
+            and lead.get('folder') != 'junk'
             and lead.get('stage') in OPEN_STAGES and not lead.get('owner_updated_at'))
 
 
@@ -138,7 +139,8 @@ def digest(open_new, older_review, now, state):
 def counters(leads, start_at, now):
     """First touch = the first owner change on the card (stage or note), measured from receipt."""
     recent = [l for l in leads if instant(l.get('received_at')) and instant(l['received_at']) >= start_at
-              and not l.get('historical') and l.get('source') != 'beside-history' and l.get('classification') != 'spam']
+              and not l.get('historical') and l.get('source') != 'beside-history' and l.get('classification') != 'spam'
+              and l.get('folder') != 'junk']
     waits = sorted((instant(l['owner_updated_at']) - instant(l['received_at'])).total_seconds() / 60
                    for l in recent if instant(l.get('owner_updated_at')))
     pct = lambda n: round(100 * n / len(recent)) if recent else None
@@ -168,7 +170,8 @@ def plan(baseline, worker_online, now, state, start_at, dashboard_url=''):
         if alarm:
             pushes += [([], 'tony', alarm), ([], 'raj', alarm)]
     older = sum(1 for l in leads if l.get('stage') == 'current_review' and not l.get('historical')
-                and l.get('source') != 'beside-history' and not is_open(l, start_at) and not l.get('owner_updated_at'))
+                and l.get('source') != 'beside-history' and l.get('folder') != 'junk'
+                and not is_open(l, start_at) and not l.get('owner_updated_at'))
     note = digest(sum(is_open(l, start_at) for l in leads), older, now, state)
     if note:
         pushes += [([], 'tony', note), ([], 'raj', note)]

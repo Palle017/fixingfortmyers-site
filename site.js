@@ -816,6 +816,9 @@
   // A dropped connection retries the same saved payload and key in the background, so a
   // customer who already pressed send is not left with an unsent lead after a brief outage.
   let retryTimer = 0, autoRetries = 0;
+  // Keep receipt IDs in memory only. A repeated saved receipt (for example after
+  // retrying a response/UI failure) must not become a second GA4 repair request.
+  const measuredRequestReceipts = new Set();
   // Only a 4xx is a definite rejection; anything else may have been saved, so retry with the same key.
   const retryable = error => !error.status || error.status < 400 || error.status >= 500 || error.status === 408 || error.status === 429;
   async function deliver(data, submittedKey) {
@@ -829,7 +832,10 @@
       if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
       sentRequestId = result.id;
       const files = byId('request-media')?.files?.length || 0;
-      track('form_submit_success', {service: data.service, has_photos: files > 0, car_location: data.carLocation?.type || 'not_given', text_consent: data.smsConsent === true});
+      if (!measuredRequestReceipts.has(result.id)) {
+        measuredRequestReceipts.add(result.id);
+        track('form_submit_success', {service: data.service, has_photos: files > 0, car_location: data.carLocation?.type || 'not_given', text_consent: data.smsConsent === true});
+      }
       status.textContent = `Repair request received. Reference: ${result.id}.`;
       const sentMedia = await uploadMedia(result);
       showDone(result, sentMedia);
