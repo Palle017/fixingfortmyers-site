@@ -41,6 +41,16 @@ class ScanNowTests(unittest.TestCase):
             self.assertEqual(R.main([]), 0)
         self.assertNotIn('manual', run.call_args.kwargs)
 
+    def test_server_code_is_short_codes_only(self):
+        self.assertEqual(R.server_code(b'{"ok":false,"code":"INVALID_ACTION"}'), 'INVALID_ACTION')
+        self.assertEqual(R.server_code({'error': 'not_requestable'}), 'not_requestable')
+        self.assertIsNone(R.server_code({'error': 'some long sentence with spaces'}))
+        self.assertIsNone(R.server_code(b'<html>'))
+
+    def test_unexpected_exception_type_is_reported(self):
+        out = R.run(settings_path=self.settings, budget_seconds=30)
+        self.assertEqual((out['error'], out['exception']), ('WORKER_FAILED', 'KeyError'))
+
 
 if __name__ == '__main__':
     unittest.main()

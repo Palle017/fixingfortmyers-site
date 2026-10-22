@@ -14,7 +14,7 @@ import sqlite3
 import subprocess
 import sys
 import time
-from urllib import request
+from urllib import error, request
 from urllib.parse import urlsplit
 from beside_uia import CaptureError, conversation, generic_review
 import beside_intake
@@ -74,6 +74,17 @@ def capture_timeout(settings,remaining):
         return min(float(settings.get('beside_linux_capture_timeout_seconds',90)),remaining-3)
     return min(25,remaining-3)
 
+def server_code(value):
+    """A short server error code (e.g. INVALID_ACTION) from a JSON reply, or None. Never free text."""
+    if isinstance(value,(bytes,bytearray)):
+        try:value=json.loads(value)
+        except ValueError:return None
+    if not isinstance(value,dict):return None
+    for key in ('code','errorCode','error'):
+        v=value.get(key)
+        if isinstance(v,str) and re.fullmatch(r'[A-Za-z0-9_.:-]{1,64}',v):return v
+    return None
+
 def attention_evidence(runs,job_id):
     """Local proof about an attention job: did this worker claim it, and did it try an import?"""
     if not job_id:return {'found':False}
@@ -129,16 +140,31 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
             req=request.Request(origin+path,data=archive.canonical(body).encode(),headers={
                 'Content-Type':'application/json','Accept':'application/json',
                 'OAI-Sites-Authorization':'Bearer '+config['service_token'],'x-owner-sync-token':config['sync_token']})
-            with opener.open(req,timeout=min(12,remaining())) as response:
-                raw=response.read(4_000_001)
-                if response.status!=200 or len(raw)>4_000_000:raise ScanError('BASELINE_UNAVAILABLE')
-                value=json.loads(raw)
-                if value.get('ok') is not True:raise ScanError('BASELINE_UNAVAILABLE')
-                return value
+            try:
+                with opener.open(req,timeout=min(12,remaining())) as response:
+                    raw=response.read(4_000_001)
+                    if response.status!=200 or len(raw)>4_000_000:raise ScanError('BASELINE_UNAVAILABLE')
+                    value=json.loads(raw)
+            except error.HTTPError as exc:
+                # Keep only the status and a short server error code; never the body or headers.
+                report['worker_http_status']=exc.code
+                code=server_code(exc.read(4096))
+                if code:report['worker_error_code']=code
+                raise ScanError('WORKER_HTTP_'+str(exc.code)) from None
+            except (error.URLError,TimeoutError,OSError):
+                raise ScanError('WORKER_UNREACHABLE') from None
+            except ValueError:
+                raise ScanError('WORKER_RESPONSE_INVALID') from None
+            if value.get('ok') is not True:
+                code=server_code(value)
+                if code:report['worker_error_code']=code
+                raise ScanError('BASELINE_UNAVAILABLE')
+            return value
         def worker(action,**extra):
             body={'action':action,**extra}
             if action in ('progress','complete','fail'):
                 body.update(jobId=lease['state']['jobId'],claimToken=lease['claimToken'])
+            report['worker_action']=action
             return call('/api/beside-refresh/worker',body)
         def capture(mode,output,*,cid=None,inventory=None):
             if remaining()<10:raise ScanError('CAPTURE_INCOMPLETE')
@@ -298,6 +324,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
             dashboard_records=len(after['leads']),scope=scope,full_account_export=False)
     except Exception as exc:
         code=str(exc) if isinstance(exc,ScanError) else 'WORKER_FAILED'
+        if not isinstance(exc,ScanError):report['exception']=type(exc).__name__
         report.update(error=code,phase=phase,requires_review=phase in ('importing','verifying'))
         if lease and lease.get('claimed'):
             try:worker('fail',errorCode=code)
