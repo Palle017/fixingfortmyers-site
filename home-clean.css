@@ -101,3 +101,7 @@
   .home-start__actions .btn{width:100%;justify-content:center;min-height:52px}
   .home-start__actions .btn--primary{font-size:17px}
 }
+.home-start__services{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.home-start__services a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border:1px solid #315069;border-radius:6px;background:#111d2a;color:#e8f4ff;font:600 14px/1.2 'Barlow',sans-serif;text-decoration:none;text-align:center;white-space:nowrap}
+.home-start__services a:hover,.home-start__services a:focus-visible{border-color:#8dd6ff;background:#172b3c;color:#fff}
+@media(max-width:540px){.home-start__services{gap:8px}.home-start__services a{padding:10px 12px}}
