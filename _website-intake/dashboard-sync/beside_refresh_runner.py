@@ -134,13 +134,18 @@ def capture_command(settings,mode,output,settings_path):
     return ['powershell.exe','-NoProfile','-File',str(ROOT/'capture_beside.ps1'),'-Mode',mode,
         '-OutputPath',str(output),'-SettingsPath',str(settings_path),'-PythonExecutable',sys.executable]
 
-def capture_timeout(settings,remaining):
+FINISH_RESERVE_SECONDS=60
+READBACK_RESERVE_SECONDS=38
+
+def capture_timeout(settings,remaining,*,reserve_seconds=0):
     # Windows UIA capture: unchanged 25 s. Linux/Playwright: cold Chromium start + read takes ~30 s
     # on the 2-vCPU VM, so allow beside_linux_capture_timeout_seconds (default 90). Always capped
     # by the remaining run budget minus 3 s.
+    available=remaining-reserve_seconds-3
+    if available<=0:raise ScanError('CAPTURE_INCOMPLETE')
     if settings.get('beside_capture_backend')=='linux':
-        return min(float(settings.get('beside_linux_capture_timeout_seconds',90)),remaining-3)
-    return min(25,remaining-3)
+        return min(float(settings.get('beside_linux_capture_timeout_seconds',90)),available)
+    return min(25,available)
 
 OWNER_REQUEST_MESSAGE=('No Refresh Beside job is queued. Workers cannot request jobs directly; press Refresh Beside '
     'in Owner Desk (or enable Owner Desk automatic refresh), then run --scan-now or let the timer pick it up.')
@@ -166,13 +171,35 @@ def attention_evidence(runs,job_id):
             return {'found':True,'import_attempted':(lease_path.parent/'apply-journal.json').exists()}
     return {'found':False}
 
-def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0):
+def require_captured_changes(selected,captures):
+    if selected and not captures:raise ScanError('CAPTURE_INCOMPLETE')
+
+def sample_when_unchanged(inventory,checkpoint,selected):
+    if selected:return selected
+    # A queued no-change refresh still reads one actual thread. Rotate the oldest
+    # checked visible row; its content fingerprint prevents an unchanged card write.
+    return [min(inventory['records'],key=lambda row:checkpoint.get('records',{}).get(row['conversation_id'],{}).get('checked_at',''))]
+
+def capture_change_count(captures,plan,unchanged_probe):
+    # A sampled unchanged preview can reveal new content. The receipt must still
+    # cover any resulting card changes; a genuinely unchanged sample reports zero.
+    card_changes=len(plan['proposed']['new'])+len(plan['proposed']['updated'])
+    return max(card_changes,0 if unchanged_probe else len(captures))
+
+def begin_import(remaining,progress):
+    # Refuse before the remote phase changes: no POST has been attempted yet.
+    if remaining()<FINISH_RESERVE_SECONDS:raise ScanError('CAPTURE_INCOMPLETE')
+    progress()
+    return min(30,remaining()-READBACK_RESERVE_SECONDS)
+
+def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0,reserve_seconds=0):
     """Read selected threads. Default: stop at the first failure (previous behavior).
     With skip_failed, a failed thread is skipped with exponential backoff and the pass continues,
-    up to max_failures. Failed threads are never checkpointed, so they stay pending."""
+    up to max_failures. Failed threads are never checkpointed, so they stay pending.
+    The caller can reserve time for archive/import/readback before starting another read."""
     captures=[];failures=[]
     for row in selected:
-        if remaining()<35:break
+        if remaining()<35+reserve_seconds:break
         cid=row['conversation_id']
         try:
             captures.append(read_one(cid))
@@ -181,11 +208,11 @@ def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_fa
             failures.append(cid)
             if not skip_failed or len(failures)>=max_failures:break
             delay=min(max_delay,base_delay*(2**(len(failures)-1)))
-            if remaining()-delay<35:break
+            if remaining()-delay<35+reserve_seconds:break
             sleep(delay)
     return captures,failures
 
-def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
+def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
     started=time.monotonic();lease=None;run_dir=None;phase='reading';last_error='WORKER_FAILED'
     report={'ok':False,'checked_at':stamp(),'fresh_scan_performed':False,'customer_messages_sent':False}
     def remaining():return budget_seconds-(time.monotonic()-started)
@@ -238,16 +265,19 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
             report['worker_action']=action
             return call('/api/beside-refresh/worker',body)
         def capture(mode,output,*,cid=None,inventory=None):
-            if remaining()<10:raise ScanError('CAPTURE_INCOMPLETE')
+            reserve=FINISH_RESERVE_SECONDS if mode=='thread' else 0
+            if remaining()<10+reserve:raise ScanError('CAPTURE_INCOMPLETE')
             args=capture_command(settings,mode,output,settings_path)
             if cid:args+=['-ConversationId',cid,'-InventoryPath',str(inventory)]
             for attempt in range(2):
-                completed=subprocess.run(args,capture_output=True,text=True,timeout=capture_timeout(settings,remaining()),
-                    creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                try:
+                    completed=subprocess.run(args,capture_output=True,text=True,timeout=capture_timeout(settings,remaining(),reserve_seconds=reserve),
+                        creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                except subprocess.TimeoutExpired:raise ScanError('CAPTURE_INCOMPLETE') from None
                 if completed.returncode==0:return load(output)
                 report['source_read_failure'] = (completed.stderr.splitlines() or ['Source read failed'])[0][:180]
                 # Only retry source reads during transient page rendering. Never replay writes.
-                if attempt or output.exists() or remaining()<12:break
+                if attempt or output.exists() or remaining()<12+reserve:break
                 time.sleep(0.4)
             raise ScanError('BROWSER_UNAVAILABLE')
         if manual:
@@ -292,14 +322,16 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
         checkpoint_path=refresh/'uia-checkpoint.json'
         checkpoint=load(checkpoint_path) if checkpoint_path.exists() else {'records':{}}
         selected,total_changed=selected_changes(inventory,checkpoint,min(25,int(settings.get('maximum_changed_threads_per_pass',25))))
+        unchanged_probe=not selected
+        selected=sample_when_unchanged(inventory,checkpoint,selected)
         def read_one(cid):
             return capture('thread',run_dir/('thread-'+cid+'.json'),cid=cid,inventory=run_dir/'inventory.json')
         captures,capture_failures=read_threads(selected,read_one,remaining,
             lambda:worker('progress',phase='reading'),
             skip_failed=settings.get('beside_skip_failed_threads') is True,
-            max_failures=int(settings.get('beside_max_thread_failures',5)))
+            max_failures=int(settings.get('beside_max_thread_failures',5)),reserve_seconds=FINISH_RESERVE_SECONDS)
         report['thread_failures']=len(capture_failures)
-        if selected and not captures:raise ScanError('CAPTURE_INCOMPLETE')
+        require_captured_changes(selected,captures)
         worker('progress',phase='checking');phase='checking'
         baseline=worker('baseline')['baseline'];archive.validate_baseline(baseline)
         by_id={row['id']:row for row in baseline['leads']}
@@ -323,7 +355,9 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
                     checkpoint.get('records',{}).get(cid,{}).get('content_sha256'))
                 capture_hashes[cid]=capture_fields_fingerprint(item)
                 review['classifications'][cid]=decision;conversations.append(item)
-            scope=f"{len(inventory['records'])} recent visible All-list conversations inventoried; {len(captures)} selected rendered threads read. {total_changed-len(captures)} changed/uninspected visible conversations remain outside this bounded pass. Not a full account export."
+            require_captured_changes(selected,conversations)
+            scope=f"{len(inventory['records'])} recent visible All-list conversations inventoried; {len(captures)} selected rendered threads read. {max(0,total_changed-len(captures))} changed/uninspected visible conversations remain outside this bounded pass. Not a full account export."
+            if unchanged_probe:scope+=' No changed preview was detected; one oldest checked visible thread was sampled.'
             snapshot={'format':'beside-snapshot/v1','account':{'provider_id':settings['mailbox_id'],'mailbox_id':settings['mailbox_id']},
                 'collected_at':observed,'coverage':{'complete':False,'method':'authorized_browser','scope':scope,
                     'limitations':['Rendered recent window only; no older paging, Spam-tab export, recording audio or transcript downloads.',
@@ -337,14 +371,13 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
         write(run_dir/'ownerdesk-before.json',baseline);write(run_dir/'review.json',review);write(run_dir/'plan.json',plan)
         # Existing sender validates exact plan, latest baseline and source-only fields.
         latest=worker('baseline')['baseline'];write(run_dir/'latest-before.json',latest)
-        worker('progress',phase='importing');phase='importing'
         if plan['batches']:
-            if remaining()<20:raise ScanError('CAPTURE_INCOMPLETE')
+            import_timeout=begin_import(remaining,lambda:worker('progress',phase='importing'));phase='importing'
             command=[sys.executable,str(dependency/'apply_reviewed_plan.py'),'--plan',str(run_dir/'plan.json'),
                 '--approved-plan-sha256',plan['plan_sha256'],'--baseline',str(run_dir/'ownerdesk-before.json'),
                 '--latest-baseline',str(run_dir/'latest-before.json'),'--private-config',settings['private_sync_config'],
                 '--journal',str(run_dir/'apply-journal.json'),'--private-directory-confirmed','--apply']
-            applied=subprocess.run(command,capture_output=True,text=True,timeout=min(30,remaining()-10),creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+            applied=subprocess.run(command,capture_output=True,text=True,timeout=import_timeout,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
             if applied.returncode:raise ScanError('IMPORT_RESULT_UNCERTAIN')
             journal=load(run_dir/'apply-journal.json')
         else:journal=None
@@ -352,7 +385,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
         after=worker('baseline')['baseline'];verified=archive.verify_after(baseline,after,plan)
         write(run_dir/'ownerdesk-after.json',after);write(run_dir/'readback-verification.json',verified)
         if not verified['ok']:raise ScanError('READBACK_MISMATCH')
-        readback=stamp();counts={'conversationsRead':len(inventory['records']),'conversationsChanged':len(captures),
+        readback=stamp();counts={'conversationsRead':len(inventory['records']),'conversationsChanged':capture_change_count(captures,plan,unchanged_probe),
             'archivedObservations':len(conversations),'newCards':len(plan['proposed']['new']),'updatedCards':len(plan['proposed']['updated']),
             'heldCards':len(plan['gaps'])+len(held),'skippedConversations':len(inventory['records'])-len(captures),'confirmedBatches':len(plan['batches'])}
         proof={'job_id':lease['state']['jobId'],'requested_at':lease['state']['requestedAt'],'captured_at':observed,'readback_at':readback,

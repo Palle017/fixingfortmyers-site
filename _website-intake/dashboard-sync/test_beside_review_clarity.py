@@ -1,8 +1,10 @@
 import copy
+import inspect
 import unittest
+from unittest import mock
 
 from beside_extract import apply
-from beside_refresh_runner import capture_fields_fingerprint, preserve_known_fields, selected_changes, source_review
+from beside_refresh_runner import FINISH_RESERVE_SECONDS, READBACK_RESERVE_SECONDS, ScanError, begin_import, capture_change_count, capture_fields_fingerprint, capture_timeout, preserve_known_fields, read_threads, require_captured_changes, run, sample_when_unchanged, selected_changes, source_review
 from beside_uia import SHOP_AUTOTEXTS, SHOP_SIGNATURE, generic_review
 
 CID='prv_'+'A'*26
@@ -182,5 +184,65 @@ class LabelChurnTests(unittest.TestCase):
         inv=inventory('Example 3h Missed call');inv['records'].append(fresh)
         chosen,total=selected_changes(inv,old,1)
         self.assertEqual(total,2);self.assertEqual(chosen,[fresh])
+
+class FinishBudgetTests(unittest.TestCase):
+    def test_no_changed_previews_still_sample_one_oldest_thread_without_card_write(self):
+        other='prv_'+'B'*26
+        inv={'records':[{'conversation_id':CID,'label':'Example 2h Missed call'},
+                        {'conversation_id':other,'label':'Other 3h Missed call'}]}
+        prior={'records':{CID:{'checked_at':'2026-10-22T03:59:00Z'},other:{'checked_at':'2026-10-22T03:55:00Z'}}}
+        chosen=sample_when_unchanged(inv,prior,[])
+        self.assertEqual(chosen,[inv['records'][1]])
+        item={'concern':'Missed call'}
+        projected=source_review({'conversation_id':other},AT,item,{'concern':'Earlier source'},None,capture_fields_fingerprint(item))
+        self.assertFalse(projected['include_in_dashboard'])
+        self.assertEqual(sample_when_unchanged(inv,prior,[inv['records'][0]]),[inv['records'][0]])
+        self.assertEqual(capture_change_count(chosen,{'proposed':{'new':[],'updated':[]}},True),0)
+        # Same preview may conceal new thread facts; completion must cover a real update.
+        self.assertEqual(capture_change_count(chosen,{'proposed':{'new':[],'updated':['one updated card']}},True),1)
+
+    def test_default_runner_budget_can_finish_one_bounded_read(self):
+        remaining=[inspect.signature(run).parameters['budget_seconds'].default-40]
+        def read_one(cid):remaining[0]-=30;return {'conversation_id':cid}
+        captures,failures=read_threads([{'conversation_id':CID}],read_one,lambda:remaining[0],lambda:None,reserve_seconds=FINISH_RESERVE_SECONDS)
+        self.assertEqual(len(captures),1);self.assertEqual(failures,[])
+        self.assertGreater(begin_import(lambda:remaining[0],lambda:None),0)
+
+    def test_stops_new_thread_reads_with_finishing_reserve_intact(self):
+        remaining=[110.0]
+        rows=[{'conversation_id':'prv_'+letter*26} for letter in 'ABC']
+        def read_one(cid):remaining[0]-=30;return {'conversation_id':cid}
+        captures,failures=read_threads(rows,read_one,lambda:remaining[0],lambda:None,reserve_seconds=FINISH_RESERVE_SECONDS)
+        self.assertEqual(len(captures),1)
+        self.assertEqual(failures,[])
+        self.assertGreaterEqual(remaining[0],FINISH_RESERVE_SECONDS)
+        self.assertEqual(len(rows)-len(captures),2)
+
+    def test_long_linux_read_timeout_cannot_consume_finishing_reserve(self):
+        timeout=capture_timeout({'beside_capture_backend':'linux'},110,reserve_seconds=FINISH_RESERVE_SECONDS)
+        self.assertEqual(timeout,47)
+        self.assertGreaterEqual(110-timeout,FINISH_RESERVE_SECONDS)
+
+    def test_low_budget_refuses_before_import_phase_or_sender(self):
+        progress=mock.Mock();sender=mock.Mock()
+        phase='checking'
+        with self.assertRaisesRegex(ScanError,'CAPTURE_INCOMPLETE'):
+            begin_import(lambda:59,progress)
+            phase='importing';sender()
+        self.assertEqual(phase,'checking');progress.assert_not_called();sender.assert_not_called()
+
+    def test_import_timeout_preserves_readback_budget_after_progress(self):
+        remaining=[80.0]
+        def progress():remaining[0]-=12
+        timeout=begin_import(lambda:remaining[0],progress)
+        self.assertGreater(timeout,0)
+        self.assertGreaterEqual(remaining[0]-timeout,READBACK_RESERVE_SECONDS)
+
+    def test_zero_captured_changed_threads_cannot_complete(self):
+        complete=mock.Mock()
+        with self.assertRaisesRegex(ScanError,'CAPTURE_INCOMPLETE'):
+            require_captured_changes([{'conversation_id':CID}],[])
+            complete()
+        complete.assert_not_called()
 
 if __name__=='__main__':unittest.main()
