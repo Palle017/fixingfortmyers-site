@@ -7,8 +7,11 @@ The custom intake counter and Google Analytics are separate systems. A populated
 
 - `contact-config.js` must run before `site.js` on every measured page. Both can
   use `defer` in that order. Existing preview hosts do not send analytics.
-- `ga4MeasurementId` is deliberately blank. No Google script is loaded until
-  the owner's actual web-stream ID is provided. Do not invent an ID.
+- `ga4MeasurementId` is `G-0PR5LCGYF9` on the production domain only. The owner’s
+  existing fixingfortmyers.com web stream was verified in the business Google
+  account on October 21, 2026 (property `555288685`, stream `15820110182`).
+  Preview hosts remain blank. This verified configuration is not proof of
+  processed Google events; read back collection in the actual property.
 - Custom events use the existing configured intake endpoint and unchanged
   `{event, event_id, page, source}` body. The live cloud implementation is not
   in this checkout, so its page/source allowlists were **not** expanded.
@@ -29,24 +32,34 @@ The custom intake counter and Google Analytics are separate systems. A populated
 
 ## Finish GA4 in the owner's account
 
-1. Obtain the actual GA4 web data stream's measurement ID and enter it in the
-   production branch of `contact-config.js` as `ga4MeasurementId`.
+1. Keep the verified GA4 web stream's measurement ID in the production branch
+   of `contact-config.js` only. Do not replace it with a new property or stream.
 2. Disable Enhanced Measurement's automatic form tracking, outbound link/site
    search measurement, and history-based pageviews for this stream. This site
    deliberately sends bounded events and sanitized manual pageviews; automatic
    events could duplicate them or collect URL/link values outside that contract.
    Confirm any existing tag-manager containers do not add a second tag.
 3. Keep the site's privacy disclosure accurate for the measurement actually
-   enabled. The current blank configuration does not load GA4.
+   enabled. `privacy-policy.html` separately describes Google Analytics cookies
+   and the existing custom counters; customer repair contents are excluded.
 4. Mark `form_submit_success` as the repair-request key event. It fires only
    after the intake returns a positive saved receipt, not when a user opens the
    form, presses Send, or opens an unsent SMS/email draft. Do not also count a
    thank-you page view as another conversion for the same request.
+   Repeated acknowledgments for the same saved receipt are deduplicated in page
+   memory. Receipt IDs are never included in an analytics event. `phone_click`
+   remains a separate interaction and does not establish an answered call.
 5. Add an event-scoped custom dimension for `lead_source` if that fixed-source
    breakdown is needed in reports. Use page paths for page-level performance.
+   The deliberate removal of raw referrers and URL queries means default GA4
+   source/campaign reports may lack normal attribution. Use this bounded custom
+   source dimension; do not restore arbitrary URLs to improve attribution.
 6. Validate one owner-authorized test request in Realtime/DebugView and the
    actual intake, then confirm only one key event. Also check phone/text clicks
    separately; a click does not prove a completed call or sent message.
+   Keep test/debug events identifiable and do not present them as customer work.
+   A loaded tag or a network response alone is not proof that GA4 processed an
+   event. Verify receipt in the owner's actual property.
 
 Success stays in the existing receipt view so selected uploads finish and
 customers can add another photo. There is no redirect to `/request-received`.
