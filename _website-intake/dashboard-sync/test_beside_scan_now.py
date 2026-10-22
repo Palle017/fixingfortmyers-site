@@ -52,5 +52,54 @@ class ScanNowTests(unittest.TestCase):
         self.assertEqual((out['error'], out['exception']), ('WORKER_FAILED', 'KeyError'))
 
 
+class OwnerRequestRequiredTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        refresh = self.tmp / 'refresh'; (refresh / 'runs').mkdir(parents=True)
+        dep = self.tmp / 'src' / 'scripts' / 'beside-import'; dep.mkdir(parents=True)
+        (dep / 'beside_archive.py').write_text('import json\ndef canonical(v):return json.dumps(v,sort_keys=True,separators=(",",":"))\n')
+        (dep / 'refresh_worker.py').write_text('')
+        cfg = self.tmp / 'cfg.json'
+        cfg.write_text(json.dumps({'url': 'https://dashboard.fixingfortmyers.com', 'service_token': 'x' * 20, 'sync_token': 'y' * 20}))
+        self.settings = refresh / 'settings.json'
+        self.settings.write_text(json.dumps({'private_archive_root': str(self.tmp), 'runs_directory': str(refresh / 'runs'),
+            'source_checkout': str(self.tmp / 'src'), 'private_sync_config': str(cfg), 'beside_auto_scan_minutes': 15}))
+        self.actions = []
+
+    def opener(self, status):
+        test = self
+        class Resp:
+            def __init__(self, body): self.body = body; self.status = 200
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self, n): return self.body
+        class Opener:
+            def open(self, req, timeout=None):
+                action = json.loads(req.data)['action']; test.actions.append(action)
+                return Resp(json.dumps({'ok': True, 'state': {'status': status}}).encode())
+        return Opener()
+
+    def test_scan_now_without_queued_job_fails_fast_without_browser_or_request(self):
+        with mock.patch.object(R.request, 'build_opener', return_value=self.opener('complete')), \
+             mock.patch.object(R.subprocess, 'run') as sub:
+            out = R.run(settings_path=self.settings, budget_seconds=60, manual=True)
+        self.assertEqual((out['ok'], out['error'], out['queue_status']), (False, 'OWNER_REQUEST_REQUIRED', 'complete'))
+        self.assertIn('Refresh Beside', out['owner_request_required'])
+        self.assertEqual(self.actions, ['baseline'])
+        sub.assert_not_called()
+
+    def test_auto_scan_never_sends_request(self):
+        def fake_run(args, **kw):
+            Path(args[args.index('-OutputPath') + 1] if '-OutputPath' in args else args[-1]).write_text('{}')
+            return mock.Mock(returncode=0, stderr='')
+        with mock.patch.object(R.request, 'build_opener', return_value=self.opener('idle')), \
+             mock.patch.object(R, 'capture_command', side_effect=lambda s, m, o, p: ['x', str(o)]), \
+             mock.patch.object(R.subprocess, 'run', side_effect=fake_run):
+            out = R.run(settings_path=self.settings, budget_seconds=60)
+        self.assertTrue(out['ok'])
+        self.assertEqual(self.actions, ['heartbeat', 'baseline'])
+        self.assertIn('owner_request_required', out)
+
+
 if __name__ == '__main__':
     unittest.main()
