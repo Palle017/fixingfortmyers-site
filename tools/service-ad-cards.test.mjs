@@ -42,6 +42,14 @@ const pages = [
     headline: "If it smokes, limps, or won't fire up, we'll test that diesel.",
     service: 'diesel',
     image: '/assets/campaign-truck.webp'
+  },
+  {
+    file: 'detailing-fort-myers.html',
+    h1: 'Car Detailing in Fort Myers',
+    id: 'detailing-ad',
+    headline: "If it's swirled, stained, or still smells like last summer, we'll clean it up.",
+    service: 'detailing',
+    image: '/assets/gbp-chevy-pickup-tailgate-hero.webp'
   }
 ];
 
