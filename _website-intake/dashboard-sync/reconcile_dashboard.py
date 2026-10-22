@@ -67,6 +67,26 @@ def index_rows(baseline):
         raise CheckError('invalid_dashboard_source_identity')
     return indexed
 
+def completed_proof_owner(receipt,proof,windows_refresh_enabled):
+    """Who completed the live last-success job: 'local' (receipt matches this machine's proof) or
+    'other_worker'. Strict when this machine runs Beside refresh: a mismatch then only passes if the
+    live receipt is newer than the local proof (a later job by another worker); otherwise it fails."""
+    if receipt.get('planSha256')==proof.get('plan_sha256') and receipt.get('afterSha256')==proof.get('after_sha256'):
+        return 'local'
+    if not windows_refresh_enabled:
+        return 'other_worker'
+    live_at,local_at=parse_instant(receipt.get('capturedAt')),parse_instant(proof.get('captured_at'))
+    if live_at and local_at and live_at>local_at:
+        return 'other_worker'
+    raise CheckError('beside_completed_job_and_local_proof_differ')
+
+def parse_instant(value):
+    try:
+        moment=datetime.fromisoformat(str(value).replace('Z','+00:00'))
+        return moment if moment.tzinfo else None
+    except ValueError:
+        return None
+
 def compare(events,current,expected):
     actual,prior=index_rows(current),index_rows(expected)
     if len({row['id'] for row in events})!=len(events):
@@ -151,8 +171,10 @@ def run(*,publish=True,budget_seconds=45):
         if hashlib.sha256(canonical(expected).encode()).hexdigest()!=proof['after_sha256']:
             raise CheckError('beside_readback_hash_mismatch')
         receipt=live['state'].get('lastSuccessReceipt') or {}
-        if receipt.get('planSha256')!=proof['plan_sha256'] or receipt.get('afterSha256')!=proof['after_sha256']:
-            raise CheckError('beside_completed_job_and_local_proof_differ')
+        proof_owner=completed_proof_owner(receipt,proof,sc.get('beside_refresh_enabled') is True)
+        # 'other_worker': the VM (or another worker) completed the latest scan. Records saved by this
+        # machine's last proof are still checked below for loss; the scan time shown is the live one.
+        scan_at=proof['captured_at'] if proof_owner=='local' else receipt.get('capturedAt')
         result.update(compare(events,live['baseline'],expected))
         health=call('cloud','/private/health')
         worker_online=bool(live['state'].get('worker',{}).get('online'))
@@ -162,7 +184,7 @@ def run(*,publish=True,budget_seconds=45):
         if metadata_publish_allowed(publish,live['state']):
             verdict='Saved-record reconciliation passed.' if result['delivery_ok'] else 'ACTION NEEDED: missing records or changed source fields. See private reconciliation receipt.'
             detail=(f"{verdict} {result['beside']['saved_cards']} newer Beside cards and {result['beside']['historical_cards']} historical cards are saved. "
-                f"Last verified scan: {proof['captured_at']}. This is a saved snapshot, not a live feed of every call/text. "
+                f"Last verified scan: {scan_at}. This is a saved snapshot, not a live feed of every call/text. "
                 +('Scan worker reports online; this check did not scrape new messages.' if worker_online else 'Scan worker is offline; calls/texts after the last scan are UNVERIFIED.')
                 +f" Website IDs checked: {result['website']['matched']}/{result['website']['source_requests']} including owner tests.")
             source={'id':'beside','name':'Beside saved scans','status':'historical' if result['delivery_ok'] else 'error',
@@ -177,7 +199,7 @@ def run(*,publish=True,budget_seconds=45):
             if not metadata_matches(saved,source):
                 raise CheckError('source_status_readback_mismatch')
             result['dashboard_status_updated']=True
-        result['beside'].update(last_verified_scan_at=proof['captured_at'],scan_scope=proof.get('scope'),
+        result['beside'].update(last_verified_scan_at=scan_at,completed_by=proof_owner,scan_scope=proof.get('scope') if proof_owner=='local' else None,
             scan_worker_online=worker_online,fresh_scan_performed=False)
         result['ok']=result['delivery_ok'] and health.get('pending')==0
     except Exception as exc:

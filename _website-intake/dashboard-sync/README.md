@@ -75,8 +75,10 @@ State (`followup-state.json`) and a counts-only receipt (`followup-status.json`)
 
 ## Manual scan and auto-scan
 
-`python beside_refresh_runner.py --scan-now` runs one full scan + Owner Desk import now, the same
-path as Refresh Beside, under the shared capture lock, with no customer messages. With no options
-the runner behaves exactly as before (one queue poll; the Windows task is unchanged). Auto-scan
-(`beside_auto_scan_minutes`) now runs at any hour when `beside_shop_hours` is unset, and only steps
-past a stale `attention` job when that job never attempted an import. See `linux/README.md`.
+Workers cannot request jobs (`400 INVALID_REQUEST`). Jobs come from the owner's **Refresh Beside**
+button or from Owner Desk's automatic refresh, which runs server-side on the worker heartbeat when
+the deployment sets `BESIDE_AUTO_REFRESH_INTERVAL_MINUTES` (e.g. 15). `beside_refresh_runner.py
+--scan-now` runs an already-queued job immediately under the shared capture lock, with no customer
+messages; with nothing queued it exits with `OWNER_REQUEST_REQUIRED` and leaves the worker's ready
+status alone. With no options the runner behaves as before (the Windows task is unchanged). See
+`linux/README.md`.
