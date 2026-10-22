@@ -73,8 +73,8 @@ def capture_timeout(settings,remaining):
         return min(float(settings.get('beside_linux_capture_timeout_seconds',90)),remaining-3)
     return min(25,remaining-3)
 
-OWNER_REQUEST_MESSAGE=('No Refresh Beside job is queued. Workers cannot create scan jobs; press Refresh Beside '
-    'in Owner Desk, then run --scan-now (or let the timer pick it up).')
+OWNER_REQUEST_MESSAGE=('No Refresh Beside job is queued. Workers cannot request jobs directly; press Refresh Beside '
+    'in Owner Desk (or enable Owner Desk automatic refresh), then run --scan-now or let the timer pick it up.')
 
 def server_code(value):
     """A short server error code (e.g. INVALID_ACTION) from a JSON reply, or None. Never free text."""
@@ -185,21 +185,26 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
             # Fail fast, before opening a browser, when there is no owner-requested job to run.
             state=worker('baseline')['state']
             if state['status']!='queued':
-                report.update(ok=False,worker_ready=False,queue_status=state['status'],error='OWNER_REQUEST_REQUIRED',
+                report.update(ok=False,queue_status=state['status'],error='OWNER_REQUEST_REQUIRED',
                     owner_request_required=OWNER_REQUEST_MESSAGE)
-                write(refresh/'uia-worker-status.json',report)
+                # Separate file: a refusal says nothing about source access, so it must not overwrite
+                # uia-worker-status.json (the Linux heartbeat reads that to decide if it is ready).
+                write(refresh/'uia-scan-now-status.json',report)
                 return report
         # Real signed-in source access must succeed before a readiness heartbeat.
         probe_dir=refresh/'uia-readiness';probe_dir.mkdir(exist_ok=True)
         probe_path=probe_dir/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')+'.json')
         capture('inventory',probe_path)
-        worker('heartbeat')
+        beat=worker('heartbeat')
+        # With BESIDE_AUTO_REFRESH_INTERVAL_MINUTES set on Owner Desk, the heartbeat itself may queue
+        # an automatic job (requested_by automatic:beside-ready-worker); the baseline below sees it.
+        if isinstance(beat.get('automatic'),dict):
+            report['automatic']={k:beat['automatic'].get(k) for k in ('enabled','intervalMinutes','queued','reason')}
         state=worker('baseline')['state']
         if state['status']!='queued' and (manual or settings.get('beside_auto_scan_minutes')):
-            # The dashboard worker endpoint cannot create jobs: its only actions are heartbeat, claim,
-            # baseline, progress, complete, fail and resolve_attention. Jobs are created only by the
-            # owner's Refresh Beside button (POST /api/beside-refresh, owner session). So neither
-            # --scan-now nor auto-scan sends a request; they fail fast with a clear message.
+            # Workers cannot request jobs. Jobs come from the owner's Refresh Beside button or from Owner
+            # Desk's own automatic refresh, which runs server-side on this worker's heartbeat when
+            # BESIDE_AUTO_REFRESH_INTERVAL_MINUTES is set. beside_auto_scan_minutes is informational only.
             report['owner_request_required']=OWNER_REQUEST_MESSAGE
         if manual and state['status']!='queued':
             report.update(ok=False,worker_ready=True,queue_status=state['status'],error='OWNER_REQUEST_REQUIRED')
