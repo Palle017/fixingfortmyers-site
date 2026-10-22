@@ -108,4 +108,20 @@ class ActiveScanTests(unittest.TestCase):
         self.assertTrue(check.metadata_publish_allowed(True,{'status':'complete'}))
         self.assertFalse(check.metadata_publish_allowed(False,{'status':'complete'}))
 
+
+class CompletedProofOwnerTests(unittest.TestCase):
+    PROOF={'plan_sha256':'a'*64,'after_sha256':'b'*64,'captured_at':'2026-10-21T09:02:40.000Z'}
+    def test_matching_receipt_is_local(self):
+        r={'planSha256':'a'*64,'afterSha256':'b'*64,'capturedAt':'2026-10-21T09:02:40.000Z'}
+        self.assertEqual(check.completed_proof_owner(r,self.PROOF,True),'local')
+    def test_windows_refresh_disabled_accepts_other_worker(self):
+        r={'planSha256':'c'*64,'afterSha256':'d'*64,'capturedAt':'2026-10-22T00:17:56.069Z'}
+        self.assertEqual(check.completed_proof_owner(r,self.PROOF,False),'other_worker')
+    def test_enabled_accepts_only_a_newer_other_job(self):
+        newer={'planSha256':'c'*64,'afterSha256':'d'*64,'capturedAt':'2026-10-22T00:17:56.069Z'}
+        self.assertEqual(check.completed_proof_owner(newer,self.PROOF,True),'other_worker')
+        same_time={'planSha256':'c'*64,'afterSha256':'d'*64,'capturedAt':'2026-10-21T09:02:40.000Z'}
+        with self.assertRaises(check.CheckError):check.completed_proof_owner(same_time,self.PROOF,True)
+        with self.assertRaises(check.CheckError):check.completed_proof_owner({},self.PROOF,True)
+
 if __name__=='__main__':unittest.main()
