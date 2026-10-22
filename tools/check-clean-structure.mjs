@@ -61,7 +61,10 @@ export function checkCleanPage(name,html){
         assert.equal(labels[0],'Request a repair',`${name}: consistent mobile request`);
         assert.match(labels[1],/^Call(?: [\u2014-] AI intake| \(239\) 397-2048)?$/,`${name}: consistent mobile call`);
         assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
-        assert.ok(actions[0].getAttribute('href').endsWith('#contact'),`${name}: request opens the form`);
+        const requestHref=actions[0].getAttribute('href');
+        const dedicatedRequest={'diesel-repair-fort-myers.html':'diesel','ac-repair-fort-myers.html':'ac','transmission-repair-fort-myers.html':'transmission'};
+        if(dedicatedRequest[name])assert.equal(requestHref,`/request-a-repair?service=${dedicatedRequest[name]}`,`${name}: mobile request opens the repair form`);
+        else assert.ok(requestHref.endsWith('#contact'),`${name}: request opens the form`);
       }
     }
     const form=d.getElementById('bookingForm');
