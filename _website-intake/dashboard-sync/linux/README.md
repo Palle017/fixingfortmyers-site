@@ -4,7 +4,7 @@ Linux port of `capture_beside.ps1`. `capture_beside_linux.py` reads the signed-i
 with Playwright Chromium on a persistent profile (`~/.config/beside-chrome`) under Xvfb and writes
 the **same** `beside-uia-inventory/v1` / `beside-uia-thread/v1` files, validated by the **same**
 `beside_uia.py` checks (target link unique, header matches, three stable observations). So
-`beside_refresh_runner.py`, the archive/plan/apply/readback steps, and the #95–#101 options
+`beside_refresh_runner.py`, the archive/plan/apply/readback steps, and the #95Ã¢â‚¬â€œ#101 options
 (scheduled scans, failure alerts, keep-alive, per-message times, extraction, skip-failed-threads,
 intake POST) run unchanged on top of it.
 
@@ -37,7 +37,7 @@ admin once: `sudo loginctl enable-linger beside` (ask whoever has sudo on the VM
 
 Private, never in Git (chmod 600):
 
-- `~/beside-private/refresh/settings.json` – copy the Windows refresh settings and change paths to
+- `~/beside-private/refresh/settings.json` Ã¢â‚¬â€œ copy the Windows refresh settings and change paths to
   Linux paths. Linux keys:
 
   ```json
@@ -53,11 +53,11 @@ Private, never in Git (chmod 600):
   }
   ```
   plus the existing keys (`expected_account_heading`, `expected_mailbox_title`, `mailbox_id`,
-  `persistent_archive`, `private_sync_config`, and any #95–#101 flags such as
+  `persistent_archive`, `private_sync_config`, and any #95Ã¢â‚¬â€œ#101 flags such as
   `beside_keepalive_enabled`, `beside_parse_details`, `beside_extract_fields`,
   `beside_skip_failed_threads`, `beside_intake_post_enabled`, `beside_auto_scan_minutes`).
-- `source_checkout/scripts/beside-import/` – the private import tools from the shop PC
-  (`beside_archive.py`, `refresh_worker.py`, `apply_reviewed_plan.py`, …). Copy them from the
+- `source_checkout/scripts/beside-import/` Ã¢â‚¬â€œ the private import tools from the shop PC
+  (`beside_archive.py`, `refresh_worker.py`, `apply_reviewed_plan.py`, Ã¢â‚¬Â¦). Copy them from the
   restricted folder; do **not** commit them here.
 - The dashboard sync config (`url`, `service_token`, `sync_token`) at the path in
   `private_sync_config`.
@@ -114,8 +114,8 @@ Automatic scans are created by Owner Desk itself, on this worker's heartbeat, wh
 deployment sets `BESIDE_AUTO_REFRESH_INTERVAL_MINUTES` (15 to 1440; unset means off). The job shows
 as requested by `automatic:beside-ready-worker`, and the timer claims it like a button job. Owner
 Desk only queues one when the worker is online, nothing is queued/running, the queue is not in
-`attention`, and the interval has passed since the last verified scan (and, with the pending Owner
-Desk change, since the last request; it also retries a plain `failed` job). The runner records the
+`attention`, and the interval has passed since the last verified scan and last request. Failed and attention
+jobs remain held for owner review; automatic polling does not clear those holds. The runner records the
 server's answer under `automatic` in `uia-worker-status.json`. `beside_auto_scan_minutes` in the
 local settings has no effect.
 
@@ -130,8 +130,8 @@ systemctl --user list-timers beside-capture.timer
 journalctl --user -u beside-capture.service -n 50
 ```
 
-Each run: optional keep-alive check → `beside_refresh_runner.run()` (heartbeat, queued job,
-capture, archive, plan, apply, readback) → optional `beside_alerts`. Status goes to
+Each run: optional keep-alive check Ã¢â€ â€™ `beside_refresh_runner.run()` (heartbeat, queued job,
+capture, archive, plan, apply, readback) Ã¢â€ â€™ optional `beside_alerts`. Status goes to
 `refresh/uia-worker-status.json` like on Windows.
 
 ## Heartbeat (every minute, no browser)
@@ -170,7 +170,7 @@ false. The Windows path is untouched.
 The geometry/identity rules are the Windows ones, applied to the DOM. Checked offline against a
 synthetic sample (`linux/fixtures/beside_chats_sample.html`); not yet against the real Beside app:
 
-- document title `Chats - … - Beside` on the Chats view;
+- document title `Chats - Ã¢â‚¬Â¦ - Beside` on the Chats view;
 - `Filter chats: All` exposed as an `aria-label` (UIA name on Windows);
 - account heading / mailbox title visible as text or `aria-label`;
 - sidebar links are `a[href*="/chats/prv_"]` (documented in `browser_readers.js`) and sit left of
@@ -187,3 +187,39 @@ python3 -m unittest discover -s _website-intake/dashboard-sync -p 'test_*.py' -v
 `test_capture_beside_linux.py` uses only the saved synthetic HTML. With Playwright installed it also
 renders that file offline (all requests aborted or fulfilled locally) and runs a full
 inventory + thread capture; without Playwright (CI) those two tests skip.
+
+## Runtime budgets and attempt evidence
+
+Install the reviewed runner, `beside_attempt.py`, Linux entry point and service unit together.
+Before activation, verify the effective unit deadline and the existing private budget and capture
+timeout through the approved operator process. Do not print private settings or copy them into Git.
+The source service now allows 660 seconds, below the unchanged 720-second timer interval. The
+entry point defaults to a 540-second runner budget, caps larger requests at 540, and deducts slow
+keepalive time from a 630-second service envelope. Smaller explicit private budgets remain smaller;
+for example, an explicit 150-second override will defer under the default Linux claim guard.
+No service restart, private setting change or timer installation is performed by these source edits.
+
+After readiness and network calls, the runner must still have time for the claim, a fresh inventory,
+one full thread and finalization. With the default 90-second Linux read ceiling, that requires at
+least 315 seconds remaining before claim. Finalization reserves 120 seconds for bounded HTTP/apply
+operations; local disk/archive work is not a hard real-time guarantee. Additional threads stop before
+consuming that reserve. A deferral leaves the queued job unclaimed and reports its required minimum.
+
+Sanitized per-attempt records are written in `refresh/uia-attempts/` before claim, even when no run
+folder exists. They contain fixed error/stage codes and timing, not response bodies, credentials,
+URLs, source text or exception messages. The create-only `.failure.json` preserves the original
+failure if queue-failure reporting also fails. Treat these as private operational evidence.
+
+A lost or malformed claim response remains held across normal polls. Only authoritative same-job
+completion/review or a later server-created queued job can reconcile it automatically. The existing
+operator `--scan-now` path may reconcile a still-queued claim through the server's atomic claim;
+it cannot release or replay an uncertain import. Inspect the attempt, server state, original plan,
+apply journal and dashboard readback before resolving any attention hold. Never infer ingestion
+success from heartbeat, an inventory count or an import plan without a completion receipt/readback.
+
+Focused synthetic checks (no live source, queue, settings or customer contact):
+
+```sh
+python3 -B -m unittest discover -s _website-intake/dashboard-sync -p 'test_beside_runner_reliability.py' -v
+python3 -B -m unittest discover -s _website-intake/dashboard-sync -p 'test_beside_budget_envelope.py' -v
+```

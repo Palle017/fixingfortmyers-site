@@ -407,10 +407,18 @@ def service(settings_path):
 
 
 def _service_locked(settings_path, settings):
+    started = time.monotonic()
     os.environ['BESIDE_REFRESH_SETTINGS'] = str(Path(settings_path).resolve())
     import beside_refresh_runner
     status = {'checked_at': stamp(), 'keepalive': keepalive(settings)}
-    status['beside_refresh'] = beside_refresh_runner.run(settings_path=Path(settings_path), budget_seconds=int(settings.get('beside_linux_budget_seconds', 150)))
+    # Leave 30 seconds under the 660-second unit for alerts and shutdown. Slow
+    # keepalive consumes this envelope; it must not borrow the runner's deadline.
+    requested_budget = int(settings.get('beside_linux_budget_seconds', 540))
+    available = max(0, int(630 - (time.monotonic() - started)))
+    budget = max(0, min(requested_budget, 540, available))
+    status['service_budget'] = {'requested_seconds': requested_budget,
+                                'effective_seconds': budget, 'maximum_seconds': 540}
+    status['beside_refresh'] = beside_refresh_runner.run(settings_path=Path(settings_path), budget_seconds=budget)
     try:
         import beside_alerts
         sync_config = load_settings(settings['beside_alerts_config']) if settings.get('beside_alerts_config') else {}
