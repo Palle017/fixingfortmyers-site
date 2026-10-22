@@ -134,13 +134,18 @@ def capture_command(settings,mode,output,settings_path):
     return ['powershell.exe','-NoProfile','-File',str(ROOT/'capture_beside.ps1'),'-Mode',mode,
         '-OutputPath',str(output),'-SettingsPath',str(settings_path),'-PythonExecutable',sys.executable]
 
-FINISH_RESERVE_SECONDS=60
+# Captures must also leave room for checking progress, two complete baselines
+# and the local archive/plan before the import/readback budget starts. The hard
+# import gate still catches preparation delays beyond this separate allowance.
+IMPORT_RESERVE_SECONDS=60
+PREPARATION_RESERVE_SECONDS=15
+FINISH_RESERVE_SECONDS=PREPARATION_RESERVE_SECONDS+IMPORT_RESERVE_SECONDS
 READBACK_RESERVE_SECONDS=38
 
 def capture_timeout(settings,remaining,*,reserve_seconds=0):
     # Windows UIA capture: unchanged 25 s. Linux/Playwright: cold Chromium start + read takes ~30 s
     # on the 2-vCPU VM, so allow beside_linux_capture_timeout_seconds (default 90). Always capped
-    # by the remaining run budget minus 3 s.
+    # by the remaining run budget minus the requested reserve and 3 s.
     available=remaining-reserve_seconds-3
     if available<=0:raise ScanError('CAPTURE_INCOMPLETE')
     if settings.get('beside_capture_backend')=='linux':
@@ -188,7 +193,7 @@ def capture_change_count(captures,plan,unchanged_probe):
 
 def begin_import(remaining,progress):
     # Refuse before the remote phase changes: no POST has been attempted yet.
-    if remaining()<FINISH_RESERVE_SECONDS:raise ScanError('CAPTURE_INCOMPLETE')
+    if remaining()<IMPORT_RESERVE_SECONDS:raise ScanError('CAPTURE_INCOMPLETE')
     progress()
     return min(30,remaining()-READBACK_RESERVE_SECONDS)
 
