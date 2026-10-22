@@ -186,6 +186,38 @@ class LabelChurnTests(unittest.TestCase):
         self.assertEqual(total,2);self.assertEqual(chosen,[fresh])
 
 class FinishBudgetTests(unittest.TestCase):
+    def test_capture_budget_includes_preparation_before_import_and_readback(self):
+        # A real 150-second Linux pass had ~97 seconds after one 21-second
+        # thread, then spent the finishing reserve trying another slow thread.
+        # Model the calls/SQLite work that still occur before begin_import.
+        for budget in (145,150):
+            with self.subTest(budget=budget):
+                remaining=[budget-32.0]
+                attempted=[]
+                def read_one(cid):
+                    attempted.append(cid)
+                    timeout=capture_timeout({'beside_capture_backend':'linux'},remaining[0],reserve_seconds=FINISH_RESERVE_SECONDS)
+                    if len(attempted)==1:
+                        remaining[0]-=21.2
+                        return {'conversation_id':cid}
+                    remaining[0]-=timeout
+                    raise ScanError('CAPTURE_INCOMPLETE')
+                captures,failures=read_threads([{'conversation_id':'prv_'+letter*26} for letter in 'AB'],
+                    read_one,lambda:remaining[0],lambda:None,reserve_seconds=FINISH_RESERVE_SECONDS)
+                # checking progress, first baseline, archive/plan and latest baseline
+                for seconds in (3,3,6,3):remaining[0]-=seconds
+                def importing_progress():remaining[0]-=12
+                timeout=begin_import(lambda:remaining[0],importing_progress)
+                self.assertEqual(len(captures),1)
+                self.assertEqual(failures,[])
+                self.assertEqual(len(attempted),1)
+                self.assertGreater(timeout,0)
+                remaining[0]-=timeout
+                self.assertGreaterEqual(remaining[0],READBACK_RESERVE_SECONDS)
+                # verifying progress, complete baseline, completion and proof writes
+                for seconds in (12,12,12,2):remaining[0]-=seconds
+                self.assertGreaterEqual(remaining[0],0)
+
     def test_no_changed_previews_still_sample_one_oldest_thread_without_card_write(self):
         other='prv_'+'B'*26
         inv={'records':[{'conversation_id':CID,'label':'Example 2h Missed call'},
@@ -201,12 +233,25 @@ class FinishBudgetTests(unittest.TestCase):
         # Same preview may conceal new thread facts; completion must cover a real update.
         self.assertEqual(capture_change_count(chosen,{'proposed':{'new':[],'updated':['one updated card']}},True),1)
 
-    def test_default_runner_budget_can_finish_one_bounded_read(self):
-        remaining=[inspect.signature(run).parameters['budget_seconds'].default-40]
+    def test_default_runner_budget_can_finish_after_observed_setup(self):
+        # The measured readiness/inventory setup took ~32 seconds. Reserving
+        # preparation too makes a 40-second setup + 35-second read infeasible
+        # under the standalone 145-second budget; that case must defer below.
+        remaining=[inspect.signature(run).parameters['budget_seconds'].default-32]
         def read_one(cid):remaining[0]-=30;return {'conversation_id':cid}
         captures,failures=read_threads([{'conversation_id':CID}],read_one,lambda:remaining[0],lambda:None,reserve_seconds=FINISH_RESERVE_SECONDS)
         self.assertEqual(len(captures),1);self.assertEqual(failures,[])
         self.assertGreater(begin_import(lambda:remaining[0],lambda:None),0)
+
+    def test_long_setup_does_not_start_an_unfinishable_standalone_read(self):
+        remaining=[145-40]
+        read_one=mock.Mock();progress=mock.Mock()
+        selected=[{'conversation_id':CID}]
+        captures,failures=read_threads(selected,read_one,lambda:remaining[0],progress,reserve_seconds=FINISH_RESERVE_SECONDS)
+        self.assertEqual(captures,[]);self.assertEqual(failures,[])
+        read_one.assert_not_called();progress.assert_not_called()
+        with self.assertRaisesRegex(ScanError,'CAPTURE_INCOMPLETE'):
+            require_captured_changes(selected,captures)
 
     def test_stops_new_thread_reads_with_finishing_reserve_intact(self):
         remaining=[110.0]
@@ -220,8 +265,15 @@ class FinishBudgetTests(unittest.TestCase):
 
     def test_long_linux_read_timeout_cannot_consume_finishing_reserve(self):
         timeout=capture_timeout({'beside_capture_backend':'linux'},110,reserve_seconds=FINISH_RESERVE_SECONDS)
-        self.assertEqual(timeout,47)
+        self.assertEqual(timeout,32)
         self.assertGreaterEqual(110-timeout,FINISH_RESERVE_SECONDS)
+
+    def test_preparation_allowance_does_not_raise_the_import_gate(self):
+        remaining=[60.0]
+        def progress():remaining[0]-=12
+        timeout=begin_import(lambda:remaining[0],progress)
+        self.assertEqual(timeout,10)
+        self.assertEqual(remaining[0]-timeout,READBACK_RESERVE_SECONDS)
 
     def test_low_budget_refuses_before_import_phase_or_sender(self):
         progress=mock.Mock();sender=mock.Mock()
