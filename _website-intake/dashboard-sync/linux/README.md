@@ -85,12 +85,16 @@ xvfb-run -a ~/venv/bin/python capture_beside_linux.py -Mode inventory \
 Prints `{"ok":true,"mode":"inventory","conversations_read":N,...}`. Errors print one line with no
 customer content (e.g. `Chats view did not become ready (signed out? run --login)`).
 
-## Scan now (manual full scan, no button press)
+## Scan now (runs a queued Refresh Beside job)
 
-Runs the same full scan and Owner Desk import as a **Refresh Beside** job: it asks the queue for a
-job (`request`, reason `manual:cli`), claims it, captures, imports, verifies readback and
-completes. It holds `refresh/capture.lock`, so it never overlaps the timer or a `--service` run
-(if one is running it exits with `capture_already_running`). It never sends customer messages.
+Workers cannot create scan jobs. The Owner Desk worker endpoint (`/api/beside-refresh/worker`,
+sync token) only accepts `heartbeat`, `claim`, `baseline`, `progress`, `complete`, `fail` and
+`resolve_attention`; anything else is `400 INVALID_REQUEST`. A job is created only by the owner's
+**Refresh Beside** button (`POST /api/beside-refresh`, body `{}`, signed-in owner session, same
+origin). This matches Raj's 2026-10-15 choice: scans stay triggered by the dashboard button.
+
+So: press **Refresh Beside** first, then optionally run the job right away instead of waiting for
+the timer:
 
 ```bash
 cd ~/fixingfortmyers-site/_website-intake/dashboard-sync
@@ -98,20 +102,10 @@ BESIDE_REFRESH_SETTINGS=~/beside-private/refresh/settings.json \
   xvfb-run -a -s "-screen 0 1280x900x24" ~/venv/bin/python beside_refresh_runner.py --scan-now
 ```
 
-Default budget is 600 s (`--budget-seconds N` to change). If the queue is busy or in
-`attention` and the rule below does not allow a new job, it prints `SCAN_NOW_REFUSED` with
-`queue_status` and `attention_rule`, and changes nothing.
-
-### Auto-scan and the `attention` state
-
-- `beside_auto_scan_minutes` (e.g. 15) turns auto-scan on. If `beside_shop_hours` is unset,
-  scans are allowed at any hour; set it to limit them to shop hours.
-- `attention` means the dashboard parked a job for a person to check (a claimed job that never
-  completed, or an import whose result is uncertain). A new scan is requested in `attention`
-  only when the same job has been in `attention` for `beside_attention_stale_minutes`
-  (default 60, timed from when this worker first saw it), this worker has that job's run folder,
-  and the run never attempted an import (no `apply-journal.json`). Anything else stays blocked.
-  Nothing clears or resolves `attention` automatically.
+It holds `refresh/capture.lock` (exits with `capture_already_running` if the timer is busy) and
+never sends customer messages. With no queued job it reads the queue once and exits with
+`OWNER_REQUEST_REQUIRED` before opening a browser. `beside_auto_scan_minutes` cannot create jobs
+either; when set, the runner only notes `owner_request_required` in its status file.
 
 ## Timer (every 12 minutes)
 

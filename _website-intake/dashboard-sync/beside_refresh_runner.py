@@ -19,7 +19,6 @@ from urllib.parse import urlsplit
 from beside_uia import CaptureError, conversation, generic_review
 import beside_intake
 import beside_extract
-from beside_schedule import auto_scan_reason, attention_scan_allowed, REQUESTABLE
 
 ROOT=Path(__file__).resolve().parent
 # BESIDE_REFRESH_SETTINGS lets the Linux service point at its own private settings; Windows default unchanged.
@@ -73,6 +72,9 @@ def capture_timeout(settings,remaining):
     if settings.get('beside_capture_backend')=='linux':
         return min(float(settings.get('beside_linux_capture_timeout_seconds',90)),remaining-3)
     return min(25,remaining-3)
+
+OWNER_REQUEST_MESSAGE=('No Refresh Beside job is queued. Workers cannot create scan jobs; press Refresh Beside '
+    'in Owner Desk, then run --scan-now (or let the timer pick it up).')
 
 def server_code(value):
     """A short server error code (e.g. INVALID_ACTION) from a JSON reply, or None. Never free text."""
@@ -179,6 +181,14 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
                 if attempt or output.exists() or remaining()<12:break
                 time.sleep(0.4)
             raise ScanError('BROWSER_UNAVAILABLE')
+        if manual:
+            # Fail fast, before opening a browser, when there is no owner-requested job to run.
+            state=worker('baseline')['state']
+            if state['status']!='queued':
+                report.update(ok=False,worker_ready=False,queue_status=state['status'],error='OWNER_REQUEST_REQUIRED',
+                    owner_request_required=OWNER_REQUEST_MESSAGE)
+                write(refresh/'uia-worker-status.json',report)
+                return report
         # Real signed-in source access must succeed before a readiness heartbeat.
         probe_dir=refresh/'uia-readiness';probe_dir.mkdir(exist_ok=True)
         probe_path=probe_dir/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')+'.json')
@@ -186,34 +196,13 @@ def run(*,settings_path=SETTINGS,budget_seconds=80,manual=False):
         worker('heartbeat')
         state=worker('baseline')['state']
         if state['status']!='queued' and (manual or settings.get('beside_auto_scan_minutes')):
-            # Optional scheduled scan (off by default) or --scan-now: ask the dashboard queue for a
-            # job; this run then claims it through the normal lease path (same as Refresh Beside).
-            auto_path=refresh/'uia-auto-scan.json'
-            auto_state=load(auto_path) if auto_path.exists() else {}
-            checkpoint_path=refresh/'uia-checkpoint.json'
-            now=datetime.now(timezone.utc)
-            if state['status']=='attention':
-                if auto_state.get('attention_job')!=state.get('jobId'):
-                    auto_state.update(attention_job=state.get('jobId'),attention_since=stamp());write(auto_path,auto_state)
-            else:
-                auto_state.pop('attention_job',None);auto_state.pop('attention_since',None)
-            reason='manual' if manual else auto_scan_reason(now,settings,auto_state,
-                load(probe_path),load(checkpoint_path) if checkpoint_path.exists() else {'records':{}})
-            allowed=state['status'] in REQUESTABLE
-            if reason and state['status']=='attention':
-                allowed,why=attention_scan_allowed(now,state,auto_state,attention_evidence(runs,state.get('jobId')),
-                    float(settings.get('beside_attention_stale_minutes',60)))
-                report['attention_rule']=why
-            if reason and allowed:
-                requested=worker(settings.get('beside_auto_scan_action','request'),reason=('manual:cli' if manual else 'scheduled:'+reason))
-                auto_state.update(last_requested_at=stamp(),last_reason=reason)
-                write(auto_path,auto_state)
-                report['auto_scan_requested']=reason
-                state=requested.get('state') or state
-            elif manual:
-                report['scan_now_refused']=state['status']
+            # The dashboard worker endpoint cannot create jobs: its only actions are heartbeat, claim,
+            # baseline, progress, complete, fail and resolve_attention. Jobs are created only by the
+            # owner's Refresh Beside button (POST /api/beside-refresh, owner session). So neither
+            # --scan-now nor auto-scan sends a request; they fail fast with a clear message.
+            report['owner_request_required']=OWNER_REQUEST_MESSAGE
         if manual and state['status']!='queued':
-            report.update(ok=False,worker_ready=True,queue_status=state['status'],error='SCAN_NOW_REFUSED')
+            report.update(ok=False,worker_ready=True,queue_status=state['status'],error='OWNER_REQUEST_REQUIRED')
             write(refresh/'uia-worker-status.json',report)
             return report
         if state['status']!='queued':
