@@ -76,7 +76,8 @@ class OwnerRequestRequiredTests(unittest.TestCase):
         class Opener:
             def open(self, req, timeout=None):
                 action = json.loads(req.data)['action']; test.actions.append(action)
-                return Resp(json.dumps({'ok': True, 'state': {'status': status}}).encode())
+                extra = {'automatic': {'enabled': True, 'intervalMinutes': 15, 'queued': False, 'reason': 'not_due'}} if action == 'heartbeat' else {}
+                return Resp(json.dumps({'ok': True, 'state': {'status': status}, **extra}).encode())
         return Opener()
 
     def test_scan_now_without_queued_job_fails_fast_without_browser_or_request(self):
@@ -87,6 +88,9 @@ class OwnerRequestRequiredTests(unittest.TestCase):
         self.assertIn('Refresh Beside', out['owner_request_required'])
         self.assertEqual(self.actions, ['baseline'])
         sub.assert_not_called()
+        refresh = self.settings.parent
+        self.assertFalse((refresh / 'uia-worker-status.json').exists(), 'refusal must not mark the worker not ready')
+        self.assertEqual(json.loads((refresh / 'uia-scan-now-status.json').read_text())['error'], 'OWNER_REQUEST_REQUIRED')
 
     def test_auto_scan_never_sends_request(self):
         def fake_run(args, **kw):
@@ -99,6 +103,7 @@ class OwnerRequestRequiredTests(unittest.TestCase):
         self.assertTrue(out['ok'])
         self.assertEqual(self.actions, ['heartbeat', 'baseline'])
         self.assertIn('owner_request_required', out)
+        self.assertEqual(out['automatic'], {'enabled': True, 'intervalMinutes': 15, 'queued': False, 'reason': 'not_due'})
 
 
 if __name__ == '__main__':

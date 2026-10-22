@@ -75,9 +75,10 @@ State (`followup-state.json`) and a counts-only receipt (`followup-status.json`)
 
 ## Manual scan and auto-scan
 
-Only the owner's **Refresh Beside** button creates a scan job; the worker endpoint has no request
-action (it answers `400 INVALID_REQUEST`). `python beside_refresh_runner.py --scan-now` runs an
-already-queued job immediately, under the shared capture lock, with no customer messages; with
-nothing queued it exits with `OWNER_REQUEST_REQUIRED`. `beside_auto_scan_minutes` cannot start
-scans. With no options the runner behaves as before (the Windows task is unchanged). See
+Workers cannot request jobs (`400 INVALID_REQUEST`). Jobs come from the owner's **Refresh Beside**
+button or from Owner Desk's automatic refresh, which runs server-side on the worker heartbeat when
+the deployment sets `BESIDE_AUTO_REFRESH_INTERVAL_MINUTES` (e.g. 15). `beside_refresh_runner.py
+--scan-now` runs an already-queued job immediately under the shared capture lock, with no customer
+messages; with nothing queued it exits with `OWNER_REQUEST_REQUIRED` and leaves the worker's ready
+status alone. With no options the runner behaves as before (the Windows task is unchanged). See
 `linux/README.md`.

@@ -104,8 +104,20 @@ BESIDE_REFRESH_SETTINGS=~/beside-private/refresh/settings.json \
 
 It holds `refresh/capture.lock` (exits with `capture_already_running` if the timer is busy) and
 never sends customer messages. With no queued job it reads the queue once and exits with
-`OWNER_REQUEST_REQUIRED` before opening a browser. `beside_auto_scan_minutes` cannot create jobs
-either; when set, the runner only notes `owner_request_required` in its status file.
+`OWNER_REQUEST_REQUIRED` before opening a browser. A refusal is written to
+`refresh/uia-scan-now-status.json`, not `uia-worker-status.json`, so it never makes the heartbeat
+report the worker as not ready.
+
+### Automatic scans every 15 minutes (Owner Desk setting)
+
+Automatic scans are created by Owner Desk itself, on this worker's heartbeat, when the Owner Desk
+deployment sets `BESIDE_AUTO_REFRESH_INTERVAL_MINUTES` (15 to 1440; unset means off). The job shows
+as requested by `automatic:beside-ready-worker`, and the timer claims it like a button job. Owner
+Desk only queues one when the worker is online, nothing is queued/running, the queue is not in
+`attention`, and the interval has passed since the last verified scan (and, with the pending Owner
+Desk change, since the last request; it also retries a plain `failed` job). The runner records the
+server's answer under `automatic` in `uia-worker-status.json`. `beside_auto_scan_minutes` in the
+local settings has no effect.
 
 ## Timer (every 12 minutes)
 
