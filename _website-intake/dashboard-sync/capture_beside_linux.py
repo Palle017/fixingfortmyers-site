@@ -44,6 +44,11 @@ CHAT_URL = re.compile(r'^https://app\.beside\.com/chats/(prv_[A-Z0-9]{26})$')
 CID = re.compile(r'^prv_[A-Z0-9]{26}$')
 CHATS_TITLE = re.compile(r'^Chats - .+ - Beside$')  # same check as capture_beside.ps1
 ALL_FILTER_NAME = 'Filter chats: All'               # same accessible name as capture_beside.ps1
+# The chats shell (title + All filter) paints before conversation links. Inventory
+# must wait for a real chat href instead of reading that empty shell.
+INVENTORY_LINK_SELECTOR = 'a[href^="https://app.beside.com/chats/prv_"]'
+INVENTORY_RENDER_TIMEOUT_SECONDS = 10
+INVENTORY_RENDER_POLL_SECONDS = 0.25
 DEFAULT_PROFILE = '~/.config/beside-chrome'
 MAX_NODES = 2500
 MAX_DEPTH = 45
@@ -203,8 +208,10 @@ def inventory_records(nodes):
             raise LinuxCaptureError('Duplicate visible conversation identity')
         seen.add(cid)
         records.append({'conversation_id': cid, 'url': node['value'], 'label': node.get('name') or ''})
-    if not 1 <= len(records) <= 200:
+    if len(records) > 200:
         raise LinuxCaptureError('Visible inventory absent or exceeds bound')
+    if not records:
+        raise LinuxCaptureError('Visible inventory not rendered')
     return records
 
 
@@ -307,6 +314,24 @@ def chats_page(context, settings):
     return page
 
 
+def wait_for_visible_inventory(page, *, timeout_seconds=INVENTORY_RENDER_TIMEOUT_SECONDS,
+                               poll_seconds=INVENTORY_RENDER_POLL_SECONDS):
+    """Poll until at least one chat link is in the DOM.
+
+    chats_page() only proves the title and the All filter. Those are ready while
+    the conversation list is still empty, and an immediate inventory read then
+    reports zero records.
+    """
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        if page.query_selector(INVENTORY_LINK_SELECTOR):
+            return
+        now = time.monotonic()
+        if now >= deadline:
+            raise LinuxCaptureError('Visible inventory not rendered')
+        time.sleep(min(poll_seconds, deadline - now))
+
+
 def observe_page(page, url):
     before = page.url
     if before != url:
@@ -327,6 +352,7 @@ def capture(mode, output, settings, *, cid=None, inventory_path=None):
     try:
         page = chats_page(context, settings)
         if mode == 'inventory':
+            wait_for_visible_inventory(page)
             nodes = page.evaluate(DOM_NODES_JS, {'maxNodes': MAX_NODES, 'maxDepth': MAX_DEPTH})
             payload = inventory_payload(nodes, page.title())
             write_create_only(out, payload)

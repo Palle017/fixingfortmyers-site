@@ -16,6 +16,7 @@ class AlertTests(unittest.TestCase):
         self.assertEqual(A.classify({'ok':False,'error':'BROWSER_UNAVAILABLE','source_read_failure':'Beside window unavailable'}),'beside_window_unavailable')
         self.assertEqual(A.classify({'ok':False,'source_read_failure':'Expected signed-in Beside account/mailbox unavailable'}),'beside_signed_out')
         self.assertEqual(A.classify({'ok':False,'source_read_failure':'Visible inventory absent or exceeds bound'}),'beside_inventory_unavailable')
+        self.assertEqual(A.classify({'ok':False,'source_read_failure':'Visible inventory not rendered'}),'beside_inventory_unavailable')
         self.assertIsNone(A.classify({'enabled':False,'fresh_scan_performed':False}))
         self.assertIsNone(A.classify({'ok':True}))
     def test_one_push_per_episode_and_rearm(self):
