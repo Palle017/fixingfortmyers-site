@@ -55,7 +55,7 @@
       !document.querySelector('script[src="https://analytics.ahrefs.com/analytics.js"]')) {
     const ahrefsTag = document.createElement('script');
     ahrefsTag.src = 'https://analytics.ahrefs.com/analytics.js';
-    ahrefsTag.dataset.key = '9usl9/b/3RCymBSag13blQ';
+    ahrefsTag.dataset.key = '9usl9/b/3RCymBSag13bIQ';
     ahrefsTag.async = true;
     document.head.append(ahrefsTag);
   }
