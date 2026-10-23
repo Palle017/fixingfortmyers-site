@@ -21,6 +21,7 @@ test('homepage H1 is followed by seven service links to real pages', () => {
   const html = read('index.html');
   assert.match(html, /<h1 id="home-title">Car trouble has terrible timing\. <br><span>Luckily, you’ve got Perfect Timing\.<\/span><\/h1>/);
   const document = new JSDOM(html).window.document;
+  assert.equal(document.title, 'Auto Repair in Fort Myers, FL | Engine, Transmission & Diesel | Perfect Timing');
   const heading = document.getElementById('home-title');
   const row = heading.nextElementSibling;
   assert.equal(row?.classList.contains('home-start__services'), true);
