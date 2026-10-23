@@ -48,6 +48,17 @@
   ]);
   const normalizedPath = location.pathname.replace(/\/$/, '').replace(/\.html$/, '') || '/';
   const publicPath = normalizedPath === '/index' ? '/' : normalizedPath;
+  // Load Ahrefs on known public pages; avoid admin, privacy alias and intake receipt pages.
+  // Home's direct head script takes precedence so page views are never double-counted.
+  const ahrefsExcluded = new Set(['/owner-desk', '/owner-desk-privacy', '/request-received', '/data-privacy-policy']);
+  if (productionHost && analyticsPages.has(publicPath) && !ahrefsExcluded.has(publicPath) &&
+      !document.querySelector('script[src="https://analytics.ahrefs.com/analytics.js"]')) {
+    const ahrefsTag = document.createElement('script');
+    ahrefsTag.src = 'https://analytics.ahrefs.com/analytics.js';
+    ahrefsTag.dataset.key = '9usl9/b/3RCymBSag13blQ';
+    ahrefsTag.async = true;
+    document.head.append(ahrefsTag);
+  }
   const metricPath = analyticsPages.has(publicPath) ? publicPath : '/other';
   // Existing receiver contract: do not expand it without the cloud schema and a
   // coordinated deployment. GA4 uses metricPath; the receiver keeps its buckets.
