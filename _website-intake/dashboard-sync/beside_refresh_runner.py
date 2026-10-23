@@ -209,6 +209,9 @@ def capture_fields_fingerprint(item):
     # Re-observing the same rendered words is not a new source update. Preserve
     # clocks/dates within concern so a repeated call with new activity still changes.
     facts={key:item.get(key) for key in ('name','phone','email','vehicle','concern','received_at')}
+    if item.get('acquisition',{}).get('messages_verified') is True:
+        facts['source_messages']=[{key:message.get(key) for key in ('id','at','direction','text','kind','facts')}
+            for message in item.get('messages',[])]
     return hashlib.sha256(json.dumps(facts,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
 
 CONTEXT_BLOCK=re.compile(r'^(Earlier saved context(?: \(source observed \d{4}-\d{2}-\d{2}\))?): (.*?)(?:\n(?:Latest capture(?: \([^\n]*\))?|Rendered source qualification): .*)?$',re.S)
@@ -463,8 +466,16 @@ def attention_evidence(runs,job_id):
             return {'found':True,'import_attempted':(lease_path.parent/'apply-journal.json').exists()}
     return {'found':False}
 
-def require_captured_changes(selected,captures):
-    if selected and not captures:raise ScanError('CAPTURE_INCOMPLETE')
+def require_captured_changes(selected,captures,*,failures=(),held=()):
+    # Retained raw evidence is useful, but a failed read/parse is not a completed refresh.
+    # A deliberately bounded pass may leave rows unattempted; that is reported separately.
+    if failures or held or (selected and not captures):raise ScanError('CAPTURE_INCOMPLETE')
+
+def require_requested_surface(conversations,requested_surface):
+    if requested_surface not in ('rendered_thread','messages'):raise ScanError('CAPTURE_INCOMPLETE')
+    if requested_surface=='messages' and (not conversations or any(
+        item.get('acquisition',{}).get('messages_verified') is not True for item in conversations)):
+        raise ScanError('CAPTURE_INCOMPLETE')
 
 def sample_when_unchanged(inventory,checkpoint,selected):
     if selected:return selected
@@ -508,9 +519,10 @@ def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_fa
             sleep(delay)
     return captures,failures
 
-def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
+def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surface='rendered_thread'):
     started=time.monotonic();lease=None;run_dir=None;phase='reading';attempt=None;operation='start';operation_started=started
-    report={'ok':False,'checked_at':stamp(),'fresh_scan_performed':False,'customer_messages_sent':False}
+    report={'ok':False,'checked_at':stamp(),'fresh_scan_performed':False,'customer_messages_sent':False,
+        'requested_surface':requested_surface,'message_surface_verified':False,'messages_observed':0}
     def remaining():return budget_seconds-(time.monotonic()-started)
     if not isinstance(budget_seconds,(int,float)) or not math.isfinite(budget_seconds) or budget_seconds<15:
         return {**report,'error':'scan_time_budget_unavailable'}
@@ -688,7 +700,8 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
 
         report['thread_failures']=len(capture_failures)
         report['coverage']=visible_coverage(inventory,selected,captures,capture_failures,selection_evidence,history_info)
-        require_captured_changes(selected,captures)
+        report['coverage'].update(requested_surface=requested_surface,messages_verified=False)
+        require_captured_changes(selected,captures,failures=capture_failures)
         worker('progress',phase='checking');phase='checking'
         baseline=worker('baseline')['baseline'];archive.validate_baseline(baseline)
         by_id={row['id']:row for row in baseline['leads']}
@@ -701,8 +714,11 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             for cap in captures:
                 cid=cap['conversation_id'];raw=(run_dir/('thread-'+cid+'.json')).read_bytes()
                 try:item=conversation(cap,hashlib.sha256(raw).hexdigest(),details=settings.get('beside_parse_details') is True,
-                    call_markers=re.compile(settings['beside_call_markers'],re.I) if settings.get('beside_call_markers') else None)
-                except CaptureError:
+                    call_markers=re.compile(settings['beside_call_markers'],re.I) if settings.get('beside_call_markers') else None,
+                    requested_surface=requested_surface)
+                except CaptureError as exc:
+                    report.setdefault('normalization_failure_reasons',[]).append(
+                        str(exc) if re.fullmatch(r'[a-z_]{1,64}',str(exc)) else 'capture_error')
                     held.append(cid);continue
                 old=by_id.get('beside:chat:'+cid)
                 item=preserve_known_fields(item,old)
@@ -718,8 +734,14 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
                 if needs_review:review_needed_items.append({'conversation_id':cid,**needs_review})
                 capture_hashes[cid]=capture_fields_fingerprint(item)
                 review['classifications'][cid]=decision;conversations.append(item)
-            require_captured_changes(selected,conversations)
             report['coverage']['parsed_observations']=len(conversations)
+            report['coverage']['normalization_failures']=len(held)
+            report['coverage']['messages_verified']=bool(conversations) and all(
+                item.get('acquisition',{}).get('messages_verified') is True for item in conversations)
+            report['coverage']['messages_observed']=sum(len(item.get('messages',[])) for item in conversations
+                if item.get('acquisition',{}).get('messages_verified') is True)
+            require_captured_changes(selected,conversations,held=held)
+            require_requested_surface(conversations,requested_surface)
             report['coverage']['archived_classification_reviews_needed']=len(review_needed_items)
             scope=f"{len(inventory['records'])} recent visible All-list conversations inventoried; {len(captures)} selected rendered threads read. {uninspected_preview_count(inventory,checkpoint,captures)} changed/due preview rows have no saved rendered capture in this pass. Not a full account export."
             scope+=' The first slot samples the oldest due visible row using successful checks and separate attempt history.'
@@ -787,7 +809,9 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             report['intake_post']=beside_intake.post_new([c for c in conversations if c['id'] in good],set(by_id),settings,refresh/'intake-posted.json')
         except Exception as exc:
             report['intake_post']={'enabled':True,'error':'intake_post_failed'}
-        report.update(ok=True,fresh_scan_performed=True,worker_ready=True,job_id=lease['state']['jobId'],counts=counts,
+        report.update(ok=True,fresh_scan_performed=True,
+            message_surface_verified=report['coverage']['messages_verified'],
+            messages_observed=report['coverage']['messages_observed'],worker_ready=True,job_id=lease['state']['jobId'],counts=counts,
             dashboard_records=len(after['leads']),scope=scope,full_account_export=False)
         attempt.claim('complete');event('complete')
     except Exception as exc:
@@ -840,13 +864,15 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
 def main(argv=None):
     import argparse
     parser=argparse.ArgumentParser(description='Beside refresh worker. Without options: one queue poll (Windows task behaviour).')
+    parser.add_argument('--require-messages',action='store_true',help='Require verified selected message-surface evidence; recap-only capture is incomplete.')
     parser.add_argument('--scan-now',action='store_true',help='Request and run a full scan + Owner Desk import now (same path as Refresh Beside). Never messages customers.')
     parser.add_argument('--settings',type=Path,default=None,help='Private settings file (default: BESIDE_REFRESH_SETTINGS or the Windows path).')
     parser.add_argument('--budget-seconds',type=int,default=None)
     args=parser.parse_args(argv)
     settings_path=args.settings or SETTINGS
     if not args.scan_now:
-        outcome=run(settings_path=settings_path,**({'budget_seconds':args.budget_seconds} if args.budget_seconds else {}))
+        outcome=run(settings_path=settings_path,requested_surface='messages' if args.require_messages else 'rendered_thread',
+            **({'budget_seconds':args.budget_seconds} if args.budget_seconds else {}))
     else:
         lock=None
         try:
@@ -856,7 +882,8 @@ def main(argv=None):
                 print(json.dumps({'ok':False,'error':'capture_already_running','customer_messages_sent':False}));return 1
         except ImportError:
             pass
-        try:outcome=run(settings_path=settings_path,budget_seconds=args.budget_seconds or 600,manual=True)
+        try:outcome=run(settings_path=settings_path,budget_seconds=args.budget_seconds or 600,manual=True,
+            requested_surface='messages' if args.require_messages else 'rendered_thread')
         finally:
             if lock:lock.close()
     print(json.dumps(outcome));return 0 if outcome['ok'] else 1

@@ -53,3 +53,21 @@ recaps beside recent calls, outgoing prompts, empty calls, unknown direction, da
 candidate provenance, stable native IDs and preserved owner classification/workflow decisions.
 Live acceptance still requires the reviewed installed revision, a fresh authorized job, a matching
 completion receipt and independent dashboard readback. A merged PR or heartbeat is insufficient.
+
+## Actual message acquisition
+
+The optional `--require-messages` mode requires verified selected message-surface evidence and actual bounded message records. Three stable, identity-matched source observations must agree. A composer-adjacent `Message` button is not a navigation tab and cannot satisfy this proof.
+
+Current collectors still provide rendered-thread observations; this change adds no invented source selector or browser adapter. Without verified message evidence, requested message acquisition returns `CAPTURE_INCOMPLETE` before import or a successful checkpoint. The default rendered-thread mode remains explicitly limited and is not a claim that current messages were acquired. Any attempted source-read or normalization failure also prevents successful refresh completion; deliberate bounded selection is reported separately.
+
+Source-event IDs and times are retained only with their supplied provenance. Capture time is an observation clock. Rendered day labels, outbound activity and weak/synthesized observation identities cannot establish fresh inbound customer activity. Historical repair context stays separate from verified current message bodies.
+
+The optional `source_event_id`, `source_event_at`, `source_captured_at` and bounded priority evidence are source artifacts here. This PR does not migrate or activate a downstream receiver. Meaningful card-update persistence and dashboard ordering require their separately reviewed integration.
+
+## Replay boundaries
+
+Repeated rendered captures retain the same semantic source fingerprint; rerunning a scraper is not a new customer event. Distinct provider-native message IDs remain distinct even when sender and text match. Never manufacture a native event identity from sender, body text or capture time.
+
+The existing native-event ledger uses its event-key uniqueness and transaction to protect stable-ID replay. Identical stable-ID payloads are duplicates; changed payloads with that same identity conflict, while a genuinely new ID is retained. If the provider supplies no stable event ID, unidentified review observations cannot guarantee a single effect across redeliveries. Preserve this uncertainty rather than collapsing possible real messages by content.
+
+Source fixtures cover duplicate capture, changed content, distinct same-body events, outbound-only evidence, weak identity and acquisition failure. They do not establish downstream deployment or a general single-effect guarantee for systems without stable delivery identity or an acknowledged atomic operation.
