@@ -115,7 +115,7 @@ deployment sets `BESIDE_AUTO_REFRESH_INTERVAL_MINUTES` (15 to 1440; unset means 
 as requested by `automatic:beside-ready-worker`, and the timer claims it like a button job. Owner
 Desk only queues one when the worker is online, nothing is queued/running, the queue is not in
 `attention`, and the interval has passed since the last verified scan and last request. Failed and attention
-jobs remain held for owner review; automatic polling does not clear those holds. The runner records the
+jobs remain held for owner review; automatic polling does not clear those holds. Failed holds are cleared only by the Owner Desk server, whose source is on the shop PC. The runner records the
 server's answer under `automatic` in `uia-worker-status.json`. `beside_auto_scan_minutes` in the
 local settings has no effect.
 

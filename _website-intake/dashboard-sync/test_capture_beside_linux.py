@@ -12,6 +12,7 @@ import re
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import capture_beside_linux as L  # noqa: E402
@@ -114,7 +115,14 @@ class PureLogic(unittest.TestCase):
     def test_duplicate_or_empty_inventory_refused(self):
         link = next(n for n in self.nodes if n['value'] == URL_A)
         with self.assertRaises(L.LinuxCaptureError): L.inventory_records(self.nodes + [dict(link)])
-        with self.assertRaises(L.LinuxCaptureError): L.inventory_records([])
+        with self.assertRaisesRegex(L.LinuxCaptureError, '^Visible inventory not rendered$'):
+            L.inventory_records([])
+
+    def test_over_bound_inventory_keeps_its_own_message(self):
+        nodes = [{'role': 'ControlType.Hyperlink', 'name': 'row',
+                  'value': 'https://app.beside.com/chats/prv_' + f'{i:026d}'} for i in range(201)]
+        with self.assertRaisesRegex(L.LinuxCaptureError, '^Visible inventory absent or exceeds bound$'):
+            L.inventory_records(nodes)
 
     def test_editor_and_hidden_text_never_captured(self):
         names = ' '.join(n['name'] for n in self.nodes)
@@ -176,6 +184,105 @@ class PureLogic(unittest.TestCase):
         cand = L.stable_thread(A, URL_A, 'Jane Synthetic 2h', lambda: observation(next(times), next(seq)),
                                sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0])
         self.assertEqual(L.conversation(cand, '0' * 64)['name'] if hasattr(L, 'conversation') else 'Jane Synthetic', 'Jane Synthetic')
+
+
+class _Stop:
+    def stop(self):
+        pass
+
+
+class _Close:
+    def __init__(self, page):
+        self.pages = [page]
+
+    def close(self):
+        pass
+
+
+class _ShellPage:
+    """Chats title and All filter are ready immediately. Conversation links appear later."""
+
+    def __init__(self, nodes, appear_at):
+        self.nodes = nodes
+        self.appear_at = appear_at
+        self.polls = 0
+        self.visible = False
+        self.selectors = []
+        self.dom_reads = 0
+
+    def title(self):
+        return 'Chats - Synthetic Shop - Beside'
+
+    def query_selector(self, selector):
+        self.polls += 1
+        self.selectors.append(selector)
+        self.visible = self.polls >= self.appear_at
+        return object() if self.visible else None
+
+    def evaluate(self, script, arg=None):
+        if script == L.PAGE_NAMES_JS:
+            return ['Shop Line mailbox', 'Signed in Synthetic Shop LLC', L.ALL_FILTER_NAME]
+        if script == L.DOM_NODES_JS:
+            self.dom_reads += 1
+            return self.nodes if self.visible else []
+        raise AssertionError('unexpected page script')
+
+
+class InventoryRenderWait(unittest.TestCase):
+    def setUp(self):
+        self.title, self.nodes = static_nodes()
+
+    def _run(self, page):
+        now = [0.0]
+        real_open = L.open_context
+
+        def fake_open(settings, *, headless):
+            return _Stop(), _Close(page)
+
+        L.open_context = fake_open
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                settings = {**SETTINGS, 'beside_linux_capture_enabled': True, 'private_archive_root': directory,
+                            'beside_linux_profile_dir': str(Path(directory) / 'profile')}
+                out = Path(directory) / 'inventory.json'
+                with mock.patch.object(L.time, 'monotonic', lambda: now[0]), \
+                     mock.patch.object(L.time, 'sleep', lambda seconds: now.__setitem__(0, now[0] + seconds)):
+                    try:
+                        result = L.capture('inventory', out, settings)
+                    except L.LinuxCaptureError as exc:
+                        return {'error': str(exc), 'elapsed': now[0], 'page': page}
+                    saved = json.loads(out.read_text(encoding='utf-8'))
+                    return {'result': result, 'saved': saved, 'elapsed': now[0], 'page': page}
+        finally:
+            L.open_context = real_open
+
+    def test_late_render_inventory_succeeds(self):
+        page = _ShellPage(self.nodes, appear_at=5)
+        outcome = self._run(page)
+        self.assertNotIn('error', outcome)
+        self.assertTrue(outcome['result']['ok'])
+        self.assertEqual(outcome['result']['conversations_read'], 3)
+        self.assertEqual([row['conversation_id'] for row in outcome['saved']['records']],
+                         [A, 'prv_01HZZZZZZZZZZZZZZZZZZZZZZB', 'prv_01HZZZZZZZZZZZZZZZZZZZZZZC'])
+        self.assertEqual(page.selectors[0], 'a[href^="https://app.beside.com/chats/prv_"]')
+        self.assertGreaterEqual(page.polls, 5)
+        self.assertTrue(page.visible)
+        self.assertGreaterEqual(page.dom_reads, 1)
+        self.assertLess(outcome['elapsed'], 10)
+
+    def test_never_rendered_inventory_names_the_miss_and_keeps_the_read_mapping(self):
+        page = _ShellPage(self.nodes, appear_at=10 ** 9)
+        outcome = self._run(page)
+        self.assertEqual(outcome['error'], 'Visible inventory not rendered')
+        self.assertNotIn('exceeds bound', outcome['error'])
+        self.assertGreaterEqual(outcome['elapsed'], 10)
+        self.assertLess(outcome['elapsed'], 10.5)
+        self.assertGreaterEqual(page.polls, 2)
+        self.assertEqual(page.selectors[0], 'a[href^="https://app.beside.com/chats/prv_"]')
+        import beside_attempt
+        self.assertEqual(beside_attempt.source_reason(outcome['error']), 'source_read_nonzero')
+        with self.assertRaisesRegex(R.ScanError, 'CAPTURE_INCOMPLETE'):
+            R.selected_changes({'records': []}, {}, 8)
 
 
 class SafetyAndWiring(unittest.TestCase):

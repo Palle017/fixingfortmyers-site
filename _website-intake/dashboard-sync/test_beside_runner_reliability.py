@@ -79,6 +79,7 @@ class Fixture:
         self.thread_cost = 0.0
         self.thread_failure = False
         self.thread_timeout = False
+        self.inventory_failures = 0
         self.http_cost = 0.0
         self.import_cost = 0.0
         self.imports = 0
@@ -156,6 +157,9 @@ class Fixture:
             raise subprocess.TimeoutExpired(args, timeout, stderr=SENTINEL)
         if mode == 'thread' and self.thread_failure:
             return SimpleNamespace(returncode=1, stderr=SENTINEL)
+        if mode == 'inventory' and self.inventory_failures:
+            self.inventory_failures -= 1
+            return SimpleNamespace(returncode=1, stderr='Visible inventory not rendered')
         value = {'records': [{'conversation_id': CID, 'label': 'Synthetic activity'}]} if mode == 'inventory' else {'conversation_id': CID}
         output.write_text(json.dumps(value))
         return SimpleNamespace(returncode=0, stderr='')
@@ -301,6 +305,17 @@ class BudgetTests(unittest.TestCase):
                               {}, 'checking', finish_reserve=R.FINALIZATION_RESERVE_SECONDS)
         self.assertEqual(len(opened), 1)
         self.assertEqual(remaining[0], R.FINALIZATION_RESERVE_SECONDS)
+
+    def test_inventory_retry_pauses_about_three_seconds(self):
+        with tempfile.TemporaryDirectory() as root:
+            fixture = Fixture(root, linux=True)
+            fixture.inventory_failures = 1
+            out = fixture.run(budget=600)
+            self.assertTrue(out['ok'], out)
+            self.assertEqual([call[0] for call in fixture.capture_calls[:2]], ['inventory', 'inventory'])
+            gap = fixture.capture_calls[1][2] - fixture.capture_calls[0][2]
+            self.assertGreaterEqual(gap, 3)
+            self.assertLess(gap, 4)
 
     def test_linux_internal_stability_retry_is_not_multiplied(self):
         with tempfile.TemporaryDirectory() as root:

@@ -139,6 +139,9 @@ def capture_command(settings,mode,output,settings_path):
 HTTP_TIMEOUT_SECONDS=12
 FINALIZATION_RESERVE_SECONDS=120
 CAPTURE_MINIMUM_SECONDS=10
+# Second source read waits out a late chat-list paint. The pause is inside the
+# caller's remaining budget; the 540-second runner cap is unchanged.
+CAPTURE_RETRY_PAUSE_SECONDS=3
 
 def capture_ceiling(settings):
     value=float(settings.get('beside_linux_capture_timeout_seconds',90)) if settings.get('beside_capture_backend')=='linux' else 25.0
@@ -443,8 +446,8 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
                 report['source_read_failure']=beside_attempt.source_reason(completed.stderr)
                 # Retry a source read only when another full read fits without consuming its reserve.
                 if (number+1>=attempts or output.exists()
-                    or remaining()<capture_ceiling(settings)+reserve_seconds+0.4):break
-                time.sleep(0.4)
+                    or remaining()<capture_ceiling(settings)+reserve_seconds+CAPTURE_RETRY_PAUSE_SECONDS):break
+                time.sleep(CAPTURE_RETRY_PAUSE_SECONDS)
             raise ScanError('BROWSER_UNAVAILABLE')
         if manual:
             # Fail fast, before opening a browser, when there is no owner-requested job to run.

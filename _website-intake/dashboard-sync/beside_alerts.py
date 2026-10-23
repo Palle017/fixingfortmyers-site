@@ -18,6 +18,7 @@ DEFAULT_HOURS = {d: ['08:00', '17:00'] for d in DAYS[:5]}
 SOURCE_CODES = (
     ('Beside window unavailable', 'beside_window_unavailable', 'Beside is not open in Chrome on the shop PC.'),
     ('account/mailbox unavailable', 'beside_signed_out', 'Beside looks signed out or on the wrong account. Sign in on the shop PC.'),
+    ('Visible inventory not rendered', 'beside_inventory_unavailable', 'The Beside chat list could not be read.'),
     ('Visible inventory absent', 'beside_inventory_unavailable', 'The Beside chat list could not be read.'),
     ('Observed Chats navigation unavailable', 'beside_inventory_unavailable', 'The Beside chat list could not be read.'),
     ('identity or stable content could not be verified', 'beside_validation_failed', 'Beside threads repeatedly failed validation; the page layout may have changed.'),
