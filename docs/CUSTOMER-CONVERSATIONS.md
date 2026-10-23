@@ -29,13 +29,21 @@ All routes are default-off behind `CUSTOMER_CONVERSATIONS_ENABLED=true`. Missing
 | `GET /conversations/{id}?after={sequence}` | Bearer capability for that exact resource; returns customer-visible messages only. |
 | `POST /conversations/{id}/messages` | `{operationId,body}` with the same scoped bearer authorization. |
 | `GET /conversations/{id}/operations/{operationId}` | Authorized receipt reconciliation after an uncertain reply or reload. |
-| `GET /private/conversations/by-lead/{rootId}` | Existing private service authorization; exact website source mapping for Owner Desk. |
-| `POST /private/conversations/{id}/messages` | Existing private service authorization plus server-resolved staff actor; `{operationId,body,actorId,displayName}`. |
-| `POST /private/conversations/{id}/revoke` | Private service authorization and audited staff actor revoke guest access. |
+| `GET /private/conversations/by-lead/{rootId}` | Prepared conversation-only service authorization; exact website source mapping for Owner Desk. |
+| `POST /private/conversations/{id}/messages` | Conversation-only service authorization plus server-resolved staff actor; `{operationId,body,actorId,displayName}`. |
+| `POST /private/conversations/{id}/revoke` | Conversation-only service authorization and audited staff actor revoke guest access. |
 
 Reads return `{ok,conversation:{id,leadId,expiresAt,repair},messages,cursor}`. Messages expose `{id,sequence,role,body,createdAt,operationId}`. A successful write additionally returns `receipt:{operationId,messageId,sequence}`. An operation ID is scoped to its conversation and content: identical replay returns the saved receipt; changed content returns 409. Authorization, expiry and revocation are checked before receipt replay. A lost response leaves the client pending; retry uses its persisted original operation ID.
 
-Return links use fragment parameters `#conversation=...&access=...`, never query parameters. Possession grants access to **one** conversation until revoked/expired; it does not verify a person. The customer page loads no analytics or third-party assets, strips the fragment before network activity, omits cookies and referrers, and renders plain text. It keeps credentials and uncertain operations only in tab session storage; explicit private-link saving is the cross-device guest path. Closing a tab can discard an unsent draft. Shared-browser access remains sensitive. Retention and recovery policies must be explicit before rollout; a finite link lifetime is not permanent account history.
+Return links use fragment parameters `#conversation=...&access=...`, never query parameters. Possession grants access to **one** conversation until revoked/expired; it does not verify a person. The customer page loads no analytics or third-party assets, strips the fragment before API requests, omits cookies and referrers, and renders plain text. It keeps credentials and uncertain operations only in tab session storage; explicit private-link saving is the cross-device guest path. Closing a tab can discard an unsent draft. Shared-browser access remains sensitive. Retention and recovery policies must be explicit before rollout; a finite link lifetime is not permanent account history.
+
+### Prepared service authorization; approval still required
+
+The existing Cloud Intake Site is public at its dispatch boundary; its private routes enforce application tokens. Owner Desk is a custom-audience Site and additionally enforces its existing staff allowlist. Neither audience is changed. No Sites bypass credential is needed for the Cloud's current public dispatch.
+
+Proposed setup is a **new** conversation-only random service credential, stored as Cloud Intake `CONVERSATION_OWNER_SERVICE_TOKEN` and Owner Desk `CLOUD_INTAKE_CONVERSATION_TOKEN`. This is prepared code, not a request to retrieve or bind the broader existing private token. It permits server-to-server reads of customer-visible website conversation messages/repair snapshots and operation receipts, audited staff replies and guest-access revocation. Those snapshots include customer-entered names and callback numbers. It cannot export raw leads, read media, drain queues, access metrics, modify sync priorities or access Raj Industries. It is a credential for the existing staff service, not a customer login or permission to send messages during setup.
+
+Initial activation should target an approved synthetic staging configuration only, with both conversation feature flags off until tests and setup are reviewed. The token persists in the two runtime secret stores until rotated/removed; it is never placed in browser configuration, source, logs or fixtures. Specific approval must cover generation and installation into the named services/environment before that action occurs. Rollback disables both conversation flags and removes/rotates the dedicated credential; existing intake tokens, service audiences, records, consent, notes and message history remain intact. No credential has been generated, displayed or installed by this implementation task.
 
 ## Identity and rollout gates
 
