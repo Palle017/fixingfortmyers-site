@@ -181,7 +181,7 @@ class RunTransportTests(unittest.TestCase):
         body=json.loads(req.data);self.actions.append(body)
         self.clock+=1
         action=body['action']
-        state={'status':'running','phase':self.phase,'jobId':JOB,'requestedAt':AT}
+        state={'status':'running','phase':self.phase,'jobId':JOB,'requestedAt':AT,'startedAt':AT}
         extra={}
         if action=='baseline':extra['baseline']={'complete':True,'leads':[],'sources':[]}
         elif action=='claim':extra.update(claimed=True,claimToken='c'*64)
@@ -196,7 +196,7 @@ class RunTransportTests(unittest.TestCase):
         elif action=='complete':state.update(status='complete',phase='complete')
         elif action=='fail' and body['errorCode']=='WORKER_UNREACHABLE':
             raise error.HTTPError(req.full_url,400,'private response',{},None)
-        if action=='baseline' and not any(row['action']=='claim' for row in self.actions):state['status']='queued'
+        if action=='baseline' and not any(row['action']=='claim' for row in self.actions):state.update(status='queued',phase='queued')
         return Response({'ok':True,'state':state,**extra})
 
     def subprocess(self,args,**kwargs):
@@ -220,7 +220,7 @@ class RunTransportTests(unittest.TestCase):
              mock.patch.object(R,'conversation',return_value={'id':CID,'name':'Name not provided','concern':'My brakes are grinding.','received_at':AT}), \
              mock.patch.object(R.time,'monotonic',side_effect=lambda:self.clock), \
              mock.patch.object(R.beside_intake,'post_new',return_value={'enabled':False}):
-            return R.run(settings_path=self.settings,budget_seconds=150)
+            return R.run(settings_path=self.settings,budget_seconds=600)
 
     def test_lost_verifying_response_retries_same_progress_then_completes_without_reimport(self):
         result=self.run_worker()

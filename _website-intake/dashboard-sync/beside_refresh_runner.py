@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import hashlib
 import importlib
 import json
+import math
 import os
 import re
 from pathlib import Path
@@ -19,6 +20,7 @@ from urllib.parse import urlsplit
 from beside_uia import CaptureError, OTP_MESSAGE, OTP_WARNING, conversation, generic_review, review_content
 import beside_intake
 import beside_extract
+import beside_attempt
 
 ROOT=Path(__file__).resolve().parent
 # BESIDE_REFRESH_SETTINGS lets the Linux service point at its own private settings; Windows default unchanged.
@@ -134,23 +136,59 @@ def capture_command(settings,mode,output,settings_path):
     return ['powershell.exe','-NoProfile','-File',str(ROOT/'capture_beside.ps1'),'-Mode',mode,
         '-OutputPath',str(output),'-SettingsPath',str(settings_path),'-PythonExecutable',sys.executable]
 
-# Captures must also leave room for checking progress, two complete baselines
-# and the local archive/plan before the import/readback budget starts. The hard
-# import gate still catches preparation delays beyond this separate allowance.
+HTTP_TIMEOUT_SECONDS=12
+FINALIZATION_RESERVE_SECONDS=120
+CAPTURE_MINIMUM_SECONDS=10
+
+def capture_ceiling(settings):
+    value=float(settings.get('beside_linux_capture_timeout_seconds',90)) if settings.get('beside_capture_backend')=='linux' else 25.0
+    if not math.isfinite(value) or value<CAPTURE_MINIMUM_SECONDS or value>3600:
+        raise ScanError('LOCAL_STORAGE_UNAVAILABLE')
+    return value
+
+def minimum_claim_budget(settings):
+    # One claim, a fresh claimed inventory, the first full thread, and finalization.
+    # Respect explicitly low settings by deferring; never silently extend a caller's slot.
+    return HTTP_TIMEOUT_SECONDS+2*capture_ceiling(settings)+FINALIZATION_RESERVE_SECONDS+3
+
+def capture_timeout(settings,remaining,reserve_seconds=0):
+    available=remaining-reserve_seconds-3
+    if available<=0:raise ScanError('CAPTURE_INCOMPLETE')
+    return min(capture_ceiling(settings),available)
+
+def validate_claim(value,expected):
+    # The backend has no token recovery endpoint. Only the exact CAS winner may proceed.
+    if not isinstance(value,dict) or type(value.get('claimed')) is not bool:
+        raise ScanError('WORKER_RESPONSE_INVALID')
+    if not isinstance(expected,dict):raise ScanError('WORKER_RESPONSE_INVALID')
+    state=value.get('state')
+    if not isinstance(state,dict) or state.get('status') not in ('queued','running','complete','failed','attention','idle'):
+        raise ScanError('WORKER_RESPONSE_INVALID')
+    if value['claimed'] is False:
+        if value.get('claimToken') is not None:raise ScanError('WORKER_RESPONSE_INVALID')
+        return None
+    token=value.get('claimToken')
+    if (not isinstance(token,str) or not re.fullmatch(r'[a-f0-9]{64}',token)
+        or state.get('status')!='running' or state.get('phase')!='reading'
+        or not beside_attempt._identifier(expected.get('jobId'))
+        or state.get('jobId')!=expected.get('jobId')
+        or not beside_attempt._date(expected.get('requestedAt'))
+        or state.get('requestedAt')!=expected.get('requestedAt')
+        or not beside_attempt._date(state.get('startedAt'))
+        or beside_attempt._date(state['startedAt'])<beside_attempt._date(expected['requestedAt'])):
+        raise ScanError('WORKER_RESPONSE_INVALID')
+    return value
+
+def failure_code(code):
+    # Private v27 fail enum does not accept transport-local diagnostic codes.
+    return code if code in beside_attempt.FAILURE_CODES else 'WORKER_FAILED'
+
+# Existing import/readback gate remains independently enforced.
 IMPORT_RESERVE_SECONDS=60
 PREPARATION_RESERVE_SECONDS=15
 FINISH_RESERVE_SECONDS=PREPARATION_RESERVE_SECONDS+IMPORT_RESERVE_SECONDS
 READBACK_RESERVE_SECONDS=38
 
-def capture_timeout(settings,remaining,*,reserve_seconds=0):
-    # Windows UIA capture: unchanged 25 s. Linux/Playwright: cold Chromium start + read takes ~30 s
-    # on the 2-vCPU VM, so allow beside_linux_capture_timeout_seconds (default 90). Always capped
-    # by the remaining run budget minus the requested reserve and 3 s.
-    available=remaining-reserve_seconds-3
-    if available<=0:raise ScanError('CAPTURE_INCOMPLETE')
-    if settings.get('beside_capture_backend')=='linux':
-        return min(float(settings.get('beside_linux_capture_timeout_seconds',90)),available)
-    return min(25,available)
 
 OWNER_REQUEST_MESSAGE=('No Refresh Beside job is queued. Workers cannot request jobs directly; press Refresh Beside '
     'in Owner Desk (or enable Owner Desk automatic refresh), then run --scan-now or let the timer pick it up.')
@@ -163,7 +201,7 @@ def server_code(value):
     if not isinstance(value,dict):return None
     for key in ('code','errorCode','error'):
         v=value.get(key)
-        if isinstance(v,str) and re.fullmatch(r'[A-Za-z0-9_.:-]{1,64}',v):return v
+        if isinstance(v,str) and v in beside_attempt.SERVER_CODES:return v
     return None
 
 WORKER_REQUEST_SECONDS=12
@@ -197,36 +235,51 @@ def transport_diagnostic(exc):
         if isinstance(number,int):detail['errno']=number
     return detail
 
-def worker_response(opener,req,body,remaining,report,phase):
+def worker_response(opener,req,body,remaining,report,phase,*,minimum_budget=0,finish_reserve=None):
     endpoint=urlsplit(req.full_url)
     safe=(endpoint.scheme+'://'+endpoint.netloc in ALLOWED_ORIGINS and endpoint.path=='/api/beside-refresh/worker'
         and not endpoint.query and not endpoint.fragment and retryable_worker_action(body))
     reserve=worker_retry_reserve(body,phase)
+    target=body.get('phase') if body.get('action')=='progress' else phase
+    if finish_reserve is not None and target in ('reading','checking'):
+        reserve=max(reserve,finish_reserve)
     for attempt in range(2 if safe else 1):
         budget=remaining()
+        # Final guard is after request serialization and all durable journal writes.
+        # Returning None here is known to precede the sole claim POST.
+        if not attempt and body.get('action')=='claim' and budget<minimum_budget:return None
         if budget<2:raise ScanError('CAPTURE_INCOMPLETE')
         if attempt and budget<reserve+WORKER_REQUEST_SECONDS:raise ScanError('WORKER_UNREACHABLE')
         timeout=min(WORKER_REQUEST_SECONDS,budget-(reserve if attempt else 0))
         try:
+            report['worker_step']='request'
             with opener.open(req,timeout=timeout) as response:
+                report['worker_step']='response_read'
                 raw=response.read(4_000_001)
                 if response.status!=200 or len(raw)>4_000_000:raise ScanError('BASELINE_UNAVAILABLE')
+                report['worker_step']='response_decode'
                 value=json.loads(raw)
         except error.HTTPError as exc:
+            report['worker_exception']='HTTPError'
             report['worker_http_status']=exc.code
             try:code=server_code(exc.read(4096))
-            except OSError:code=None
+            except Exception:code=None
             finally:exc.close()
             if code:report['worker_error_code']=code
             raise ScanError('WORKER_HTTP_'+str(exc.code)) from None
         except (error.URLError,TimeoutError,OSError) as exc:
+            name=type(exc).__name__
+            report['worker_exception']=name if name in beside_attempt.EXCEPTION_TYPES else 'Exception'
             report['worker_transport_error']=transport_diagnostic(exc)
             if not attempt and safe and remaining()>=reserve+WORKER_REQUEST_SECONDS:
                 report.setdefault('worker_transport_retries',[]).append({'action':body['action'],
                     **({'phase':body['phase']} if body['action']=='progress' else {}),**transport_diagnostic(exc)})
                 continue
             raise ScanError('WORKER_UNREACHABLE') from None
-        except ValueError:raise ScanError('WORKER_RESPONSE_INVALID') from None
+        except ValueError as exc:
+            report['worker_exception']='JSONDecodeError' if isinstance(exc,json.JSONDecodeError) else 'ValueError'
+            raise ScanError('WORKER_RESPONSE_INVALID') from None
+        report['worker_step']='response_validate'
         if not isinstance(value,dict):raise ScanError('WORKER_RESPONSE_INVALID')
         if value.get('ok') is not True:
             code=server_code(value)
@@ -286,14 +339,17 @@ def begin_import(remaining,progress):
     progress()
     return min(30,remaining()-READBACK_RESERVE_SECONDS)
 
-def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0,reserve_seconds=0):
+def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_failures=5,sleep=time.sleep,base_delay=0.5,max_delay=4.0,reserve_seconds=0,minimum_remaining=None):
+    minimum_remaining=max(35+reserve_seconds,minimum_remaining if minimum_remaining is not None else 35)
+
     """Read selected threads. Default: stop at the first failure (previous behavior).
     With skip_failed, a failed thread is skipped with exponential backoff and the pass continues,
     up to max_failures. Failed threads are never checkpointed, so they stay pending.
     The caller can reserve time for archive/import/readback before starting another read."""
     captures=[];failures=[]
     for row in selected:
-        if remaining()<35+reserve_seconds:break
+        if remaining()<minimum_remaining:break
+
         cid=row['conversation_id']
         try:
             captures.append(read_one(cid))
@@ -302,17 +358,20 @@ def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_fa
             failures.append(cid)
             if not skip_failed or len(failures)>=max_failures:break
             delay=min(max_delay,base_delay*(2**(len(failures)-1)))
-            if remaining()-delay<35+reserve_seconds:break
+            if remaining()-delay<minimum_remaining:break
+
             sleep(delay)
     return captures,failures
 
-def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
-    started=time.monotonic();lease=None;run_dir=None;phase='reading';last_error='WORKER_FAILED'
+def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
+    started=time.monotonic();lease=None;run_dir=None;phase='reading';attempt=None;operation='start';operation_started=started
     report={'ok':False,'checked_at':stamp(),'fresh_scan_performed':False,'customer_messages_sent':False}
     def remaining():return budget_seconds-(time.monotonic()-started)
-    if budget_seconds<15:
+    if not isinstance(budget_seconds,(int,float)) or not math.isfinite(budget_seconds) or budget_seconds<15:
         return {**report,'error':'scan_time_budget_unavailable'}
     try:
+        # This journal exists before a claim or run directory and contains no credentials or payloads.
+        attempt=beside_attempt.Attempt(Path(settings_path).parent,time.monotonic)
         settings=load(settings_path);private=Path(settings['private_archive_root']).resolve()
         refresh=private/'refresh';runs=Path(settings['runs_directory']).resolve()
         if not runs.is_relative_to(refresh.resolve()):raise ScanError('LOCAL_STORAGE_UNAVAILABLE')
@@ -327,31 +386,64 @@ def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
         for key in ('service_token','sync_token'):
             if not isinstance(config.get(key),str) or len(config[key])<16 or any(c.isspace() for c in config[key]):raise ScanError('LOCAL_STORAGE_UNAVAILABLE')
         opener=request.build_opener(request.ProxyHandler({}),NoRedirect())
+        def event(name,**extra):
+            nonlocal operation,operation_started
+            operation=name;operation_started=time.monotonic()
+            report.pop('worker_exception',None)
+            report.pop('worker_transport_error',None)
+            attempt.event(name,phase=phase,remaining=remaining(),**extra)
+        def defer_budget(ready):
+            report.update(ok=True,worker_ready=ready,readiness_deferred=True,
+                deferred_reason='INSUFFICIENT_CAPTURE_BUDGET',
+                minimum_remaining_seconds=minimum_claim_budget(settings),
+                remaining_seconds=round(remaining(),3))
+            event('budget.deferred',error='INSUFFICIENT_CAPTURE_BUDGET')
+            write(refresh/'uia-worker-status.json',report)
+            return report
         def call(path,body):
+            report.pop('worker_http_status',None);report.pop('worker_error_code',None)
             req=request.Request(origin+path,data=archive.canonical(body).encode(),headers={
                 'Content-Type':'application/json','Accept':'application/json',
                 'OAI-Sites-Authorization':'Bearer '+config['service_token'],'x-owner-sync-token':config['sync_token']})
-            return worker_response(opener,req,body,remaining,report,phase)
+            began=time.monotonic();report['worker_step']='request'
+            value=worker_response(opener,req,body,remaining,report,phase,
+                minimum_budget=minimum_claim_budget(settings) if body.get('action')=='claim' else 0,
+                finish_reserve=FINALIZATION_RESERVE_SECONDS)
+            if value is not None:
+                attempt.event(operation,phase=phase,elapsed=time.monotonic()-began,remaining=remaining(),stage='response_validate')
+            return value
         def worker(action,**extra):
             body={'action':action,**extra}
             if action in ('progress','complete','fail'):
                 body.update(jobId=lease['state']['jobId'],claimToken=lease['claimToken'])
             report['worker_action']=action
+            event('worker.'+action)
             return call('/api/beside-refresh/worker',body)
-        def capture(mode,output,*,cid=None,inventory=None):
-            reserve=FINISH_RESERVE_SECONDS if mode=='thread' else 0
-            if remaining()<10+reserve:raise ScanError('CAPTURE_INCOMPLETE')
+        def capture(mode,output,*,cid=None,inventory=None,reserve_seconds=0):
+            event('capture.'+mode)
+            report.pop('worker_http_status',None);report.pop('worker_error_code',None)
             args=capture_command(settings,mode,output,settings_path)
             if cid:args+=['-ConversationId',cid,'-InventoryPath',str(inventory)]
-            for attempt in range(2):
+            # Linux threads already contain the reviewed same-thread stability retry.
+            attempts=1 if mode=='thread' and settings.get('beside_capture_backend')=='linux' else 2
+            for number in range(attempts):
+                allowance=capture_timeout(settings,remaining(),reserve_seconds)
+                if allowance<CAPTURE_MINIMUM_SECONDS:raise ScanError('CAPTURE_INCOMPLETE')
+                began=time.monotonic();report['worker_step']='capture_process'
                 try:
-                    completed=subprocess.run(args,capture_output=True,text=True,timeout=capture_timeout(settings,remaining(),reserve_seconds=reserve),
+                    completed=subprocess.run(args,capture_output=True,text=True,timeout=allowance,
                         creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
-                except subprocess.TimeoutExpired:raise ScanError('CAPTURE_INCOMPLETE') from None
+                except subprocess.TimeoutExpired:
+                    report['worker_exception']='TimeoutExpired'
+                    report['source_read_failure']='source_read_timeout'
+                    raise ScanError('BROWSER_UNAVAILABLE') from None
+                report['worker_step']='capture_output'
+                attempt.event('capture.'+mode,phase=phase,elapsed=time.monotonic()-began,remaining=remaining())
                 if completed.returncode==0:return load(output)
-                report['source_read_failure'] = (completed.stderr.splitlines() or ['Source read failed'])[0][:180]
-                # Only retry source reads during transient page rendering. Never replay writes.
-                if attempt or output.exists() or remaining()<12+reserve:break
+                report['source_read_failure']=beside_attempt.source_reason(completed.stderr)
+                # Retry a source read only when another full read fits without consuming its reserve.
+                if (number+1>=attempts or output.exists()
+                    or remaining()<capture_ceiling(settings)+reserve_seconds+0.4):break
                 time.sleep(0.4)
             raise ScanError('BROWSER_UNAVAILABLE')
         if manual:
@@ -374,6 +466,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
         if isinstance(beat.get('automatic'),dict):
             report['automatic']={k:beat['automatic'].get(k) for k in ('enabled','intervalMinutes','queued','reason')}
         state=worker('baseline')['state']
+        held=attempt.held_claims(state)
         if state['status']!='queued' and (manual or settings.get('beside_auto_scan_minutes')):
             # Workers cannot request jobs. Jobs come from the owner's Refresh Beside button or from Owner
             # Desk's own automatic refresh, which runs server-side on this worker's heartbeat when
@@ -387,29 +480,71 @@ def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
             report.update(ok=True,worker_ready=True,queue_status=state['status'],scan_trigger='Owner Dashboard Refresh Beside')
             write(refresh/'uia-worker-status.json',report)
             return report
-        # No automatic retry of an earlier uncertain write or failed job.
-        lease=worker('claim')
-        if lease.get('claimed') is not True:raise ScanError('WORKER_FAILED')
+        # Durable pending evidence precedes the POST; timers never repeat an uncertain claim.
+        if (not beside_attempt._identifier(state.get('jobId')) or not beside_attempt._date(state.get('requestedAt'))
+            or state.get('phase')!='queued'):
+            raise ScanError('WORKER_RESPONSE_INVALID')
+        if held and not manual:
+            report.update(ok=True,worker_ready=True,queue_status=state['status'],
+                readiness_deferred=True,deferred_reason='CLAIM_REVIEW_REQUIRED')
+            event('held',error='CLAIM_REVIEW_REQUIRED')
+            write(refresh/'uia-worker-status.json',report)
+            return report
+        if held and attempt.held_claims(state,manual=True,persist=False):
+            # A manual claim readback cannot release an uncertain import.
+            report.update(ok=True,worker_ready=True,queue_status=state['status'],
+                readiness_deferred=True,deferred_reason='CLAIM_REVIEW_REQUIRED')
+            event('held',error='CLAIM_REVIEW_REQUIRED')
+            write(refresh/'uia-worker-status.json',report)
+            return report
+        if remaining()<minimum_claim_budget(settings):return defer_budget(True)
+        attempt.claim('pending',state);event('claim.pending')
+        # This particular deferral is known to precede any POST; old manual latches remain intact.
+        if remaining()<minimum_claim_budget(settings):
+            attempt.claim('refused')
+            return defer_budget(True)
+        reply=worker('claim')
+        if reply is None:
+            attempt.claim('refused')
+            return defer_budget(True)
+        report['worker_step']='claim_validate';operation='worker.claim'
+        granted=validate_claim(reply,state)
+        if granted is None:
+            attempt.claim('refused');event('claim.refused')
+            if held:attempt.held_claims(state,manual=True)
+            report.update(ok=True,worker_ready=True,queue_status=reply['state']['status'],
+                claim_not_acquired=True)
+            write(refresh/'uia-worker-status.json',report)
+            return report
+        lease=granted;attempt.claim('acquired');event('claim.acquired')
+        if held:attempt.held_claims(state,manual=True)
+        event('mkdir')
         run_dir=runs/('queued-uia-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'));run_dir.mkdir()
         write(run_dir/'lease.json',lease)
-        inventory=capture('inventory',run_dir/'inventory.json')
+        inventory=capture('inventory',run_dir/'inventory.json',
+            reserve_seconds=capture_ceiling(settings)+FINALIZATION_RESERVE_SECONDS)
         checkpoint_path=refresh/'uia-checkpoint.json'
         checkpoint=load(checkpoint_path) if checkpoint_path.exists() else {'records':{}}
         selected,total_changed=selected_changes(inventory,checkpoint,min(25,int(settings.get('maximum_changed_threads_per_pass',25))))
         unchanged_probe=not selected
         selected=sample_when_unchanged(inventory,checkpoint,selected)
         def read_one(cid):
-            return capture('thread',run_dir/('thread-'+cid+'.json'),cid=cid,inventory=run_dir/'inventory.json')
+            return capture('thread',run_dir/('thread-'+cid+'.json'),cid=cid,inventory=run_dir/'inventory.json',
+                reserve_seconds=FINALIZATION_RESERVE_SECONDS)
         captures,capture_failures=read_threads(selected,read_one,remaining,
-            lambda:worker('progress',phase='reading'),
+            lambda:worker('progress',phase='reading') if remaining()>=FINALIZATION_RESERVE_SECONDS+HTTP_TIMEOUT_SECONDS+3 else None,
             skip_failed=settings.get('beside_skip_failed_threads') is True,
-            max_failures=int(settings.get('beside_max_thread_failures',5)),reserve_seconds=FINISH_RESERVE_SECONDS)
+            max_failures=int(settings.get('beside_max_thread_failures',5)),
+            minimum_remaining=capture_ceiling(settings)+FINALIZATION_RESERVE_SECONDS)
+
         report['thread_failures']=len(capture_failures)
         require_captured_changes(selected,captures)
         worker('progress',phase='checking');phase='checking'
         baseline=worker('baseline')['baseline'];archive.validate_baseline(baseline)
         by_id={row['id']:row for row in baseline['leads']}
         observed=stamp();review={'format':'beside-review/v1','classifications':{},'crosswalks':[]};conversations=[];held=[];capture_hashes={}
+        event('archive.plan')
+
         database=archive.connect(settings['persistent_archive'])
         try:
             backup=sqlite3.connect(str(run_dir/'archive-before.sqlite3'));database.backup(backup);backup.close()
@@ -451,12 +586,18 @@ def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
                 '--approved-plan-sha256',plan['plan_sha256'],'--baseline',str(run_dir/'ownerdesk-before.json'),
                 '--latest-baseline',str(run_dir/'latest-before.json'),'--private-config',settings['private_sync_config'],
                 '--journal',str(run_dir/'apply-journal.json'),'--private-directory-confirmed','--apply']
+            event('import.apply')
+            attempt.claim('write_uncertain')
+            # Journal writes happen after phase progress; keep readback time intact.
+            import_timeout=min(import_timeout,remaining()-READBACK_RESERVE_SECONDS)
+            if import_timeout<=0:raise ScanError('CAPTURE_INCOMPLETE')
             applied=subprocess.run(command,capture_output=True,text=True,timeout=import_timeout,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+
             if applied.returncode:raise ScanError('IMPORT_RESULT_UNCERTAIN')
             journal=load(run_dir/'apply-journal.json')
         else:journal=None
         worker('progress',phase='verifying');phase='verifying'
-        after=worker('baseline')['baseline'];verified=archive.verify_after(baseline,after,plan)
+        after=worker('baseline')['baseline'];event('readback.verify');verified=archive.verify_after(baseline,after,plan)
         write(run_dir/'ownerdesk-after.json',after);write(run_dir/'readback-verification.json',verified)
         if not verified['ok']:raise ScanError('READBACK_MISMATCH')
         readback=stamp();counts={'conversationsRead':len(inventory['records']),'conversationsChanged':capture_change_count(captures,plan,unchanged_probe),
@@ -470,6 +611,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
         completed=worker('complete',receipt=receipt)
         if completed['state']['status']!='complete':raise ScanError('VERIFICATION_REQUIRED')
         write(run_dir/'completion-receipt.json',completed)
+        event('checkpoint')
         current=load(settings_path)
         if current.get('last_verified_job')!=settings.get('last_verified_job'):raise ScanError('VERIFICATION_REQUIRED')
         current.update(last_verified_job=str(run_dir/'run-proof.json'),last_completed_recovery=str(run_dir/'canonical-snapshot.json'))
@@ -484,15 +626,52 @@ def run(*,settings_path=SETTINGS,budget_seconds=145,manual=False):
         try:
             report['intake_post']=beside_intake.post_new([c for c in conversations if c['id'] in good],set(by_id),settings,refresh/'intake-posted.json')
         except Exception as exc:
-            report['intake_post']={'enabled':True,'error':str(exc) if isinstance(exc,ValueError) else type(exc).__name__}
+            report['intake_post']={'enabled':True,'error':'intake_post_failed'}
         report.update(ok=True,fresh_scan_performed=True,worker_ready=True,job_id=lease['state']['jobId'],counts=counts,
             dashboard_records=len(after['leads']),scope=scope,full_account_export=False)
+        attempt.claim('complete');event('complete')
     except Exception as exc:
-        code=str(exc) if isinstance(exc,ScanError) else 'WORKER_FAILED'
-        if not isinstance(exc,ScanError):report['exception']=type(exc).__name__
-        report.update(error=code,phase=phase,requires_review=phase in ('importing','verifying'))
-        if lease and lease.get('claimed'):
-            report_queue_failure(worker,report,code,phase)
+        code=beside_attempt.safe_error(str(exc) if isinstance(exc,ScanError) else 'WORKER_FAILED')
+        name=type(exc).__name__
+        if not isinstance(exc,ScanError):report['exception']=name if name in beside_attempt.EXCEPTION_TYPES else 'Exception'
+        report.update(error=code,phase=phase,requires_review=phase in ('importing','verifying'),
+            failure_operation=operation,failure_operation_seconds=round(time.monotonic()-operation_started,3))
+        # Preserve the original action, stage and evidence before a secondary fail/reconcile request.
+        original_diagnostic={key:report[key] for key in ('worker_action','worker_step','worker_http_status','worker_error_code','worker_exception','worker_transport_error') if key in report}
+        report['original_failure']={'error':code,'phase':phase,**{key:report[key] for key in WORKER_DIAGNOSTIC_KEYS if key in report}}
+        primary_operation=operation
+        try:
+            if attempt:
+                if lease is None and attempt.data.get('claim_state')=='pending':attempt.claim('uncertain')
+                attempt.failure(primary_operation,code,exc,phase=phase,report=report)
+        except OSError:report['attempt_evidence_unavailable']=True
+        if lease and lease.get('claimed') is True:
+            try:
+                wire_code=queue_failure_code(code,phase)
+                failed=worker('fail',errorCode=wire_code)
+                failed_state=failed.get('state')
+                if (not isinstance(failed_state,dict) or failed_state.get('jobId')!=lease['state']['jobId']
+                    or failed_state.get('status') not in ('failed','attention')):
+                    raise ScanError('WORKER_RESPONSE_INVALID')
+                report['failure_reporting']={'accepted':True,'errorCode':wire_code}
+                attempt.claim('write_uncertain' if phase in ('importing','verifying') else 'failed')
+            except Exception as failure_exc:
+                report['queue_failure_unconfirmed']=True
+                report['failure_reporting']={'accepted':False,'errorCode':queue_failure_code(code,phase),
+                    'exception_type':type(failure_exc).__name__,**{key:report[key] for key in WORKER_DIAGNOSTIC_KEYS if key in report}}
+                try:attempt.claim('write_uncertain' if phase in ('importing','verifying') else 'uncertain')
+                except OSError:report['attempt_evidence_unavailable']=True
+        elif attempt and attempt.data.get('claim_state') in ('pending','uncertain'):
+            # Lost/malformed grant: read-only reconciliation only, never another claim in this run.
+            try:
+                reconciled=worker('baseline')['state']
+                attempt.held_claims(reconciled,include_current=True)
+                report['claim_reconciliation']='readback_only'
+            except Exception:report['claim_reconciliation']='unavailable'
+        for key in ('worker_action','worker_step','worker_http_status','worker_error_code','worker_exception'):
+            report.pop(key,None)
+        report.update(original_diagnostic)
+
     report['duration_seconds']=round(time.monotonic()-started,3)
     try:write(Path(settings_path).parent/'uia-worker-status.json',report)
     except OSError:pass
