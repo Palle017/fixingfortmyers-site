@@ -1,4 +1,4 @@
-// Homepage hero: six service links sit directly under the H1.
+// Homepage hero: seven service links sit directly under the H1.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -14,9 +14,10 @@ const links = [
   ['Diesel', 'Diesel repair in Fort Myers', '/diesel-repair-fort-myers'],
   ['A/C', 'A/C repair in Fort Myers', '/ac-repair-fort-myers'],
   ['Car Audio', 'Car audio installation in Fort Myers', '/car-audio-installation-fort-myers'],
+  ['Detailing', 'Car detailing in Fort Myers', '/detailing-fort-myers'],
 ];
 
-test('homepage H1 is followed by six service links to real pages', () => {
+test('homepage H1 is followed by seven service links to real pages', () => {
   const html = read('index.html');
   assert.match(html, /<h1 id="home-title">Car trouble has terrible timing\. <br><span>Luckily, you’ve got Perfect Timing\.<\/span><\/h1>/);
   const document = new JSDOM(html).window.document;
