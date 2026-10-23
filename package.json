@@ -9,7 +9,8 @@
   "scripts": {
     "test": "node tools/verify.mjs",
     "preview": "node tools/preview-company.mjs",
-    "build:styles": "node tools/build-styles.mjs"
+    "build:styles": "node tools/build-styles.mjs",
+    "build:staging": "node tools/build-staging.mjs"
   },
   "devDependencies": {
     "jsdom": "30.1.1",

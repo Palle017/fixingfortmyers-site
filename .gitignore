@@ -9,3 +9,6 @@ _website-intake/test-data/
 !.env.example
 # Raw business/customer material and private asset annotations must never be published.
 /source-materials/
+
+# Generated isolated website staging artifact (never serve from production).
+/.staging-dist/
