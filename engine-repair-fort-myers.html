@@ -272,6 +272,9 @@
   ]
 }
 </script>
+<style id="service-ad-styles">
+.service-ad{padding:clamp(24px,5vw,56px) 0}.service-ad__card{overflow:hidden;border:1px solid #23c6d0;border-radius:18px;background:#10232a;color:#f5f9fa}.service-ad__image{display:block;width:100%;height:auto}.service-ad__copy{padding:clamp(20px,4vw,36px)}.service-ad h2{color:#fff;font-size:clamp(26px,3.6vw,42px);line-height:1.15;margin:0 0 16px}.service-ad p{line-height:1.65;margin:12px 0}.service-ad__actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}.service-ad__actions .btn{white-space:normal;text-align:center}.service-ad__note{font-size:14px;color:#c9dce0}
+</style>
 </head>
 <body>
 
@@ -291,7 +294,7 @@
         </a>
 
         <ul class="nav__links" role="list">
-          <li><a href="/#services">Services</a></li><li><a href="/repair-guides">Repair Guides</a></li>
+          <li><a href="/#services">Services</a></li><li><a href="/detailing-fort-myers">Detailing</a></li><li><a href="/repair-guides">Repair Guides</a></li>
           <li><a href="/about-perfect-timing">About</a></li>
           <li><a href="/careers">Careers</a></li>
           <li><a href="/?service=engine#contact" class="nav__cta">Request a repair</a></li>
@@ -305,7 +308,7 @@
       </div>
 
       <div class="nav__mobile-menu" id="mobileMenu">
-        <a href="/#services">Services</a><a href="/repair-guides">Repair Guides</a>
+        <a href="/#services">Services</a><a href="/detailing-fort-myers">Detailing</a><a href="/repair-guides">Repair Guides</a>
         <a href="/about-perfect-timing">About</a>
         <a href="/careers">Careers</a>
         <a href="/?service=engine#contact" class="nav__cta">Request a repair</a>
@@ -333,6 +336,23 @@
 
 
   <main class="service-layout" id="main-content">
+    <section class="service-ad" id="engine-ad" aria-labelledby="engine-ad-title">
+      <div class="container">
+        <div class="service-ad__card">
+          <a href="/engine-repair-fort-myers#engine-ad">
+            <img class="service-ad__image" src="/assets/campaign-engine.webp" srcset="/assets/campaign-engine-768.webp 768w, /assets/campaign-engine.webp 1536w" sizes="(max-width: 760px) calc(100vw - 48px), 1150px" width="1536" height="1024" alt="Timing chain and cam gears on a workbench. The photo reads: Bad timing? Perfect Timing. Car trouble has terrible timing. Luckily, you've got Perfect Timing." loading="lazy" decoding="async">
+          </a>
+          <div class="service-ad__copy">
+            <h2 id="engine-ad-title">If it's knocking, ticking, or leaving a puddle, we'll get in there.</h2>
+            <p>Misfire, a hot gauge, or oil on the ground. Tell us what changed and when.</p>
+            <p>Engine repair is by appointment.</p>
+            <div class="service-ad__actions">
+              <a class="btn btn--primary" href="/request-a-repair?service=engine">Request engine repair</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
     <section>
       <div class="container">
         <p class="section-label reveal">What To Watch For</p>
@@ -527,6 +547,7 @@
             <li><a href="/ac-repair-fort-myers">A/C Service</a></li>
             <li><a href="/brake-repair-fort-myers">Brakes</a></li>
             <li><a href="/oil-change-fort-myers">Oil Changes</a></li>
+            <li><a href="/detailing-fort-myers">Detailing</a></li>
             <li><a href="/#service-pages">All services</a></li>
           </ul>
         </div>
