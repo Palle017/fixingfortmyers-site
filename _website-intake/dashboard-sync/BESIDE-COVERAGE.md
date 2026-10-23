@@ -66,7 +66,7 @@ The optional `source_event_id`, `source_event_at`, `source_captured_at` and boun
 
 ## Replay boundaries
 
-Repeated rendered captures retain the same semantic source fingerprint; rerunning a scraper is not a new customer event. Distinct provider-native message IDs remain distinct even when sender and text match. Never manufacture a native event identity from sender, body text or capture time.
+Repeated verified message records retain the same source fingerprint when their event fields are unchanged. Legacy relative-date guesses remain uncertain; a new observation or changed capture clock is not proof of a new customer event. Distinct provider-native message IDs remain distinct even when sender and text match. Never manufacture a native event identity from sender, body text or capture time.
 
 The existing native-event ledger uses its event-key uniqueness and transaction to protect stable-ID replay. Identical stable-ID payloads are duplicates; changed payloads with that same identity conflict, while a genuinely new ID is retained. If the provider supplies no stable event ID, unidentified review observations cannot guarantee a single effect across redeliveries. Preserve this uncertainty rather than collapsing possible real messages by content.
 
