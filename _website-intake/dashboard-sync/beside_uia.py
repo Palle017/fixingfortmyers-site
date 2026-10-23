@@ -7,6 +7,7 @@ import math
 import re
 import unicodedata
 from zoneinfo import ZoneInfo
+from beside_evidence import rendered_provenance, qualifier_summary, is_shop_reply
 
 ID = re.compile(r'^prv_[A-Z0-9]{26}$')
 URL = re.compile(r'^https://app\.beside\.com/chats/(prv_[A-Z0-9]{26})$')
@@ -203,6 +204,9 @@ def conversation(capture,raw_sha256,*,details=False,call_markers=None):
                 time_basis='Earliest rendered message clock in the visible thread, America/New_York; older paged history not read.')
         item['source']='beside_call' if any(e['kind']=='call' for e in events) else 'beside_text'
         item['messages']=[{'at':e['at'],'kind':e['kind']} for e in events]
+    # Optional fields are preserved in the private archive; the dashboard contract
+    # remains its existing source summary. Rendered activity is not a new request.
+    item['provenance']=rendered_provenance(item,capture['observed_at'])
     return item
 
 REVIEW_CHROME=re.compile(r'^(?:AI recap|AI summary|Summary|Transcript|Call details|Conversation details|Read|Unread|Delivered|Sent|Show more|Show less|View transcript|View recording|Play recording|Audio\s*Call|Receptionist\s*Call|No\s*Answer|Incoming call|Outgoing call|Missed call|Voicemail|Message|Ask\s*Beside\s*AI)$',re.I)
@@ -224,7 +228,7 @@ def review_content(item):
     lines=[]
     for line in str(item.get('concern') or '').splitlines():
         line=' '.join(line.split())
-        if not line or CLOCK.fullmatch(line) or DAY.fullmatch(line) or DISPLAY_TIME.fullmatch(line) or DISPLAY_DATE.fullmatch(line) or REVIEW_CHROME.fullmatch(line) or _shop_text(line) in SHOP_BOILERPLATE:continue
+        if not line or CLOCK.fullmatch(line) or DAY.fullmatch(line) or DISPLAY_TIME.fullmatch(line) or DISPLAY_DATE.fullmatch(line) or REVIEW_CHROME.fullmatch(line) or _shop_text(line) in SHOP_BOILERPLATE or is_shop_reply(line):continue
         if line not in lines:lines.append(line)
     return lines
 
@@ -242,6 +246,9 @@ def generic_review(capture,observed_at,*,item=None):
     summary=('Automated verification message only; no repair request is visible.' if otp else
         'Captured text: '+' '.join(useful) if useful else
         fallback)
+    if not otp:
+        qualified=qualifier_summary(item,observed_at)
+        if qualified:summary=qualified
     if len(summary)>500:summary=summary[:499].rstrip()+'…'
     # Unknown, missed and silent callers remain owner-review items. No payment,
     # repair, spam or booking outcome is inferred from keywords or an AI recap.

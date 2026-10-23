@@ -5,6 +5,7 @@ Conservative: only explicit labels ("Vehicle:", "Car:", "Issue:", "Reason for ca
 """
 from __future__ import annotations
 import re
+from beside_evidence import is_shop_reply
 
 MAKES = ('acura alfa audi bmw buick cadillac chevrolet chevy chrysler dodge fiat ford genesis gmc honda hyundai '
          'infiniti jaguar jeep kia land lexus lincoln mazda mercedes mercedes-benz mini mitsubishi nissan porsche ram '
@@ -52,10 +53,38 @@ def explicit_customer_name(item):
         names.update(match.group(1) for match in SELF_NAME.finditer(body))
     return next(iter(names)) if len(names)==1 else ''
 
+FIRST_PERSON_VEHICLE=re.compile(r"\b(?:I\s+(?:have|drive|own|got)|my)\s+(?:(?:a|an)\s+)?",re.I)
+PROMPT=re.compile(r'\b(?:please text|for example|such as|your vehicle|year,? make and model)\b',re.I)
+
+def vehicle_candidate(item):
+    """Observed first-person vehicle wording, not a proved inbound/new request."""
+    contexts=(item.get('provenance') or {}).get('events') or [
+        {'text':line,'at':None,'direction':'unknown'}
+        for line in str(item.get('concern') or '').splitlines()]
+    candidates={}
+    for context in contexts:
+        if context.get('direction')=='outbound':continue
+        for line in str(context.get('text') or '').splitlines():
+            if is_shop_reply(line) or PROMPT.search(line):continue
+            for person in FIRST_PERSON_VEHICLE.finditer(line):
+                match=YEAR_MAKE.search(line,person.end())
+                if not match or match.start()-person.end()>20:continue
+                value=_clean(match[1],160)
+                candidates[value]={'basis':'rendered_first_person_vehicle',
+                    'event_at':context.get('at'),'direction':context.get('direction','unknown'),
+                    'candidate_only':True,'new_request_established':False}
+    return next(iter(candidates.items())) if len(candidates)==1 else None
+
+
 def apply(item,*,explicit_only=False):
     """Fill vehicle (only when empty) and put the extracted issue first in concern; keep full text."""
     vehicle, issue = extract(item.get('concern', ''),explicit_only=explicit_only)
     out = dict(item)
+    if not vehicle and not out.get('vehicle'):
+        candidate=vehicle_candidate(item)
+        if candidate:
+            vehicle,evidence=candidate
+            out['field_evidence']={**out.get('field_evidence',{}),'vehicle':evidence}
     if not out.get('name') or out.get('name')=='Name not provided':
         name=explicit_customer_name(item)
         if name:out['name']=name

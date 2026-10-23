@@ -5,6 +5,7 @@ Uses the already installed private archive/planner and the existing refresh queu
 from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
+import heapq
 import importlib
 import json
 import math
@@ -21,6 +22,7 @@ from beside_uia import CaptureError, OTP_MESSAGE, OTP_WARNING, conversation, gen
 import beside_intake
 import beside_extract
 import beside_attempt
+from beside_evidence import review_needed, qualifier_summary
 
 ROOT=Path(__file__).resolve().parent
 # BESIDE_REFRESH_SETTINGS lets the Linux service point at its own private settings; Windows default unchanged.
@@ -73,6 +75,127 @@ def selected_changes(inventory,checkpoint,maximum):
     recheck.sort(key=lambda row:prior.get(row['conversation_id'],{}).get('checked_at',''))
     changed+=recheck
     return changed[:maximum],len(changed)
+SELECTION_HISTORY_RUNS=32
+SELECTION_RECHECK_SECONDS=900
+SELECTION_OUTCOMES=frozenset(('started','rendered_capture_saved','source_read_failed','failed'))
+
+def selection_time(value):
+    result=beside_attempt._date(value)
+    return result.astimezone(timezone.utc) if result else None
+
+def selection_id(value):
+    return isinstance(value,str) and re.fullmatch(r'[A-Za-z0-9_-]{1,128}',value) is not None
+
+def selection_history(runs,observed_at,*,exclude=None):
+    """Bounded private source artifacts only; attempts are scheduling evidence, never success."""
+    now=selection_time(observed_at)
+    history={};info={'runs_inspected':0,'ignored_artifacts':0,'maximum_runs':SELECTION_HISTORY_RUNS}
+    root=Path(runs).resolve()
+    folders=heapq.nlargest(SELECTION_HISTORY_RUNS,
+        (path for path in root.glob('queued-uia-*') if path!=exclude and path.is_dir() and not path.is_symlink()
+         and re.fullmatch(r'queued-uia-\d{8}T\d{12}Z',path.name)),key=lambda path:path.name)
+    def artifact(path):
+        if path.is_symlink() or path.stat().st_size>1_000_000:raise ValueError('invalid_selection_artifact')
+        return load(path)
+    for folder in folders:
+        info['runs_inspected']+=1
+        try:
+            inventory=artifact(folder/'inventory.json')
+            records=inventory.get('records')
+            if not isinstance(records,list) or not 0<len(records)<=200:raise ValueError('invalid_selection_inventory')
+            ids=[row.get('conversation_id') for row in records if isinstance(row,dict)]
+            if len(ids)!=len(records) or any(not selection_id(cid) for cid in ids) or len(set(ids))!=len(ids):
+                raise ValueError('invalid_selection_inventory')
+            observed=selection_time(inventory.get('captured_at'))
+            if observed is None:
+                observed=datetime.strptime(folder.name[len('queued-uia-'):],'%Y%m%dT%H%M%S%fZ').replace(tzinfo=timezone.utc)
+            if now is None or observed>now:raise ValueError('invalid_selection_observation')
+            for cid in ids:
+                previous=selection_time(history.get(cid,{}).get('first_seen_at'))
+                history.setdefault(cid,{})['first_seen_at']=min(previous,observed).isoformat() if previous else observed.isoformat()
+        except (OSError,ValueError,TypeError,AttributeError):
+            info['ignored_artifacts']+=1
+            continue
+        path=folder/'selection-attempts.json'
+        if not path.exists():continue
+        try:
+            evidence=artifact(path)
+            attempts=evidence.get('attempts')
+            if evidence.get('format')!='beside-selection-attempts/v1' or not isinstance(attempts,list) or len(attempts)>25:
+                raise ValueError('invalid_selection_attempts')
+            validated=[]
+            for item in attempts:
+                at=selection_time(item.get('attempted_at')) if isinstance(item,dict) else None
+                cid=item.get('conversation_id') if isinstance(item,dict) else None
+                if cid not in ids or at is None or at<observed or at>now or item.get('outcome') not in SELECTION_OUTCOMES:
+                    raise ValueError('invalid_selection_attempt')
+                validated.append((cid,at))
+            for cid,at in validated:
+                previous=selection_time(history.get(cid,{}).get('attempted_at'))
+                history.setdefault(cid,{})['attempted_at']=max(previous,at).isoformat() if previous else at.isoformat()
+        except (OSError,ValueError,TypeError,AttributeError):
+            info['ignored_artifacts']+=1
+    return history,info
+
+def fair_visible_selection(inventory,checkpoint,maximum,history):
+    """Reserve the first slot for the oldest due visible row, including previously failed reads."""
+    if type(maximum) is not int or not 1<=maximum<=25:raise ScanError('LOCAL_STORAGE_UNAVAILABLE')
+    changed,total=selected_changes(inventory,checkpoint,len(inventory.get('records',[])))
+    records=inventory['records'];prior=checkpoint.get('records',{});now=selection_time(inventory.get('captured_at'))
+    changed_ids={row['conversation_id'] for row in changed}
+    def times(row):
+        cid=row['conversation_id'];previous=prior.get(cid,{})
+        known=history.get(cid,{}) if isinstance(history,dict) else {}
+        known=known if isinstance(known,dict) else {}
+        checked=selection_time(previous.get('checked_at'))
+        attempted=selection_time(known.get('attempted_at'))
+        first_seen=selection_time(known.get('first_seen_at'))
+        # Ignore future/malformed scheduling metadata instead of granting it success.
+        valid=[value for value in (checked,attempted) if value and (now is None or value<=now)]
+        first_seen=first_seen if first_seen and (now is None or first_seen<=now) else now
+        effective=max(valid) if valid else first_seen
+        return checked,effective or datetime.max.replace(tzinfo=timezone.utc)
+    due=[row for row in records if row['conversation_id'] in changed_ids or times(row)[0] is None
+         or now is None or (now-times(row)[0]).total_seconds()>=SELECTION_RECHECK_SECONDS
+         or (now-times(row)[0]).total_seconds()<0]
+    oldest=min(due or records,key=lambda row:(times(row)[1],row['conversation_id']))
+    selected=[oldest]+[row for row in changed if row['conversation_id']!=oldest['conversation_id']]
+    return selected[:maximum],total
+
+def uninspected_preview_count(inventory,checkpoint,captures):
+    eligible,_=selected_changes(inventory,checkpoint,len(inventory['records']))
+    saved={capture['conversation_id'] for capture in captures}
+    return sum(row['conversation_id'] not in saved for row in eligible)
+
+def read_with_selection_evidence(cid,read,evidence,persist):
+    """Persist a request before reading; failure/attempt metadata never advances the checkpoint."""
+    item={'conversation_id':cid,'attempted_at':stamp(),'outcome':'started'}
+    evidence['attempts'].append(item);persist(evidence)
+    try:
+        captured=read(cid)
+    except ScanError:
+        item['outcome']='source_read_failed';item['finished_at']=stamp();persist(evidence)
+        raise
+    except Exception:
+        item['outcome']='failed';item['finished_at']=stamp();persist(evidence)
+        raise
+    item['outcome']='rendered_capture_saved';item['finished_at']=stamp();persist(evidence)
+    return captured
+
+def visible_coverage(inventory,selected,captures,failures,evidence,history_info,parsed=None):
+    attempted=len(evidence['attempts'])
+    result={'format':'beside-visible-coverage/v1','visible_rows_inventoried':len(inventory['records']),
+        'rows_selected':len(selected),'thread_read_requests':attempted,'rendered_thread_captures':len(captures),
+        'thread_read_failures':len(failures),'selected_not_attempted':max(0,len(selected)-attempted),
+        'visible_rows_without_rendered_capture':max(0,len(inventory['records'])-len(captures)),
+        'full_thread_history_verified':False,'account_export_complete':False,
+        'selection_history':history_info,
+        'limitations':['Visible All-list window only; selection can rotate only while a row remains visible.',
+            'Rendered excerpts are not complete threads, recording audio, or downloaded transcripts.',
+            'Attempt metadata records scheduling only; it does not mark a row successfully imported.']}
+    if parsed is not None:result['parsed_observations']=parsed
+    return result
+
 def preserve_known_fields(incoming,old):
     result=dict(incoming)
     if old:
@@ -88,7 +211,7 @@ def capture_fields_fingerprint(item):
     facts={key:item.get(key) for key in ('name','phone','email','vehicle','concern','received_at')}
     return hashlib.sha256(json.dumps(facts,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
 
-CONTEXT_BLOCK=re.compile(r'^(Earlier saved context(?: \(source observed \d{4}-\d{2}-\d{2}\))?): (.*?)(?:\nLatest capture(?: \([^\n]*\))?: .*)?$',re.S)
+CONTEXT_BLOCK=re.compile(r'^(Earlier saved context(?: \(source observed \d{4}-\d{2}-\d{2}\))?): (.*?)(?:\n(?:Latest capture(?: \([^\n]*\))?|Rendered source qualification): .*)?$',re.S)
 NON_CONTEXT=('New or changed Beside conversation captured for review.','Call captured; name and repair details still needed.',
     'Conversation captured; name and repair details still needed.','Call captured; repair details still needed.',
     'Conversation captured; repair details still needed.',
@@ -98,9 +221,12 @@ NON_CONTEXT=('New or changed Beside conversation captured for review.','Call cap
 def saved_context(old):
     """Retain the earlier useful summary once, never the full formatted concern."""
     first=str((old or {}).get('concern') or '').split('\n\n',1)[0].strip()
-    if not first or any(marker in first for marker in NON_CONTEXT):return None
+    if not first:return None
     parsed=CONTEXT_BLOCK.fullmatch(first)
-    if parsed:return parsed[1],parsed[2][:280]
+    if parsed:
+        earlier=parsed[2]
+        return None if any(marker in earlier for marker in NON_CONTEXT) else (parsed[1],earlier[:280])
+    if any(marker in first for marker in NON_CONTEXT):return None
     if first.startswith('Captured text: '):first=first[len('Captured text: '):]
     first=' '.join(first.split())
     date=str((old or {}).get('source_updated_at') or '')[:10]
@@ -116,16 +242,32 @@ def source_review(capture,observed,item,old,prior_class=None,previous_fingerprin
         decision.update(classification='repair',include_in_dashboard=True,category='Previously reviewed repair conversation')
     context=saved_context(old)
     if context and prior_class not in ('spam','operational','personal'):
-        useful=[line for line in review_content(item) if not OTP_MESSAGE.fullmatch(line) and not OTP_WARNING.fullmatch(line)]
-        latest=' '.join(useful)
+        qualified=qualifier_summary(item,observed)
         label,earlier=context
-        decision['summary']=label+': '+earlier
-        if latest!=earlier:
-            latest=latest[:300] if latest else 'No new repair details visible; earlier context retained.'
-            decision['summary']+='\nLatest capture ('+observed[:10]+'): '+latest
+        if qualified:
+            # Do not flatten an old recap into a new request merely because it was observed today.
+            decision['summary']=label+': '+earlier[:200]+'\nRendered source qualification: '+qualified
+        else:
+            useful=[line for line in review_content(item) if not OTP_MESSAGE.fullmatch(line) and not OTP_WARNING.fullmatch(line)]
+            latest=' '.join(useful)
+            decision['summary']=label+': '+earlier
+            if latest!=earlier:
+                latest=latest[:300] if latest else 'No new repair details visible; earlier context retained.'
+                decision['summary']+='\nLatest capture ('+observed[:10]+'): '+latest
     if old and previous_fingerprint==capture_fields_fingerprint(item):
         decision['include_in_dashboard']=False
     return decision
+
+def suppressed_review_needed(item,observed,prior_class,previous_fingerprint,*,since=None):
+    """Changed repair context can require review without changing an archived owner decision."""
+    if prior_class not in ('spam','operational','personal'):return None
+    fingerprint=capture_fields_fingerprint(item)
+    if previous_fingerprint==fingerprint:return None
+    evidence=review_needed(item,observed,since=since)
+    if not evidence['requires_review']:return None
+    return {**evidence,'classification_preserved':prior_class,
+        'content_comparison':'changed' if previous_fingerprint else 'unbaselined',
+        'content_sha256':fingerprint}
 
 def capture_command(settings,mode,output,settings_path):
     # Default: the Windows UI Automation capture. Opt-in Linux/Playwright capture with the same
@@ -528,12 +670,16 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             reserve_seconds=capture_ceiling(settings)+FINALIZATION_RESERVE_SECONDS)
         checkpoint_path=refresh/'uia-checkpoint.json'
         checkpoint=load(checkpoint_path) if checkpoint_path.exists() else {'records':{}}
-        selected,total_changed=selected_changes(inventory,checkpoint,min(25,int(settings.get('maximum_changed_threads_per_pass',25))))
-        unchanged_probe=not selected
-        selected=sample_when_unchanged(inventory,checkpoint,selected)
-        def read_one(cid):
+        history,history_info=selection_history(runs,stamp(),exclude=run_dir)
+        selected,total_changed=fair_visible_selection(inventory,checkpoint,min(25,int(settings.get('maximum_changed_threads_per_pass',25))),history)
+        unchanged_probe=total_changed==0
+        selection_evidence={'format':'beside-selection-attempts/v1','attempts':[]}
+        def capture_one(cid):
             return capture('thread',run_dir/('thread-'+cid+'.json'),cid=cid,inventory=run_dir/'inventory.json',
                 reserve_seconds=FINALIZATION_RESERVE_SECONDS)
+        def read_one(cid):
+            return read_with_selection_evidence(cid,capture_one,selection_evidence,
+                lambda value:write(run_dir/'selection-attempts.json',value))
         captures,capture_failures=read_threads(selected,read_one,remaining,
             lambda:worker('progress',phase='reading') if remaining()>=FINALIZATION_RESERVE_SECONDS+HTTP_TIMEOUT_SECONDS+3 else None,
             skip_failed=settings.get('beside_skip_failed_threads') is True,
@@ -541,11 +687,12 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             minimum_remaining=capture_ceiling(settings)+FINALIZATION_RESERVE_SECONDS)
 
         report['thread_failures']=len(capture_failures)
+        report['coverage']=visible_coverage(inventory,selected,captures,capture_failures,selection_evidence,history_info)
         require_captured_changes(selected,captures)
         worker('progress',phase='checking');phase='checking'
         baseline=worker('baseline')['baseline'];archive.validate_baseline(baseline)
         by_id={row['id']:row for row in baseline['leads']}
-        observed=stamp();review={'format':'beside-review/v1','classifications':{},'crosswalks':[]};conversations=[];held=[];capture_hashes={}
+        observed=stamp();review={'format':'beside-review/v1','classifications':{},'crosswalks':[]};conversations=[];held=[];capture_hashes={};review_needed_items=[]
         event('archive.plan')
 
         database=archive.connect(settings['persistent_archive'])
@@ -565,11 +712,18 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
                 prior=database.execute('SELECT classification FROM conversation_classifications WHERE mailbox_id=? AND conversation_id=? ORDER BY reviewed_at DESC LIMIT 1',(settings['mailbox_id'],cid)).fetchone()
                 decision=source_review(cap,observed,item,old,prior['classification'] if prior else None,
                     checkpoint.get('records',{}).get(cid,{}).get('content_sha256'))
+                previous=checkpoint.get('records',{}).get(cid,{})
+                needs_review=suppressed_review_needed(item,observed,prior['classification'] if prior else None,
+                    previous.get('content_sha256'),since=(old or {}).get('source_updated_at') or previous.get('checked_at'))
+                if needs_review:review_needed_items.append({'conversation_id':cid,**needs_review})
                 capture_hashes[cid]=capture_fields_fingerprint(item)
                 review['classifications'][cid]=decision;conversations.append(item)
             require_captured_changes(selected,conversations)
-            scope=f"{len(inventory['records'])} recent visible All-list conversations inventoried; {len(captures)} selected rendered threads read. {max(0,total_changed-len(captures))} changed/uninspected visible conversations remain outside this bounded pass. Not a full account export."
-            if unchanged_probe:scope+=' No changed preview was detected; one oldest checked visible thread was sampled.'
+            report['coverage']['parsed_observations']=len(conversations)
+            report['coverage']['archived_classification_reviews_needed']=len(review_needed_items)
+            scope=f"{len(inventory['records'])} recent visible All-list conversations inventoried; {len(captures)} selected rendered threads read. {uninspected_preview_count(inventory,checkpoint,captures)} changed/due preview rows have no saved rendered capture in this pass. Not a full account export."
+            scope+=' The first slot samples the oldest due visible row using successful checks and separate attempt history.'
+            if unchanged_probe:scope+=' No changed preview was detected; one visible thread was sampled.'
             snapshot={'format':'beside-snapshot/v1','account':{'provider_id':settings['mailbox_id'],'mailbox_id':settings['mailbox_id']},
                 'collected_at':observed,'coverage':{'complete':False,'method':'authorized_browser','scope':scope,
                     'limitations':['Rendered recent window only; no older paging, Spam-tab export, recording audio or transcript downloads.',
@@ -581,6 +735,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             plan=archive.plan_import(database,archive.digest(raw_snapshot),baseline,review)
         finally:database.close()
         write(run_dir/'ownerdesk-before.json',baseline);write(run_dir/'review.json',review);write(run_dir/'plan.json',plan)
+        write(run_dir/'review-needed.json',{'format':'beside-suppressed-review/v1','items':review_needed_items})
         # Existing sender validates exact plan, latest baseline and source-only fields.
         latest=worker('baseline')['baseline'];write(run_dir/'latest-before.json',latest)
         if plan['batches']:
@@ -608,7 +763,9 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False):
             'heldCards':len(plan['gaps'])+len(held),'skippedConversations':len(inventory['records'])-len(captures),'confirmedBatches':len(plan['batches'])}
         proof={'job_id':lease['state']['jobId'],'requested_at':lease['state']['requestedAt'],'captured_at':observed,'readback_at':readback,
             'plan_sha256':plan['plan_sha256'],'before_sha256':archive.digest(baseline),'after_sha256':archive.digest(after),
-            'full_threads_read':len(captures),'list_conversations_checked':len(inventory['records']),'scope':scope}
+            'full_threads_read':len(captures),'list_conversations_checked':len(inventory['records']),'scope':scope,
+            # Legacy full_threads_read is retained for compatibility; coverage defines its actual rendered scope.
+            'coverage':report['coverage']}
         receipt=queue.completion(baseline,after,plan,counts,journal,lease,proof,raw_snapshot,snapshot)
         write(run_dir/'run-proof.json',proof);write(run_dir/'counts.json',counts);write(run_dir/'settings-before.json',settings)
         completed=worker('complete',receipt=receipt)
