@@ -16,3 +16,13 @@ for (const page of ['workshop.html','engine-repair-fort-myers.html']) test(`${pa
   const quote = p.textContent.match(/“([^”]+)”/)[1];
   assert.ok(home.includes(`“${quote}”`), 'quote must be an existing homepage review');
 });
+
+test('walnut blasting: inquiry block offers Google review proof and a direct text action', () => {
+  const doc = new JSDOM(read('walnut-blasting-fort-myers.html')).window.document;
+  const block = [...doc.querySelectorAll('.service-panel')].find(el => el.querySelector('h2')?.textContent?.includes('Tell us about your engine'));
+  assert.ok(block, 'walnut inquiry block exists');
+  assert.equal(block.querySelector('a[href^="sms:"]')?.getAttribute('href'), 'sms:+12393972048');
+  assert.match(block.querySelector('a[href^="sms:"]')?.textContent, /Text Tony/);
+  assert.match(block.querySelector('.service-rating a[href^="https://www.google.com/maps/place/"]')?.textContent || '', /customer reviews on Google/);
+  assert.equal(block.querySelector('a[href^="/request-a-repair"]')?.getAttribute('href'), '/request-a-repair?service=walnut');
+});

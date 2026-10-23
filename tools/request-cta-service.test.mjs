@@ -33,3 +33,16 @@ test('cooling-system-repair-fort-myers.html: request links pre-select the coolin
   assert.doesNotMatch(h, /href="\/#contact"/);
   assert.ok((h.match(/href="\/\?service=cooling#contact"/g) || []).length >= 6);
 });
+
+test('walnut-blasting-fort-myers.html: all 7 repair CTAs open a preselected dedicated form', () => {
+  const doc = new JSDOM(read('walnut-blasting-fort-myers.html')).window.document;
+  const links = [...doc.querySelectorAll('a[href]')].filter(a => a.getAttribute('href')?.includes('service=walnut'));
+  assert.equal(links.length, 7);
+  for (const link of links) assert.equal(link.getAttribute('href'), '/request-a-repair?service=walnut');
+  const dom = new JSDOM(read('request-a-repair.html'), {url:'https://preview.invalid/request-a-repair?service=walnut', runScripts:'outside-only', pretendToBeVisual:true});
+  dom.window.matchMedia = () => ({matches:false, addEventListener(){}, removeEventListener(){}});
+  dom.window.PT_CONTACT_CONFIG = {endpoint:''};
+  dom.window.eval(read('site.js'));
+  assert.equal(dom.window.document.getElementById('request-service').value, 'Walnut blasting / carbon cleaning');
+  dom.window.close();
+});
