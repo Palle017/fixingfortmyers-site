@@ -1,4 +1,4 @@
-// Instant confirmation text to the customer after a saved web request: speed-to-lead.
+// Consent-gated acknowledgment after a saved web request; no callback-time promise.
 // Sent only when the customer ticked text permission, customer texts are switched on
 // (LEAD_CUSTOMER_TEXTS=true) and Twilio is configured. Twilio has no idempotency key, so an
 // uncertain send is never repeated; only an explicit rate-limit answer is retried.
@@ -10,27 +10,29 @@ const issue = (code, {retryable = false} = {}) => Object.assign(new Error(code),
 export const customerNumber = phone => { const d = String(phone || '').replace(/\D/g, ''); return d.length === 10 ? '+1' + d : d.length === 11 && d[0] === '1' ? '+' + d : ''; };
 
 // Plain mechanic's-note receipt: confirms the request, repeats the vehicle and problem,
-// says Tony will call to set the appointment, and gives the shop number. Always <= 320 chars.
+// explains callback priority and gives the shop number. Always <= 320 chars.
 export const issueSummary = lead => {
   const first = String(lead.details || '').split('\n')[0].replace(/[\u0000-\u001f]/g, ' ').trim();
   const text = first.startsWith('Problem: ') ? first.slice(9) : first;
   return text.length > 50 ? text.slice(0, 49).replace(/\s+\S*$/, '') + '…' : text;
 };
 export function confirmationText(lead, {urgent = false} = {}) {
-  const first = String(lead.name || '').trim().split(/\s+/)[0].replace(/[^\p{L}'-]/gu, '').slice(0, 30);
+  let first = String(lead.name || '').trim().split(/\s+/)[0].replace(/[^\p{L}'-]/gu, '').slice(0, 30);
   const raw = String(lead.vehicle || '').replace(/[\u0000-\u001f]/g, ' ').trim();
   const vehicle = /^Not provided/i.test(raw) ? '' : raw.slice(0, 60);
   const issue = issueSummary(lead);
   const build = (v, i) => {
     const about = v ? ` for the ${v}${i ? ' (' + i + ')' : ''}` : i ? ` (${i})` : '';
     return [`Perfect Timing Auto Repair: Hi${first ? ' ' + first : ''}, we got your repair request${about}.`,
-      urgent ? `You said you're stranded, so it's marked urgent. If you're somewhere unsafe, call 911.` : `Tony will call you to set up an appointment.`,
-      `If it can't wait, call ${SHOP_NUMBER_TEXT}. Reply STOP to opt out, HELP for help.`].join(' ');
+      urgent ? `You said you're stranded, so it's marked urgent. If you're somewhere unsafe, call 911.` : `Tony will call to set up an appointment.`,
+      'Requests with your name, vehicle year/model and callback time are prioritized so we can prepare.',
+      `Call ${SHOP_NUMBER_TEXT}. Reply STOP to opt out, HELP for help.`].join(' ');
   };
   // Keep one SMS-sized note: drop the problem first, then shorten the vehicle.
   let body = build(vehicle, issue);
   if (body.length > 320) body = build(vehicle, '');
   if (body.length > 320) body = build(vehicle.slice(0, Math.max(0, vehicle.length - (body.length - 320))).trim(), '');
+  if (body.length > 320) { first = first.slice(0, Math.max(0, first.length - (body.length - 320))); body = build('', ''); }
   return body;
 }
 

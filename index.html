@@ -452,9 +452,10 @@
           <p>Rather talk? Stuck somewhere?</p>
           <a class="btn btn--primary request-call__btn" href="tel:+12393972048">Call Tony (239) 397-2048</a>
         </aside>
-        <form id="bookingForm" class="repair-request" method="post" action="#contact" toolname="request_repair_review" tooldescription="Prepare a basic repair callback request from customer-provided contact, vehicle and symptom details. The customer reviews and manually submits this form. Use prepare_repair_request for location-dependent details and the visible form for requested date/time. Tony must confirm appointments by phone; no repair or payment is authorized.">
+        <form id="bookingForm" class="repair-request" aria-describedby="request-priority-notice" method="post" action="#contact" toolname="request_repair_review" tooldescription="Prepare a basic repair callback request from customer-provided contact, vehicle and symptom details. The customer reviews and manually submits this form. Use prepare_repair_request for location-dependent details and the visible form for requested date/time. Tony must confirm appointments by phone; no repair or payment is authorized.">
           <h2 id="request-heading">How can we help with your car?</h2>
           <p id="request-instructions">Four quick things and you’re done. No account needed. Tony reads every request and calls you back.</p>
+          <p class="request-fineprint" id="request-priority-notice">We receive a high volume of calls. Please leave your name, vehicle year and model, and a good time to call back. Requests with these details are prioritized because they give us the information we need to prepare before calling you back. The more we know upfront, the sooner we can return your call.</p>
           <div class="request-fields request-fields--core">
             <label for="request-phone"><span id="request-phone-label">Best number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required enterkeyhint="next" placeholder="(239) 555-0123" aria-describedby="request-phone-error"></label>
             <p class="request-error" id="request-phone-error" hidden></p>
@@ -578,6 +579,7 @@
         <p class="request-done__lead" id="request-done-lead">Send Tony a quick text so he has your number.</p>
         <p id="request-done-summary" class="request-done__summary" hidden></p>
         <p id="request-done-note">If you’re stuck or it can’t wait, call (239) 397-2048. Any time you asked for is penciled in only; it isn’t official until Tony confirms it with you by phone, so please wait for his call before heading over.</p>
+        <p class="request-fineprint" id="request-done-priority">We receive a high volume of calls. Please leave your name, vehicle year and model, and a good time to call back. Requests with these details are prioritized because they give us the information we need to prepare before calling you back. The more we know upfront, the sooner we can return your call.</p>
         <p class="request-fineprint" id="request-done-ref"></p>
         <p class="request-status" id="request-done-appointment-state" role="status" aria-live="polite" hidden></p>
         <div class="request-actions">
@@ -929,7 +931,7 @@
         </div>
       </div>
     </div>
-  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Repair requests 24/7</strong><br>Repair requests and appointment requests are taken 24/7, including nights, weekends and holidays, by form, call or text. Shop repairs at Tony's workshop, mobile repairs from his equipped service van, and pickup are all by appointment; requested times are penciled in until Tony confirms by phone. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop and the service van cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
+  <p class="hours-disclaimer" id="hours-disclaimer"><strong>Repair requests 24/7</strong><br>Repair requests and appointment requests are taken 24/7, including nights, weekends and holidays, by form, call or text. Shop repairs at Tony's workshop, mobile repairs from his equipped service van, and pickup are all by appointment; requested times are penciled in until Tony confirms by phone. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop and the service van cannot accommodate every job. An immediate reply or visit is not guaranteed. Requests with your name, vehicle year and model, and a good callback time are prioritized so we can prepare before calling you back.</p>
 </footer>
 
   <!-- ============ JAVASCRIPT ============ -->

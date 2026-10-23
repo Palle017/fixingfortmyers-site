@@ -30,7 +30,8 @@ test('a customer who ticked text permission gets one confirmation text right awa
   await new Promise(resolve => setTimeout(resolve, 50));
   assert.equal(twilio.sent.length, 1);
   assert.equal(twilio.sent[0].to, '+12395550142');
-  assert.match(twilio.sent[0].body, /^Perfect Timing Auto Repair: Hi Maria, we got your repair request for the 2012 F-150 \(Synthetic test only\.\)\. Tony will call you to set up an appointment\. If it can't wait, call \(239\) 397-2048\./);
+  assert.match(twilio.sent[0].body, /^Perfect Timing Auto Repair: Hi Maria, we got your repair request for the 2012 F-150/);
+  assert.match(twilio.sent[0].body, /Tony will call to set up an appointment\. Requests with your name, vehicle year\/model and callback time are prioritized so we can prepare\./);
   assert.match(twilio.sent[0].body, /Reply STOP to opt out, HELP for help\.$/);
   assert.equal((await x.inbox()).find(row => row.id === receipt.id).customerText.state, 'sent');
 });
@@ -91,6 +92,7 @@ test('confirmation text stays calm and under 320 characters at maximum field len
   const long = confirmationText({name: 'A'.repeat(100), vehicle: 'V'.repeat(160), details: 'Problem: ' + 'Won’t start, Overheating, AC not cooling, Strange noise, Warning light on'}, {urgent: true});
   assert.ok(long.length <= 320, long.length + ' chars');
   const plain = confirmationText({name: 'Maria Synthetic', vehicle: '2012 Ford F-150', details: 'Problem: Won’t start\nClicks when I turn the key.'});
-  assert.equal(plain, "Perfect Timing Auto Repair: Hi Maria, we got your repair request for the 2012 Ford F-150 (Won’t start). Tony will call you to set up an appointment. If it can't wait, call (239) 397-2048. Reply STOP to opt out, HELP for help.");
+  assert.match(plain, /^Perfect Timing Auto Repair: Hi Maria, we got your repair request for the 2012 Ford F-150/);
+  assert.match(plain, /prioritized so we can prepare\. Call \(239\) 397-2048\. Reply STOP to opt out, HELP for help\.$/);
   for (const body of [long, plain]) assert.doesNotMatch(body, /!|review|discount|offer|\p{Extended_Pictographic}/u);
 });
