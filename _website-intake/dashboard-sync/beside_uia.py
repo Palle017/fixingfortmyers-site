@@ -7,6 +7,8 @@ import math
 import re
 import unicodedata
 from zoneinfo import ZoneInfo
+from beside_evidence import rendered_provenance, qualifier_summary, is_shop_reply
+from beside_message_evidence import acquisition, MessageEvidenceError
 
 ID = re.compile(r'^prv_[A-Z0-9]{26}$')
 URL = re.compile(r'^https://app\.beside\.com/chats/(prv_[A-Z0-9]{26})$')
@@ -181,8 +183,10 @@ def message_events(capture,text_nodes,call_markers=None):
         event['kind']='call' if markers.search(body) else 'text'
     return events
 
-def conversation(capture,raw_sha256,*,details=False,call_markers=None):
+def conversation(capture,raw_sha256,*,details=False,call_markers=None,requested_surface='rendered_thread'):
     text_nodes=verified_text(capture)
+    try:source_evidence=acquisition(capture,requested_surface=requested_surface)
+    except MessageEvidenceError as exc:raise CaptureError(str(exc)) from exc
     title=text_nodes[0]['name']
     phone=''
     if re.fullmatch(r'(?:\+1[ .-]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}',title):
@@ -190,11 +194,17 @@ def conversation(capture,raw_sha256,*,details=False,call_markers=None):
         phone='+'+(digits if len(digits)==11 else '1'+digits)
         title='Name not provided'
     body='\n'.join(n['name'] for n in text_nodes[1:])
+    if source_evidence['messages_verified']:
+        # The full rendered pane remains in raw capture; current message text stays separate.
+        body='\n'.join(message['text'] for message in source_evidence['messages'])
+    source_times=sorted(message['at'] for message in source_evidence['messages']
+        if message['direction']=='inbound' and message['id'] and message['at'])
     item={'id':capture['conversation_id'],'name':title,'phone':phone,'email':'','vehicle':'',
-        'concern':body,'received_at':displayed_activity(capture,text_nodes),'updated_at':None,
+        'concern':body,'received_at':(source_times[0] if source_times else None) if source_evidence['messages_verified']
+        else displayed_activity(capture,text_nodes),'updated_at':None,
         'time_basis':'Latest rendered activity clock and following day separator, America/New_York; not first-ever receipt.',
         'raw':{'capture_sha256':raw_sha256,'capture':sanitize_raw(capture)}}
-    if details:
+    if details and not source_evidence['messages_verified']:
         # Optional (beside_parse_details): earliest visible message time and call/text split.
         events=message_events(capture,text_nodes,call_markers)
         if events:
@@ -203,6 +213,17 @@ def conversation(capture,raw_sha256,*,details=False,call_markers=None):
                 time_basis='Earliest rendered message clock in the visible thread, America/New_York; older paged history not read.')
         item['source']='beside_call' if any(e['kind']=='call' for e in events) else 'beside_text'
         item['messages']=[{'at':e['at'],'kind':e['kind']} for e in events]
+    # Optional acquisition metadata is source evidence, not a receiver schema migration.
+    item['acquisition']={key:value for key,value in source_evidence.items() if key not in ('messages','priority_evidence')}
+    for key in ('source_event_at','source_event_id','source_captured_at','priority_evidence'):
+        item[key]=source_evidence[key]
+    if source_evidence['messages_verified']:
+        item['messages']=source_evidence['messages']
+        item['source']='beside_text'
+        item['updated_at']=source_times[-1] if source_times and source_times[-1]!=source_times[0] else None
+        item['time_basis']='Explicit source message timestamps only; rendered day/clock guesses do not establish event freshness.'
+    # The current collector remains a bounded rendered-thread reader.
+    item['provenance']=rendered_provenance(item,capture['observed_at'])
     return item
 
 REVIEW_CHROME=re.compile(r'^(?:AI recap|AI summary|Summary|Transcript|Call details|Conversation details|Read|Unread|Delivered|Sent|Show more|Show less|View transcript|View recording|Play recording|Audio\s*Call|Receptionist\s*Call|No\s*Answer|Incoming call|Outgoing call|Missed call|Voicemail|Message|Ask\s*Beside\s*AI)$',re.I)
@@ -224,7 +245,7 @@ def review_content(item):
     lines=[]
     for line in str(item.get('concern') or '').splitlines():
         line=' '.join(line.split())
-        if not line or CLOCK.fullmatch(line) or DAY.fullmatch(line) or DISPLAY_TIME.fullmatch(line) or DISPLAY_DATE.fullmatch(line) or REVIEW_CHROME.fullmatch(line) or _shop_text(line) in SHOP_BOILERPLATE:continue
+        if not line or CLOCK.fullmatch(line) or DAY.fullmatch(line) or DISPLAY_TIME.fullmatch(line) or DISPLAY_DATE.fullmatch(line) or REVIEW_CHROME.fullmatch(line) or _shop_text(line) in SHOP_BOILERPLATE or is_shop_reply(line):continue
         if line not in lines:lines.append(line)
     return lines
 
@@ -242,6 +263,9 @@ def generic_review(capture,observed_at,*,item=None):
     summary=('Automated verification message only; no repair request is visible.' if otp else
         'Captured text: '+' '.join(useful) if useful else
         fallback)
+    if not otp:
+        qualified=qualifier_summary(item,observed_at)
+        if qualified:summary=qualified
     if len(summary)>500:summary=summary[:499].rstrip()+'…'
     # Unknown, missed and silent callers remain owner-review items. No payment,
     # repair, spam or booking outcome is inferred from keywords or an AI recap.
