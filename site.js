@@ -594,6 +594,12 @@
     preview.value = ''; refreshDraftLinks(); backup.hidden = true;
   }
   const sameRequestContent = data => JSON.stringify({...data,smsConsentTimestamp:'',appointmentPencilAcknowledgedAt:''});
+  // Agent results describe evidence, never include the customer's fields or capability tokens.
+  const repairResponse = (state, message, extra = {}) => ({status:state, receiptConfirmed:state === 'received', message, ...extra});
+  const receivedResponse = (id, edited = false) => repairResponse('received', edited
+    ? 'The earlier request was saved. Edited details still need review and submission.'
+    : 'Repair request saved. Tony must confirm the appointment by phone.',
+  {submitted:true, received:true, reference:id, appointmentConfirmed:false, calendarPlacement:'not_verified', ...(edited ? {editedDetailsSubmitted:false} : {})});
   const send = async (path, body, key, json = true) => {
     if (!endpoint) throw new Error('unavailable');
     const controller = new AbortController();
@@ -647,10 +653,17 @@
     clearTimeout(retryTimer); requestKey = uid(); requestPayload = null; voicePayload = null; voiceKey = uid(); sentRequestId = ''; status.textContent = '';
   });
   document.querySelector('.request-ai-help')?.addEventListener('toggle', event => { if (event.currentTarget.open) reportMetric('ai_help_opened'); });
-  form.addEventListener('submit', async event => {
+  form.addEventListener('submit', event => {
     event.preventDefault();
-    if (sending) return;
+    // respondWith must be called during this event, before any asynchronous work settles.
+    const respond = result => {
+      if (event.agentInvoked && typeof event.respondWith === 'function') event.respondWith(Promise.resolve(result));
+    };
+    if (sending) { respond(repairResponse('pending', 'A request is already being sent. Wait for its receipt before trying again.')); return; }
+    if (sentRequestId && form.hidden) { respond(receivedResponse(sentRequestId)); return; }
     reportMetric('form_started');
+    form.dispatchEvent(new Event('pt:repair-sync'));
+    updateCarLocation();
     // Browser autofill can insert invisible characters without an input event.
     phoneField.value = cleanPhone(phoneField.value);
     if (carAddress && !carAddress.disabled) carAddress.setCustomValidity(carAddress.value.trim() ? '' : 'Enter the car’s address or use current location.');
@@ -658,20 +671,26 @@
       if (visitBox) visitBox.open = true;
       status.textContent = 'Please acknowledge that this is penciled in only and Tony must verbally confirm by phone.';
       pencilAck?.focus();
+      respond(repairResponse('validation_error', 'Review the requested time and personally acknowledge that Tony must confirm by phone.', {submitted:false, fields:['pencilAcknowledged']}));
       return;
     }
-    if (!form.reportValidity()) { track('form_validation_error', {field: form.querySelector(':invalid')?.name || 'unknown'}); return; }
+    if (!form.reportValidity()) {
+      const field = form.querySelector(':invalid')?.name || 'unknown';
+      track('form_validation_error', {field});
+      respond(repairResponse('validation_error', 'Correct the highlighted form fields before submitting.', {submitted:false, fields:[field]}));
+      return;
+    }
     const currentData = readRequest();
     if (requestPayload && sameRequestContent(currentData) !== sameRequestContent(requestPayload)) { requestKey = uid(); requestPayload = null; sentRequestId = ''; }
     const data = requestPayload || currentData;
-    if (data.website) return;
-    if ((endpoint || data.phone) && !validPhone(data.phone)) { status.textContent = endpoint ? 'Please include a valid phone number with its area code.' : 'Please include a valid phone number with its area code, or leave the optional callback field blank when texting.'; phoneField.focus(); return; }
-    if (!data.name) { status.textContent = 'Please enter your name. Vehicle and problem details are optional.'; return; }
+    if (data.website) { respond(repairResponse('rejected', 'This request was not sent.', {submitted:false})); return; }
+    if ((endpoint || data.phone) && !validPhone(data.phone)) { status.textContent = endpoint ? 'Please include a valid phone number with its area code.' : 'Please include a valid phone number with its area code, or leave the optional callback field blank when texting.'; phoneField.focus(); respond(repairResponse('validation_error', 'Include a valid callback number with its area code.', {submitted:false, fields:['phone']})); return; }
+    if (!data.name) { status.textContent = 'Please enter your name. Vehicle and problem details are optional.'; respond(repairResponse('validation_error', 'Enter your name before submitting.', {submitted:false, fields:['name']})); return; }
     makeBackup(data);
     requestPayload = data;
-    if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app, attach photos or a short video of the problem if you have them, and tap Send. Nothing has been sent yet. You can also copy the text, email it or call the shop.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); return; }
+    if (!endpoint) { status.textContent = 'Your text draft is ready below. Review it, open your texting app, attach photos or a short video of the problem if you have them, and tap Send. Nothing has been sent yet. You can also copy the text, email it or call the shop.'; backup.scrollIntoView({behavior:'auto',block:'nearest'}); respond(repairResponse('draft_ready', 'Review the draft and send it yourself from your text or email app. Nothing has been sent.', {submitted:false})); return; }
     autoRetries = 0;
-    deliver(data, requestKey);
+    respond(deliver(data, requestKey));
   });
   // Success replaces the form in place, so the customer never lands on an unrelated page.
   const done = byId('request-done');
@@ -829,7 +848,7 @@
     track('form_submit_attempt', {service: data.service, attempt: autoRetries + 1});
     try {
       const result = await send('/hooks/lead/webform', data, submittedKey);
-      if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return; }
+      if (submittedKey !== requestKey) { status.textContent = 'The earlier request was received. Your edited details have not been sent; send again to share this update.'; submit.textContent = 'Send updated request'; return receivedResponse(result.id, true); }
       sentRequestId = result.id;
       const files = byId('request-media')?.files?.length || 0;
       if (!measuredRequestReceipts.has(result.id)) {
@@ -839,25 +858,30 @@
       status.textContent = `Repair request received. Reference: ${result.id}.`;
       const sentMedia = await uploadMedia(result);
       showDone(result, sentMedia);
+      return receivedResponse(result.id);
     } catch (error) {
       reportMetric('submit_unconfirmed', false);
       track('form_submit_error', {reason: error.status ? `http_${error.status}` : 'network', attempt: autoRetries + 1});
       if (submittedKey !== requestKey) {
         status.textContent = 'Receipt of the earlier request could not be confirmed. Your changed details have not been sent. Send again to share the update, or call (239) 397-2048.';
         submit.textContent = 'Send updated request';
+        return repairResponse('pending', 'Receipt of the earlier request is unconfirmed. Edited details have not been sent.', {retryScheduled:false, editedDetailsSubmitted:false});
       } else if (error.status && !retryable(error)) {
         status.textContent = `${error.reason || 'The shop’s system could not accept this request.'} Your details are still here: correct them and send again, or call (239) 397-2048.`;
         submit.textContent = 'Retry repair request';
         showFailedHandoff();
+        return repairResponse('rejected', 'The receiver could not accept this request. Review the form or call Tony.', {retryScheduled:false});
       } else if (autoRetries < 2) {
         autoRetries++;
         status.textContent = 'We could not confirm receipt yet. Your details are safe on this page, and we’re trying again in a few seconds. You can also call (239) 397-2048.';
         submit.textContent = 'Retry now';
         retryTimer = setTimeout(() => { if (!sending && !sentRequestId && submittedKey === requestKey && requestPayload) deliver(requestPayload, submittedKey); }, autoRetries === 1 ? 4000 : 12000);
+        return repairResponse('pending', 'Receipt is unconfirmed. This page will retry the same request; do not create a second inquiry.', {retryScheduled:true});
       } else {
         status.textContent = 'We could not confirm receipt. Your details are preserved below. Retry, call (239) 397-2048, or open the text/email draft and send it yourself.';
         submit.textContent = 'Retry repair request';
         showFailedHandoff();
+        return repairResponse('pending', 'Receipt remains unconfirmed. Details are preserved; retry this form or call Tony.', {retryScheduled:false});
       }
     } finally { sending = false; submit.disabled = form.hidden; }
   }
@@ -1004,6 +1028,36 @@
     (ready ? submit : byId(repairToolFields[incomplete[0]][0])).focus();
     return {status:ready ? 'ready_for_review' : 'needs_details', submitted:false, reviewRequired:true, message, fields:incomplete};
   };
+  // Declarative autofill uses the same dependent controls and visible form.
+  // No toolautosubmit is present: only the customer's Submit reaches deliver().
+  const onRepairToolActivated = ({toolName}) => {
+    if (toolName !== form.getAttribute('toolname') || sending) return;
+    preparingWithWebMcp = true;
+    try {
+      form.dispatchEvent(new Event('pt:repair-sync'));
+      const where = form.querySelector('input[name="repairWhere"]:checked');
+      if (where && locationChoice.value !== where.value) {
+        locationChoice.value = where.value;
+        locationChoice.dispatchEvent(new Event('change', {bubbles:true}));
+      }
+      updateCarLocation();
+      if (visitTime) visitTime.disabled = !visitDay?.value;
+      if (pencilAck) {
+        const needsAcknowledgement = Boolean(visitDay?.value && visitTime?.value);
+        pencilAck.required = needsAcknowledgement;
+        pencilAck.checked = false; // This acknowledgement belongs to the customer.
+        pencilAck.closest('label').hidden = !needsAcknowledgement;
+        if (needsAcknowledgement && visitBox) visitBox.open = true;
+      }
+      byId('request-sms-consent').checked = false; // Optional consent is the customer's own choice after review.
+      // Moving the active declarative form into the popup unregisters its tool
+      // and cancels the browser invocation. Review it where it is already mounted.
+      form.scrollIntoView({behavior:'auto', block:'nearest'});
+      submit.focus({preventScroll:true});
+    } finally { preparingWithWebMcp = false; }
+  };
+  const activationTarget = 'ontoolactivated' in (document.modelContext || {}) ? document.modelContext : window;
+  activationTarget.addEventListener('toolactivated', onRepairToolActivated);
   let repairToolRegistration;
   const registerRepairTool = () => {
     const context = document.modelContext;

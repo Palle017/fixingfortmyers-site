@@ -215,7 +215,7 @@ test('online form initializes the short request flow and enables the safe submit
   // The first screen is four fields plus one optional email; everything else waits behind the optional step.
   const core = [...x.d.querySelectorAll('.request-fields--core :is(input,textarea,select)')].map(field => field.name).filter(Boolean);
   // Name, phone and optional email first; vehicle year/make/model feed the one "vehicle" field; repairWhere drives locationChoice.
-  assert.deepEqual(core, ['phone', 'name', 'email', 'vehicle', 'details', 'repairWhere', 'repairWhere']);
+  assert.deepEqual(core, ['phone', 'name', 'email', 'vehicleYear', 'vehicleMake', 'vehicleModel', 'vehicle', 'details', 'repairWhere', 'repairWhere']);
   assert.equal(x.d.querySelector('.request-fields--core [name="email"]').required, false);
   assert.equal(x.d.getElementById('request-options').open, false);
   assert.match(x.d.querySelector('#request-options > summary').textContent, /Add a photo or more details/);

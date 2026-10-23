@@ -220,12 +220,11 @@ test('configured GA4 tracks phone taps separately and counts a repeated saved re
   x.fill(); x.submit(); await settle();
   assert.equal(googleEvents(x).filter(entry=>entry[1]==='phone_click').length,1);
   assert.equal(googleEvents(x).filter(entry=>entry[1]==='form_submit_success').length,1);
-  // A repeated acknowledgment can follow an uncertain UI/media response. The
-  // intake's stable key and backend receipt still represent the same request.
+  // A repeated submit after a visible receipt is already saved and must not
+  // create another POST or count a second lead in analytics.
   x.submit(); await settle();
   const leads=x.calls.filter(call=>call.path==='/hooks/lead/webform');
-  assert.equal(leads.length,2);
-  assert.equal(leads[1].headers['Idempotency-Key'],leads[0].headers['Idempotency-Key']);
+  assert.equal(leads.length,1);
   assert.equal(googleEvents(x).filter(entry=>entry[1]==='form_submit_success').length,1);
   assert.equal(googleEvents(x).some(entry=>entry[1]==='generate_lead'),false);
   assert.doesNotMatch(JSON.stringify(x.w.dataLayer),/PRIVATE|2395550100|12345678-1234/);

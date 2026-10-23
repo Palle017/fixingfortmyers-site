@@ -14,7 +14,7 @@
   <link rel="preload" href="/assets/fonts/bebas-neue-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <style id="self-hosted-fonts">@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/barlow-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/barlow-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/barlow-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:800;font-display:swap;src:url(/assets/fonts/barlow-800-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/bebas-neue-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Russo One';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/russo-one-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
   <link rel="stylesheet" href="/bundle-core.min.css?v=c3dcf1f49fc0" data-css-sources="base.css style.css">
-<link rel="stylesheet" href="/bundle-page-2560e8eda477.min.css?v=73da301f6c5e" data-css-sources="site-updates.css home-clean.css repair-dialog.css">
+<link rel="stylesheet" href="/bundle-page-2560e8eda477.min.css?v=591073c9dfc0" data-css-sources="site-updates.css home-clean.css repair-dialog.css">
 <link rel="stylesheet" href="/booking-preferences.css?v=20261016-pencil-24x7">
 
 
@@ -77,7 +77,7 @@
           <p>Rather talk? Stuck somewhere?</p>
           <a class="btn btn--primary request-call__btn" href="tel:+12393972048">Call Tony (239) 397-2048</a>
         </aside>
-        <form id="bookingForm" class="repair-request" method="post" action="#contact">
+        <form id="bookingForm" class="repair-request" method="post" action="#contact" toolname="request_repair_review" tooldescription="Prepare a basic repair callback request from customer-provided contact, vehicle and symptom details. The customer reviews and manually submits this form. Use prepare_repair_request for location-dependent details and the visible form for requested date/time. Tony must confirm appointments by phone; no repair or payment is authorized.">
           <h2 id="request-heading">How can we help with your car?</h2>
           <p id="request-instructions">Four quick things and you’re done. No account needed. Tony reads every request and calls you back.</p>
           <div class="request-fields request-fields--core">
@@ -89,9 +89,9 @@
             <fieldset class="request-full request-vehicle-parts">
               <legend>Vehicle <span class="field-note">(as much as you know)</span></legend>
               <div class="request-vehicle-row">
-                <label for="request-vehicle-year">Year<input id="request-vehicle-year" inputmode="numeric" autocomplete="off" maxlength="4" pattern="(19|20)[0-9]{2}" placeholder="2018" enterkeyhint="next" aria-describedby="request-vehicle-error"></label>
-                <label for="request-vehicle-make">Make<input id="request-vehicle-make" autocomplete="off" autocapitalize="words" maxlength="40" placeholder="Ford" enterkeyhint="next"></label>
-                <label for="request-vehicle-model">Model<input id="request-vehicle-model" autocomplete="off" autocapitalize="words" maxlength="60" placeholder="F-150" enterkeyhint="next"></label>
+                <label for="request-vehicle-year">Year<input id="request-vehicle-year" name="vehicleYear" toolparamdescription="Vehicle model year, if known, such as 2018." inputmode="numeric" autocomplete="off" maxlength="4" pattern="(19|20)[0-9]{2}" placeholder="2018" enterkeyhint="next" aria-describedby="request-vehicle-error"></label>
+                <label for="request-vehicle-make">Make<input id="request-vehicle-make" name="vehicleMake" toolparamdescription="Vehicle manufacturer, if known, such as Ford." autocomplete="off" autocapitalize="words" maxlength="40" placeholder="Ford" enterkeyhint="next"></label>
+                <label for="request-vehicle-model">Model<input id="request-vehicle-model" name="vehicleModel" toolparamdescription="Vehicle model, if known, such as F-150." autocomplete="off" autocapitalize="words" maxlength="60" placeholder="F-150" enterkeyhint="next"></label>
               </div>
               <p class="request-error" id="request-vehicle-error" hidden></p>
               <input id="request-vehicle" name="vehicle" type="hidden" maxlength="160">
@@ -109,7 +109,7 @@
               <label class="request-full" for="request-details">In your own words <span class="field-note">(optional)</span><textarea id="request-details" name="details" rows="3" maxlength="4000" placeholder="e.g. Grinding noise when I brake, started last week." aria-describedby="request-details-error"></textarea></label>
               <p class="request-error" id="request-details-error" hidden></p>
             </fieldset>
-            <fieldset class="request-full request-where">
+            <fieldset class="request-full request-where" toolparamdescription="For mobile or drop-off details use prepare_repair_request, or let the customer complete these controls. Changing dependent fields may cancel declarative assistance; Tony must confirm the location.">
               <legend>Where should the repair happen?</legend>
               <div class="request-where__options">
                 <label class="request-where__option" for="request-where-mobile"><input type="radio" id="request-where-mobile" name="repairWhere" value="location"><span><strong>Come to me</strong><small>Tony brings the tools to your car</small></span></label>
@@ -191,7 +191,7 @@
 
           </details>
           <p id="request-direct-consent" class="request-fineprint" hidden>By sending this text, you ask the shop to reply about this repair inquiry. No marketing. <a href="/privacy-policy">Privacy policy</a>.</p>
-          <div class="request-honeypot" aria-hidden="true"><label>Leave this blank<input name="website" tabindex="-1" autocomplete="off"></label></div>
+          <div class="request-honeypot" aria-hidden="true"><label>Leave this blank<input name="website" toolparamdescription="Spam protection: leave this field empty." tabindex="-1" autocomplete="off"></label></div>
           <div class="request-primary-actions"><button class="btn btn--primary" id="request-submit" type="submit" disabled>Request Repair</button></div>
           <p class="request-trust">★ 4.8 from ~70 Google reviews · Appointments are confirmed only when Tony speaks with you by phone</p>
           <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
@@ -294,6 +294,6 @@
   <p class="hours-disclaimer" id="hours-disclaimer"><strong>Repair requests 24/7</strong><br>Repair requests and appointment requests are taken 24/7, including nights, weekends and holidays, by form, call or text. Shop repairs at Tony's workshop, mobile repairs from his equipped service van, and pickup are all by appointment; requested times are penciled in until Tony confirms by phone. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop and the service van cannot accommodate every job. An immediate reply or visit is not guaranteed.</p>
 </footer>
   <script src="/repair-dialog.js?v=20261011-popup" defer></script>
-  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/repair-form-calm.js?v=20261021-text-tony" defer></script><script src="/site.js?v=20261021-text-tony" defer></script>
+  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/repair-form-calm.js?v=20261022-webmcp-review" defer></script><script src="/site.js?v=20261022-webmcp-review" defer></script>
 </body>
 </html>

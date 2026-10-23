@@ -1,6 +1,6 @@
 # Perfect Timing search and profile setup
 
-This mirror is ready for the owner-account work below. Do these steps only after the updated site has been previewed and published.
+Use the existing verified accounts and properties before creating anything new. The account-setup steps below are for a missing property only. See the [October 22 AI search review](../docs/AI-SEARCH-REVIEW-20261022.md) for current measurement and optimization guidance.
 
 ## Already completed in the website
 
@@ -64,7 +64,7 @@ Use this exact identity everywhere:
 - **Location:** Fort Myers and Southwest Florida. No public street address; call to arrange service.
 - **Phone:** (239) 397-2048
 - **Website:** https://fixingfortmyers.com/
-- **Hours:** Monday-Saturday, 7AM-7PM, by appointment
+- **Availability:** Repair requests are accepted 24/7. Tony confirms appointment timing by phone; an immediate reply or visit is not guaranteed.
 
 Do not add Bing or Apple URLs to `sameAs` until a durable public business-profile URL is verified. A search-results URL is not a business profile.
 
