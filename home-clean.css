@@ -1,4 +1,10 @@
 /* Homepage: one useful introduction and one repair inquiry. */
+/* Match Barlow's narrower text while it loads so the service links and lead
+   keep their rows and the appointment picker stays in place. */
+@font-face{font-family:'Barlow Fallback';src:local('Arial'),local('ArialMT'),local('Liberation Sans');font-style:normal;font-weight:400;size-adjust:92%}
+@font-face{font-family:'Barlow Fallback';src:local('Arial Bold'),local('Arial-BoldMT'),local('Liberation Sans Bold');font-style:normal;font-weight:600 900;size-adjust:92%}
+body.home-clean{--font-body:'Barlow','Barlow Fallback','Helvetica Neue',sans-serif}
+.home-clean .home-start :is(.home-start__services a,.hero-appointment__heading h2,.hero-appointment label,.hero-appointment input,.hero-appointment select,.hero-appointment__continue){font-family:var(--font-body)}
 .home-start{padding:128px 0 56px;background:radial-gradient(ellipse at 8% 15%,#142435 0,transparent 58%),#0b1119;border-bottom:1px solid #263b4d}
 .home-start__grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(32px,5vw,76px);align-items:start}
 .home-start__intro{padding:28px 0 0;max-width:530px}

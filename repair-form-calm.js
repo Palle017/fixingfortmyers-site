@@ -34,10 +34,15 @@
       if (vehicle.value !== v) { vehicle.value = v; vehicle.dataset.userEdited = 'true'; fire(vehicle); }
     };
     parts.forEach(p => p?.addEventListener('input', syncVehicle));
-    if (vehicle?.value && parts[0] && !parts.some(p => p.value)) {
+    const showVehicle = () => {
+      if (!vehicle || !parts.every(Boolean) || parts.map(p => p.value.trim()).filter(Boolean).join(' ') === vehicle.value.trim()) return;
       const m = vehicle.value.match(/^((?:19|20)\d{2})?\s*(\S+)?\s*(.*)$/) || [];
       parts[0].value = m[1] || ''; parts[1].value = m[2] || ''; parts[2].value = m[3] || '';
-    }
+    };
+    showVehicle();
+    vehicle?.addEventListener('change', showVehicle);
+    // Browser/agent autofill may set values without dispatching input events.
+    form.addEventListener('pt:repair-sync', syncVehicle);
 
     // Problem chips: a plain first line in the customer's own notes.
     const details = $('request-details'), service = $('request-service');
@@ -93,7 +98,13 @@
     });
     form.addEventListener('submit', e => {
       const bad = Object.keys(rules).map($).filter(Boolean).filter(el => !check(el));
-      if (bad.length) { e.preventDefault(); e.stopImmediatePropagation(); bad[0].focus(); }
+      if (bad.length) {
+        e.preventDefault(); e.stopImmediatePropagation(); bad[0].focus();
+        if (e.agentInvoked && typeof e.respondWith === 'function') e.respondWith(Promise.resolve({
+          status:'validation_error', submitted:false, receiptConfirmed:false,
+          fields:bad.map(el => el.name || el.id), message:'Review and correct the highlighted fields. Nothing has been sent.'
+        }));
+      }
     }, true);
 
     // Calm confirmation: repeat back the vehicle and problem the person sent.
