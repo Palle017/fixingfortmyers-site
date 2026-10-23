@@ -68,7 +68,7 @@ test('the dedicated repair page retains service context and submits through the 
 
 test('a shared specialty link keeps its source through the service page, inquiry and failed-receiver fallback', async t => {
   const landing = browser(t,{file:'walnut-blasting-fort-myers.html',url:'https://preview.invalid/walnut-blasting-fort-myers?utm_source=gbp_walnut&utm_content=PrivatePerson&phone=2395550199'});
-  const inquiry = browser(t,{url:'https://preview.invalid/?service=walnut#contact',endpoint:'https://receiver.invalid',saved:landing.storage()});
+  const inquiry = browser(t,{file:'request-a-repair.html',url:'https://preview.invalid/request-a-repair?service=walnut',endpoint:'https://receiver.invalid',saved:landing.storage()});
   await settle(); await inquiry.submit();
   const leads = inquiry.requests.filter(r=>r.path==='/hooks/lead/webform');
   assert.equal(leads.length,1);assert.equal(leads[0].body.channel,'gbp_walnut');
