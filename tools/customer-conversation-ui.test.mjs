@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
 import {webcrypto} from 'node:crypto';
 import {mountConversation,configuredEndpoint} from '../customer-conversation.js';
-import {QUESTIONS,makeIntake} from '../customer-conversation-protocol.js';
+import {QUESTIONS,REQUIRED_FIELDS,makeIntake} from '../customer-conversation-protocol.js';
 
 const html=fs.readFileSync(new URL('../customer-conversation.html',import.meta.url),'utf8');
 const configScript=fs.readFileSync(new URL('../customer-conversation-config.js',import.meta.url),'utf8');
@@ -57,7 +57,7 @@ test('guide asks one missing question, permits corrections, and does not send dr
   const x=setup(t);await x.app.ready;
   for(const item of QUESTIONS){
     assert.equal(x.d.querySelectorAll('#question-answer').length,1);
-    assert.equal(x.d.getElementById('question-label').textContent,item.prompt);
+    assert.equal(x.d.getElementById('question-label').textContent,item.prompt+(REQUIRED_FIELDS.includes(item.field)?'':' (optional)'));
     x.answer(answers[item.field]);
   }
   assert.equal(x.d.getElementById('intake-review').hidden,false);
@@ -65,8 +65,9 @@ test('guide asks one missing question, permits corrections, and does not send dr
   x.d.querySelector('#review-answers button[aria-label^="Edit What is happening"]').click();
   x.answer('Corrected synthetic symptoms');
   assert.equal(x.d.getElementById('intake-review').hidden,false);
-  assert.equal(x.state().answers.details,'Corrected synthetic symptoms');
-  for(const field of ['name','phone','vehicle','starts','drivable','location'])assert.equal(x.state().answers[field],answers[field]);
+  assert.deepEqual(x.state().answers.details,{state:'provided',answer:'Corrected synthetic symptoms'});
+  for(const field of ['name','phone','vehicle','starts','location'])assert.deepEqual(x.state().answers[field],{state:'provided',answer:answers[field]});
+  assert.deepEqual(x.state().answers.drivable,{state:'unknown'});
   assert.match(x.d.getElementById('conversation-status').textContent,/Unsent draft/);
 });
 
@@ -77,10 +78,74 @@ test('resumed prefilled draft skips supplied details and preserves the rest on c
   x.answer('no');x.answer(answers.drivable);x.answer(answers.location);
   assert.equal(x.d.getElementById('intake-review').hidden,false);
   x.d.querySelector('#review-answers button[aria-label^="Edit What name"]').click();x.answer('Corrected Synthetic');
-  assert.equal(x.state().answers.name,'Corrected Synthetic');
-  assert.equal(x.state().answers.details,answers.details);
-  assert.equal(x.state().answers.starts,'no');
+  assert.deepEqual(x.state().answers.name,{state:'provided',answer:'Corrected Synthetic'});
+  assert.deepEqual(x.state().answers.details,{state:'provided',answer:answers.details});
+  assert.deepEqual(x.state().answers.starts,{state:'provided',answer:'no'});
   assert.equal(x.requests.length,0);
+});
+
+test('name and phone only quick path sends typed later states without fabricated customer text',async t=>{
+  let submitted;
+  const x=setup(t,{fetcher:async(target,options)=>{
+    if(target.includes('/operations/'))return reply({ok:false},404);
+    if(options.method==='POST'){submitted=JSON.parse(options.body);return reply({ok:true,receipt:{operationId:submitted.operationId,messageId:'contact-four',sequence:4}});}
+    return reply(view(submitted.conversationId,{repair:{...submitted.intake,fieldStates:Object.fromEntries(submitted.answers.map(item=>[item.field,item.state]))},messages:[message('name-guide',1,'guide',QUESTIONS[1].prompt),message('name-answer',2,'customer','Syn'),message('phone-guide',3,'guide',QUESTIONS[2].prompt),message('phone-answer',4,'customer','239-555-0100')],cursor:4}));
+  }});await x.app.ready;
+  assert.equal(x.d.getElementById('question-answer').name,'details');
+  assert.equal(x.d.getElementById('question-answer').required,false);
+  x.d.getElementById('question-later').click();x.answer('Syn');x.answer('239-555-0100');
+  assert.equal(x.d.getElementById('question-answer').name,'vehicle');
+  assert.equal(x.d.getElementById('skip-optional-details').hidden,false);
+  x.d.getElementById('skip-optional-details').click();
+  assert.equal(x.d.getElementById('intake-review').hidden,false);assert.equal(x.requests.length,0);
+  assert.match(x.d.getElementById('review-answers').textContent,/To add later/);
+  x.d.getElementById('send-inquiry').click();await settle();
+  assert.equal(submitted.schemaVersion,2);
+  assert.deepEqual(submitted.intake,{name:'Syn',phone:'239-555-0100',source:'form',smsConsent:false});
+  assert.deepEqual(submitted.answers.map(item=>item.field),QUESTIONS.map(item=>item.field));
+  for(const field of ['details','vehicle','starts','drivable','location'])assert.deepEqual(submitted.answers.find(item=>item.field===field),{field,state:'later'});
+  assert.equal(x.d.getElementById('messages').children.length,4);
+  assert.doesNotMatch(x.d.getElementById('messages').textContent,/unknown|To add later/);
+  assert.equal(x.d.querySelector('input[type="password"],script[src*="accounts.google"]'),null);
+  assert.ok(x.d.querySelector('#conversation-app a[href="request-a-repair.html"]'));
+  assert.equal(Object.hasOwn(submitted.intake,'identity'),false);assert.equal(Object.hasOwn(submitted.intake,'appointment'),false);
+});
+
+test('optional uncertainty and skip preserve provided details and allow later corrections',async t=>{
+  const typed={details:{state:'provided',answer:'Synthetic short problem'},name:{state:'provided',answer:'Syn'},phone:{state:'provided',answer:'239-555-0100'},vehicle:{state:'provided',answer:'Synthetic provided vehicle'}};
+  const x=setup(t,{state:{...blank(),version:2,answers:typed}});await x.app.ready;
+  assert.equal(x.d.getElementById('question-answer').name,'starts');x.d.getElementById('question-unknown').click();
+  assert.deepEqual(x.state().answers.starts,{state:'unknown'});
+  x.d.getElementById('skip-optional-details').click();
+  assert.deepEqual(x.state().answers.vehicle,typed.vehicle);assert.deepEqual(x.state().answers.details,typed.details);
+  assert.deepEqual(x.state().answers.drivable,{state:'later'});assert.deepEqual(x.state().answers.location,{state:'later'});
+  x.d.querySelector('#review-answers button[aria-label^="Edit What is the year"]').click();x.answer('Corrected synthetic vehicle');
+  assert.equal(x.d.getElementById('intake-review').hidden,false);
+  assert.deepEqual(x.state().answers.vehicle,{state:'provided',answer:'Corrected synthetic vehicle'});
+  assert.deepEqual(x.state().answers.starts,{state:'unknown'});assert.deepEqual(x.state().answers.location,{state:'later'});
+  assert.equal(x.requests.length,0);
+});
+
+test('contact requirements cannot be bypassed through hidden optional skip controls',async t=>{
+  const x=setup(t);await x.app.ready;x.d.getElementById('skip-optional-details').click();
+  assert.equal(x.d.getElementById('intake-review').hidden,true);
+  x.d.getElementById('question-later').click();
+  assert.equal(x.d.getElementById('question-answer').name,'name');
+  x.d.getElementById('question-unknown').click();x.d.getElementById('question-later').click();
+  assert.equal(x.d.getElementById('question-answer').name,'name');assert.equal(x.d.getElementById('question-answer').required,true);
+  x.answer('');assert.match(x.d.getElementById('question-error').textContent,/Enter an answer/);assert.equal(x.requests.length,0);
+});
+
+test('version 1 pending create retries unchanged after the browser draft schema update',async t=>{
+  const pending={conversationId:idA,operationId:operation,accessToken:tokenA,intake:makeIntake(answers),answers:QUESTIONS.map(({field})=>({field,answer:answers[field]}))};
+  let posted=0;
+  const x=setup(t,{state:{...blank(),answers,access:{id:idA,token:tokenA},pendingCreate:pending},fetcher:async(target,options)=>{
+    if(target.includes('/operations/'))return reply({ok:false},404);
+    if(options.method==='POST'){assert.deepEqual(JSON.parse(options.body),pending);posted++;return reply({ok:true,receipt:receipt(operation)});}
+    return reply(view(idA));
+  }});await x.app.ready;
+  assert.equal(posted,0);x.d.getElementById('retry-pending').click();await settle();assert.equal(posted,1);
+  assert.equal(x.state().pendingCreate,null);
 });
 
 test('missing and invalid answers stay on the same question with an accessible error',async t=>{

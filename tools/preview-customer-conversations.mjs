@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';
-import {QUESTIONS,UUID,CAPABILITY} from '../customer-conversation-protocol.js';
+import {QUESTIONS,UUID,CAPABILITY,makeIntake,makeAnswerList} from '../customer-conversation-protocol.js';
 
 const argument=process.argv[2]||'--port=18947';
 if(process.argv.length>3||!/^--port=\d+$/.test(argument))throw Error('Use --port=18947.');
@@ -28,8 +28,11 @@ const server=http.createServer(async(req,res)=>{
       let record=conversations.get(input.conversationId);
       if(record&&record.token!==input.accessToken)return json(res,404,{ok:false});
       if(!record){
-        record={id:input.conversationId,token:input.accessToken,intake:input.intake,messages:[],operations:new Map()};
-        for(const question of QUESTIONS){const answer=input.answers.find(item=>item.field===question.field)?.answer;if(typeof answer!=='string')return json(res,400,{ok:false});append(record,'guide',question.prompt,input.operationId);append(record,'customer',answer,input.operationId);}
+        const v2=input.schemaVersion===2,choices=Object.fromEntries(input.answers.map(({field,...choice})=>[field,choice]));
+        const typed=v2?makeAnswerList(choices):null;
+        if(v2&&JSON.stringify(input.intake)!==JSON.stringify(makeIntake(choices,{schemaVersion:2})))return json(res,400,{ok:false});
+        record={id:input.conversationId,token:input.accessToken,intake:{...input.intake,...(v2?{fieldStates:Object.fromEntries(typed.map(item=>[item.field,item.state]))}:{})},messages:[],operations:new Map()};
+        for(const question of QUESTIONS){const choice=v2?typed.find(item=>item.field===question.field):input.answers.find(item=>item.field===question.field);if(v2&&choice.state!=='provided')continue;const answer=choice?.answer;if(typeof answer!=='string')return json(res,400,{ok:false});append(record,'guide',question.prompt,input.operationId);append(record,'customer',answer,input.operationId);}
         const last=record.messages.at(-1);record.operations.set(input.operationId,{operationId:input.operationId,messageId:last.id,sequence:last.sequence});
         append(record,'owner','Synthetic preview reply: the shop can respond in this saved conversation. No real customer message was sent.',randomUUID());
         conversations.set(record.id,record);

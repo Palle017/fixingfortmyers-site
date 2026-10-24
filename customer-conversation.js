@@ -1,4 +1,4 @@
-import {QUESTIONS,UUID,CAPABILITY,MESSAGE_MAX,validateAnswer,nextQuestion,makeIntake,readReturnAccess,returnLink} from './customer-conversation-protocol.js';
+import {QUESTIONS,UUID,CAPABILITY,MESSAGE_MAX,REQUIRED_FIELDS,validateAnswer,validateChoice,nextQuestion,makeIntake,makeAnswerList,readReturnAccess,returnLink} from './customer-conversation-protocol.js';
 
 const STORAGE_KEY='pt-customer-conversation-v1';
 const LOCKED_STATUSES=new Set([401,403,410]);
@@ -24,7 +24,7 @@ export function mountConversation(w,config=w.PT_CUSTOMER_CONVERSATION_CONFIG) {
   if(!endpoint)return {ready:Promise.resolve(),destroy(){}};
   const app=$('conversation-app'),status=$('conversation-status');
   $('unavailable').hidden=true;app.hidden=false;
-  let state={version:1,endpoint,answers:{},access:null,pendingCreate:null,pendingReply:null,draftReply:''};
+  let state={version:2,endpoint,answers:{},access:null,pendingCreate:null,pendingReply:null,draftReply:''};
   let cursor=0,currentIndex=0,busy=false,locked=false,storageReady=false,stopped=false,pollTimer;
   const messages=new Map();
   function say(text){status.textContent=text;}
@@ -46,18 +46,24 @@ export function mountConversation(w,config=w.PT_CUSTOMER_CONVERSATION_CONFIG) {
     catch{localFailure();throw Error('tab_storage_unavailable');}
   }
   function validateStored(raw){
-    if(!raw||raw.version!==1||raw.endpoint!==endpoint||typeof raw.answers!=='object'||!raw.answers||Array.isArray(raw.answers))throw Error('invalid_tab_state');
-    for(const [field,answer] of Object.entries(raw.answers))validateAnswer(field,answer);
+    if(!raw||![1,2].includes(raw.version)||raw.endpoint!==endpoint||typeof raw.answers!=='object'||!raw.answers||Array.isArray(raw.answers))throw Error('invalid_tab_state');
+    const typedAnswers={};
+    for(const [field,answer] of Object.entries(raw.answers)){
+      if(raw.version===1){const text=validateAnswer(field,answer);typedAnswers[field]=['starts','drivable'].includes(field)&&text==='unknown'?{state:'unknown'}:{state:'provided',answer:text};}
+      else typedAnswers[field]=validateChoice(field,answer);
+    }
     if(raw.access&&!validAccess(raw.access))throw Error('invalid_tab_state');
     if(raw.pendingCreate){
       const p=raw.pendingCreate;
       if(!UUID.test(p.conversationId)||!UUID.test(p.operationId)||!CAPABILITY.test(p.accessToken)||p.conversationId!==raw.access?.id||p.accessToken!==raw.access?.token||!Array.isArray(p.answers))throw Error('invalid_tab_state');
-      const pendingAnswers=Object.fromEntries(p.answers.map(item=>[item.field,item.answer]));
-      if(p.answers.length!==QUESTIONS.length||JSON.stringify(p.intake)!==JSON.stringify(makeIntake(pendingAnswers)))throw Error('invalid_tab_state');
+      const v2=p.schemaVersion===2;
+      const pendingAnswers=Object.fromEntries(p.answers.map(({field,...choice})=>[field,v2?choice:choice.answer]));
+      if(p.answers.length!==QUESTIONS.length||JSON.stringify(p.intake)!==JSON.stringify(makeIntake(pendingAnswers,{schemaVersion:v2?2:1})))throw Error('invalid_tab_state');
     }
     if(raw.pendingReply&&(!raw.access||!UUID.test(raw.pendingReply.operationId)||typeof raw.pendingReply.body!=='string'||!raw.pendingReply.body.trim()||raw.pendingReply.body.length>MESSAGE_MAX))throw Error('invalid_tab_state');
     if(typeof raw.draftReply!=='string'||raw.draftReply.length>MESSAGE_MAX)throw Error('invalid_tab_state');
-    return raw;
+    // Migrate only the editable draft; never rewrite an already-pending version 1 operation.
+    return {...raw,version:2,answers:typedAnswers};
   }
   try{
     const stored=w.sessionStorage.getItem(STORAGE_KEY);
@@ -82,22 +88,26 @@ export function mountConversation(w,config=w.PT_CUSTOMER_CONVERSATION_CONFIG) {
 
   function question(index){
     currentIndex=index;
-    const item=QUESTIONS[index];
+    const item=QUESTIONS[index],optional=!REQUIRED_FIELDS.includes(item.field);
     $('question-form').hidden=false;$('intake-review').hidden=true;
-    $('question-label').textContent=item.prompt;
-    $('question-progress').textContent=`Question ${index+1} of ${QUESTIONS.length} · Unsent draft`;
+    $('question-label').textContent=item.prompt+(optional?' (optional)':'');
+    $('question-progress').textContent=optional?'Optional detail · Unsent draft':'Contact details · Unsent draft';
+    $('question-help').textContent=optional?(item.field==='location'?'A city or general area is enough; no exact location is needed. ':'')+'You can choose Not sure or add this later.':'name'===item.field?'Your first name is enough.':'Use a number where Tony can reach you.';
     const control=d.createElement(['starts','drivable'].includes(item.field)?'select':['details','location'].includes(item.field)?'textarea':'input');
-    control.id='question-answer';control.name=item.field;control.required=true;control.setAttribute('aria-describedby','question-help question-error');
+    control.id='question-answer';control.name=item.field;control.required=!optional;control.setAttribute('aria-describedby','question-help question-error');
     if(control.tagName==='SELECT')for(const value of ['','yes','no','unknown']){const option=d.createElement('option');option.value=value;option.textContent=value||'Choose an answer';control.append(option);}
     else {control.maxLength=item.max;if(control.tagName==='TEXTAREA')control.rows=4;else {control.type=item.field==='phone'?'tel':'text';control.autocomplete=item.autocomplete||'off';}}
-    control.value=state.answers[item.field]||'';
+    control.value=state.answers[item.field]?.state==='provided'?state.answers[item.field].answer:state.answers[item.field]?.state==='unknown'&&control.tagName==='SELECT'?'unknown':'';
+    $('question-unknown').hidden=!optional;$('question-later').hidden=!optional;
+    $('skip-optional-details').hidden=!optional||!REQUIRED_FIELDS.every(field=>state.answers[field]?.state==='provided');
     $('question-control').replaceChildren(control);$('question-back').hidden=index===0;$('question-error').textContent='';controls();control.focus();
   }
   function review(){
     $('question-form').hidden=true;$('intake-review').hidden=false;$('question-progress').textContent='Ready to review · Unsent draft';
     const list=$('review-answers');list.replaceChildren();
     for(const [index,item] of QUESTIONS.entries()){
-      const term=d.createElement('dt');term.textContent=item.prompt;const value=d.createElement('dd');value.textContent=state.answers[item.field];
+      const term=d.createElement('dt');term.textContent=item.prompt+(!REQUIRED_FIELDS.includes(item.field)?' (optional)':'');const value=d.createElement('dd');
+      const choice=validateChoice(item.field,state.answers[item.field]);value.textContent=choice.state==='provided'?choice.answer:choice.state==='unknown'?'Not sure':'To add later';
       const edit=d.createElement('button');edit.type='button';edit.className='secondary';edit.textContent='Edit answer';edit.setAttribute('aria-label','Edit '+item.prompt);edit.addEventListener('click',()=>question(index));
       value.append(d.createElement('br'),edit);list.append(term,value);
     }
@@ -131,8 +141,10 @@ export function mountConversation(w,config=w.PT_CUSTOMER_CONVERSATION_CONFIG) {
     $('access-expiry').textContent='Return access expires: '+data.conversation.expiresAt+'. Save the private link if you want to return from another device.';
     const repair=$('repair-details');repair.replaceChildren();
     for(const [field,label] of [['vehicle','Vehicle'],['details','Reported concern and location'],['name','Name supplied'],['phone','Callback number'],['starts','Starts'],['drivable','Drivable']]){
-      if(typeof data.conversation.repair?.[field]!=='string')continue;
-      const term=d.createElement('dt'),value=d.createElement('dd');term.textContent=label;value.textContent=data.conversation.repair[field];repair.append(term,value);
+      const snapshot=data.conversation.repair,fieldState=snapshot?.fieldStates?.[field];
+      if(typeof snapshot?.[field]!=='string'&&!fieldState)continue;
+      const term=d.createElement('dt'),value=d.createElement('dd');term.textContent=label;
+      value.textContent=field==='details'&&snapshot[field]?snapshot[field]:fieldState==='unknown'?'Not sure at intake':fieldState==='later'?'Not supplied initially':snapshot[field]||'';repair.append(term,value);
     }
     for(const item of data.messages){
       if(typeof item.id!=='string'||!Number.isSafeInteger(item.sequence)||item.sequence<1||!['guide','customer','owner'].includes(item.role)||typeof item.body!=='string'||typeof item.createdAt!=='string')throw Error('response_mismatch');
@@ -185,10 +197,23 @@ export function mountConversation(w,config=w.PT_CUSTOMER_CONVERSATION_CONFIG) {
     }catch{if(!locked)say(acknowledged?'Your send was saved, but messages could not be refreshed. Use Refresh messages to load the saved conversation.':'The send could not be confirmed. Its original retry reference is kept in this tab. Check and retry; do not submit another inquiry.');}
     finally{busy=false;controls();if(acknowledged&&!locked)schedule();}
   }
+  function saveChoice(choice){
+    const item=QUESTIONS[currentIndex];state.answers[item.field]=validateChoice(item.field,choice);persist();
+    const next=nextQuestion(state.answers);if(next)question(QUESTIONS.indexOf(next));else review();
+  }
   $('question-form').addEventListener('submit',event=>{
     event.preventDefault();if(locked||busy||state.pendingCreate)return;
-    try{const item=QUESTIONS[currentIndex];state.answers[item.field]=validateAnswer(item.field,$('question-answer').value);persist();const next=nextQuestion(state.answers);if(next)question(QUESTIONS.indexOf(next));else review();}
+    try{const item=QUESTIONS[currentIndex],answer=$('question-answer').value;saveChoice(['starts','drivable'].includes(item.field)&&answer==='unknown'?{state:'unknown'}:{state:'provided',answer});}
     catch(error){if(!locked){$('question-error').textContent=error.message;$('question-answer').focus();}}
+  });
+  for(const answerState of ['unknown','later'])$('question-'+answerState).addEventListener('click',()=>{
+    if(locked||busy||state.pendingCreate||REQUIRED_FIELDS.includes(QUESTIONS[currentIndex].field))return;
+    try{saveChoice({state:answerState});}catch(error){if(!locked)$('question-error').textContent=error.message;}
+  });
+  $('skip-optional-details').addEventListener('click',()=>{
+    if(locked||busy||state.pendingCreate||!REQUIRED_FIELDS.every(field=>state.answers[field]?.state==='provided'))return;
+    try{for(const {field} of QUESTIONS)if(!REQUIRED_FIELDS.includes(field)&&!Object.hasOwn(state.answers,field))state.answers[field]={state:'later'};makeIntake(state.answers,{schemaVersion:2});persist();review();}
+    catch(error){if(!locked)$('question-error').textContent=error.message;}
   });
   $('question-back').addEventListener('click',()=>{if(!locked&&!busy)question(Math.max(0,currentIndex-1));});
   $('send-inquiry').addEventListener('click',()=>{
@@ -196,7 +221,7 @@ export function mountConversation(w,config=w.PT_CUSTOMER_CONVERSATION_CONFIG) {
     try{
       const bytes=w.crypto.getRandomValues(new Uint8Array(32));const token=w.btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
       const id=w.crypto.randomUUID(),operationId=w.crypto.randomUUID();
-      state.pendingCreate={conversationId:id,operationId,accessToken:token,intake:makeIntake(state.answers),answers:QUESTIONS.map(({field})=>({field,answer:state.answers[field]}))};
+      state.pendingCreate={schemaVersion:2,conversationId:id,operationId,accessToken:token,intake:makeIntake(state.answers,{schemaVersion:2}),answers:makeAnswerList(state.answers)};
       state.access={id,token};persist();void reconcilePending({retry:true});
     }catch{if(!locked)say('Your draft could not be prepared. Nothing was sent. Keep this tab and call Tony if you need help.');}
   });
