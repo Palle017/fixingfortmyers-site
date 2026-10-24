@@ -1,0 +1,55 @@
+name: Verify isolated website staging
+
+on:
+  pull_request:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Repository ref to build as isolated staging (artifact only)
+        required: true
+        default: staging
+        type: string
+
+# Hosting uses the separately approved provider Git connection, never this token.
+permissions:
+  contents: read
+
+concurrency:
+  group: website-staging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.source_ref || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Exercise synthetic staging boundaries
+        run: node --test tools/website-staging.test.mjs
+      - name: Build static staging artifact
+        run: npm run build:staging
+      - name: Archive only the isolated static output
+        run: tar -czf "$RUNNER_TEMP/website-staging.tar.gz" -C .staging-dist .
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: website-staging-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/website-staging.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+      - name: Record artifact scope
+        run: |
+          echo 'Static staging artifact only; no hosting or DNS change was made.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Verified source revision:' >> "$GITHUB_STEP_SUMMARY"
+          git rev-parse HEAD >> "$GITHUB_STEP_SUMMARY"
+          echo 'Mock intake only; analytics, external messages and OAuth disabled.' >> "$GITHUB_STEP_SUMMARY"
