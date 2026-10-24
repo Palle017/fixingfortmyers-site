@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src https: http://127.0.0.1:* http://localhost:*; img-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>Repair conversation | Perfect Timing Auto Repair</title>
+  <link rel="stylesheet" href="customer-conversation.css">
+  <script src="customer-conversation-config.js" defer></script>
+  <script type="module" src="customer-conversation.js"></script>
+</head>
+<body>
+  <main>
+    <a class="brand" href="index.html">Perfect Timing Auto Repair</a>
+    <p class="eyebrow">Your repair details, together</p>
+    <h1>Repair conversation</h1>
+    <p id="unavailable">Website conversations are not open yet. <a href="request-a-repair.html">Use our repair request form</a> or <a href="tel:+12393972048">call Tony at (239) 397-2048</a>.</p>
+    <noscript><p>JavaScript is required for saved conversations. The repair request form and phone number above remain available.</p></noscript>
+    <section id="conversation-app" aria-label="Customer conversation" hidden>
+      <p id="conversation-status" class="status" role="status" aria-live="polite"></p>
+      <p><a href="request-a-repair.html">Prefer the ordinary short repair request form?</a></p>
+      <section id="intake-guide" aria-labelledby="guide-heading">
+        <h2 id="guide-heading">Tell Tony what is happening</h2>
+        <p>A name and callback number help Tony find your request and know who to call back. Everything else can be added later. No sign-in is needed.</p>
+        <p>Your answers stay in this tab as an unsent draft until you review and send. Closing the tab may discard the draft.</p>
+        <p id="question-progress"></p>
+        <form id="question-form" action="customer-conversation.html" method="post">
+          <label id="question-label" for="question-answer"></label>
+          <div id="question-control"></div>
+          <p id="question-help"></p>
+          <p id="question-error" class="error" role="alert"></p>
+          <div class="actions"><button id="question-back" type="button" class="secondary">Back</button><button type="submit">Continue</button><button id="question-unknown" type="button" class="secondary" hidden>Not sure</button><button id="question-later" type="button" class="secondary" hidden>I'll add this later</button></div>
+          <button id="skip-optional-details" type="button" class="secondary" hidden>Skip optional details and review</button>
+        </form>
+        <section id="intake-review" aria-labelledby="review-heading" hidden>
+          <h2 id="review-heading" tabindex="-1">Review your repair inquiry</h2>
+          <dl id="review-answers"></dl>
+          <p>Sending saves one repair inquiry and this clarification transcript. It does not request an appointment, authorize repairs, or opt you into text messages.</p>
+          <button id="send-inquiry" type="button">Send repair inquiry</button>
+        </section>
+      </section>
+      <section id="saved-conversation" aria-labelledby="messages-heading" hidden>
+        <h2 id="messages-heading" tabindex="-1">Saved messages</h2>
+        <p id="access-expiry"></p>
+        <div class="privacy-note">Your private return link opens only this conversation. Anyone with it can read and reply until it expires or is revoked. It is not a verified account.</div>
+        <div class="actions"><button id="copy-return-link" type="button" class="secondary">Copy private return link</button><button id="refresh-messages" type="button" class="secondary">Refresh messages</button></div>
+        <details><summary>Details in the initial request</summary><dl id="repair-details"></dl></details>
+        <ol id="messages" aria-label="Saved conversation messages"></ol>
+        <form id="reply-form" action="customer-conversation.html" method="post">
+          <label for="reply-body">Add a message for Tony</label>
+          <textarea id="reply-body" name="body" rows="4" maxlength="4000" required aria-describedby="reply-help"></textarea>
+          <p id="reply-help">You can add repair details here later; the initial request above stays as sent. Replies are asynchronous. An immediate reply or visit is not guaranteed. Use the Send message button; Enter adds a new line.</p>
+          <button type="submit">Send message</button>
+        </form>
+      </section>
+      <button id="retry-pending" type="button" hidden>Check and retry pending send</button>
+      <p class="call-note">Need to speak with Tony? <a href="tel:+12393972048">Call (239) 397-2048</a>. A conversation cannot confirm an appointment. Tony must speak with you by phone and verbally confirm before it becomes official.</p>
+    </section>
+  </main>
+</body>
+</html>
