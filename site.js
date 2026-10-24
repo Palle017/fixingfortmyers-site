@@ -187,8 +187,6 @@
   }
   const nav = byId('nav');
   if (nav) { const update = () => nav.classList.toggle('nav--scrolled', window.scrollY > 60); update(); window.addEventListener('scroll', update, { passive: true }); }
-  const quickCall = document.querySelector('.mobile-contact-bar[aria-label="Quick contact"] a[href="tel:+12393972048"], .mobile-contact-bar[aria-label^="Engine or transmission"] a[href="tel:+12393972048"]');
-  if (quickCall) { quickCall.textContent = 'Call'; quickCall.setAttribute('aria-label', 'Call Perfect Timing Auto Repair at (239) 397-2048'); }
   const brandVideo = document.querySelector('.bang-video-wrap video');
   if (brandVideo) {
     brandVideo.removeAttribute('autoplay');
