@@ -31,7 +31,7 @@ test('a customer who ticked text permission gets one confirmation text right awa
   assert.equal(twilio.sent.length, 1);
   assert.equal(twilio.sent[0].to, '+12395550142');
   assert.match(twilio.sent[0].body, /^Perfect Timing Auto Repair: Hi Maria, we got your repair request for the 2012 F-150/);
-  assert.match(twilio.sent[0].body, /Tony will call to set up an appointment\. Requests with your name, vehicle year\/model and callback time are prioritized so we can prepare\./);
+  assert.match(twilio.sent[0].body, /Tony will call to set up an appointment\. We receive spam\. Name, number, car, issue and callback time help us prepare and prioritize\. Send what you know\./);
   assert.match(twilio.sent[0].body, /Reply STOP to opt out, HELP for help\.$/);
   assert.equal((await x.inbox()).find(row => row.id === receipt.id).customerText.state, 'sent');
 });
@@ -93,6 +93,31 @@ test('confirmation text stays calm and under 320 characters at maximum field len
   assert.ok(long.length <= 320, long.length + ' chars');
   const plain = confirmationText({name: 'Maria Synthetic', vehicle: '2012 Ford F-150', details: 'Problem: Won’t start\nClicks when I turn the key.'});
   assert.match(plain, /^Perfect Timing Auto Repair: Hi Maria, we got your repair request for the 2012 Ford F-150/);
-  assert.match(plain, /prioritized so we can prepare\. Call \(239\) 397-2048\. Reply STOP to opt out, HELP for help\.$/);
+  assert.match(plain, /prioritize\. Send what you know\. Call \(239\) 397-2048\. Reply STOP to opt out, HELP for help\.$/);
   for (const body of [long, plain]) assert.doesNotMatch(body, /!|review|discount|offer|\p{Extended_Pictographic}/u);
+});
+
+test('overlapping acknowledgment ticks do not duplicate an in-flight consented send', async t => {
+  const sent = [];
+  let release, markStarted;
+  const started = new Promise(resolve => { markStarted = resolve; });
+  const adapter = {fromNumber:'+12395550000', async send(to, body) {
+    sent.push({to, body});
+    await new Promise(resolve => { release = resolve; markStarted(); });
+    return {id:'SM' + 'a'.repeat(32)};
+  }};
+  t.after(() => release?.());
+  const x = await setup(t, adapter);
+  const receipt = await x.send(lead(consent));
+  const firstTick = x.app.customerTexts.tick();
+  let deadline;
+  try { await Promise.race([started, new Promise((_, reject) => { deadline = setTimeout(() => reject(Error('Synthetic send did not start')), 1000); })]); }
+  finally { clearTimeout(deadline); }
+  const overlaps = [x.app.customerTexts.tick(), x.app.customerTexts.tick()];
+  assert.equal(sent.length, 1);
+  release();
+  await Promise.all([firstTick, ...overlaps]);
+  assert.equal(sent.length, 1);
+  assert.match(sent[0].body, /Send what you know\./);
+  assert.equal((await x.inbox()).find(row => row.id === receipt.id).customerText.state, 'sent');
 });

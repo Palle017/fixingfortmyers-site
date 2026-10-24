@@ -1,12 +1,12 @@
 # Callback priority notice â€” proposed rollout
 
-Raj approved the notice across existing inquiry surfaces on October 23, 2026. This is copy and a rollout checklist; it does not change live phone settings, send messages, or establish a response-time service level.
+Raj approved the notice across existing inquiry surfaces on October 23, 2026. Copy was refined on October 24 to welcome partial information and explain spam gently. This is copy and a rollout checklist; it does not change live phone settings, send messages, or establish a response-time service level.
 
 ## Customer wording
 
-> We receive a high volume of calls. Please leave your name, vehicle year and model, and a good time to call back. Requests with these details are prioritized because they give us the information we need to prepare before calling you back. The more we know upfront, the sooner we can return your call.
+> We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome.
 
-These details help the shop prepare a callback. They are not a new condition for submitting a request: sparse inquiries remain accepted, and vehicle details remain optional. An appointment remains penciled in until Tony verbally confirms it by phone. Existing emergency, consent, routing and approval rules still apply.
+These details help the shop prepare a callback. Missing information alone is not evidence of spam. They are not a new condition for submitting a request: sparse inquiries remain accepted, and vehicle details remain optional. An appointment remains penciled in until Tony verbally confirms it by phone. Existing emergency, consent, routing and approval rules still apply.
 
 ## Version-controlled surfaces
 
@@ -20,11 +20,11 @@ These details help the shop prepare a callback. They are not a new condition for
 
 Footer wording:
 
-> Requests with your name, vehicle year and model, and a good callback time are prioritized so we can prepare before calling you back.
+> We receive a lot of spam. Name, callback number, repair details and a good callback time help us prepare and prioritize callbacks. Vehicle details help, but send what you know; partial information is welcome.
 
 SMS wording (within the existing acknowledgment, maximum 320 characters):
 
-> Requests with your name, vehicle year/model and callback time are prioritized so we can prepare.
+> We receive spam. Name, number, car, issue and callback time help us prepare and prioritize. Send what you know.
 
 SMS space is reserved for this explanation and existing safety/opt-out information before optional vehicle/problem repetition. This code changes only future enqueue content; it does not rewrite queued messages or broadcast to old leads. The copy in this repository is not proof that a separately deployed intake service has been updated.
 
@@ -36,13 +36,13 @@ The actual provider control names and current setting values have not been inspe
 
 | Existing setting to review | Exact proposed text |
 | --- | --- |
-| Main phone / receptionist greeting | Thanks for calling Perfect Timing Auto Repair. We receive a high volume of calls. Please leave your name, vehicle year and model, and a good time to call back. Requests with these details are prioritized because they give us the information we need to prepare before calling you back. The more we know upfront, the sooner we can return your call. |
-| Voicemail greeting | You have reached Perfect Timing Auto Repair. We receive a high volume of calls. Please leave your name, vehicle year and model, and a good time to call back. Requests with these details are prioritized because they give us the information we need to prepare before calling you back. The more we know upfront, the sooner we can return your call. Please include a brief description of the repair you need after the tone. |
-| Existing automatic inquiry acknowledgment / missed-call text | We receive a high volume of calls. Please leave your name, vehicle year and model, and a good time to call back. Requests with these details are prioritized because they give us the information we need to prepare before calling you back. The more we know upfront, the sooner we can return your call. |
+| Main phone / receptionist greeting | Thanks for calling Perfect Timing Auto Repair. We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome. |
+| Voicemail greeting | You have reached Perfect Timing Auto Repair. We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome. Please leave your message after the tone. |
+| Existing automatic inquiry acknowledgment / missed-call text | We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome. |
 
 If a provider field has a shorter verified limit, use this condensed value without adding a response-time promise:
 
-> We receive many calls. Requests with your name, vehicle year and model, and a good callback time are prioritized because these details help us prepare before calling you back.
+> We receive a lot of spam. Name, callback number, repair details and a good callback time help us prepare and prioritize callbacks. Vehicle details help, but send what you know; partial information is welcome.
 
 ## Remaining rollout and verification
 

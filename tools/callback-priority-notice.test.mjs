@@ -6,8 +6,8 @@ import {confirmationText} from '../_website-intake/customer-texts.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = path => fs.readFileSync(new URL(path, root), 'utf8');
-const copy = 'We receive a high volume of calls. Please leave your name, vehicle year and model, and a good time to call back. Requests with these details are prioritized because they give us the information we need to prepare before calling you back. The more we know upfront, the sooner we can return your call.';
-const footerCopy = 'Requests with your name, vehicle year and model, and a good callback time are prioritized so we can prepare before calling you back.';
+const copy = 'We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome.';
+const footerCopy = 'We receive a lot of spam. Name, callback number, repair details and a good callback time help us prepare and prioritize callbacks. Vehicle details help, but send what you know; partial information is welcome.';
 
 test('contact and booking share the notice without requiring optional repair details', () => {
   for (const page of ['index.html', 'request-a-repair.html']) {
@@ -18,7 +18,8 @@ test('contact and booking share the notice without requiring optional repair det
       assert.equal(d.getElementById(id).required, false, page + ': ' + id + ' remains optional');
     assert.equal(d.querySelectorAll('#bookingForm').length, 1);
     assert.match(d.getElementById('request-pencil-ack').closest('label').textContent, /Tony must speak with me by phone and verbally confirm/);
-    assert.doesNotMatch(d.getElementById('request-priority-notice').textContent, /right away|immediate|within \d/i);
+    assert.doesNotMatch(d.getElementById('request-priority-notice').textContent, /right away|immediate|within \d|only complete|incomplete requests are spam/i);
+    assert.match(d.getElementById('request-priority-notice').textContent, /Send what you know; partial information is welcome\./);
     dom.window.close();
   }
 });
@@ -62,7 +63,7 @@ test('new SMS acknowledgments retain priority, safety, consent language and boun
     for (const name of ['Al', 'A'.repeat(200)]) {
       const body = confirmationText({name, vehicle: 'V'.repeat(160), details: 'Problem: ' + 'Synthetic detail '.repeat(100)}, {urgent});
       assert.ok(body.length <= 320, body.length + ' characters');
-      assert.match(body, /Requests with your name, vehicle year\/model and callback time are prioritized so we can prepare\./);
+      assert.match(body, /We receive spam\. Name, number, car, issue and callback time help us prepare and prioritize\. Send what you know\./);
       assert.match(body, /Call \(239\) 397-2048\. Reply STOP to opt out, HELP for help\.$/);
       assert.doesNotMatch(body, /right away|immediately|within \d|confirmed appointment/i);
       if (urgent) assert.match(body, /marked urgent\. If you're somewhere unsafe, call 911\./);

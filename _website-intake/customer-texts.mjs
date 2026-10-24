@@ -25,7 +25,7 @@ export function confirmationText(lead, {urgent = false} = {}) {
     const about = v ? ` for the ${v}${i ? ' (' + i + ')' : ''}` : i ? ` (${i})` : '';
     return [`Perfect Timing Auto Repair: Hi${first ? ' ' + first : ''}, we got your repair request${about}.`,
       urgent ? `You said you're stranded, so it's marked urgent. If you're somewhere unsafe, call 911.` : `Tony will call to set up an appointment.`,
-      'Requests with your name, vehicle year/model and callback time are prioritized so we can prepare.',
+      'We receive spam. Name, number, car, issue and callback time help us prepare and prioritize. Send what you know.',
       `Call ${SHOP_NUMBER_TEXT}. Reply STOP to opt out, HELP for help.`].join(' ');
   };
   // Keep one SMS-sized note: drop the problem first, then shorten the vehicle.
