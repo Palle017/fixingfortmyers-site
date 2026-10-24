@@ -31,4 +31,6 @@ At 390 by 844 pixels, the final browser journey deferred symptoms, supplied only
 
 ## Safe local preview
 
+The ordinary static staging build includes only this page's inactive fallback. It strips the two conversation script tags and does not copy the conversation transport or protocol modules. The staging guard still blocks contact actions and network traffic. Use the separate memory-only preview below to exercise the optional guide; merging this source does not enable staging conversations.
+
 From this checkout, run `node tools/preview-customer-conversations.mjs --port=18947`, then open `http://127.0.0.1:18947/customer-conversation.html`. It binds loopback only, serves only this page's allowlisted files, visibly labels itself synthetic, uses memory-only mock data and sends no notifications or external requests. Stopping that owned process discards its synthetic records. It is a UI preview, not a deployable backend or integration proof.
