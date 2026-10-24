@@ -116,10 +116,10 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
   const valid=render({id,confirmed:true,receivedAt:new Date().toISOString(),smsConsent:true,name:'Private identity',vehicle:'Private vehicle'});assert.equal(valid.getElementById('receipt-title').textContent,'Request received');assert.equal(valid.getElementById('receipt-detail').hidden,false);assert.equal(valid.getElementById('receipt-ref').textContent,id);assert.doesNotMatch(valid.body.textContent,/Private identity|Private vehicle/);
 });
 
-test('mobile bar keeps only the request and call actions',async t=>{
+test('mobile bar keeps only the call and request actions, call first',async t=>{
   const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar');
-  assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'#contact');assert.equal(bar.children[1].getAttribute('href'),'tel:+12393972048');
-  assert.deepEqual([...bar.children].map(node=>node.textContent),['Request a repair','Call the shop']);
+  assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'tel:+12393972048');assert.equal(bar.children[1].getAttribute('href'),'#contact');
+  assert.deepEqual([...bar.children].map(node=>node.textContent),['Call the shop','Request a repair']);
 });
 
 test('careers preserves the applicant-specific mobile introduction action',t=>{
