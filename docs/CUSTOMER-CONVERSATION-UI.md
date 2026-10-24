@@ -25,6 +25,10 @@ Explicit Copy private return link puts the one-conversation capability in a URL 
 
 Mocked API and browser preview do not establish deployed Cloud Intake authorization, D1 migrations, Owner Desk staff access, credentials or live delivery. The private durable API release must precede this UI; the Owner Desk proxy/panel must be reviewed and configured through its authorized private process before activation. Cross-device verified-account history requires separate server verification and authorization work.
 
+## Final sparse V2 browser proof
+
+At 390 by 844 pixels, the final browser journey deferred symptoms, supplied only name/phone, skipped remaining optional details, reviewed, saved, read a synthetic shop reply, added a later message and reloaded. Nine real input actions and eleven assertions passed, with zero external requests and no horizontal overflow. The ordinary short form link appears before the optional guide. Local evidence is under `browser-proof-v2/`; the preview is memory-only. Actual V2 helper-to-Worker SQLite interoperability was checked separately with outbound networking blocked.
+
 ## Safe local preview
 
 From this checkout, run `node tools/preview-customer-conversations.mjs --port=18947`, then open `http://127.0.0.1:18947/customer-conversation.html`. It binds loopback only, serves only this page's allowlisted files, visibly labels itself synthetic, uses memory-only mock data and sends no notifications or external requests. Stopping that owned process discards its synthetic records. It is a UI preview, not a deployable backend or integration proof.
