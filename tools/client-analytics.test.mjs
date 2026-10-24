@@ -206,7 +206,16 @@ test('a repair conversion waits for a positive server receipt and keeps the rece
 });
 
 test('every public content page keeps its exact approved path for page-level reporting', async t => {
-  const pages=fs.readdirSync(root).filter(file=>file.endsWith('.html') && file!=='404.html' && !/^google[a-z0-9]+\.html$/.test(file));
+  // Scoped bearer conversations intentionally load no analytics or normal site script.
+  // Keep the privacy exception explicit; every existing public content path is still checked.
+  const privateHtml=fs.readFileSync(new URL('customer-conversation.html',root),'utf8');
+  const privateDom=new JSDOM(privateHtml),privatePage=privateDom.window.document;
+  assert.deepEqual([...privatePage.querySelectorAll('script[src]')].map(node=>node.getAttribute('src')),['customer-conversation-config.js','customer-conversation.js']);
+  assert.doesNotMatch(privateHtml,/site\.js|gtag|google-analytics|googletagmanager|analytics/i);
+  for(const node of privatePage.querySelectorAll('[src],[href]'))assert.doesNotMatch(node.getAttribute('src')||node.getAttribute('href'),/^(?:https?:)?\/\//,'private page has no third-party assets or links');
+  assert.equal(privatePage.querySelector('meta[name="referrer"]').content,'no-referrer');
+  privateDom.window.close();
+  const pages=fs.readdirSync(root).filter(file=>file.endsWith('.html') && file!=='404.html' && file!=='customer-conversation.html' && !/^google[a-z0-9]+\.html$/.test(file));
   for(const file of pages){
     const x=setup(t,{url:'https://fixingfortmyers.com/'+file}); await settle();
     assert.equal(x.w.PT_ANALYTICS_STATUS.page,file==='index.html'?'/':'/'+file.replace(/\.html$/,''),file);

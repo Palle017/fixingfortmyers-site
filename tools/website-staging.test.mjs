@@ -39,6 +39,16 @@ function browser(t, page = 'index.html', host = 'https://staging.fixingfortmyers
   return {w,d,enter,submit};
 }
 
+test('conversation staging stays on its inactive fallback without copying a live transport', t => {
+  if (!fs.existsSync(path.join(output,'customer-conversation.html'))) return;
+  const {d} = browser(t,'customer-conversation.html');
+  assert.equal(d.getElementById('conversation-app').hidden,true);
+  assert.equal(d.getElementById('unavailable').hidden,false);
+  assert.match(d.getElementById('unavailable').textContent,/not open yet/);
+  for (const name of ['customer-conversation.js','customer-conversation-config.js','customer-conversation-protocol.js'])
+    assert.equal(fs.existsSync(path.join(output,name)),false,name + ': transport stays outside static staging');
+});
+
 test('every staged page has guard first, noindex, visible labeling, isolated resources and no production publication files', () => {
   const pages = fs.readdirSync(output).filter(name => name.endsWith('.html'));
   assert.deepEqual(pages.sort(),fs.readdirSync(root).filter(name => name.endsWith('.html') && !/^google[a-f0-9]+\.html$/i.test(name)).sort());
