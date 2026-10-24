@@ -8,16 +8,18 @@ Prepared, default-off source only. This public PR contains the browser contract 
 | --- | --- |
 | Existing Cloud Intake Site | `appgprj_6ac0bd5aa77481918cc6a603a3251492`, v9 |
 | Baseline | `a0fecdfba5a91be05f5f8cc343ce836de6ea3f2a` |
-| Private candidate | `7bbef704bd8e8dc25b80a955051f31c014a0135f` |
-| Private archive | `Cloud-Conversations-Review-2026-10-23.zip` |
-| Archive SHA-256 | `43bd76a8a93e9964986593070440b53af53cb8b2d97ab529b35539d635061f3d` |
-| Patch SHA-256 | `de7d51719f82a2ea13bef2b422f8806ed07b83c68bd8f5487986e9d763cff3bb` |
+| Private candidate | `fc3b57f666667d724169be1750c9b0fdf37bc68d` |
+| Private archive | `Cloud-Conversations-V2-fc3b57f.zip` |
+| Archive SHA-256 | `493f738b703c4e353831fc72dae543aeda33d997f349285c3cd91e09ffb17b00` |
+| Full patch SHA-256 | `d5391edd7fd7981f9961fbe18564017f3de4ef9eb6f7a15e5c7b18c1c8c16892` |
 
 The archive is delivered through the authorized private review handoff, never as a public attachment. It contains the baseline-specific patch, test/build logs and setup instructions. Reconcile newer private source before applying it.
 
 ## Behavior and preservation
 
-The existing Cloud Intake gains gated conversation routes in a separate module. One atomic D1 batch saves one existing webform lead, fourteen guide/customer transcript messages, the operation receipt, hashed guest access and existing handoff/alert work. The original intake normalization, receipt hashes, media, consent and source mapping remain unchanged; the worker edit is one import and one route dispatch. No source-priority, Beside importer or Owner Desk schema edit is included.
+The existing Cloud Intake gains gated conversation routes in a separate module. One atomic D1 batch saves one existing webform lead, supplied guide/customer transcript pairs, the operation receipt, hashed guest access and existing handoff/alert work. The original intake normalization, receipt hashes, media, consent and source mapping remain unchanged; the worker edit is one import and one route dispatch. No source-priority, Beside importer or Owner Desk schema edit is included.
+
+The explicit **V2 sparse-request contract** requires only name and callback phone, matching the existing short form. Optional symptoms, vehicle, starts/drivable and general location can be omitted, marked `unknown`, or deferred as `later` typed states. These states persist separately in `repair.fieldStates`; they add no invented customer statements or profile text. A minimum request saves four message rows. Missing details remain an ordinary lead, never an automatic spam label. Version 1 and frozen V1 pending-operation bodies remain compatible. The V2 package supersedes the earlier `7bbef70` review package, which is retained separately.
 
 Messages and the normalized repair snapshot are separate. Follow-ups append messages and do not overwrite source/profile fields, owner notes, stages, classifications, Junk or quotes. Initial handoff still uses the same website root UUID and existing retry path. Durable retry and idempotent receiver effects do not imply exactly-once network delivery.
 
@@ -27,11 +29,13 @@ Private staff routes require the new, **unconfigured** `CONVERSATION_OWNER_SERVI
 
 ## Verification and remaining gates
 
-- Private exact-head `npm test`: **57/57 passed**, including 35 existing intake tests and 22 new conversation checks.
+- Private exact-head `npm test`: **67/67 passed**, including 35 existing intake tests, 22 original conversation checks and 10 V2 sparse-request checks.
 - Private `npm run build` and `git diff --check`: passed. Generated migration SQL, Drizzle journal and snapshot align; a subsequent schema generation reports no changes.
 - Real SQLite tests include separate-thread/connection duplicate create/reply races, rollback, process reopen and lost acknowledgment, A/B isolation, forged identity, expired/revoked return access and receipt replay, late revoke/expiry, service-token isolation, XSS stored as data, missing fields, CORS and streaming rate/size limits.
-- Independent review reran all 22 new tests; no remaining blocking finding. Synthetic tests are not hosted D1, dispatch authentication or recovery-scheduler proof.
-- Public protocol focus: four tests passed. The existing full Windows suite was attempted and stalled on legacy test handles; a bounded run produced 339 passes and 13 unchanged failures (seven temporary-directory EPERM cleanup hooks, five CRLF CSS assertions and one native Node handle assertion). Linux PR CI is the release verification gate. Structural accessibility audit: zero violations.
+- Independent guarded review reran all 32 conversation tests; no remaining blocking finding. Actual public V2 helpers also passed against the private Worker and transactional SQLite: name/phone-only persistence, typed unknown/later, no fabricated messages, stable replay receipt and changed-state conflict, with zero external requests. Synthetic tests are not hosted D1, dispatch authentication or recovery-scheduler proof.
+- The initial public protocol head passed Linux CI (351 website tests and 264 dashboard-sync checks). Final V2 exact-head checks are recorded in the PR. Native Windows full-suite attempts hit unchanged EPERM/CRLF/native-handle issues; Linux PR CI is the release gate. Structural accessibility audit: zero violations.
+
+A preliminary V2 test accidentally attempted the existing Owner Desk sync endpoint with invalid synthetic credentials and received HTTP 401; there was no accepted write or real customer data. The fixture was corrected, and the final V2 test file has a hard outbound-network guard with zero-attempt assertions. Exact incident evidence is retained in the private `NETWORK-ISOLATION.md`. No live target was retried.
 
 Before any activation: review the private patch, reconcile the current deployed revision and **live applied** migration journal, take an approved private backup, provision the separately approved environment-specific conversation token, deploy to an isolated synthetic staging service with the flag off, then verify the actual authorized end-to-end transport and recovery path. The additive migration filename is source sequence evidence only; it is not permission to apply against a live journal. No backend migration, deployment, customer send or public PR merge occurred in this task.
 
