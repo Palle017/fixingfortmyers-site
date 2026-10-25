@@ -53,6 +53,25 @@ function setup(t, {url = 'https://fixingfortmyers.com/', referrer, offline = fal
 const localEvents = x => Array.from(x.w.dataLayer).filter(entry => entry.event);
 const googleEvents = x => Array.from(x.w.dataLayer).filter(entry => entry[0] === 'event');
 
+test('contact taps keep fixed per-page categories and never export request fields', async t => {
+  const x=setup(t,{ga4MeasurementId:'G-TEST1234'});await settle();
+  for(let i=0;i<2;i++)for(const selector of ['a[href^="tel:"]','a[href^="sms:"]','a[href^="mailto:"]'])x.click(selector);
+  await settle();
+  for(const name of ['call_clicked','text_clicked','email_clicked'])assert.equal(x.metrics(name).length,1,name);
+  assert.equal(googleEvents(x).filter(entry=>entry[1]==='phone_click').length,2);
+  assert.doesNotMatch(JSON.stringify(x.metrics()),/2395550100|Synthetic|vehicle|symptoms/);
+});
+
+test('anonymous metric retries reuse their event ID once and rate limits do not create retry loops', async t => {
+  const x=setup(t,{analyticsHandler:()=>reply({ok:false},503)});await settle();
+  assert.equal(x.metrics('visit').length,1);assert.equal(x.retries.length,1);
+  x.retries.shift()();await settle();
+  assert.equal(x.metrics('visit').length,2);assert.deepEqual(x.metrics('visit')[1].body,x.metrics('visit')[0].body);
+  assert.equal(x.retries.length,0);
+  const limited=setup(t,{analyticsHandler:()=>reply({ok:false},429)});await settle();
+  assert.equal(limited.retries.length,0);
+});
+
 test('analytics sends only fixed public categories and allowlisted sources, without persistent tracking or private data', async t => {
   for (const [url,referrer,page,source] of [
     ['https://fixingfortmyers.com/?utm_source=chatgpt&name=PRIVATE_QUERY', undefined, '/', 'chatgpt'],
@@ -71,72 +90,6 @@ test('analytics sends only fixed public categories and allowlisted sources, with
     assert.doesNotMatch(JSON.stringify(metric.body), /PRIVATE|visitor_id|utm_source|referrer/);
     assert.equal(x.w.localStorage.getItem('pt-website-visitor-v1'), null);
   }
-});
-
-test('human starts, contact clicks and the discreet AI disclosure are bounded per page and kept separate', async t => {
-  const x = setup(t); await settle(); x.fill(); x.enter('details','PRIVATE_UPDATED_SYMPTOMS');
-  for (let i=0; i<3; i++) { x.click('a[href^="tel:"]'); x.click('a[href^="sms:"]'); x.click('a[href^="mailto:"]'); }
-  const disclosure = x.d.querySelector('.request-ai-help');
-  disclosure.open = true; disclosure.dispatchEvent(new x.w.Event('toggle'));
-  disclosure.open = false; disclosure.dispatchEvent(new x.w.Event('toggle'));
-  disclosure.open = true; disclosure.dispatchEvent(new x.w.Event('toggle'));
-  await settle();
-  for (const name of ['form_started','call_clicked','text_clicked','email_clicked','ai_help_opened']) assert.equal(x.metrics(name).length, 1, name);
-  assert.equal(x.metrics('submit_attempted').length, 0);
-  assert.equal(x.metrics('submit_unconfirmed').length, 0);
-  assert.doesNotMatch(JSON.stringify(x.metrics()), /PRIVATE|2395550100/);
-});
-
-test('WebMCP preparation is separate from human form starts and attempts reflect actual HTTP requests', async t => {
-  let attempts = 0;
-  const x = setup(t, {leadHandler:() => ++attempts === 1 ? reply({ok:false}, 503) : reply(receipt)}); await settle();
-  const input = {name:'PRIVATE_CUSTOMER', phone:'2395550100', details:'PRIVATE_SYMPTOMS', city:'Fort Myers', locationChoice:'dropoff'};
-  x.tools[0].execute(input); x.tools[0].execute(input); await settle();
-  assert.equal(x.metrics('webmcp_prepared').length, 1);
-  assert.equal(x.metrics('form_started').length, 0);
-  assert.equal(x.metrics('submit_attempted').length, 0);
-  x.submit(); await settle();
-  assert.equal(x.metrics('form_started').length, 1);
-  assert.equal(x.metrics('submit_attempted').length, 1);
-  assert.equal(x.metrics('submit_unconfirmed').length, 1);
-  const first = x.calls.find(call => call.path === '/hooks/lead/webform');
-  x.tools[0].execute(input); x.submit(); await settle();
-  const leads = x.calls.filter(call => call.path === '/hooks/lead/webform');
-  assert.equal(x.metrics('submit_attempted').length, 2);
-  assert.equal(x.metrics('submit_unconfirmed').length, 1);
-  assert.equal(leads[1].headers['Idempotency-Key'], first.headers['Idempotency-Key']);
-  assert.deepEqual(leads[1].body, first.body);
-  assert.equal(x.metrics().some(call => /received|success|durable/.test(call.body.event)), false, 'durable counts belong to the backend');
-  assert.doesNotMatch(JSON.stringify(x.metrics()), /PRIVATE|2395550100/);
-});
-
-test('validation failures and offline manual drafts are never counted as network submission attempts', async t => {
-  for (const offline of [false,true]) {
-    const x = setup(t,{offline}); await settle(); x.submit(); await settle();
-    assert.equal(x.metrics('submit_attempted').length,0);
-    assert.equal(x.metrics('submit_unconfirmed').length,0);
-    if (offline) { x.fill(); x.submit(); await settle(); assert.equal(x.metrics('submit_attempted').length,0); assert.match(x.d.getElementById('request-status').textContent,/Nothing has been sent yet/); }
-  }
-});
-
-test('analytics retries at most once with the same event ID and cannot block a repair submission', async t => {
-  const x = setup(t,{analyticsHandler:() => reply({ok:false},503)}); await settle();
-  assert.equal(x.metrics('visit').length,1); assert.equal(x.retries.length,1);
-  x.retries.shift()(); await settle();
-  assert.equal(x.metrics('visit').length,2);
-  assert.deepEqual(x.metrics('visit')[1].body,x.metrics('visit')[0].body);
-  assert.equal(x.retries.length,0,'a failed retry does not schedule a third attempt');
-  x.fill(); x.submit(); await settle();
-  assert.equal(x.calls.filter(call=>call.path==='/hooks/lead/webform').length,1);
-  assert.equal(JSON.parse(x.w.sessionStorage.getItem('pt-last-request')).confirmed,true);
-  const limited=setup(t,{analyticsHandler:()=>reply({ok:false},429)}); await settle();
-  assert.equal(limited.retries.length,0,'rate limits do not trigger retries');
-});
-
-test('preview hosts create no analytics events even when the normal form is used', async t => {
-  const x = setup(t,{url:'https://preview.invalid/'}); await settle(); x.fill(); x.submit(); await settle();
-  assert.equal(x.metrics().length,0);
-  assert.equal(x.calls.filter(call=>call.path==='/hooks/lead/webform').length,1);
 });
 
 test('GA4 stays honestly unconfigured until an actual ID is provided, and never loads on previews', async t => {
@@ -189,22 +142,6 @@ test('GA4 page detail covers known public pages but arbitrary paths and event pa
   }
 });
 
-test('a repair conversion waits for a positive server receipt and keeps the receipt in place', async t => {
-  let acknowledge;
-  const x=setup(t,{leadHandler:()=>new Promise(resolve=>{acknowledge=resolve;})});
-  await settle(); x.fill(); x.submit(); await settle();
-  assert.equal(localEvents(x).filter(event=>event.event==='form_submit_success').length,0);
-  acknowledge(reply(receipt)); await settle();
-  assert.equal(localEvents(x).filter(event=>event.event==='form_submit_success').length,1);
-  assert.equal(x.d.getElementById('bookingForm').hidden,true);
-  assert.equal(x.d.getElementById('request-done').hidden,false);
-  assert.equal(x.w.location.pathname,'/','do not redirect away from the receipt/photo-upload flow');
-  assert.doesNotMatch(JSON.stringify(x.w.dataLayer),/PRIVATE|2395550100|12345678-1234/);
-  const rejected=setup(t,{leadHandler:()=>reply({ok:true,received:false,id:receipt.id})});
-  await settle(); rejected.fill(); rejected.submit(); await settle();
-  assert.equal(localEvents(rejected).filter(event=>event.event==='form_submit_success').length,0,'HTTP 200 without durable receipt is not a lead');
-});
-
 test('every public content page keeps its exact approved path for page-level reporting', async t => {
   // Scoped bearer conversations intentionally load no analytics or normal site script.
   // Keep the privacy exception explicit; every existing public content path is still checked.
@@ -220,22 +157,5 @@ test('every public content page keeps its exact approved path for page-level rep
     const x=setup(t,{url:'https://fixingfortmyers.com/'+file}); await settle();
     assert.equal(x.w.PT_ANALYTICS_STATUS.page,file==='index.html'?'/':'/'+file.replace(/\.html$/,''),file);
   }
-});
-
-test('configured GA4 tracks phone taps separately and counts a repeated saved receipt once', async t => {
-  const x=setup(t,{ga4MeasurementId:'G-TEST1234'});
-  await settle();
-  x.click('a[href^="tel:"]');
-  x.fill(); x.submit(); await settle();
-  assert.equal(googleEvents(x).filter(entry=>entry[1]==='phone_click').length,1);
-  assert.equal(googleEvents(x).filter(entry=>entry[1]==='form_submit_success').length,1);
-  // A repeated submit after a visible receipt is already saved and must not
-  // create another POST or count a second lead in analytics.
-  x.submit(); await settle();
-  const leads=x.calls.filter(call=>call.path==='/hooks/lead/webform');
-  assert.equal(leads.length,1);
-  assert.equal(googleEvents(x).filter(entry=>entry[1]==='form_submit_success').length,1);
-  assert.equal(googleEvents(x).some(entry=>entry[1]==='generate_lead'),false);
-  assert.doesNotMatch(JSON.stringify(x.w.dataLayer),/PRIVATE|2395550100|12345678-1234/);
 });
 

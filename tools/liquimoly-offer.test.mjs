@@ -14,7 +14,8 @@ test('homepage offers only half-off oil-change labor, not half-off materials',()
   assert.match(oilCard.textContent,/50% off (?:oil-change )?labor/);
   assert.match(oilCard.textContent,/Oil, filter, taxes and additional repairs are extra/);
   assert.ok(oilCard.querySelector('a[href*="offer=liquimoly-labor50"]'));
-  assert.ok(doc.getElementById('hero-appointment-date'),'preserve compact calendar');
+  assert.equal(doc.getElementById('hero-appointment-date'),null,'baseline callback request has no service-date picker');
+  assert.equal(doc.getElementById('hero-appointment-time'),null,'callback time stays inside optional details');
 });
 test('oil landing page states prepay condition and excludes materials from discount',()=>{
   const doc=new JSDOM(oil).window.document;
