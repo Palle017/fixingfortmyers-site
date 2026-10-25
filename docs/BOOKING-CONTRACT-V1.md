@@ -1,4 +1,5 @@
 # Perfect Timing Auto Repair — BOOKING CONTRACT V1 (LOCKED)
+**WU A scope update, October 25, 2026 (Raj):** The baseline public callback form now collects only name, callback number and vehicle, with optional VIN and preferred callback. It does not collect repair/service/location/symptom/appointment fields or create a calendar event. This explicit WU A instruction supersedes the field collection and form scheduling requirements below for this baseline. A callback time is not a service appointment. Existing appointment records, backend/calendar components and Tony's verbal confirmation rule remain in place. See `deliverables/form-backend-spec.md` for the new request contract and current mailto fallback; additional intake fields belong to a later WU A2.
 **Owner instruction accepted:** October 16, 2026
 **Canonical status:** This document overrides previous generic scheduling proposals in this repository and issue #67. Do not alter its customer journey without an explicit new owner decision. The shop may revise implementation details, not the agreed product behavior.
 

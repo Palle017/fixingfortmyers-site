@@ -5,7 +5,7 @@
   const receipts = new Map();
   const blocked = message => new TypeError('STAGING blocked: ' + message);
   const lock = (target, key, value) => Object.defineProperty(target, key, {value, writable:false, configurable:false});
-  const config = Object.freeze({endpoint:location.origin + prefix, ga4MeasurementId:'', googleClientId:'', staging:true});
+  const config = Object.freeze({endpoint:location.origin + prefix, requestEndpoint:location.origin + prefix + '/hooks/lead/webform', ga4MeasurementId:'', googleClientId:'', staging:true});
   lock(window, 'PT_CONTACT_CONFIG', config);
   lock(window, 'PT_STAGING', Object.freeze({syntheticOnly:true, analytics:false, get calls() { return calls.map(item => ({...item})); }}));
   const reply = (body, status = 200) => Object.freeze({

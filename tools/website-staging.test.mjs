@@ -98,11 +98,9 @@ test('repair form submits to browser-memory mock and keeps generated handoff lin
   x.enter('request-name','Synthetic Staging Tester');
   x.enter('request-phone','2025550100');
   x.enter('request-vehicle','2018 Test Vehicle');
-  x.enter('request-details','Synthetic test only');
-  x.enter('request-location-choice','dropoff');
   x.submit('bookingForm'); await settle();
   assert.equal(x.d.getElementById('request-done').hidden,false);
-  assert.match(x.d.getElementById('request-done-ref').textContent,/Reference:/);
+  assert.match(x.d.getElementById('request-done-heading').textContent,/Got it, Synthetic Staging Tester\. Tony calls back ASAP\./);
   assert.equal(x.w.PT_STAGING.calls.filter(call => call.path === '/hooks/lead/webform').length,1);
   assert.equal(x.w.PT_ANALYTICS_STATUS.customMetrics,'disabled');
   assert.equal(x.w.PT_ANALYTICS_STATUS.ga4,'preview_disabled');

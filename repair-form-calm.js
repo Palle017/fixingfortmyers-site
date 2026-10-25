@@ -21,7 +21,7 @@
   };
   const init = () => {
     const form = document.getElementById('bookingForm');
-    if (!form || form.dataset.calm) return;
+    if (!form || form.dataset.intakeVersion === '1' || form.dataset.calm) return;
     form.dataset.calm = '1';
     const $ = id => document.getElementById(id);
     const fire = el => { el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); };

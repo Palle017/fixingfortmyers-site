@@ -43,23 +43,21 @@ test('repair action opens the same form, then closing restores it and returns fo
   assert.equal(d.activeElement, opener);
   assert.deepEqual(calls, []);
 });
-test('close and reopen preserve unsent entries, consent and location pin', t => {
+test('close and reopen preserve unsent vehicle, VIN and callback choice', t => {
   const {d, click, calls} = setup(t);
-  const opener = d.querySelector('#hero-appointment-continue');
+  const opener = d.querySelector('.home-start__actions .btn--primary');
   click(opener);
-  d.getElementById('request-details').value = 'Synthetic unsent no-start notes';
-  d.getElementById('request-city').value = '33901';
-  d.getElementById('request-latitude').value = '26.64';
-  d.getElementById('request-sms-consent').checked = true;
+  d.getElementById('request-vehicle').value = '2014 Synthetic Civic';
+  d.getElementById('request-vin').value = '1HGCM82633A004352';
+  d.getElementById('callback-tomorrow').checked = true;
   const form = d.getElementById('bookingForm');
   click(d.querySelector('.repair-dialog__close'));
   click(opener);
   assert.equal(d.getElementById('bookingForm'), form);
   assert.equal(d.querySelectorAll('#bookingForm').length, 1);
-  assert.equal(d.getElementById('request-details').value, 'Synthetic unsent no-start notes');
-  assert.equal(d.getElementById('request-city').value, '33901');
-  assert.equal(d.getElementById('request-latitude').value, '26.64');
-  assert.equal(d.getElementById('request-sms-consent').checked, true);
+  assert.equal(d.getElementById('request-vehicle').value, '2014 Synthetic Civic');
+  assert.equal(d.getElementById('request-vin').value, '1HGCM82633A004352');
+  assert.equal(d.getElementById('callback-tomorrow').checked, true);
   assert.deepEqual(calls, []);
 });
 test('service deep link opens the form; closing removes only the contact fragment', t => {
@@ -86,7 +84,7 @@ test('unsupported dialog browsers keep the inline form and contact fallback', t 
   assert.ok(d.querySelector('noscript a[href="tel:+12393972048"]'));
   assert.deepEqual(calls, []);
 });
-test('AI preparation opens a review popup without submitting a lead or checking consent', async t => {
+test('review event opens the same minimal form without an automatic lead submission', async t => {
   const {d, w, calls} = setup(t);
   w.matchMedia = () => ({matches:false});
   w.HTMLElement.prototype.scrollIntoView = function () {};
@@ -95,11 +93,10 @@ test('AI preparation opens a review popup without submitting a lead or checking 
   d.modelContext = {registerTool(value) { tool = value; }};
   w.eval(markup('site.js'));
   await settle();
-  const result = tool.execute({details:'Synthetic no-start review', locationChoice:'dropoff', city:'33901', name:'Synthetic Review'});
-  assert.equal(result.status, 'ready_for_review');
-  assert.equal(result.submitted, false);
+  assert.equal(tool, undefined, 'the legacy location preparation tool is not registered for v1');
+  d.getElementById('bookingForm').dispatchEvent(new w.Event('pt:repair-review'));
   assert.equal(d.getElementById('repair-request-dialog').open, true);
-  assert.equal(d.activeElement.id, 'request-submit');
-  assert.equal(d.getElementById('request-sms-consent').checked, false);
+  assert.equal(d.activeElement.id, 'request-heading');
+  assert.equal(d.getElementById('request-sms-consent'), null);
   assert.deepEqual(calls, []);
 });

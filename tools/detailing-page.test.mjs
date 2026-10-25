@@ -51,13 +51,14 @@ test('detailing is linked from the nav, menu, listing, sitemap, footer and schem
   assert.match(read('request-a-repair.html'), /href="\/detailing-fort-myers">Detailing</);
 });
 
-test('request forms offer detailing and the new page maps to that service', () => {
+test('detailing keeps service attribution while the baseline form stays minimal', () => {
   const site = read('site.js');
   assert.match(site, /detailing:'Detailing \/ paint correction'/);
   assert.match(site, /'detailing-fort-myers':'detailing'/);
   assert.match(site, /'\/detailing-fort-myers'/);
   for (const file of ['request-a-repair.html', 'index.html']) {
-    const select = new JSDOM(read(file)).window.document.getElementById('request-service');
-    assert.ok([...select.options].some(option => option.value === 'Detailing / paint correction'));
+    const doc = new JSDOM(read(file)).window.document;
+    assert.equal(doc.getElementById('request-service'), null);
+    assert.ok(doc.getElementById('request-vehicle').required);
   }
 });

@@ -9,29 +9,7 @@ const read = path => fs.readFileSync(new URL(path, root), 'utf8');
 const copy = 'We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome.';
 const footerCopy = 'We receive a lot of spam. Name, callback number, repair details and a good callback time help us prepare and prioritize callbacks. Vehicle details help, but send what you know; partial information is welcome.';
 
-test('contact and booking share the notice without requiring optional repair details', () => {
-  for (const page of ['index.html', 'request-a-repair.html']) {
-    const dom = new JSDOM(read(page)), d = dom.window.document;
-    assert.equal(d.getElementById('request-priority-notice').textContent, copy);
-    assert.match(d.getElementById('bookingForm').getAttribute('aria-describedby'), /request-priority-notice/);
-    for (const id of ['request-vehicle-year', 'request-vehicle-model', 'request-details', 'request-timing'])
-      assert.equal(d.getElementById(id).required, false, page + ': ' + id + ' remains optional');
-    assert.equal(d.querySelectorAll('#bookingForm').length, 1);
-    assert.match(d.getElementById('request-pencil-ack').closest('label').textContent, /Tony must speak with me by phone and verbally confirm/);
-    assert.doesNotMatch(d.getElementById('request-priority-notice').textContent, /right away|immediate|within \d|only complete|incomplete requests are spam/i);
-    assert.match(d.getElementById('request-priority-notice').textContent, /Send what you know; partial information is welcome\./);
-    dom.window.close();
-  }
-});
-
 test('notice accompanies saved receipts without becoming proof of receipt or confirmation', () => {
-  for (const page of ['index.html', 'request-a-repair.html']) {
-    const dom = new JSDOM(read(page)), d = dom.window.document;
-    assert.equal(d.getElementById('request-done-priority').textContent, copy);
-    assert.equal(d.getElementById('request-done').hidden, true);
-    assert.match(d.getElementById('request-done-note').textContent, /official until Tony confirms it with you by phone/);
-    dom.window.close();
-  }
   const dom = new JSDOM(read('request-received.html')), d = dom.window.document;
   assert.equal(d.getElementById('receipt-priority-notice').textContent, copy);
   assert.equal(d.getElementById('receipt-next').hidden, true);

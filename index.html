@@ -352,6 +352,7 @@
 </style><link rel="stylesheet" href="/booking-preferences.css?v=20261016-pencil-24x7">
 <link rel="stylesheet" href="/repair-campaigns.css?v=20261017" media="all">
   <link rel="stylesheet" href="/repair-form-calm.css?v=20261025-call-handoff">
+  <link rel="stylesheet" href="/request-form-v1.css?v=20261025-intake-v1" media="all">
 </head>
 <body class="home-clean">
 
@@ -407,28 +408,9 @@
         <p class="home-start__rating"><a href="https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b" target="_blank" rel="noopener"><strong>★ 4.8</strong> from ~70 Google reviews</a></p>
         <div class="home-start__actions">
           <a class="btn btn--primary" href="#contact">Request a repair <span aria-hidden="true">→</span></a>
-          <a class="home-start__schedule-link" href="#hero-appointment">Choose a date and time</a>
+          <a class="home-start__schedule-link" href="tel:+12393972048">Call (239) 397-2048</a>
         </div>
         <p class="home-start__next-step">Send what you know. Tony reviews your request and confirms the appointment by phone.</p>
-        <div class="hero-appointment" id="hero-appointment" aria-labelledby="hero-appointment-title">
-          <div class="hero-appointment__heading">
-            <h2 id="hero-appointment-title">Choose a date and time</h2>
-            <p>Request an appointment any time, day or night. Tony confirms by phone.</p>
-          </div>
-          <div class="hero-appointment__inputs">
-            <label for="hero-appointment-date">Preferred date
-              <input type="date" id="hero-appointment-date" aria-describedby="hero-appointment-notice" required>
-            </label>
-            <label for="hero-appointment-time">Preferred time
-              <input type="time" step="60" id="hero-appointment-time" aria-describedby="hero-appointment-notice" required>
-            </label>
-          </div>
-          <div class="hero-appointment__footer">
-            <a id="hero-appointment-continue" class="hero-appointment__continue" href="#contact">Continue <span aria-hidden="true">→</span></a>
-            <span id="hero-appointment-notice">24/7 requests · Penciled in only until Tony verbally confirms by phone.</span>
-          </div>
-          <p class="hero-appointment__error" id="hero-appointment-error" role="alert" hidden></p>
-        </div>
         <nav class="home-start__services" aria-label="Services">
           <a href="/module-programming-fort-myers" aria-label="Module programming in Fort Myers">Module Programming</a>
           <a href="/engine-repair-fort-myers" aria-label="Engine repair in Fort Myers">Engine</a>
@@ -453,156 +435,50 @@
         <p class="home-start__hours">Request an appointment 24/7, including nights and weekends · Verbal confirmation by Tony required</p>
       </div>
       <div class="request-panel" id="contact" role="region" aria-labelledby="request-heading">
-        <aside class="request-call" aria-label="Call instead">
-          <p>Rather talk? Stuck somewhere?</p>
-          <a class="btn btn--primary request-call__btn" href="tel:+12393972048">Call Tony (239) 397-2048</a>
-        </aside>
-        <form id="bookingForm" class="repair-request" aria-describedby="request-priority-notice" method="post" action="#contact" toolname="request_repair_review" tooldescription="Prepare a basic repair callback request from customer-provided contact, vehicle and symptom details. The customer reviews and manually submits this form. Use prepare_repair_request for location-dependent details and the visible form for requested date/time. Tony must confirm appointments by phone; no repair or payment is authorized.">
-          <h2 id="request-heading">How can we help with your car?</h2>
-          <p id="request-instructions">Four quick things and you’re done. No account needed. Tony reads every request and calls you back.</p>
-          <p class="request-fineprint" id="request-priority-notice">We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome.</p>
-          <div class="request-fields request-fields--core">
-            <label for="request-phone"><span id="request-phone-label">Best number</span><input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required enterkeyhint="next" placeholder="(239) 555-0123" aria-describedby="request-phone-error"></label>
-            <p class="request-error" id="request-phone-error" hidden></p>
-            <label for="request-name">Your name <span class="field-note">(first name is fine)</span><input id="request-name" name="name" autocomplete="name" autocapitalize="words" maxlength="100" required enterkeyhint="next" aria-describedby="request-name-error"></label>
-            <p class="request-error" id="request-name-error" hidden></p>
-            <label for="request-customer-email">Email <span class="field-note">(optional)</span><input id="request-customer-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" enterkeyhint="next"></label>
-            <fieldset class="request-full request-vehicle-parts">
-              <legend>Vehicle <span class="field-note">(as much as you know)</span></legend>
-              <div class="request-vehicle-row">
-                <label for="request-vehicle-year">Year<input id="request-vehicle-year" name="vehicleYear" toolparamdescription="Vehicle model year, if known, such as 2018." inputmode="numeric" autocomplete="off" maxlength="4" pattern="(19|20)[0-9]{2}" placeholder="2018" enterkeyhint="next" aria-describedby="request-vehicle-error"></label>
-                <label for="request-vehicle-make">Make<input id="request-vehicle-make" name="vehicleMake" toolparamdescription="Vehicle manufacturer, if known, such as Ford." autocomplete="off" autocapitalize="words" maxlength="40" placeholder="Ford" enterkeyhint="next"></label>
-                <label for="request-vehicle-model">Model<input id="request-vehicle-model" name="vehicleModel" toolparamdescription="Vehicle model, if known, such as F-150." autocomplete="off" autocapitalize="words" maxlength="60" placeholder="F-150" enterkeyhint="next"></label>
-              </div>
-              <p class="request-error" id="request-vehicle-error" hidden></p>
-              <input id="request-vehicle" name="vehicle" type="hidden" maxlength="160">
-            </fieldset>
-            <fieldset class="request-full request-issue">
-              <legend>What’s wrong?</legend>
-              <div class="request-chips" role="group" aria-label="Common problems, tap any that fit">
-                <button type="button" class="request-chip" aria-pressed="false" data-issue="Won’t start" data-service="Electrical / no-start">Won’t start</button>
-                <button type="button" class="request-chip" aria-pressed="false" data-issue="Overheating">Overheating</button>
-                <button type="button" class="request-chip" aria-pressed="false" data-issue="AC not cooling" data-service="A/C repair">AC</button>
-                <button type="button" class="request-chip" aria-pressed="false" data-issue="Strange noise">Noise</button>
-                <button type="button" class="request-chip" aria-pressed="false" data-issue="Warning light on">Warning light</button>
-                <button type="button" class="request-chip" aria-pressed="false" data-issue="Something else">Other</button>
-              </div>
-              <label class="request-full" for="request-details">In your own words <span class="field-note">(optional)</span><textarea id="request-details" name="details" rows="3" maxlength="4000" placeholder="e.g. Grinding noise when I brake, started last week." aria-describedby="request-details-error"></textarea></label>
-              <p class="request-error" id="request-details-error" hidden></p>
-            </fieldset>
-            <fieldset class="request-full request-where" toolparamdescription="For mobile or drop-off details use prepare_repair_request, or let the customer complete these controls. Changing dependent fields may cancel declarative assistance; Tony must confirm the location.">
-              <legend>Where should the repair happen?</legend>
-              <div class="request-where__options">
-                <label class="request-where__option" for="request-where-mobile"><input type="radio" id="request-where-mobile" name="repairWhere" value="location"><span><strong>Come to me</strong><small>Tony brings the tools to your car</small></span></label>
-                <label class="request-where__option" for="request-where-shop"><input type="radio" id="request-where-shop" name="repairWhere" value="dropoff"><span><strong>I’ll bring it in</strong><small>Repair at the shop, by appointment</small></span></label>
-              </div>
-              <p class="request-fineprint">Every repair is by appointment. Tony will call to set the time and place.</p>
-            </fieldset>
+
+        <h2 id="request-heading">Send a request. It takes 20 seconds. Tony calls back.</h2>
+        <form id="bookingForm" class="repair-request intake-v1" data-intake-version="1" method="post" action="mailto:fixingfortmyers@gmail.com" enctype="text/plain">
+          <div class="request-fields">
+            <div><label for="request-name">Name <span>(required)</span></label>
+              <input id="request-name" name="name" type="text" autocomplete="name" maxlength="100" required aria-describedby="request-name-error">
+              <p class="request-error" id="request-name-error" aria-live="polite" hidden></p></div>
+            <div><label for="request-phone">Callback number <span>(required)</span></label>
+              <input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" pattern="(?:\+1)?[0-9]{10}" placeholder="2395550123 or +12395550123" required aria-describedby="request-phone-error">
+              <p class="request-error" id="request-phone-error" aria-live="polite" hidden></p></div>
+            <div><label for="request-vehicle">Vehicle <span>(required)</span></label>
+              <input id="request-vehicle" name="vehicle" type="text" maxlength="160" placeholder="Year Make Model, e.g. 2014 Honda Civic" required aria-describedby="request-vehicle-error">
+              <p class="request-error" id="request-vehicle-error" aria-live="polite" hidden></p></div>
           </div>
-          <p class="request-oil-offer" id="request-oil-offer" hidden>
-            <strong>LIQUI MOLY prepay offer: 50% off oil-change labor.</strong>
-            The discount applies when your shop-approved correct-spec LIQUI MOLY oil is purchased and paid for in advance.
-            Oil, filter, taxes and other work are not discounted. The shop confirms fitment, itemized pricing, payment and your appointment before ordering or service.
-            No payment is taken here.
-          </p>
-          <details class="request-appointment" id="request-appointment">
-            <summary>Preferred time <span>(optional)</span></summary>
-            <p class="request-fineprint">Appointment requests are accepted 24 hours a day, seven days a week, including evenings, weekends and holidays. All requested times are tentative until Tony verbally confirms by phone.</p>
-            <div class="request-fields request-appointment__fields">
-              <label for="request-visit-date">Preferred day<input id="request-visit-date" name="preferredDate" type="date" autocomplete="off" aria-describedby="request-visit-help"></label>
-              <label for="request-visit-time">Preferred time (Eastern)<input type="time" id="request-visit-time" name="preferredTime" step="60" aria-describedby="request-visit-help"></label>
-            </div>
-            <p id="request-visit-help" class="request-fineprint">Any time of day is welcome. Leave the time blank if flexible. The date and time are a request, never a confirmed visit.</p>
-            <label for="request-pencil-ack" class="request-pencil-consent" hidden>
-              <input type="checkbox" id="request-pencil-ack" name="pencilAcknowledged" value="yes">
-              <span>I understand my appointment is penciled in only, not confirmed. Tony must speak with me by phone and verbally confirm the appointment before it becomes official.</span>
-            </label>
-            <div class="request-appointment__contact">
-              <a class="btn btn--outline" href="tel:+12393972048">Call now about this time</a>
-              <span>Submitting a time does not confirm your visit. Call Tony to get verbal confirmation.</span>
-            </div>
-            <div class="request-appointment__payment">
-              <button class="btn btn--outline" type="button" id="request-payment-link" aria-pressed="false">Ask for a parts-payment link</button>
-              <input id="request-payment-intent" type="hidden" name="paymentIntent" value="no">
-              <p id="request-payment-message" class="request-fineprint" role="status" aria-live="polite">No card details or payment on this form. After checking fitment and your quote, the shop can send a secure itemized payment link.</p>
-            </div>
-          </details>
-          <details class="request-options" id="request-options">
-            <summary>Add a photo or more details <span>(optional)</span></summary>
-            <label class="request-full request-media" for="request-media" hidden>Photos or a short video of the problem <small>(up to 6)</small><input id="request-media" name="media" type="file" accept="image/*,video/*" multiple></label>
+          <details id="request-options">
+            <summary>Add details (optional)</summary>
             <div class="request-fields">
-              <label class="request-full" for="request-vin">VIN <span class="field-note">(optional, if known)</span><input id="request-vin" name="vin" maxlength="32" autocomplete="off" placeholder="17-character VIN, if available"></label>
-              <label class="request-full" for="request-service">Type of repair<select id="request-service" name="service"><option>Diagnosis / not sure yet</option><option>Injector cleaning</option><option>Walnut blasting / carbon cleaning</option><option>Engine</option><option>Transmission</option><option>Diesel</option><option>Oil change / maintenance</option><option>Electrical / no-start</option><option>A/C repair</option><option>Brakes</option><option>Module programming</option><option>Water damage / flood vehicle</option><option>Detailing / paint correction</option><option>Other</option><option hidden>Engine / transmission</option><option hidden>Diesel service</option><option hidden>Maintenance / other repair</option></select></label>
-              <label for="request-starts">Does it drive?<select id="request-starts" name="starts"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-              <label for="request-stranded">Are you stranded?<select id="request-stranded" name="stranded"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-              <label class="request-full" for="request-location-choice">Where is the car?<select id="request-location-choice" name="locationChoice" aria-controls="request-car-location request-dropoff"><option value="">Not sure yet / I’ll explain on the call</option><option value="location">At an address (home, work or roadside)</option><option value="dropoff">I can drop it off at the shop</option></select></label>
-              <div class="request-full request-car-location" id="request-car-location" hidden>
-                <label for="request-car-address">Car address or current location<input id="request-car-address" name="carAddress" autocomplete="street-address" maxlength="500" placeholder="Street address, city and any parking details" disabled aria-describedby="request-location-help request-location-status"></label>
-                <button class="btn btn--outline" id="request-use-location" type="button">Use current location</button>
-                <p class="request-fineprint" id="request-location-help">Use current location only when you’re with the car. Your location is shared with the request when you send it.</p>
-                <p class="request-status" id="request-location-status" role="status" aria-live="polite"></p>
-              </div>
-              <div class="request-full" id="request-dropoff" hidden>
-                <label for="request-dropoff-time">Preferred drop-off time <span class="field-note">(optional)</span><input id="request-dropoff-time" name="dropoffTime" maxlength="160" placeholder="e.g. Friday morning or sometime this week" disabled></label>
-                <p class="request-fineprint">We’ll contact you to confirm the job, repair location and appointment. Wait for confirmation before arranging a visit or drop-off.</p>
-              </div>
-              <label class="request-full" for="request-city">Your city or ZIP<input id="request-city" name="city" autocomplete="postal-code" maxlength="100" placeholder="e.g. Fort Myers or 33901" aria-describedby="request-sender-location-help request-sender-location-status"></label>
-              <div class="request-full request-sender-location">
-                <button class="btn btn--outline" id="request-use-my-location" type="button">Use my location</button>
-                <button class="btn btn--outline" id="request-remove-my-location" type="button" hidden>Remove map pin</button>
-                <p class="request-fineprint" id="request-sender-location-help">Shares your device’s location, which may differ from the car’s location. You can remove the pin before sending.</p>
-                <p class="request-status" id="request-sender-location-status" role="status" aria-live="polite"></p>
-                <input type="hidden" id="request-latitude" name="latitude" value="">
-                <input type="hidden" id="request-longitude" name="longitude" value="">
-                <input type="hidden" id="request-maps-link" name="mapsLink" value="">
-              </div>
-              <label class="request-full" for="request-timing">Preferred timing<input id="request-timing" name="timing" maxlength="160" placeholder="e.g. This week; best callback after 3 pm"></label>
+              <div><label for="request-vin">VIN <span>(optional)</span></label>
+                <input id="request-vin" name="vin" type="text" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="request-vin-help">
+                <p class="request-hint" id="request-vin-help" aria-live="polite">17 characters, if known. You can send your request without a valid VIN.</p></div>
+              <fieldset class="request-callback"><legend>Preferred callback <span>(optional)</span></legend>
+                <label for="callback-asap"><input id="callback-asap" name="callback_preference" type="radio" value="asap" checked> ASAP</label>
+                <label for="callback-today"><input id="callback-today" name="callback_preference" type="radio" value="today"> Today</label>
+                <label for="callback-tomorrow"><input id="callback-tomorrow" name="callback_preference" type="radio" value="tomorrow"> Tomorrow</label>
+                <label for="callback-next-week"><input id="callback-next-week" name="callback_preference" type="radio" value="next_week"> Next week</label>
+                <label for="callback-specific"><input id="callback-specific" name="callback_preference" type="radio" value="specific" aria-controls="request-callback-time"> Specific time</label>
+              </fieldset>
+              <div id="request-callback-time" hidden><label for="request-callback-at">Callback date and time <span>(optional, your local time)</span></label>
+                <input id="request-callback-at" name="callback_at" type="datetime-local"></div>
             </div>
-        <label class="request-consent" hidden><input type="checkbox" id="request-sms-consent" name="smsConsent"> <span>Yes, I agree to receive text messages from Perfect Timing Auto Repair LLC at the number provided about my inquiry, estimates, scheduling, and service updates. Optional; consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="/sms-terms">SMS terms</a> · <a href="/privacy-policy">Privacy policy</a>.</span></label>
-
-      <details class="request-voice">
-        <summary>Prefer to describe it in your own voice?</summary>
-        <p>Record up to 60 seconds. You can listen before sending. Include your name, phone number and vehicle details in your repair request above.</p>
-        <div class="request-actions"><button class="btn btn--outline" type="button" id="voice-start">Start recording</button><button class="btn btn--outline" type="button" id="voice-stop" disabled>Stop</button></div>
-        <p id="voice-status" role="status" aria-live="polite"></p>
-        <audio id="voice-preview" controls hidden></audio>
-        <div class="request-actions"><button class="btn btn--outline" type="button" id="voice-send" hidden>Send recording</button><a id="voice-download" class="btn btn--outline" hidden>Download recording</a></div>
-        <p class="request-fineprint">Microphone access starts only when you choose Start recording. If sending is unavailable, download the recording and attach it to your email or text.</p>
-      </details>
-
           </details>
-          <p id="request-direct-consent" class="request-fineprint" hidden>By sending this text, you ask the shop to reply about this repair inquiry. No marketing. <a href="/privacy-policy">Privacy policy</a>.</p>
-          <div class="request-honeypot" aria-hidden="true"><label>Leave this blank<input name="website" toolparamdescription="Spam protection: leave this field empty." tabindex="-1" autocomplete="off"></label></div>
-          <div class="request-primary-actions"><button class="btn btn--primary" id="request-submit" type="submit" disabled>Request Repair</button></div>
-          <p class="request-trust">★ 4.8 from ~70 Google reviews · Appointments are confirmed only when Tony speaks with you by phone</p>
+          <div class="request-primary-actions"><button class="btn btn--primary" id="request-submit" type="submit">Send request</button></div>
           <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
-          <p class="request-fineprint request-privacy">Your details are used to respond to this request. <a href="/privacy-policy">Privacy policy</a>.</p>
-          <details class="request-ai-help"><summary>Can my AI assistant help?</summary><p>If your browser’s AI assistant supports this form, it can help fill it out. Review the details before sending. Nothing is sent automatically.</p></details>
+          <a id="request-email" href="mailto:fixingfortmyers@gmail.com" hidden>Open email draft again</a>
+          <p class="request-phone-footer">Prefer to call? <a href="tel:+12393972048">(239) 397-2048</a></p>
         </form>
-      <div class="request-done" id="request-done" hidden>
-        <h2 id="request-done-heading" tabindex="-1">Your request is in.</h2>
-        <p class="request-done__lead" id="request-done-lead">Your request and callback number are saved. Call the shop about the next step.</p>
-        <p id="request-done-summary" class="request-done__summary" hidden></p>
-        <p id="request-done-note">An AI assistant answers first. An appointment isn’t official until Tony confirms it with you by phone; please wait for confirmation before heading over.</p>
-        <p class="request-fineprint" id="request-done-priority">We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome.</p>
-        <p class="request-fineprint" id="request-done-ref"></p>
-        <p class="request-status" id="request-done-appointment-state" role="status" aria-live="polite" hidden></p>
-        <div class="request-actions">
-          <a class="btn btn--primary" id="request-done-call" href="tel:+12393972048" aria-describedby="request-done-note">Call the shop (239) 397-2048</a>
-          <a class="btn btn--outline" id="request-done-text" href="sms:+12393972048?&amp;body=">Text Tony now</a>
-          <button class="btn btn--outline" type="button" id="request-done-copy">Copy text</button>
-          <label class="btn btn--outline request-done__photo" id="request-done-photo" hidden>Add another photo<input id="request-done-media" type="file" accept="image/*,video/*" multiple></label>
-          <a class="btn btn--outline" href="/">Return home</a>
-        </div>
-        <p class="request-status" id="request-done-status" role="status" aria-live="polite"></p>
-      </div>
-      <div class="request-backup" id="request-backup" hidden>
-        <h3>Your text draft</h3>
-        <p>Edit the message if needed. Then open your texting app and tap Send. This page has not sent your inquiry. If your device cannot open texts or leaves the message blank, copy the message or use email. Add a callback number if you want a call, especially when using email.</p>
-        <label for="request-preview">Message to the shop</label>
-        <textarea id="request-preview" rows="8"></textarea>
-        <div class="request-actions"><a class="btn btn--primary" id="request-text" href="sms:+12393972048">Open text draft to the shop</a><a class="btn btn--outline" id="request-email" href="mailto:fixingfortmyers@gmail.com">Open email draft</a><button class="btn btn--outline" type="button" id="request-copy">Copy request</button></div>
-      </div>
+        <p class="request-hint" id="request-review-note">An AI assistant reviews your request, then Tony calls back to confirm.</p>
+        <p class="request-oil-offer" id="request-oil-offer" hidden>
+          <strong>LIQUI MOLY prepay offer: 50% off oil-change labor.</strong>
+          The discount applies when your shop-approved correct-spec LIQUI MOLY oil is purchased and paid for in advance.
+          Oil, filter, taxes and other work are not discounted. The shop confirms fitment, itemized pricing, payment and your appointment before ordering or service.
+          No payment is taken here.
+        </p>
+        <div class="request-done" id="request-done" role="status" hidden><h2 id="request-done-heading" tabindex="-1"></h2></div>
 
 <noscript><p>To request a repair, <a href="tel:+12393972048">call (239) 397-2048</a> or <a href="mailto:fixingfortmyers@gmail.com">email fixingfortmyers@gmail.com</a>. The online request form requires JavaScript.</p></noscript>
       </div>
@@ -950,5 +826,5 @@
 
 
 
-<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: call the shop (an AI assistant answers first) or request a repair"><a href="tel:+12393972048">Call the shop</a><a href="#contact">Request a repair</a></div><script src="/repair-dialog.js?v=20261016-hero-appointment" defer></script><script src="/contact-config.js?v=20261012-audit" defer></script><script src="/repair-form-calm.js?v=20261022-webmcp-review" defer></script><script src="/site.js?v=20261025-injector" defer></script></body>
+<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: call the shop (an AI assistant answers first) or request a repair"><a href="tel:+12393972048">Call the shop</a><a href="#contact">Request a repair</a></div><script src="/repair-dialog.js?v=20261016-hero-appointment" defer></script><script src="/contact-config.js?v=20261012-audit" defer></script><script src="/request-form-v1.js?v=20261025-intake-v1" defer></script><script src="/site.js?v=20261025-intake-v1" defer></script></body>
 </html>

@@ -196,7 +196,7 @@
   }
   byId('partsForm')?.addEventListener('input', () => reportMetric('parts_quote_started'), {once:true});
   const form = byId('bookingForm');
-  if (!form) return;
+  if (!form || form.dataset.intakeVersion === '1') return;
   window.PT_REPAIR_CONTEXT.applyService(serviceKey);
   const problemField = byId('request-details');
   if (problemField) problemField.addEventListener('input',()=>problemField.setCustomValidity(problemField.maxLength>0&&problemField.value.length>problemField.maxLength?'Your notes are preserved. Please shorten them to fit the form before sending.':''));
@@ -1108,7 +1108,7 @@
   const clientId = String(window.PT_CONTACT_CONFIG?.googleClientId || '').trim();
   const form = document.getElementById('bookingForm');
   const anchor = document.getElementById('request-instructions');
-  if (!/^[\w-]+\.apps\.googleusercontent\.com$/.test(clientId) || !form || !anchor) return;
+  if (!/^[\w-]+\.apps\.googleusercontent\.com$/.test(clientId) || !form || form.dataset.intakeVersion === '1' || !anchor) return;
   const box = document.createElement('div');
   box.className = 'request-fineprint request-google';
   box.id = 'request-google';
