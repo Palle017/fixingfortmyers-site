@@ -2,6 +2,9 @@
 
 Merged pull requests to `main`, newest first. Dates are America/New_York.
 
+## 2026-10-25
+- Put the homepage repair scope, Google rating and primary repair-request action before service browsing, keeping the existing appointment picker and one intake form. Local preview now serves the existing WOFF2 fonts for accurate visual checks.
+
 ## 2026-10-19
 - Call button label: the main call button on /workshop and /engine-repair-fort-myers now reads "Call the shop (239) 397-2048", with the AI disclosure as small text directly under it (this PR).
 - Owner Desk: review source indicators and sync receipt display (#91).

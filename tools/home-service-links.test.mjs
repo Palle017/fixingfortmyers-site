@@ -1,4 +1,4 @@
-// Homepage hero: seven service links sit directly under the H1.
+// Homepage hero: a clear repair request precedes the service browsing links.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -17,13 +17,17 @@ const links = [
   ['Detailing', 'Car detailing in Fort Myers', '/detailing-fort-myers'],
 ];
 
-test('homepage H1 is followed by seven service links to real pages', () => {
+test('homepage keeps all seven service links after its primary repair request', () => {
   const html = read('index.html');
   assert.match(html, /<h1 id="home-title">Car trouble has terrible timing\. <br><span>Luckily, you’ve got Perfect Timing\.<\/span><\/h1>/);
   const document = new JSDOM(html).window.document;
   assert.equal(document.title, 'Auto Repair in Fort Myers, FL | Engine, Transmission & Diesel | Perfect Timing');
   const heading = document.getElementById('home-title');
-  const row = heading.nextElementSibling;
+  const row = document.querySelector('.home-start__services');
+  const primary = document.querySelector('.home-start__actions .btn--primary');
+  assert.equal(primary?.getAttribute('href'), '#contact');
+  assert.ok(heading.compareDocumentPosition(primary) & 4, 'heading precedes the repair request');
+  assert.ok(primary.compareDocumentPosition(row) & 4, 'repair request precedes secondary service navigation');
   assert.equal(row?.classList.contains('home-start__services'), true);
   assert.equal(row.querySelectorAll('a[href^="tel:"], a[href^="sms:"], button').length, 0);
   assert.doesNotMatch(row.textContent, /13037|Second St/);
