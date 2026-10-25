@@ -25,7 +25,7 @@ const provider=async({messages})=>{
 };
 const app=createLeadServers({dataDir,origins:[origin],chat:{provider},alerts:{enabled:false},notifyChannels:[],customerTextAdapter:null,deskDigest:null,alertWorker:false});
 const ports=await app.start(0,0);
-const types={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'application/javascript','.webp':'image/webp','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.ico':'image/x-icon','.mp4':'video/mp4','.xml':'application/xml','.txt':'text/plain'};
+const types={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'application/javascript','.webp':'image/webp','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.ico':'image/x-icon','.mp4':'video/mp4','.xml':'application/xml','.txt':'text/plain','.woff2':'font/woff2'};
 http.createServer(async(req,res)=>{
   const url=new URL(req.url,origin);
   if(url.pathname==='/healthz'||url.pathname.startsWith('/hooks/')||url.pathname.startsWith('/chat/')){
