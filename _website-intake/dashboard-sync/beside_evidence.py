@@ -205,18 +205,45 @@ def qualifier_summary(item, observed_at):
     return None
 
 
+# Review candidates, never qualification or spam scores. Year/problem are optional
+# in the current receptionist scope. Keep the words event-local so a contact
+# header or an old saved vehicle cannot make a new blank call substantive.
+SPARSE_CONTACT = re.compile(
+    r"\b(?:my name is\s+[a-z][a-z'-]{1,39}|(?:please\s+)?call me(?:\s+back)?|"
+    r"(?:you can|please)\s+(?:call|reach) me|I(?:'m| am)\s+(?:available|free)\s+(?:after|before|at|on)|"
+    r"my (?:car|vehicle|truck|model) is\s+[a-z0-9][a-z0-9\'-]*)\b", re.I)
+CONTACT_LABEL = re.compile(r'^\s*(?:name|car|vehicle|model|callback(?: time)?|best time to call)\s*:\s*\S+', re.I | re.M)
+CONTACT_PROMPT = re.compile(r"\b(?:please text|text (?:me|us|your)|for example|your (?:name|car|vehicle)|what(?:'s| is) your)\b", re.I)
+
+
+def sparse_contact_candidate(event):
+    # Unknown-direction flattened text is only a review candidate. Never infer
+    # that it is inbound, current, a real lead, or an owner-approved reopening.
+    for line in str(event.get('text') or '').splitlines():
+        if is_shop_reply(line) or CONTACT_PROMPT.search(line):
+            continue
+        if SPARSE_CONTACT.search(line) or CONTACT_LABEL.search(line):
+            return True
+    return False
+
+
 def review_needed(item, observed_at, *, since=None):
     """Fixed metadata for local review, never an automatic classification change."""
     provenance = item.get('provenance') or rendered_provenance(item, observed_at)
     previous = _instant(since)
     for event in provenance['events']:
-        if not event['repair_candidate'] or event['direction'] == 'outbound':
+        repair = event['repair_candidate']
+        contact = sparse_contact_candidate(event)
+        if not (repair or contact) or event['direction'] == 'outbound':
             continue
         instant = _instant(event['at'])
         if previous and instant and instant <= previous:
             continue
         reason = ('changed_inbound_repair_evidence' if event['direction'] == 'inbound' else
                   'changed_unattributed_repair_context' if instant else 'changed_undated_repair_context')
+        if not repair:
+            reason = ('changed_inbound_contact_evidence' if event['direction'] == 'inbound' else
+                      'changed_unattributed_contact_context' if instant else 'changed_undated_contact_context')
         return {'requires_review': True, 'reason': reason, 'event_at': event['at'],
                 'direction': event['direction'], 'basis': 'rendered_source_not_owner_qualification'}
     return {'requires_review': False, 'reason': 'no_new_substantive_repair_evidence',
