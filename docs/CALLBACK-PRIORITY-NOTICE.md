@@ -28,28 +28,46 @@ SMS wording (within the existing acknowledgment, maximum 320 characters):
 
 SMS space is reserved for this explanation and existing safety/opt-out information before optional vehicle/problem repetition. This code changes only future enqueue content; it does not rewrite queued messages or broadcast to old leads. The copy in this repository is not proof that a separately deployed intake service has been updated.
 
-## Exact proposed phone and Beside configuration
+## Phone and Beside scope — October 25, 2026 correction
 
-Target: the existing Perfect Timing business line **(239) 397-2048**, in the existing Beside business mailbox. Do not change routing, number ownership, forwarding, receptionist rules, access or credentials.
+The owner reports that the live receptionist asks for **name and car model only**.
+A preferred callback time is optional. Do not ask repair-issue questions, offer
+appointments, or start a chat flow. This phone-specific scope supersedes the
+earlier proposed phone scripts in this document; those scripts must not be
+applied from this runbook.
 
-The actual provider control names and current setting values have not been inspected. The table gives exact proposed values, not invented API field names.
+This is an owner-reported setting, not an independent provider readback. The
+actual provider control names and current setting values have not been inspected
+in this documentation correction. No greeting, voicemail, automatic reply,
+routing, number ownership, forwarding, access or credential was changed.
 
-| Existing setting to review | Exact proposed text |
+| Phone surface | Scope and evidence |
 | --- | --- |
-| Main phone / receptionist greeting | Thanks for calling Perfect Timing Auto Repair. We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome. |
-| Voicemail greeting | You have reached Perfect Timing Auto Repair. We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome. Please leave your message after the tone. |
-| Existing automatic inquiry acknowledgment / missed-call text | We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome. |
+| Main phone / receptionist greeting | Name and car model only; callback time optional. Do not add issue questions or appointment collection. Owner-reported current scope; no new script proposed. |
+| Voicemail greeting | No independently verified current text and no replacement authorized by this document. Do not apply the superseded repair-description script. |
+| Existing automatic inquiry acknowledgment / missed-call text | No independently verified current text and no replacement authorized by this document. Keep this separate from the website acknowledgment source above. |
 
-If a provider field has a shorter verified limit, use this condensed value without adding a response-time promise:
+The phone scope does not restrict the website form: name and callback number
+remain required for cloud submission, while vehicle, symptoms and other details
+remain optional. Partial website inquiries are welcome. Keep the existing
+website booking journey: any requested time is tentative, and only Tony's actual
+verbal confirmation by phone makes an appointment official. The receptionist
+does not confirm appointments.
 
-> We receive a lot of spam. Name, callback number, repair details and a good callback time help us prepare and prioritize callbacks. Vehicle details help, but send what you know; partial information is welcome.
+## Separate rollout states and verification
 
-## Remaining rollout and verification
+- **Website copy:** PR #160 merged October 24. The notice is present in the
+  public homepage and footer HTML checked October 25.
+- **Website intake SMS:** the acknowledgment source is version controlled here.
+  A website merge does not establish deployment of the separate intake service,
+  notification delivery, or changes to already queued messages.
+- **Phone/Beside:** scope above is owner-reported. Provider readback remains
+  unverified. The older scripts were **proposed, not applied** by that source
+  change and are now superseded; do not use them as live configuration evidence.
 
-1. Lead Mechanic reviews and merges the source PR under the existing workflow. Record the exact reviewed revision and passing tests.
-2. Publish the website and applicable intake acknowledgment source through their existing approved release routes. A website release does not automatically deploy a separate intake service.
-3. An authorized operator opens the existing business-line greeting, voicemail and automatic-reply controls, checks the actual field limits and current routing, then applies only the approved copy above. Preserve the existing recipients, consent, frequency limits and emergency handling. Do not send this notice to old leads.
-4. Read back each saved value. Use an approved synthetic inquiry or operator call for verification; record the source revision/configuration receipt and what was actually heard or received. Do not contact a customer as a test.
-5. Keep website, separately deployed intake SMS and phone/Beside rollout states separate. Until those receipts exist, phone/configuration changes are **proposed, not applied**. Do not infer rollout from a merged PR.
-
-No Lead Mechanic browser-focus check, phone setting write, message send, service restart, DNS change or deployment is included in this patch.
+For future authorized work, record the exact source revision or provider
+readback for the surface actually changed. Any provider-setting change or
+synthetic operator call needs its own scoped authorization; this document is
+not a command to perform it. Preserve consent, frequency limits, routing and
+emergency handling. Do not send the notice to old leads or contact a customer as
+a test. No response-time service level is established here.
