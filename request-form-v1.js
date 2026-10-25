@@ -93,7 +93,6 @@
       key: crypto.randomUUID()
     };
     const current = attempt;
-    track('form_submit_attempt');
     if (!endpoint) {
       const href = 'mailto:fixingfortmyers@gmail.com?subject=' + encodeURIComponent('Repair callback request') + '&body=' + encodeURIComponent(JSON.stringify(current.data, null, 2));
       $('request-email').href = href;
@@ -110,6 +109,7 @@
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
+      track('form_submit_attempt');
       const response = await fetch(endpoint, {
         method:'POST', headers:{'Content-Type':'application/json', 'Idempotency-Key':current.key},
         body:JSON.stringify(current.data), credentials:'omit', referrerPolicy:'no-referrer', signal:controller.signal

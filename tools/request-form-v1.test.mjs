@@ -107,8 +107,11 @@ test('US phone constraint accepts exactly ten digits or +1 plus ten digits', asy
 });
 
 test('valid submission sends exactly the v1 JSON contract and shows only the confirmation text', async t=>{
-  const x=setup(t);x.fill();x.send();await settle();
+  const x=setup(t),events=[];
+  x.w.PT_TRACK=event=>events.push(event);
+  x.fill();x.send();await settle();
   assert.equal(x.calls.length,1);
+  assert.equal(events.filter(event=>event==='form_submit_attempt').length,1);
   const call=x.calls[0], data=call.body;
   assert.equal(call.url,'https://receiver.invalid/request-v1');
   assert.equal(call.method,'POST');
@@ -186,7 +189,9 @@ test('editing a failed request creates a new idempotency key and the next reques
 });
 
 test('mailto fallback prepares encoded subject and exact JSON body without claiming receipt or sending HTTP', async t=>{
-  const x=setup(t,{endpoint:''});x.fill();x.preference('tomorrow');x.send();await settle();
+  const x=setup(t,{endpoint:''}),events=[];
+  x.w.PT_TRACK=event=>events.push(event);
+  x.fill();x.preference('tomorrow');x.send();await settle();
   const mail=new URL(x.d.getElementById('request-email').href);
   assert.equal(mail.protocol,'mailto:');assert.equal(mail.pathname,'fixingfortmyers@gmail.com');
   assert.equal(mail.searchParams.get('subject'),'Repair callback request');
@@ -194,6 +199,8 @@ test('mailto fallback prepares encoded subject and exact JSON body without claim
   assert.deepEqual(Object.keys(data).sort(),keys);assert.equal(data.callback_preference,'tomorrow');
   assert.equal(x.calls.length,0);assert.equal(x.form.hidden,false);assert.equal(x.d.getElementById('request-done').hidden,true);
   assert.equal(x.d.getElementById('request-submit').disabled,false);assert.match(x.d.getElementById('request-status').textContent,/has not been sent/);
+  assert.equal(events.includes('form_submit_attempt'),false,'an email draft is not an HTTP submission attempt');
+  assert.equal(events.includes('form_submit_success'),false,'draft creation does not confirm delivery');
 });
 
 test('editing fields or callback choice invalidates the previous mailto draft and retry rebuilds it', async t=>{

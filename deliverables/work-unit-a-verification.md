@@ -1,5 +1,7 @@
 # Work Unit A verification
 
+Independent review correction: preparing the mailto fallback must not emit an HTTP submission-attempt event. The regression reproduced a false attempt with zero request calls; the controller now emits that event only when sending to a configured receiver. Focused checks cover both the email-draft zero-attempt path and one real mocked HTTP attempt.
+
 Replaces the previous public callback form baseline, per Raj's October 25, 2026 instruction. Branch: `feat/intake-form`.
 
 - Both homepage and dedicated request page use one form with required name, callback number and vehicle. Native optional details contain VIN and callback radios; Specific time alone reveals the optional local datetime control. No service, location, symptoms, driving-status, service-time dropdown or hidden extra collection fields remain in the form. Removed the old hero appointment picker because its values would otherwise be discarded.
