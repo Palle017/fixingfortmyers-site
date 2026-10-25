@@ -16,18 +16,21 @@ SHOP_TEXTS = (
     "Thanks for calling Perfect Timing Auto Repair. Please text your name, your vehicle's year, make and model, and a short description of the issue so Tony can prepare before calling you back.",
     "Hey, it's Tony at Perfect Timing. Text me your name, your vehicle's year, make and model, and what's going on with it. I'll give you a call back when I'm free.",
     "Hey, it's Tony at Perfect Timing. Text me your name and your vehicle's year, make and model. I'll give you a call back as soon as I can.",
+    "Thanks for calling Perfect Timing. Please share your name and car model so Tony can be better prepared when he calls or texts back. Feel free to include a good time to reach you; otherwise, he'll call as soon as he gets a minute.",
+    "Thanks, that helps Tony be prepared.",
 )
+SHOP_SIGNATURE = re.compile(r'(?:[\u2013\u2014-]\s*)?(?:Tony\s*-\s*Perfect Timing|Perfect Timing Reception)')
 
 
 def _text(value):
-    return ' '.join(str(value or '').replace('\u2019', "'").split())
+    return ' '.join(str(value or '').replace('\u2019', "'").replace('\u2018', "'").split())
 
 
 def is_shop_reply(value):
     text = _text(value)
-    if re.fullmatch(r'(?:\u2013|-)?\s*Tony\s*-\s*Perfect Timing', text):
+    if SHOP_SIGNATURE.fullmatch(text):
         return True
-    text = re.sub(r'\s*(?:\u2013|-)?\s*Tony\s*-\s*Perfect Timing$', '', text).strip()
+    text = re.sub(r'\s+' + SHOP_SIGNATURE.pattern + r'$', '', text).strip()
     return text in SHOP_TEXTS
 
 
