@@ -213,11 +213,11 @@ class _ShellPage:
     def title(self):
         return 'Chats - Synthetic Shop - Beside'
 
-    def query_selector(self, selector):
+    def query_selector_all(self, selector):
         self.polls += 1
         self.selectors.append(selector)
         self.visible = self.polls >= self.appear_at
-        return object() if self.visible else None
+        return [type('Link',(),{'evaluate':lambda self,script:'https://app.beside.com/chats/'+A})()] if self.visible else []
 
     def evaluate(self, script, arg=None):
         if script == L.PAGE_NAMES_JS:
@@ -264,7 +264,7 @@ class InventoryRenderWait(unittest.TestCase):
         self.assertEqual(outcome['result']['conversations_read'], 3)
         self.assertEqual([row['conversation_id'] for row in outcome['saved']['records']],
                          [A, 'prv_01HZZZZZZZZZZZZZZZZZZZZZZB', 'prv_01HZZZZZZZZZZZZZZZZZZZZZZC'])
-        self.assertEqual(page.selectors[0], 'a[href^="https://app.beside.com/chats/prv_"]')
+        self.assertEqual(page.selectors[0], 'a[href*="/chats/prv_"]')
         self.assertGreaterEqual(page.polls, 5)
         self.assertTrue(page.visible)
         self.assertGreaterEqual(page.dom_reads, 1)
@@ -278,7 +278,7 @@ class InventoryRenderWait(unittest.TestCase):
         self.assertGreaterEqual(outcome['elapsed'], 10)
         self.assertLess(outcome['elapsed'], 10.5)
         self.assertGreaterEqual(page.polls, 2)
-        self.assertEqual(page.selectors[0], 'a[href^="https://app.beside.com/chats/prv_"]')
+        self.assertEqual(page.selectors[0], 'a[href*="/chats/prv_"]')
         import beside_attempt
         self.assertEqual(beside_attempt.source_reason(outcome['error']), 'source_read_nonzero')
         with self.assertRaisesRegex(R.ScanError, 'CAPTURE_INCOMPLETE'):
