@@ -351,7 +351,7 @@
 .penguin-ac{padding:clamp(24px,5vw,56px) 0}.penguin-ac__card{overflow:hidden;border:1px solid #23c6d0;border-radius:18px;background:#10232a;color:#f5f9fa}.penguin-ac__image{display:block;width:100%;height:auto}.penguin-ac__copy{padding:clamp(20px,4vw,36px)}.penguin-ac h2{color:#fff;font-size:clamp(26px,3.6vw,42px);line-height:1.15;margin:0 0 16px}.penguin-ac p{line-height:1.65;margin:12px 0}.penguin-ac__actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}.penguin-ac__actions .btn{white-space:normal;text-align:center}.penguin-ac__note{font-size:14px;color:#c9dce0}
 </style><link rel="stylesheet" href="/booking-preferences.css?v=20261016-pencil-24x7">
 <link rel="stylesheet" href="/repair-campaigns.css?v=20261017" media="all">
-  <link rel="stylesheet" href="/repair-form-calm.css?v=20261021-text-tony">
+  <link rel="stylesheet" href="/repair-form-calm.css?v=20261025-call-handoff">
 </head>
 <body class="home-clean">
 
@@ -576,16 +576,16 @@
         </form>
       <div class="request-done" id="request-done" hidden>
         <h2 id="request-done-heading" tabindex="-1">Your request is in.</h2>
-        <p class="request-done__lead" id="request-done-lead">Send Tony a quick text so he has your number.</p>
+        <p class="request-done__lead" id="request-done-lead">Your request and callback number are saved. Call the shop about the next step.</p>
         <p id="request-done-summary" class="request-done__summary" hidden></p>
-        <p id="request-done-note">If you’re stuck or it can’t wait, call (239) 397-2048. Any time you asked for is penciled in only; it isn’t official until Tony confirms it with you by phone, so please wait for his call before heading over.</p>
+        <p id="request-done-note">An AI assistant answers first. An appointment isn’t official until Tony confirms it with you by phone; please wait for confirmation before heading over.</p>
         <p class="request-fineprint" id="request-done-priority">We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome.</p>
         <p class="request-fineprint" id="request-done-ref"></p>
         <p class="request-status" id="request-done-appointment-state" role="status" aria-live="polite" hidden></p>
         <div class="request-actions">
-          <a class="btn btn--primary" id="request-done-text" href="sms:+12393972048?&amp;body=">Text Tony now</a>
+          <a class="btn btn--primary" id="request-done-call" href="tel:+12393972048" aria-describedby="request-done-note">Call the shop (239) 397-2048</a>
+          <a class="btn btn--outline" id="request-done-text" href="sms:+12393972048?&amp;body=">Text Tony now</a>
           <button class="btn btn--outline" type="button" id="request-done-copy">Copy text</button>
-          <a class="btn btn--outline" id="request-done-call" href="tel:+12393972048">Call Tony about your request (239) 397-2048</a>
           <label class="btn btn--outline request-done__photo" id="request-done-photo" hidden>Add another photo<input id="request-done-media" type="file" accept="image/*,video/*" multiple></label>
           <a class="btn btn--outline" href="/">Return home</a>
         </div>
@@ -939,5 +939,5 @@
 
 
 
-<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: call the shop (an AI assistant answers first) or request a repair"><a href="tel:+12393972048">Call the shop</a><a href="#contact">Request a repair</a></div><script src="/repair-dialog.js?v=20261016-hero-appointment" defer></script><script src="/contact-config.js?v=20261012-audit" defer></script><script src="/repair-form-calm.js?v=20261022-webmcp-review" defer></script><script src="/site.js?v=20261022-webmcp-review" defer></script></body>
+<div class="mobile-contact-bar" role="navigation" aria-label="Repair help: call the shop (an AI assistant answers first) or request a repair"><a href="tel:+12393972048">Call the shop</a><a href="#contact">Request a repair</a></div><script src="/repair-dialog.js?v=20261016-hero-appointment" defer></script><script src="/contact-config.js?v=20261012-audit" defer></script><script src="/repair-form-calm.js?v=20261022-webmcp-review" defer></script><script src="/site.js?v=20261025-call-handoff" defer></script></body>
 </html>

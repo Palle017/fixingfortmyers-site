@@ -744,9 +744,20 @@
     const heading = byId('request-done-heading');
     const lead = byId('request-done-lead');
     const note = byId('request-done-note');
+    const callAction = byId('request-done-call');
+    const textAction = byId('request-done-text');
+    // Keep DOM/tab order aligned with the next step; failed saves still lead with text recovery.
+    if (callAction && textAction) {
+      const primary = saved ? callAction : textAction;
+      primary.parentElement.prepend(primary);
+      for (const action of [callAction, textAction]) {
+        action.classList.toggle('btn--primary', action === primary);
+        action.classList.toggle('btn--outline', action !== primary);
+      }
+    }
     if (saved) {
       if (heading) heading.textContent = 'Your request is in.';
-      if (lead) lead.textContent = 'Send Tony a quick text so he has your number.';
+      if (lead) lead.textContent = 'Your request and callback number are saved. Call the shop about the next step.';
       if (note) note.hidden = false;
     } else {
       if (heading) heading.textContent = "The online request didn't go through.";
@@ -815,8 +826,8 @@
     byId('request-done-ref').textContent = `Reference: ${result.id}`;
     const confirmCall = byId('request-done-call');
     if (confirmCall) confirmCall.textContent = requestPayload?.preferredDate && requestPayload?.preferredTime
-      ? 'Call Tony to confirm (239) 397-2048'
-      : 'Call Tony about your request (239) 397-2048';
+      ? 'Call the shop to confirm (239) 397-2048'
+      : 'Call the shop (239) 397-2048';
     const failed = sentMedia.total - sentMedia.sent;
     byId('request-done-status').textContent = failed
       ? `${failed} photo/video file(s) did not go through. Choose Add another photo to try again, or text them to (239) 397-2048.`

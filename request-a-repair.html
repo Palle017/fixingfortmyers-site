@@ -23,7 +23,7 @@
 
 
 
-  <link rel="stylesheet" href="/repair-form-calm.css?v=20261021-text-tony">
+  <link rel="stylesheet" href="/repair-form-calm.css?v=20261025-call-handoff">
 </head>
 <body class="home-clean" data-repair-popup>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -201,16 +201,16 @@
         </form>
       <div class="request-done" id="request-done" hidden>
         <h2 id="request-done-heading" tabindex="-1">Your request is in.</h2>
-        <p class="request-done__lead" id="request-done-lead">Send Tony a quick text so he has your number.</p>
+        <p class="request-done__lead" id="request-done-lead">Your request and callback number are saved. Call the shop about the next step.</p>
         <p id="request-done-summary" class="request-done__summary" hidden></p>
-        <p id="request-done-note">If you’re stuck or it can’t wait, call (239) 397-2048. Any time you asked for is penciled in only; it isn’t official until Tony confirms it with you by phone, so please wait for his call before heading over.</p>
+        <p id="request-done-note">An AI assistant answers first. An appointment isn’t official until Tony confirms it with you by phone; please wait for confirmation before heading over.</p>
         <p class="request-fineprint" id="request-done-priority">We receive a lot of spam. Your name, callback number and a short repair description help us know who to contact. Vehicle details and a good callback time help us prepare, so requests with useful details are prioritized. Send what you know; partial information is welcome.</p>
         <p class="request-fineprint" id="request-done-ref"></p>
         <p class="request-status" id="request-done-appointment-state" role="status" aria-live="polite" hidden></p>
         <div class="request-actions">
-          <a class="btn btn--primary" id="request-done-text" href="sms:+12393972048?&amp;body=">Text Tony now</a>
+          <a class="btn btn--primary" id="request-done-call" href="tel:+12393972048" aria-describedby="request-done-note">Call the shop (239) 397-2048</a>
+          <a class="btn btn--outline" id="request-done-text" href="sms:+12393972048?&amp;body=">Text Tony now</a>
           <button class="btn btn--outline" type="button" id="request-done-copy">Copy text</button>
-          <a class="btn btn--outline" id="request-done-call" href="tel:+12393972048">Call Tony about your request (239) 397-2048</a>
           <label class="btn btn--outline request-done__photo" id="request-done-photo" hidden>Add another photo<input id="request-done-media" type="file" accept="image/*,video/*" multiple></label>
           <a class="btn btn--outline" href="/">Return home</a>
         </div>
@@ -296,6 +296,6 @@
   <p class="hours-disclaimer" id="hours-disclaimer"><strong>Repair requests 24/7</strong><br>Repair requests and appointment requests are taken 24/7, including nights, weekends and holidays, by form, call or text. Shop repairs at Tony's workshop, mobile repairs from his equipped service van, and pickup are all by appointment; requested times are penciled in until Tony confirms by phone. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop and the service van cannot accommodate every job. An immediate reply or visit is not guaranteed. We receive a lot of spam. Name, callback number, repair details and a good callback time help us prepare and prioritize callbacks. Vehicle details help, but send what you know; partial information is welcome.</p>
 </footer>
   <script src="/repair-dialog.js?v=20261011-popup" defer></script>
-  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/repair-form-calm.js?v=20261022-webmcp-review" defer></script><script src="/site.js?v=20261022-webmcp-review" defer></script>
+  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/repair-form-calm.js?v=20261022-webmcp-review" defer></script><script src="/site.js?v=20261025-call-handoff" defer></script>
 </body>
 </html>

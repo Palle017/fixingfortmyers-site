@@ -84,10 +84,17 @@ test('success replaces the form in place with the receipt and three useful next 
   assert.equal(done.hidden, false);
   assert.equal(x.d.getElementById('bookingForm').hidden, true);
   assert.match(done.querySelector('h2').textContent, /Your request is in/);
-  assert.match(done.textContent, /Send Tony a quick text so he has your number/);
+  assert.match(done.textContent, /Your request and callback number are saved/);
   assert.doesNotMatch(done.querySelector('#request-done-lead').textContent, /!/);
   assert.match(done.textContent, /isn’t official until Tony confirms it with you by phone/, 'saved receipt is not a booking');
+  const callLink = x.d.getElementById('request-done-call');
+  assert.equal(done.querySelector('.request-actions').firstElementChild, callLink);
+  assert.equal(callLink.classList.contains('btn--primary'), true);
+  assert.equal(callLink.getAttribute('href'), 'tel:+12393972048');
+  assert.match(x.d.getElementById(callLink.getAttribute('aria-describedby')).textContent, /AI assistant answers first/);
+  assert.doesNotMatch(x.d.getElementById('request-done-note').textContent, /penciled in/, 'saved lead alone is not calendar placement');
   const textLink = x.d.getElementById('request-done-text');
+  assert.equal(textLink.classList.contains('btn--outline'), true);
   assert.equal(textLink.textContent, 'Text Tony now');
   assert.ok(textLink.getAttribute('href').startsWith('sms:+12393972048?&body='));
   const textBody = decodeURIComponent(textLink.getAttribute('href').slice('sms:+12393972048?&body='.length));
@@ -127,7 +134,7 @@ test('year, make, model and the problem line prefill Text Tony now after the lea
   assert.equal(body, `Hi, I filled out the repair form on your website. This is Maria Synthetic texting about my 2012 Ford F-150: ${issue}. Clicks when I turn the key. Reference: ${id}.`);
   assert.doesNotMatch(body, /13037|Second St|!/);
   assert.match(x.d.getElementById('request-done').textContent, /Your request is in/);
-  assert.match(x.d.getElementById('request-done-lead').textContent, /Send Tony a quick text so he has your number/);
+  assert.match(x.d.getElementById('request-done-lead').textContent, /Your request and callback number are saved/);
 });
 
 test('photo button stays hidden when the intake cannot take uploads', async t => {
@@ -228,7 +235,13 @@ test('background retries stop after two attempts and leave the manual fallbacks'
   assert.match(x.d.getElementById('request-done-heading').textContent, /The online request didn't go through/);
   assert.match(x.d.getElementById('request-done-lead').textContent, /A text is the way to reach Tony/);
   assert.doesNotMatch(x.d.getElementById('request-done-lead').textContent, /!/);
-  const failedHref = x.d.getElementById('request-done-text').getAttribute('href');
+  const fallback = x.d.getElementById('request-done-text');
+  assert.equal(x.d.querySelector('#request-done .request-actions').firstElementChild, fallback);
+  assert.equal(fallback.classList.contains('btn--primary'), true);
+  assert.equal(x.d.getElementById('request-done-call').classList.contains('btn--outline'), true);
+  assert.equal(x.d.activeElement, fallback);
+  assert.equal(x.d.getElementById('request-done-note').hidden, true);
+  const failedHref = fallback.getAttribute('href');
   assert.ok(failedHref.startsWith('sms:+12393972048?&body='));
   const failedBody = decodeURIComponent(failedHref.slice('sms:+12393972048?&body='.length));
   assert.equal(failedBody, 'Hi, I filled out the repair form on your website. This is Synthetic Customer texting about my 2015 BMW 335i: Rough idle and misfire when cold.');
@@ -248,7 +261,8 @@ test('editing during a pending retry cancels it, so changed details are never se
 });
 
 test('a clear rejection shows the intake’s message, keeps the entries and does not retry', async t => {
-  const x = setup(t, {handler:() => response({ok:false, error:'Please enter a valid phone number.'}, 400)});
+  let accepted = false;
+  const x = setup(t, {handler:() => accepted ? saved() : response({ok:false, error:'Please enter a valid phone number.'}, 400)});
   await settle(); x.fill(); x.send(); await settle();
   assert.match(x.statusText(), /^Please enter a valid phone number\. Your details are still here/);
   assert.equal(x.timers.length, 0);
@@ -258,6 +272,13 @@ test('a clear rejection shows the intake’s message, keeps the entries and does
   assert.equal(x.d.getElementById('request-done').hidden, false);
   assert.match(x.d.getElementById('request-done-lead').textContent, /A text is the way to reach Tony/);
   assert.doesNotMatch(decodeURIComponent(x.d.getElementById('request-done-text').getAttribute('href')), /Reference:/);
+  accepted = true; x.send(); await settle();
+  assert.equal(x.d.querySelector('#request-done .request-actions').firstElementChild.id, 'request-done-call');
+  assert.equal(x.d.getElementById('request-done-call').classList.contains('btn--primary'), true);
+  assert.equal(x.d.getElementById('request-done-text').classList.contains('btn--outline'), true);
+  assert.equal(x.d.getElementById('request-done-note').hidden, false);
+  assert.equal(x.d.activeElement.id, 'request-done-heading');
+  assert.equal(x.events('form_submit_success').length, 1);
 });
 
 test('double taps while sending create one lead', async t => {
@@ -335,7 +356,7 @@ test('preferred time and itemized parts-payment request reach the existing intak
   assert.equal(payload.appointmentPencilAcknowledged,true);
   assert.match(payload.details,/Customer requests a secure parts payment link after quote\/fitment approval/);
   assert.match(x.d.getElementById('request-done').textContent,/isn’t official until Tony confirms it with you by phone/);
-  assert.match(x.d.getElementById('request-done-call').textContent,/Call Tony to confirm/);
+  assert.match(x.d.getElementById('request-done-call').textContent,/Call the shop to confirm/);
   assert.equal(Object.hasOwn(payload,'cardNumber'),false);
   assert.equal(Object.hasOwn(payload,'paymentAmount'),false);
 });
