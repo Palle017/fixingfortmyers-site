@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import uuid
+from beside_capture_diagnostics import CODES as CAPTURE_CODES, parse_code
 
 SERVER_CODES = frozenset({
     'INVALID_ACTION', 'INVALID_REQUEST', 'CLAIM_CONFLICT', 'REFRESH_STATE_CHANGED',
@@ -33,7 +34,7 @@ EXCEPTION_TYPES = frozenset({
     'OSError', 'PermissionError', 'FileNotFoundError', 'ValueError', 'TypeError',
     'KeyError', 'AttributeError', 'ScanError', 'RuntimeError',
 })
-SOURCE_REASONS = frozenset({
+SOURCE_REASONS = CAPTURE_CODES | frozenset({
     'no_observation', 'observe_failed', 'page_not_on_thread', 'capture_error',
     'ambiguous_visible_contact_identity', 'capture_identity_mismatch',
     'capture_identity_unverified', 'capture_timezone_missing', 'capture_too_large',
@@ -68,6 +69,8 @@ def safe_error(value):
 
 
 def source_reason(stderr):
+    code = parse_code(stderr)
+    if code: return code
     # Recognize fixed validator reasons, not arbitrary stderr or exception messages.
     match = re.search(r'could not be verified \(([a-z_]+)\)', stderr or '')
     if match and match.group(1) in SOURCE_REASONS:
