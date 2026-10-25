@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="560" viewBox="0 0 800 560" role="img" aria-labelledby="title description">
+<title id="title">Injector-cleaning equipment illustration</title>
+<desc id="description">An original unbranded illustration of a workshop cleaning unit, hose and injector. Representative equipment, not a photograph of the shop's machines or a specification of their capabilities.</desc>
+<defs><linearGradient id="body" x2="1" y2="1"><stop stop-color="#384450"/><stop offset="1" stop-color="#17212b"/></linearGradient><linearGradient id="metal" x2="1"><stop stop-color="#a0aeb8"/><stop offset=".5" stop-color="#dae1e6"/><stop offset="1" stop-color="#677886"/></linearGradient></defs>
+<rect width="800" height="560" rx="28" fill="#11181f"/>
+<path d="M70 450H730" stroke="#36434f" stroke-width="3"/>
+<ellipse cx="385" cy="462" rx="245" ry="22" fill="#080d12"/>
+<rect x="172" y="139" width="326" height="297" rx="22" fill="url(#body)" stroke="#647886" stroke-width="3"/>
+<path d="M239 139V110Q239 94 255 94H410Q426 94 426 110V139" fill="none" stroke="#a3b3bf" stroke-width="13"/>
+<rect x="197" y="165" width="276" height="90" rx="13" fill="#101820" stroke="#526777" stroke-width="2"/>
+<circle cx="240" cy="210" r="17" fill="#3abeff"/><circle cx="240" cy="210" r="7" fill="#132632"/>
+<path d="M280 195H438M280 211H410M280 227H426" stroke="#536a7c" stroke-width="6" stroke-linecap="round"/>
+<path d="M207 281H462M207 297H462M207 313H462" stroke="#526777" stroke-width="4"/>
+<rect x="202" y="342" width="266" height="63" rx="8" fill="#202f3c"/>
+<path d="M221 366H450M221 382H450" stroke="#3b5365" stroke-width="5"/>
+<circle cx="225" cy="444" r="18" fill="#0a1016" stroke="#71818d" stroke-width="6"/><circle cx="447" cy="444" r="18" fill="#0a1016" stroke="#71818d" stroke-width="6"/>
+<circle cx="498" cy="299" r="12" fill="#a2b5c2"/>
+<path d="M509 299C567 297 531 412 586 414C659 414 660 325 627 290" fill="none" stroke="#0a0e13" stroke-width="22"/>
+<path d="M509 299C567 297 531 412 586 414C659 414 660 325 627 290" fill="none" stroke="#4b6578" stroke-width="10"/>
+<g transform="translate(610 202) rotate(-18 22 50)"><rect x="5" y="0" width="34" height="23" rx="5" fill="#ff8a3d"/><rect x="0" y="21" width="44" height="60" rx="8" fill="url(#metal)"/><path d="M8 42H36M8 56H36" stroke="#4a5b68" stroke-width="5"/><path d="M15 81H29V112H15Z" fill="#9faeb8"/><path d="M13 112H31L24 127H20Z" fill="#d9e3e9"/><path d="M39 35H57V54H39" fill="#718696"/></g>
+</svg>

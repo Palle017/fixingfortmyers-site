@@ -18,8 +18,8 @@ function mockRecorder(w) {
     stop(){this.state='inactive';const event=new w.Event('dataavailable');event.data=new w.Blob([new Uint8Array([0x1a,0x45,0xdf,0xa3])],{type:this.mimeType});this.dispatchEvent(event);this.dispatchEvent(new w.Event('stop'));}
   };
 }
-function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00Z',publicContact=false,userAgent,savedSource,beforeScripts}={}){
-  const dom=new JSDOM(page,{url,runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,requests=[];
+function setup(t,{url='https://preview.invalid/',handler,at='2026-09-24T16:00:00Z',publicContact=false,userAgent,savedSource,beforeScripts,pageFile}={}){
+  const dom=new JSDOM(pageFile?fs.readFileSync(new URL(pageFile,root),'utf8'):page,{url,runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,requests=[];
   t.after(()=>w.close());
   w.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});
   w.HTMLElement.prototype.scrollIntoView=function(){};
@@ -201,4 +201,20 @@ test('the site form stores the exact SMS consent wording shown beside the site c
   const shown=new JSDOM(page).window.document.querySelector('.request-consent span').firstChild.textContent.trim();
   assert.match(shown,/Reply STOP to opt out or HELP for help\.$/);
   assert.ok(site.includes(`'${shown}'`),'site.js consentDisclosure matches index.html');
+});
+
+
+test('injector-cleaning interest survives both existing forms into one saved lead with callback and vehicle',async t=>{
+  for(const pageFile of ['index.html','request-a-repair.html']){
+    const x=setup(t,{pageFile,url:'https://preview.invalid/'+pageFile+'?service=injector#contact',handler:async route=>({ok:true,status:route==='/healthz'?200:201,json:async()=>route==='/healthz'?{ok:true,storage:'cloud',media:'ready'}:{ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'}})}),d=x.w.document;
+    await settle();
+    assert.equal(d.getElementById('request-service').value,'Injector cleaning',pageFile);
+    x.enter('request-name','Synthetic Customer');x.enter('request-phone','2395550100');x.enter('request-vehicle','2018 Synthetic Model');
+    x.enter('request-location-choice','dropoff');d.getElementById('request-location-choice').dispatchEvent(new x.w.Event('change'));
+    d.getElementById('bookingForm').dispatchEvent(new x.w.Event('submit',{bubbles:true,cancelable:true}));await settle();
+    const sent=x.requests.filter(r=>r.route==='/hooks/lead/webform');
+    assert.equal(sent.length,1,pageFile);assert.equal(sent[0].body.name,'Synthetic Customer');assert.equal(sent[0].body.phone,'2395550100');
+    assert.match(sent[0].body.vehicle,/2018 Synthetic Model/);assert.equal(sent[0].body.service,'Injector cleaning');
+    assert.match(d.getElementById('request-status').textContent,/received/i);
+  }
 });
