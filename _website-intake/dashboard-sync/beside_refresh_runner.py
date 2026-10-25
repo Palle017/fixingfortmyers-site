@@ -731,7 +731,9 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
                 previous=checkpoint.get('records',{}).get(cid,{})
                 needs_review=suppressed_review_needed(item,observed,prior['classification'] if prior else None,
                     previous.get('content_sha256'),since=(old or {}).get('source_updated_at') or previous.get('checked_at'))
-                if needs_review:review_needed_items.append({'conversation_id':cid,**needs_review})
+                if needs_review:
+                    review_needed_items.append({'conversation_id':cid,**needs_review})
+                    item['manual_review']=needs_review
                 capture_hashes[cid]=capture_fields_fingerprint(item)
                 review['classifications'][cid]=decision;conversations.append(item)
             report['coverage']['parsed_observations']=len(conversations)
