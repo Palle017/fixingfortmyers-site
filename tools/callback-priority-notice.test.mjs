@@ -71,11 +71,18 @@ test('new SMS acknowledgments retain priority, safety, consent language and boun
   }
 });
 
-test('phone rollout is explicit proposed copy and forbids broadcasts or routing changes', () => {
-  const doc = read('docs/CALLBACK-PRIORITY-NOTICE.md');
+test('phone documentation preserves owner-reported name/car scope and separate website fields', () => {
+  const doc = read('docs/CALLBACK-PRIORITY-NOTICE.md').replace(/\r\n/g, '\n');
   assert.match(doc, /Main phone \/ receptionist greeting/);
   assert.match(doc, /Voicemail greeting/);
   assert.match(doc, /actual provider control names and current setting values have not been inspected/);
   assert.match(doc, /proposed, not applied/);
+  const phone = doc.slice(doc.indexOf('## Phone and Beside scope'));
+  assert.match(phone, /name and car model only/i);
+  assert.match(phone, /callback time is optional/i);
+  assert.match(phone, /Do not ask repair-issue questions, offer\nappointments, or start a chat flow/);
+  assert.match(phone, /not an independent provider readback/);
+  assert.match(phone, /vehicle, symptoms and other details\nremain optional/);
+  assert.doesNotMatch(phone, /Thanks for calling Perfect Timing|Please leave your message after the tone/);
   assert.match(doc, /does not rewrite queued messages or broadcast to old leads/);
 });
