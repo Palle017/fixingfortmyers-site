@@ -36,6 +36,7 @@ import time
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
+from beside_capture_diagnostics import CaptureDiagnostic, run_stage, diagnostic_line, readiness_diagnostic
 from beside_uia import CaptureError, conversation  # noqa: E402  (same validator as Windows)
 
 APP = 'https://app.beside.com'
@@ -46,7 +47,7 @@ CHATS_TITLE = re.compile(r'^Chats - .+ - Beside$')  # same check as capture_besi
 ALL_FILTER_NAME = 'Filter chats: All'               # same accessible name as capture_beside.ps1
 # The chats shell (title + All filter) paints before conversation links. Inventory
 # must wait for a real chat href instead of reading that empty shell.
-INVENTORY_LINK_SELECTOR = 'a[href^="https://app.beside.com/chats/prv_"]'
+INVENTORY_LINK_SELECTOR = 'a[href*="/chats/prv_"]'
 INVENTORY_RENDER_TIMEOUT_SECONDS = 10
 INVENTORY_RENDER_POLL_SECONDS = 0.25
 DEFAULT_PROFILE = '~/.config/beside-chrome'
@@ -282,11 +283,11 @@ def profile_dir(settings):
 
 def open_context(settings, *, headless):
     from playwright.sync_api import sync_playwright  # imported lazily: tests need no browser
-    pw = sync_playwright().start()
+    pw = run_stage('launch', lambda: sync_playwright().start())
     try:
-        context = pw.chromium.launch_persistent_context(
+        context = run_stage('launch', lambda: pw.chromium.launch_persistent_context(
             str(profile_dir(settings)), headless=headless, args=CHROMIUM_ARGS,
-            viewport={'width': 1280, 'height': 900}, executable_path=settings.get('beside_linux_chromium') or None)
+            viewport={'width': 1280, 'height': 900}, executable_path=settings.get('beside_linux_chromium') or None))
     except Exception:
         pw.stop(); raise
     return pw, context
@@ -298,7 +299,7 @@ def chats_page(context, settings):
     for extra in context.pages[1:]:
         extra.close()
     if not CHATS_TITLE.fullmatch(page.title() or ''):
-        page.goto(CHATS, wait_until='domcontentloaded', timeout=15000)
+        run_stage('navigation', lambda: page.goto(CHATS, wait_until='domcontentloaded', timeout=15000))
     for _ in range(40):
         if CHATS_TITLE.fullmatch(page.title() or ''):
             break
@@ -324,7 +325,8 @@ def wait_for_visible_inventory(page, *, timeout_seconds=INVENTORY_RENDER_TIMEOUT
     """
     deadline = time.monotonic() + timeout_seconds
     while True:
-        if page.query_selector(INVENTORY_LINK_SELECTOR):
+        if any(CHAT_URL.fullmatch(link.evaluate('a => a.href'))
+               for link in page.query_selector_all(INVENTORY_LINK_SELECTOR)):
             return
         now = time.monotonic()
         if now >= deadline:
@@ -483,7 +485,8 @@ def main(argv=None):
                 result = capture(args.mode, args.output_path, settings, cid=args.conversation_id, inventory_path=args.inventory_path)
     except Exception as exc:
         # Never print captured content or private paths; first line only, bounded.
-        msg = str(exc).splitlines()[0][:180] if isinstance(exc, LinuxCaptureError) else type(exc).__name__
+        diagnostic = exc if isinstance(exc, CaptureDiagnostic) else readiness_diagnostic(exc)
+        msg = diagnostic_line(diagnostic) if diagnostic else (str(exc).splitlines()[0][:180] if isinstance(exc, LinuxCaptureError) else type(exc).__name__)
         print(msg, file=sys.stderr)
         return 1
     print(json.dumps(result, separators=(',', ':')))
