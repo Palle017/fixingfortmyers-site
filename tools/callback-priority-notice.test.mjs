@@ -72,7 +72,7 @@ test('new SMS acknowledgments retain priority, safety, consent language and boun
 });
 
 test('phone documentation preserves owner-reported name/car scope and separate website fields', () => {
-  const doc = read('docs/CALLBACK-PRIORITY-NOTICE.md');
+  const doc = read('docs/CALLBACK-PRIORITY-NOTICE.md').replace(/\r\n/g, '\n');
   assert.match(doc, /Main phone \/ receptionist greeting/);
   assert.match(doc, /Voicemail greeting/);
   assert.match(doc, /actual provider control names and current setting values have not been inspected/);
