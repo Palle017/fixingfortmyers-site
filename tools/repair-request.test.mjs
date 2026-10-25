@@ -81,7 +81,7 @@ test('verified Google readback changes only the appointment receipt status to pe
  assert.match(status.textContent,/call Tony/i);
  assert.doesNotMatch(status.textContent,/confirmed appointment|already confirmed/i);
  assert.equal(x.requests.filter(v=>v.path.startsWith('/hooks/calendar/status/')).length,1);
- assert.match(x.d.getElementById('request-done-call').textContent,/Call Tony to confirm/);
+ assert.match(x.d.getElementById('request-done-call').textContent,/Call the shop to confirm/);
 });
 
 test('a saved website receipt without a signed Google status token never claims calendar placement',async t=>{
