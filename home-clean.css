@@ -111,3 +111,18 @@ body.home-clean{--font-body:'Barlow','Barlow Fallback','Helvetica Neue',sans-ser
 .home-start__services a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border:1px solid #315069;border-radius:6px;background:#111d2a;color:#e8f4ff;font:600 14px/1.2 'Barlow',sans-serif;text-decoration:none;text-align:center;white-space:nowrap}
 .home-start__services a:hover,.home-start__services a:focus-visible{border-color:#8dd6ff;background:#172b3c;color:#fff}
 @media(max-width:540px){.home-start__services{gap:8px}.home-start__services a{padding:10px 12px}}
+
+/* Put service fit, independent proof and the existing request before browsing. */
+.home-start__actions{align-items:center;gap:8px 20px;margin:18px 0 8px}
+.home-start__schedule-link{display:inline-flex;align-items:center;min-height:48px;color:#a6dfff;font-size:15px;font-weight:600;text-underline-offset:4px}
+.home-start__next-step{font-size:14px;line-height:1.5;color:#c4d4e2;margin:0 0 20px;max-width:46ch}
+.home-start__services{margin-top:22px}
+.home-start #hero-appointment{scroll-margin-top:100px}
+.home-start__actions :is(a):focus-visible{outline:3px solid #a5e1ff;outline-offset:4px}
+@media(max-width:540px){
+  .home-start__lead{font-size:17px;line-height:1.5;margin-bottom:14px;max-width:34ch}
+  .home-start__rating{font-size:14px;margin-bottom:0}
+  .home-start__actions{grid-template-columns:minmax(0,1fr);gap:0;margin:16px 0 0}
+  .home-start__schedule-link{justify-content:center;min-height:48px;font-size:15px}
+  .home-start__next-step{font-size:14px;margin-bottom:20px}
+}

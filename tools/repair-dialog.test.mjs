@@ -29,7 +29,7 @@ test('repair action opens the same form, then closing restores it and returns fo
   const {d, click, calls} = setup(t);
   const form = d.getElementById('bookingForm'), panel = d.getElementById('contact');
   const dialog = d.getElementById('repair-request-dialog');
-  const opener = d.querySelector('#hero-appointment-continue');
+  const opener = d.querySelector('.home-start__actions .btn--primary');
   assert.equal(dialog.open, false);
   assert.ok(panel.closest('.home-start__grid'));
   assert.equal(click(opener), false);
