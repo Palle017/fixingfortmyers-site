@@ -63,13 +63,11 @@
   };
   const track = event => window.PT_TRACK?.(event, {placement:'form'});
   form.addEventListener('input', () => track('form_start'), {once:true});
-  const invalidateDraft = () => {
-    $('request-email').hidden = true;
-    $('request-email').href = 'mailto:fixingfortmyers@gmail.com';
+  const clearStatus = () => {
     if (!inFlight) status.textContent = '';
   };
-  form.addEventListener('input', invalidateDraft);
-  form.addEventListener('change', invalidateDraft);
+  form.addEventListener('input', clearStatus);
+  form.addEventListener('change', clearStatus);
   const confirm = data => {
     if (offer) offer.hidden = true;
     const when = {asap:'ASAP', today:'ASAP', tomorrow:'by tomorrow', next_week:'next week', specific:'ASAP'}[data.callback_preference];
@@ -94,11 +92,9 @@
     };
     const current = attempt;
     if (!endpoint) {
-      const href = 'mailto:fixingfortmyers@gmail.com?subject=' + encodeURIComponent('Repair callback request') + '&body=' + encodeURIComponent(JSON.stringify(current.data, null, 2));
-      $('request-email').href = href;
-      $('request-email').hidden = false;
-      status.textContent = 'Your email draft is ready. Send it from your email app to request a callback. Your request has not been sent from this page.';
-      window.location.href = href;
+      status.textContent = 'Online requests are temporarily unavailable. Your details are still here. Please try again or call (239) 397-2048.';
+      submit.textContent = 'Retry request';
+      track('form_submit_error');
       return;
     }
     inFlight = true;

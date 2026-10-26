@@ -1,5 +1,5 @@
 // WU A replaces the former service/location/calendar/voice form. All submissions
-// here use synthetic receivers or intercepted mailto navigation, never live intake.
+// here use synthetic receivers, never live intake.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -188,35 +188,37 @@ test('editing a failed request creates a new idempotency key and the next reques
   assert.doesNotMatch(JSON.stringify(x.logs),/Private|Synthetic|2395550100/);
 });
 
-test('mailto fallback prepares encoded subject and exact JSON body without claiming receipt or sending HTTP', async t=>{
+test('missing endpoint preserves fields and offers retry without opening an email app or claiming receipt', async t=>{
   const x=setup(t,{endpoint:''}),events=[];
   x.w.PT_TRACK=event=>events.push(event);
   x.fill();x.preference('tomorrow');x.send();await settle();
-  const mail=new URL(x.d.getElementById('request-email').href);
-  assert.equal(mail.protocol,'mailto:');assert.equal(mail.pathname,'fixingfortmyers@gmail.com');
-  assert.equal(mail.searchParams.get('subject'),'Repair callback request');
-  const data=JSON.parse(mail.searchParams.get('body'));
-  assert.deepEqual(Object.keys(data).sort(),keys);assert.equal(data.callback_preference,'tomorrow');
   assert.equal(x.calls.length,0);assert.equal(x.form.hidden,false);assert.equal(x.d.getElementById('request-done').hidden,true);
-  assert.equal(x.d.getElementById('request-submit').disabled,false);assert.match(x.d.getElementById('request-status').textContent,/has not been sent/);
-  assert.equal(events.includes('form_submit_attempt'),false,'an email draft is not an HTTP submission attempt');
-  assert.equal(events.includes('form_submit_success'),false,'draft creation does not confirm delivery');
+  assert.equal(x.d.getElementById('request-submit').disabled,false);
+  assert.equal(x.d.getElementById('request-submit').textContent,'Retry request');
+  assert.match(x.d.getElementById('request-status').textContent,/temporarily unavailable/);
+  assert.equal(x.d.getElementById('request-name').value,'Synthetic Customer');
+  assert.equal(x.d.getElementById('request-phone').value,'2395550100');
+  assert.equal(x.d.getElementById('request-vehicle').value,'2014 Honda Civic');
+  assert.equal(x.d.getElementById('request-email'),null);
+  assert.equal(x.w.location.href,'https://preview.invalid/');
+  assert.doesNotMatch(x.form.action,/mailto:/);
+  assert.equal(events.includes('form_submit_attempt'),false);
+  assert.equal(events.includes('form_submit_error'),true);
+  assert.equal(events.includes('form_submit_success'),false);
 });
 
-test('editing fields or callback choice invalidates the previous mailto draft and retry rebuilds it', async t=>{
+test('editing fields or callback choice clears an unavailable status while retaining retry and the current fields', async t=>{
   const x=setup(t,{endpoint:''});x.fill();x.send();await settle();
-  assert.equal(x.d.getElementById('request-email').hidden,false);
+  assert.match(x.d.getElementById('request-status').textContent,/temporarily unavailable/);
   x.enter('request-vehicle','2018 Synthetic Van');
-  assert.equal(x.d.getElementById('request-email').hidden,true);
-  assert.equal(x.d.getElementById('request-email').href,'mailto:fixingfortmyers@gmail.com');
   assert.equal(x.d.getElementById('request-status').textContent,'');
   x.send();await settle();
-  assert.equal(JSON.parse(new URL(x.d.getElementById('request-email').href).searchParams.get('body')).vehicle,'2018 Synthetic Van');
+  assert.equal(x.d.getElementById('request-vehicle').value,'2018 Synthetic Van');
   x.preference('tomorrow');
-  assert.equal(x.d.getElementById('request-email').hidden,true);
-  assert.equal(x.d.getElementById('request-email').href,'mailto:fixingfortmyers@gmail.com');
+  assert.equal(x.d.getElementById('request-status').textContent,'');
   x.send();await settle();
-  assert.equal(JSON.parse(new URL(x.d.getElementById('request-email').href).searchParams.get('body')).callback_preference,'tomorrow');
+  assert.equal(x.form.querySelector('[name="callback_preference"]:checked').value,'tomorrow');
+  assert.equal(x.d.getElementById('request-submit').textContent,'Retry request');
   assert.equal(x.calls.length,0);
 });
 
@@ -234,13 +236,15 @@ test('malformed and unacknowledged 2xx responses preserve data and show Retry in
   assert.doesNotMatch(JSON.stringify(x.logs),/PRIVATE_SERVER_BODY|Synthetic|2395550100/);
 });
 
-test('public configuration keeps the verified legacy endpoint separate until the v1 backend contract is ready', t=>{
-  for(const url of ['https://fixingfortmyers.com/','https://www.fixingfortmyers.com/','http://127.0.0.1:18909/']){
+test('public configuration uses the dedicated HTTPS request route only on the two production hosts', t=>{
+  for(const url of ['https://fixingfortmyers.com/','https://www.fixingfortmyers.com/','http://127.0.0.1:18909/','https://fixingfortmyers.com.preview.invalid/','https://preview.fixingfortmyers.com/']){
     const dom=new JSDOM('',{url,runScripts:'outside-only'});t.after(()=>dom.window.close());
     dom.window.eval(read('contact-config.js'));
     const config=dom.window.PT_CONTACT_CONFIG;
-    assert.equal(config.requestEndpoint,'');assert.equal(config.googleClientId,'');
-    assert.equal(config.endpoint,url.includes('fixingfortmyers.com')?'https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site':'');
+    const production=['fixingfortmyers.com','www.fixingfortmyers.com'].includes(new URL(url).hostname);
+    assert.equal(config.requestEndpoint,production?'https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site/hooks/lead/webform':'');
+    assert.equal(config.googleClientId,'');
+    assert.equal(config.endpoint,production?'https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site':'');
   }
   assert.match(read('deliverables/form-backend-spec.md'),/site_form_v1/);
 });

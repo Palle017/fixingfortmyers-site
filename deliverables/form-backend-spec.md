@@ -2,7 +2,17 @@
 
 Work Unit A, 2026-10-25. The current owner instruction replaces the earlier form field requirements for this baseline. This is a callback request, not a service appointment or calendar placement. The public form has three required fields (name, callback number, vehicle) and two optional field groups (VIN and preferred callback).
 
-## Current endpoint evidence and chosen fallback
+## Automatic capture and shop email — October 26, 2026
+
+Raj requested that submitting the request sends it automatically, without opening a visitor's email app or asking Raj to forward it. The public controller now posts the unchanged `site_form_v1` JSON directly to `https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site/hooks/lead/webform`. The production endpoint is configured only for `fixingfortmyers.com` and `www.fixingfortmyers.com`; local and staging environments remain isolated from production.
+
+The compatible private receiver must save every field and the authoritative receipt time durably, then enqueue the shop's email in a durable outbox. The email recipient is the fixed, already-published shop address, `fixingfortmyers@gmail.com`. Neither the browser nor customer fields can select a recipient. FormSubmit is the server-side email transport already used by the shop's careers form; no third-party email script or credential belongs in the public page. The lead and its outbox entry survive an email-provider failure. Automatic retries use the same logical notification and preserve the original lead receipt; uncertain transport responses need reconciliation rather than a new lead or a claim of exactly-once email delivery.
+
+A successful browser receipt means **the request was saved**, not that an email reached the recipient's inbox. Provider acceptance and eventual inbox delivery are separate evidence. Private release acceptance must establish the full saved payload, idempotent lead/outbox behavior and a provider-accepted shop notification before this public configuration is merged. Production compatibility, controlled synthetic receipt readback and email acceptance are **pending in this prepared public change**; append actual deployment evidence below once independently verified. No production acceptance is established by these source edits or browser mocks.
+
+There is no email-draft submission flow. If configuration is missing, the form stays editable and reports that online requests are temporarily unavailable, with Retry and the existing call option. Network errors or unacknowledged responses also retain the entered values. This integration sends no customer email or SMS, creates no appointment or calendar event, and leaves the existing analytics, parts and receipt consumers on their current endpoint.
+
+## Historical endpoint evidence and interim fallback — October 25, 2026
 
 Read-only discovery on 2026-10-25 found the following:
 
@@ -12,17 +22,17 @@ Read-only discovery on 2026-10-25 found the following:
 | `https://perfect-timing-cloud-intake.prudhvi-pallempati.chatgpt.site/healthz` | HTTP 200; `ok:true`, `storage:"cloud"`, `media:"ready"`, contract `sender-v1`. | This is the existing production origin in `contact-config.js`. Health does not prove compatibility with this new contract. |
 | `https://redline.taild5f39d.ts.net:10000/healthz` | HTTP 200; `ok:true`, service `Perfect Timing website requests`. | The response differs from the local listener. A current mapping to the local process was not established. |
 
-The installed local receiver (`C:/Users/LP15/PerfectTiming-Intake/server.mjs`, `normalize`) and the inspected retained cloud source (`C:/Users/LP15/PerfectTiming-Pipeline/cloud-intake/src/payload.mjs`, `normalize`) accept only `form`, `ai`, `voice`, or `unknown` as `source`. They reject the required `site_form_v1`. Their normalized records also omit `vin`, `callback_preference`, `callback_at`, and `submitted_at`. Silently dropping those values would lose the visitor's callback request. The cloud source inspection is a retained local source check, not independent proof of the exact deployed revision.
+At that time, the installed local receiver (`C:/Users/LP15/PerfectTiming-Intake/server.mjs`, `normalize`) and the inspected retained cloud source (`C:/Users/LP15/PerfectTiming-Pipeline/cloud-intake/src/payload.mjs`, `normalize`) accepted only `form`, `ai`, `voice`, or `unknown` as `source`. They rejected the required `site_form_v1`. Their normalized records also omitted `vin`, `callback_preference`, `callback_at`, and `submitted_at`. Silently dropping those values would lose the visitor's callback request. The cloud source inspection was a retained local source check, not independent proof of the exact deployed revision.
 
 Historical receiver documentation in `docs/handoff/email-server/SENDER-INVENTORY.md` also records local health on 2026-10-09. No separate Phase 0/Phase 1 artifact confirming an endpoint for the new payload was located in the inspected repository documentation. The current health checks above refresh the relevant evidence without treating that historical check as current acceptance.
 
-The form therefore uses the owner-authorized `mailto:` fallback until a compatible public HTTPS endpoint is confirmed. It opens a prefilled email for the visitor to send; opening a draft is not delivery and must not display the successful-backend confirmation. The destination is the shop email already published on the website. All five field groups, the specific callback time if provided, and submission metadata must survive into the draft. No third-party script is needed.
+The October 25 release therefore used the owner-authorized `mailto:` fallback. It opened a prefilled email for the visitor to send; opening a draft was never delivery and did not display the successful-backend confirmation. That interim fallback is superseded by Raj's October 26 automatic-delivery instruction above.
 
 Do not publish `127.0.0.1:18795` as a public website endpoint: it would target each visitor's computer. A future public HTTPS proxy may route to PerfectTiming-Intake after its mapping and compatibility are verified. Preserve the existing cloud configuration used by other site features; configure this v1 form separately when ready.
 
 ## Request
 
-`POST` to a confirmed public HTTPS endpoint, with `Content-Type: application/json`. The backend path may remain `/hooks/lead/webform` if that receiver adds this contract without changing legacy contracts.
+`POST` to the dedicated public HTTPS endpoint above, with `Content-Type: application/json`. The receiver adds this contract to `/hooks/lead/webform` without changing legacy contracts.
 
 ```json
 {
@@ -64,8 +74,10 @@ On failure, retain the form values and stable retry payload, show a retry contro
 
 1. Verify the exact deployed receiver accepts and durably retains every property above, including `source: "site_form_v1"`, optional callback time, and a deliberately short synthetic VIN. Legacy form contracts must continue working.
 2. Confirm the public HTTPS route reaches that compatible deployed receiver. Check exact-origin CORS/preflight from `https://fixingfortmyers.com` and `https://www.fixingfortmyers.com`; if using idempotency, permit its header. The inbox must remain private.
-3. Run an owner-approved synthetic POST through that route, read back the saved request through the protected owner path, and verify retries return the same receipt without duplicating records or notifications. A health response or mocked 2xx alone is insufficient production acceptance.
+3. Run an owner-approved synthetic POST through that route, read back the saved request through the protected owner path, and verify retries return the same receipt without duplicating lead or outbox records. Verify provider acceptance of the fixed-recipient shop email separately from durable lead capture. A health response or mocked 2xx alone is insufficient production acceptance.
 4. Verify timeout, non-2xx, and invalid receipt responses preserve client values and permit retry. Never infer a saved request from an unconfirmed response.
-5. Enable only this form's dedicated endpoint configuration after those checks. Keep analytics free of request contents; preserve the parallel phone CTA.
+5. Merge this form's dedicated endpoint configuration only after those checks. Keep analytics free of request contents; preserve the parallel phone CTA.
 
-This work unit performs no production POST, runtime restart, proxy edit, backend deployment, customer message, provider configuration, or calendar write. Those acceptance gates remain pending; the mailto fallback is the verified delivery handoff available for this release.
+## Release evidence
+
+Prepared public change: direct JSON submission, no email draft, durable-receipt validation, editable failures and stable idempotent retries. Exact production backend revision, deployment receipt, controlled synthetic lead readback and email-provider acceptance remain to be appended by the release owner. The historical October 25 form-only work performed no production POST, backend deployment, customer message, provider configuration or calendar write; that statement described the earlier release, not completed acceptance of this integration.
