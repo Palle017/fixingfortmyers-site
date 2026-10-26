@@ -352,7 +352,7 @@
 </style><link rel="stylesheet" href="/booking-preferences.css?v=20261016-pencil-24x7">
 <link rel="stylesheet" href="/repair-campaigns.css?v=20261017" media="all">
   <link rel="stylesheet" href="/repair-form-calm.css?v=20261025-call-handoff">
-  <link rel="stylesheet" href="/request-form-v1.css?v=20261025-intake-v1" media="all">
+  <link rel="stylesheet" href="/request-form-v1.css?v=20261026-service-notes" media="all">
 </head>
 <body class="home-clean">
 
@@ -448,6 +448,9 @@
             <div><label for="request-vehicle">Vehicle <span>(required)</span></label>
               <input id="request-vehicle" name="vehicle" type="text" maxlength="160" placeholder="Year Make Model, e.g. 2014 Honda Civic" required aria-describedby="request-vehicle-error">
               <p class="request-error" id="request-vehicle-error" aria-live="polite" hidden></p></div>
+            <div><label for="request-notes">What's going on? (symptoms, codes, promo code like WALNUT10)</label>
+              <textarea id="request-notes" name="notes" rows="3" maxlength="2000" autocomplete="off"></textarea></div>
+            <input id="request-service" name="service" type="hidden" value="">
           </div>
           <details id="request-options">
             <summary>Add details (optional)</summary>

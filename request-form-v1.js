@@ -1,4 +1,5 @@
-// Five-field callback request. No customer data is stored in browser storage or logs.
+// Callback request: name, phone and vehicle, plus optional VIN, callback time,
+// notes and a hidden service from ?service=. No customer data is stored in browser storage or logs.
 (() => {
   'use strict';
   const form = document.getElementById('bookingForm');
@@ -11,6 +12,21 @@
   let inFlight = false, attempt = null;
   const offer = document.getElementById('request-oil-offer');
   if (offer) offer.hidden = new URLSearchParams(location.search).get('offer') !== 'liquimoly-labor50';
+  // Known service keys stay canonical. Anything else must already be a short plain string.
+  const knownServices = new Set(['ac','battery','brakes','cooling','detailing','diagnostics','diesel','electrical','engine','injector','maintenance','no-start','programming','transmission','walnut','water-damage']);
+  const serviceValue = raw => {
+    const trimmed = String(raw ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim().replace(/\s+/g, ' ').slice(0, 80);
+    if (!trimmed) return '';
+    const key = trimmed.toLowerCase();
+    if (knownServices.has(key)) return key;
+    return /^[A-Za-z0-9][A-Za-z0-9 .,&/+'-]*$/.test(trimmed) ? trimmed : '';
+  };
+  const serviceField = $('request-service');
+  if (serviceField) serviceField.value = serviceValue(new URLSearchParams(location.search).get('service'));
+  const notesValue = () => {
+    const text = String($('request-notes')?.value ?? '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim().slice(0, 2000);
+    return text || null;
+  };
   // Keep native constraints for no-JS users; JS adds all three inline errors at once.
   form.noValidate = true;
   if (endpoint) form.action = endpoint;
@@ -58,6 +74,8 @@
       vehicle: $('request-vehicle').value.trim(), vin: vin.value.trim().toUpperCase() || null,
       callback_preference: preference,
       callback_at: date && Number.isFinite(date.getTime()) ? date.toISOString() : null,
+      service: serviceValue(serviceField?.value) || null,
+      notes: notesValue(),
       source: 'site_form_v1'
     };
   };
