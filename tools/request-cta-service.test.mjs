@@ -25,7 +25,9 @@ test('walnut-blasting-fort-myers.html: all 7 repair CTAs open a preselected dedi
   dom.window.matchMedia = () => ({matches:false, addEventListener(){}, removeEventListener(){}});
   dom.window.PT_CONTACT_CONFIG = {endpoint:''};
   dom.window.eval(read('site.js'));
-  assert.equal(dom.window.document.getElementById('request-service'), null, 'baseline request does not add a service dropdown');
+  const service = dom.window.document.getElementById('request-service');
+  assert.equal(service?.type, 'hidden', 'service from the link stays a hidden field');
+  assert.equal(dom.window.document.querySelector('#bookingForm select'), null, 'baseline request does not add a service dropdown');
   assert.ok(dom.window.document.getElementById('request-vehicle').required);
   dom.window.close();
 });

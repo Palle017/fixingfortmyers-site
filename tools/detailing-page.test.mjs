@@ -58,7 +58,10 @@ test('detailing keeps service attribution while the baseline form stays minimal'
   assert.match(site, /'\/detailing-fort-myers'/);
   for (const file of ['request-a-repair.html', 'index.html']) {
     const doc = new JSDOM(read(file)).window.document;
-    assert.equal(doc.getElementById('request-service'), null);
+    const service = doc.getElementById('request-service');
+    assert.equal(service?.type, 'hidden');
+    assert.equal(service.required, false);
+    assert.equal(doc.querySelector('#bookingForm select'), null);
     assert.ok(doc.getElementById('request-vehicle').required);
   }
 });
