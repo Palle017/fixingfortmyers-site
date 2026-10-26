@@ -8,13 +8,7 @@
   const endpoint = (window.PT_CONTACT_CONFIG?.endpoint || '').replace(/\/$/, '');
   let sending = false, snapshot = '', key = '', savedSnapshot = '';
   const uid = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
-  const updateDraftLinks = () => {
-    const draft = el('preview').value;
-    const apple = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    el('text').href = `sms:+12393972048${apple ? '&' : '?'}body=${encodeURIComponent(draft)}`;
-    el('email-draft').href = `mailto:fixingfortmyers@gmail.com?subject=${encodeURIComponent('Parts quote request')}&body=${encodeURIComponent(draft)}`;
-  };
-  el('preview').addEventListener('input', updateDraftLinks);
+  form.addEventListener('input', () => { if (!sending) el('status').textContent = ''; });
   for (const name of ['name', 'vehicle', 'description']) {
     const field = form.elements.namedItem(name);
     field.addEventListener('input', () => field.setCustomValidity(''));
@@ -44,14 +38,13 @@
     const serialized = JSON.stringify(payload);
     if (savedSnapshot === serialized) return;
     if (serialized !== snapshot) { snapshot = serialized; key = uid(); }
-    el('preview').value = `Parts quote request (no order confirmed)\nName: ${payload.name}\nPhone: ${phone}\nVehicle: ${payload.vehicle}\nPart: ${payload.parts.description}\nQuantity: ${payload.parts.quantity}\nVIN: ${payload.parts.vin || 'Not provided'}\nPart number: ${payload.parts.partNumber || 'Not provided'}\nFulfillment: ${payload.parts.fulfillment}\nEmail: ${payload.email || 'Not provided'}\n${payload.details}`;
-    updateDraftLinks();
     if (!endpoint) {
-      el('backup').hidden = false;
-      el('status').textContent = 'Online requests are unavailable. Open a draft and send it yourself, or call the shop.';
+      el('status').textContent = 'Online requests are temporarily unavailable. Your entries are still here. Please try again or call (239) 397-2048.';
+      el('submit').textContent = 'Retry Parts Quote Request';
       return;
     }
     sending = true; el('submit').disabled = true;
+    form.setAttribute('aria-busy', 'true');
     el('status').textContent = 'Sending parts quote request…';
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 18000);
     try {
@@ -63,7 +56,6 @@
       if (!response.ok || result.ok !== true || result.received !== true ||
           typeof result.id !== 'string' || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(result.id)) throw Error('unconfirmed');
       savedSnapshot = serialized;
-      el('backup').hidden = true;
       el('status').textContent = `Parts quote request received and saved. Reference: ${result.id}. No order is confirmed.`;
       el('submit').textContent = 'Parts Quote Request Saved';
       // Receipt storage contains no name, phone, vehicle, VIN or part description.
@@ -72,11 +64,11 @@
       } catch (_) { return; }
       location.assign('/request-received.html');
     } catch (_) {
-      el('backup').hidden = false;
-      el('status').textContent = 'We could not confirm receipt. Your entries are preserved. Retry, send the draft yourself, or call (239) 397-2048.';
+      el('status').textContent = 'We could not confirm receipt. Your entries are still here. Please try again or call (239) 397-2048.';
       el('submit').textContent = 'Retry Parts Quote Request';
     } finally {
       clearTimeout(timer); sending = false; el('submit').disabled = false;
+      form.removeAttribute('aria-busy');
     }
   });
   el('submit').disabled = false;

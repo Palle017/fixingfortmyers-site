@@ -38,7 +38,7 @@ test('parts confirms saved quote only after a receipt and keeps customer details
   const receipt=JSON.parse(x.w.sessionStorage.getItem('pt-last-request'));
   assert.deepEqual(Object.keys(receipt).sort(),['confirmed','id','receivedAt','requestType','smsConsent'].sort());
   assert.equal(receipt.requestType,'parts'); assert.equal(receipt.id,reference);
-  assert.equal(x.d.getElementById('parts-backup').hidden,true);
+  assert.equal(x.d.getElementById('parts-backup'),null);
   assert.match(x.d.getElementById('parts-status').textContent,/No order is confirmed/);
   x.send(); await settle(); assert.equal(x.requests.length,1);
 });
@@ -47,10 +47,13 @@ test('parts uncertain retries preserve one key and edits create a new request', 
   const x=setup(t); x.fill(); x.send(); await settle(); x.send(); await settle();
   assert.equal(x.requests[0].key,x.requests[1].key);
   assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null);
-  assert.equal(x.d.getElementById('parts-backup').hidden,false);
+  assert.match(x.d.getElementById('parts-status').textContent,/could not confirm receipt/);
+  assert.equal(x.d.getElementById('parts-submit').textContent,'Retry Parts Quote Request');
   x.enter('quantity','2'); x.send(); await settle();
   assert.notEqual(x.requests[2].key,x.requests[0].key);
-  assert.match(decodeURIComponent(x.d.getElementById('parts-text').href),/Quantity: 2/);
+  assert.equal(x.requests[2].body.parts.quantity,2);
+  assert.equal(x.d.getElementById('parts-quantity').value,'2');
+  assert.equal(x.d.getElementById('parts-text'),null);
 });
 
 test('parts rejects incomplete or malformed acknowledgments instead of claiming receipt', async t => {
@@ -69,22 +72,45 @@ test('parts blocks whitespace-only required fields, invalid phone, quantity and 
   }
 });
 
-test('parts offline fallback remains editable and uses the iPhone text separator', async t => {
-  const x=setup(t,{endpoint:'',beforeScripts:w=>Object.defineProperty(w.navigator,'userAgent',{value:'iPhone',configurable:true})});
-  x.fill(); x.send(); await settle();
-  assert.equal(x.requests.length,0); assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null);
-  assert.match(x.d.getElementById('parts-status').textContent,/send it yourself/);
-  assert.equal(x.d.getElementById('parts-preview').readOnly,false);
-  x.enter('preview','Edited customer parts request.');
-  assert.equal(decodeURIComponent(x.d.getElementById('parts-text').getAttribute('href')),'sms:+12393972048&body=Edited customer parts request.');
-  assert.match(decodeURIComponent(x.d.getElementById('parts-email-draft').href),/Edited customer parts request/);
+test('parts missing endpoint retains every field and offers retry without drafts or email app navigation', async t => {
+  const x=setup(t,{endpoint:''});x.fill();
+  const optional={quantity:'2',vin:'1HGCM82633A004352',number:'SYNTHETIC-PART',fulfillment:'installation',email:'synthetic@example.invalid',notes:'Call in the afternoon.'};
+  for(const [id,value] of Object.entries(optional))x.enter(id,value);
+  x.send();await settle();
+  assert.equal(x.requests.length,0);assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null);
+  assert.match(x.d.getElementById('parts-status').textContent,/temporarily unavailable/);
+  assert.equal(x.d.getElementById('parts-submit').textContent,'Retry Parts Quote Request');
+  assert.equal(x.d.getElementById('parts-submit').disabled,false);
+  for(const [id,value] of Object.entries(optional))assert.equal(x.d.getElementById('parts-'+id).value,value);
+  for(const id of ['backup','preview','text','email-draft'])assert.equal(x.d.getElementById('parts-'+id),null);
+  assert.equal(x.w.location.href,'https://preview.invalid/parts');
+  assert.ok(x.d.querySelector('#partsForm a[href="tel:+12393972048"]'));
+  x.enter('quantity','3');assert.equal(x.d.getElementById('parts-status').textContent,'');
+  x.send();await settle();assert.equal(x.d.getElementById('parts-quantity').value,'3');
+  assert.equal(x.requests.length,0);
 });
 
 test('parts keeps a confirmed inline receipt when session storage is unavailable', async t => {
   const x=setup(t,{handler:confirmed,beforeScripts:w=>Object.defineProperty(w,'sessionStorage',{value:{setItem(){throw Error('blocked');}}})});
   x.fill(); x.send(); await settle(); x.send(); await settle();
   assert.equal(x.requests.length,1); assert.match(x.d.getElementById('parts-status').textContent,new RegExp(reference));
-  assert.equal(x.d.getElementById('parts-backup').hidden,true);
+  assert.equal(x.d.getElementById('parts-backup'),null);
+});
+
+test('parts network failures retain entered values and unchanged retries send the identical request', async t => {
+  const x=setup(t,{handler:()=>{throw Error('Synthetic unavailable receiver');}});x.fill();
+  x.enter('email','synthetic@example.invalid');x.enter('notes','Call in the afternoon.');x.send();await settle();
+  assert.equal(x.d.getElementById('parts-name').value,'Synthetic Customer');
+  assert.equal(x.d.getElementById('parts-phone').value,'2395550100');
+  assert.equal(x.d.getElementById('parts-vehicle').value,'2018 Example sedan');
+  assert.equal(x.d.getElementById('parts-description').value,'Front brake pads');
+  assert.equal(x.d.getElementById('parts-email').value,'synthetic@example.invalid');
+  assert.equal(x.d.getElementById('parts-notes').value,'Call in the afternoon.');
+  assert.equal(x.d.getElementById('parts-submit').disabled,false);
+  assert.equal(x.d.getElementById('partsForm').hasAttribute('aria-busy'),false);
+  assert.equal(x.w.location.href,'https://preview.invalid/parts');
+  x.send();await settle();assert.deepEqual(x.requests[0],x.requests[1]);
+  assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null);
 });
 
 test('parts receipt explains quote approval without confirming an order or appointment', t => {
