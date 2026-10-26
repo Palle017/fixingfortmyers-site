@@ -17,12 +17,33 @@ for (const page of ['workshop.html','engine-repair-fort-myers.html']) test(`${pa
   assert.ok(home.includes(`“${quote}”`), 'quote must be an existing homepage review');
 });
 
+const googleReviews = 'https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b';
+const ratingLine = /★ 4\.8 on Google from Fort Myers drivers\. Read the reviews\./;
+
+test('walnut blasting: hero offers Text Tony and the Google rating line', () => {
+  const doc = new JSDOM(read('walnut-blasting-fort-myers.html')).window.document;
+  const hero = doc.querySelector('.service-hero');
+  const actions = [...hero.querySelectorAll('.service-hero__actions a')];
+  const call = actions.find(a => a.getAttribute('href') === 'tel:+12393972048');
+  const text = actions.find(a => a.getAttribute('href') === 'sms:+12393972048');
+  assert.equal(call?.textContent.trim(), 'Call (239) 397-2048');
+  assert.equal(text?.textContent.trim(), 'Text Tony');
+  assert.match(text?.className || '', /btn--outline/);
+  assert.ok(actions.indexOf(text) === actions.indexOf(call) + 1, 'Text Tony sits next to the call button');
+  const rating = hero.querySelector('.service-rating a');
+  assert.equal(rating?.getAttribute('href'), googleReviews);
+  assert.match(rating?.textContent || '', ratingLine);
+  assert.ok(hero.querySelector('.service-hero__actions').compareDocumentPosition(rating) & 4, 'rating line sits under the hero buttons');
+});
+
 test('walnut blasting: inquiry block offers Google review proof and a direct text action', () => {
   const doc = new JSDOM(read('walnut-blasting-fort-myers.html')).window.document;
   const block = [...doc.querySelectorAll('.service-panel')].find(el => el.querySelector('h2')?.textContent?.includes('Tell us about your engine'));
   assert.ok(block, 'walnut inquiry block exists');
   assert.equal(block.querySelector('a[href^="sms:"]')?.getAttribute('href'), 'sms:+12393972048');
   assert.match(block.querySelector('a[href^="sms:"]')?.textContent, /Text Tony/);
-  assert.match(block.querySelector('.service-rating a[href^="https://www.google.com/maps/place/"]')?.textContent || '', /customer reviews on Google/);
+  const rating = block.querySelector('.service-rating a[href^="https://www.google.com/maps/place/"]');
+  assert.equal(rating?.getAttribute('href'), googleReviews);
+  assert.match(rating?.textContent || '', ratingLine);
   assert.equal(block.querySelector('a[href^="/request-a-repair"]')?.getAttribute('href'), '/request-a-repair?service=walnut');
 });
