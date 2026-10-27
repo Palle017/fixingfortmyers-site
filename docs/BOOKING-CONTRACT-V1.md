@@ -3,6 +3,8 @@
 **Owner instruction accepted:** October 16, 2026
 **Canonical status:** This document overrides previous generic scheduling proposals in this repository and issue #67. Do not alter its customer journey without an explicit new owner decision. The shop may revise implementation details, not the agreed product behavior.
 
+**Optional service and notes, October 26, 2026:** This later instruction adds two optional values to the callback form above. A hidden `service` field keeps a sanitized `?service=` value, and an optional "What's going on?" note can carry symptoms, codes, or a promo code such as WALNUT10. Both are included in the existing submission payload and in the email draft that payload already produces. Name, callback number and vehicle stay the only required fields. This does not add a service menu, a location question, a calendar event, or a different submit path. A callback time is still not a service appointment.
+
 ## Non-negotiable customer journey
 1. On fixingfortmyers.com, the customer picks **any future local date and time, 24/7** (America/New_York). Include nights, weekends and holidays. No invented opening hours, first-come guaranteed slot, fixed service duration or conventional booking-capacity constraints. Exact DST-nonexistent/ambiguous clock times require clarification, not false calendar placement.
 2. Customer enters their name, callback number, vehicle (year/make/model; VIN optional), symptoms, whether it starts/drives, where the car is (shop/drop-off/mobile/roadside), and any useful optional photos/video. Keep the **existing short lead form and its cloud receiver**, showing optional details only when helpful.

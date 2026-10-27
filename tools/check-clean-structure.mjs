@@ -23,11 +23,16 @@ export function checkCleanPage(name,html){
       assert.equal(hero.querySelectorAll('.service-proof-list li').length,processPoints,`${name}: concise service process points`);
       assert.ok(text(hero.querySelector('.service-hero__desc')),`${name}: keep a useful service description`);
       const actions=[...hero.querySelectorAll('.service-hero__actions a')];
-      assert.equal(actions.length,2,`${name}: two service actions`);
+      const textTony=name==='walnut-blasting-fort-myers.html';
+      assert.equal(actions.length,textTony?3:2,`${name}: ${textTony?'request, call, and text':'two service actions'}`);
       const requestLabel=name==='oil-change-fort-myers.html'?'Request an oil change':'Request Repair';
       assert.equal(text(actions[0]),requestLabel,`${name}: service request is the first action`);
       assert.match(text(actions[1]),/^Call(?: [\u2014-] AI intake| \(239\) 397-2048| the shop \(239\) 397-2048)?$/,`${name}: clear alternative call label`);
       assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: published call number`);
+      if(textTony){
+        assert.equal(text(actions[2]),'Text Tony',`${name}: text action beside call`);
+        assert.equal(actions[2].getAttribute('href'),'sms:+12393972048',`${name}: published text number`);
+      }
     }
     if(hero&&photoGalleryPage){
       assert.equal(hero.querySelectorAll('h1').length,1,`${name}: one workshop heading`);

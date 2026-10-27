@@ -9,15 +9,15 @@ import {JSDOM, VirtualConsole} from 'jsdom';
 const root = new URL('../', import.meta.url);
 const read = file => fs.readFileSync(new URL(file, root), 'utf8');
 const settle = async () => { for (let i=0; i<5; i++) await new Promise(setImmediate); };
-const keys = ['name','phone','vehicle','vin','callback_preference','callback_at','submitted_at','source'].sort();
+const keys = ['name','phone','vehicle','vin','callback_preference','callback_at','service','notes','submitted_at','source'].sort();
 const receipt = {ok:true,received:true,id:'12345678-1234-4234-8234-123456789012'};
 const reply = (body=receipt,status=201) => ({ok:status>=200&&status<300,status,json:async()=>body});
 
-function setup(t, {page='index.html', endpoint='https://receiver.invalid/request-v1', handler, config={}, nativeFetch=false}={}) {
+function setup(t, {page='index.html', endpoint='https://receiver.invalid/request-v1', handler, config={}, nativeFetch=false, search=''}={}) {
   const errors=[], logs=[], console=new VirtualConsole();
   console.on('jsdomError', error=>{if(!/Not implemented: navigation/.test(error.message)) errors.push(error.message);});
   console.on('error', (...args)=>logs.push(args));
-  const dom=new JSDOM(read(page), {url:'https://preview.invalid/'+(page==='index.html'?'':page), runScripts:'outside-only', pretendToBeVisual:true, virtualConsole:console});
+  const dom=new JSDOM(read(page), {url:'https://preview.invalid/'+(page==='index.html'?'':page)+search, runScripts:'outside-only', pretendToBeVisual:true, virtualConsole:console});
   const w=dom.window, d=w.document, calls=[], tools=[];
   t.after(()=>{w.close();assert.deepEqual(errors,[]);});
   w.matchMedia=()=>({matches:false});
@@ -42,13 +42,24 @@ function setup(t, {page='index.html', endpoint='https://receiver.invalid/request
   return {w,d,form,calls,logs,tools,enter,fill,send,preference};
 }
 
-test('both entry pages share five logical fields, labels, a closed details toggle and no Phase-2 controls', t=>{
+test('both entry pages share the short callback form, optional notes, a hidden service and no Phase-2 controls', t=>{
   for(const page of ['index.html','request-a-repair.html']){
     const x=setup(t,{page});
     assert.deepEqual([...x.form.querySelectorAll('[required]')].map(input=>input.name),['name','phone','vehicle']);
-    assert.deepEqual([...new Set([...x.form.querySelectorAll('input')].map(input=>input.name))],['name','phone','vehicle','vin','callback_preference','callback_at']);
-    assert.equal(x.form.querySelectorAll('select,textarea,input[type="file"],input[type="checkbox"]').length,0);
-    for(const input of x.form.querySelectorAll('input')) assert.ok(input.labels.length,input.id+': visible label');
+    assert.deepEqual([...new Set([...x.form.querySelectorAll('input')].map(input=>input.name))],['name','phone','vehicle','service','vin','callback_preference','callback_at']);
+    assert.equal(x.form.querySelectorAll('select,input[type="file"],input[type="checkbox"]').length,0);
+    const notes=x.form.querySelector('textarea');
+    assert.equal(notes?.id,'request-notes');
+    assert.equal(notes.name,'notes');
+    assert.equal(notes.required,false);
+    assert.equal(notes.maxLength,2000);
+    assert.equal(notes.labels[0].textContent,"What's going on? (symptoms, codes, promo code like WALNUT10)");
+    const service=x.d.getElementById('request-service');
+    assert.equal(service.type,'hidden');
+    assert.equal(service.name,'service');
+    assert.equal(service.required,false);
+    assert.equal(service.value,'');
+    for(const input of x.form.querySelectorAll('input,textarea')) if(input.type!=='hidden') assert.ok(input.labels.length,input.id+': visible label');
     for(const name of ['name','phone','vehicle','vin']) assert.equal(x.form.querySelectorAll(`[name="${name}"]`).length,1);
     assert.equal(x.d.getElementById('request-options').open,false);
     assert.equal(x.d.querySelector('#request-options>summary').textContent,'Add details (optional)');
@@ -121,6 +132,7 @@ test('valid submission sends exactly the v1 JSON contract and shows only the con
   assert.deepEqual(Object.keys(data).sort(),keys);
   assert.equal(data.name,'Synthetic Customer');assert.equal(data.vehicle,'2014 Honda Civic');
   assert.equal(data.vin,null);assert.equal(data.callback_preference,'asap');assert.equal(data.callback_at,null);
+  assert.equal(data.service,null);assert.equal(data.notes,null);
   assert.equal(data.source,'site_form_v1');
   assert.equal(new Date(data.submitted_at).toISOString(),data.submitted_at);
   assert.equal(x.form.hidden,true);
@@ -271,6 +283,39 @@ test('conversion events wait for an acknowledged receipt and contain fixed categ
   assert.doesNotMatch(JSON.stringify(events),/Synthetic|2395550100|2014 Honda|ABC123/);
   const y=setup(t,{handler:()=>({ok:false,status:400})});y.fill();y.send();await settle();
   assert.equal(Array.from(y.w.dataLayer).filter(entry=>entry.event==='form_submit_success').length,0);
+});
+
+test('optional notes and a sanitized ?service= value are included in the payload and the email draft', async t=>{
+  const walnut=setup(t,{page:'request-a-repair.html',search:'?service=walnut'});
+  assert.equal(walnut.d.getElementById('request-service').value,'walnut');
+  walnut.fill();
+  walnut.enter('request-notes','  Rough idle. Code P0301. Promo WALNUT10  ');
+  walnut.send();await settle();
+  assert.equal(walnut.calls[0].body.service,'walnut');
+  assert.equal(walnut.calls[0].body.notes,'Rough idle. Code P0301. Promo WALNUT10');
+  assert.equal(walnut.d.getElementById('request-notes').required,false);
+  assert.doesNotMatch(JSON.stringify(Array.from(walnut.w.dataLayer)),/P0301|WALNUT10/);
+
+  const draft=setup(t,{endpoint:'',page:'request-a-repair.html',search:'?service=ENGINE'});
+  draft.fill();draft.enter('request-notes','Send the estimate');draft.send();await settle();
+  const mailed=JSON.parse(new URL(draft.d.getElementById('request-email').href).searchParams.get('body'));
+  assert.equal(mailed.service,'engine');assert.equal(mailed.notes,'Send the estimate');
+  assert.equal(draft.calls.length,0);assert.match(draft.d.getElementById('request-status').textContent,/has not been sent/);
+  draft.enter('request-notes','P0300');
+  assert.equal(draft.d.getElementById('request-email').hidden,true);
+
+  const plain=setup(t,{search:'?service=Timing%20Chain'});
+  plain.fill();plain.send();await settle();
+  assert.equal(plain.calls[0].body.service,'Timing Chain');assert.equal(plain.calls[0].body.notes,null);
+  for(const query of ['?service=%3Cscript%3Ealert(1)%3C/script%3E','?service=javascript:alert(1)','?service=','?service=%20%20']){
+    const blocked=setup(t,{search:query});blocked.fill();blocked.send();await settle();
+    assert.equal(blocked.calls[0].body.service,null,query);
+  }
+  const blank=setup(t,{endpoint:''});
+  blank.fill();blank.enter('request-notes','   ');blank.send();await settle();
+  assert.equal(JSON.parse(new URL(blank.d.getElementById('request-email').href).searchParams.get('body')).notes,null);
+  const tamper=setup(t);tamper.fill();tamper.d.getElementById('request-service').value='<img src=x onerror=alert(1)>';tamper.send();await settle();
+  assert.equal(tamper.calls[0].body.service,null);
 });
 
 test('exact JSON reaches a real isolated HTTP receiver and its 201 response confirms the form', async t=>{

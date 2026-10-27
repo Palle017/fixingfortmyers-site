@@ -42,12 +42,14 @@ Do not publish `127.0.0.1:18795` as a public website endpoint: it would target e
   "vin": null,
   "callback_preference": "asap",
   "callback_at": null,
+  "service": "walnut",
+  "notes": "Rough idle, code P0301, promo WALNUT10",
   "submitted_at": "2026-10-25T12:00:00.000Z",
   "source": "site_form_v1"
 }
 ```
 
-The example is synthetic. Do not add service, location, driving status, symptoms, service-window, consent, or hidden customer-data fields to this v1 JSON.
+The example is synthetic. `service` and `notes` are optional and are `null` when the visitor does not supply them. Do not add location, driving status, service-window, consent, or hidden customer-data fields to this v1 JSON.
 
 | Property | Contract |
 | --- | --- |
@@ -57,6 +59,8 @@ The example is synthetic. Do not add service, location, driving status, symptoms
 | `vin` | Optional uppercase string or `null` when blank. The client advises about a 17-character VIN but never blocks submission on VIN format. The backend must retain a submitted short or imperfect VIN as unverified customer text rather than reject it for format. |
 | `callback_preference` | One of `asap`, `today`, `tomorrow`, `next_week`, `specific`. Default `asap`. |
 | `callback_at` | ISO-8601 UTC timestamp or `null`. Only populate when `specific` is selected and the optional `datetime-local` control contains a valid value. Convert the visitor's local date/time to an ISO instant. It is a callback preference, never a booked repair time. |
+| `service` | Optional string or `null`. Read from `?service=` into a hidden field. Known keys (`ac`, `battery`, `brakes`, `cooling`, `detailing`, `diagnostics`, `diesel`, `electrical`, `engine`, `injector`, `maintenance`, `no-start`, `programming`, `transmission`, `walnut`) are stored in lowercase. Any other value is kept only when it is already a trimmed plain string of at most 80 characters (letters, numbers, spaces, and `. , & / + ' -`). Markup or other characters become `null`. This labels the request. It does not book that service. |
+| `notes` | Optional trimmed string or `null`, at most 2000 characters. The visitor can describe symptoms, codes, or a promo code such as WALNUT10. The field is never required, and blank or whitespace-only notes are `null`. |
 | `submitted_at` | ISO-8601 UTC timestamp. Preserve across retries of the same unchanged request. The receiver should also record its own authoritative receipt time. |
 | `source` | Exactly `site_form_v1`. |
 
