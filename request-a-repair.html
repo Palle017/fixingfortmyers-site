@@ -72,11 +72,12 @@
         <p class="section-label">Perfect Timing Auto Repair · Fort Myers</p>
         <h1 id="request-page-title">Request a repair</h1>
         <p class="request-page__intro">Request a callback with your name, number and vehicle. Requests are accepted 24/7. Tony confirms appointments by phone.</p>
+        <p class="service-rating" style="margin-top:.75rem;font-size:.95rem;line-height:1.5;"><a href="https://www.google.com/maps/place/Perfect+Timing+Auto+Repair+LLC/data=!4m2!3m1!1s0x88db6ffa0afe8209:0x90e69f392087435b" target="_blank" rel="noopener"><strong>★ 4.8</strong> from ~70 Google reviews</a></p>
         <div class="request-page__actions"><a class="btn btn--primary request-page__open" href="#contact">Open repair form</a><a class="btn btn--outline" href="tel:+12393972048">Call (239) 397-2048</a></div>
 <div class="request-panel" id="contact" role="region" aria-labelledby="request-heading">
 
         <h2 id="request-heading">Send a request. It takes 20 seconds. Tony calls back.</h2>
-        <form id="bookingForm" class="repair-request intake-v1" data-intake-version="1" method="post" action="mailto:fixingfortmyers@gmail.com" enctype="text/plain">
+        <form id="bookingForm" class="repair-request intake-v1" data-intake-version="1" method="post" action="/request-a-repair#contact">
           <div class="request-fields">
             <div><label for="request-name">Name <span>(required)</span></label>
               <input id="request-name" name="name" type="text" autocomplete="name" maxlength="100" required aria-describedby="request-name-error">
@@ -110,7 +111,6 @@
           </details>
           <div class="request-primary-actions"><button class="btn btn--primary" id="request-submit" type="submit">Send request</button></div>
           <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
-          <a id="request-email" href="mailto:fixingfortmyers@gmail.com" hidden>Open email draft again</a>
           <p class="request-phone-footer">Prefer to call? <a href="tel:+12393972048">(239) 397-2048</a></p>
         </form>
         <p class="request-hint" id="request-review-note">An AI assistant reviews your request, then Tony calls back to confirm.</p>
@@ -194,6 +194,6 @@
   <p class="hours-disclaimer" id="hours-disclaimer"><strong>Repair requests 24/7</strong><br>Repair requests and appointment requests are taken 24/7, including nights, weekends and holidays, by form, call or text. Shop repairs at Tony's workshop, mobile repairs from his equipped service van, and pickup are all by appointment; requested times are penciled in until Tony confirms by phone. Calls use AI intake to collect your details; texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop and the service van cannot accommodate every job. An immediate reply or visit is not guaranteed. We receive a lot of spam. Name, callback number, repair details and a good callback time help us prepare and prioritize callbacks. Vehicle details help, but send what you know; partial information is welcome.</p>
 </footer>
   <script src="/repair-dialog.js?v=20261011-popup" defer></script>
-  <script src="/contact-config.js?v=20261012-audit" defer></script><script src="/request-form-v1.js?v=20261025-intake-v1" defer></script><script src="/site.js?v=20261025-intake-v1" defer></script>
+  <script src="/contact-config.js?v=20261026-automatic-capture" defer></script><script src="/request-form-v1.js?v=20261026-automatic-capture" defer></script><script src="/site.js?v=20261025-intake-v1" defer></script>
 </body>
 </html>
