@@ -285,37 +285,65 @@ test('conversion events wait for an acknowledged receipt and contain fixed categ
   assert.equal(Array.from(y.w.dataLayer).filter(entry=>entry.event==='form_submit_success').length,0);
 });
 
-test('optional notes and a sanitized ?service= value are included in the payload and the email draft', async t=>{
+test('optional notes and a sanitized ?service= value are included in the posted JSON payload', async t=>{
+  const noMailto = x => {
+    assert.equal(x.d.getElementById('request-email'),null);
+    assert.doesNotMatch(x.form.action,/mailto:/i);
+    assert.equal([...x.form.querySelectorAll('[href]')].some(node=>/^mailto:/i.test(node.getAttribute('href')||'')),false);
+    assert.doesNotMatch(x.w.location.href,/^mailto:/i);
+  };
   const walnut=setup(t,{page:'request-a-repair.html',search:'?service=walnut'});
   assert.equal(walnut.d.getElementById('request-service').value,'walnut');
   walnut.fill();
   walnut.enter('request-notes','  Rough idle. Code P0301. Promo WALNUT10  ');
   walnut.send();await settle();
+  assert.equal(walnut.calls.length,1);
+  assert.equal(walnut.calls[0].url,'https://receiver.invalid/request-v1');
+  assert.equal(walnut.calls[0].method,'POST');
   assert.equal(walnut.calls[0].body.service,'walnut');
   assert.equal(walnut.calls[0].body.notes,'Rough idle. Code P0301. Promo WALNUT10');
+  assert.equal(walnut.calls[0].body.source,'site_form_v1');
   assert.equal(walnut.d.getElementById('request-notes').required,false);
+  assert.equal(walnut.d.getElementById('request-notes').maxLength,2000);
   assert.doesNotMatch(JSON.stringify(Array.from(walnut.w.dataLayer)),/P0301|WALNUT10/);
+  noMailto(walnut);
+  assert.equal(walnut.w.location.href,'https://preview.invalid/request-a-repair.html?service=walnut');
 
-  const draft=setup(t,{endpoint:'',page:'request-a-repair.html',search:'?service=ENGINE'});
-  draft.fill();draft.enter('request-notes','Send the estimate');draft.send();await settle();
-  const mailed=JSON.parse(new URL(draft.d.getElementById('request-email').href).searchParams.get('body'));
-  assert.equal(mailed.service,'engine');assert.equal(mailed.notes,'Send the estimate');
-  assert.equal(draft.calls.length,0);assert.match(draft.d.getElementById('request-status').textContent,/has not been sent/);
-  draft.enter('request-notes','P0300');
-  assert.equal(draft.d.getElementById('request-email').hidden,true);
+  const engine=setup(t,{page:'request-a-repair.html',search:'?service=ENGINE'});
+  engine.fill();engine.enter('request-notes','Send the estimate');engine.send();await settle();
+  assert.equal(engine.calls.length,1);
+  assert.equal(engine.calls[0].body.service,'engine');
+  assert.equal(engine.calls[0].body.notes,'Send the estimate');
+  assert.equal(engine.calls[0].body.source,'site_form_v1');
+  noMailto(engine);
 
   const plain=setup(t,{search:'?service=Timing%20Chain'});
   plain.fill();plain.send();await settle();
-  assert.equal(plain.calls[0].body.service,'Timing Chain');assert.equal(plain.calls[0].body.notes,null);
+  assert.equal(plain.calls[0].body.service,'Timing Chain');
+  assert.equal(plain.calls[0].body.notes,null);
+  assert.equal(plain.calls[0].body.source,'site_form_v1');
   for(const query of ['?service=%3Cscript%3Ealert(1)%3C/script%3E','?service=javascript:alert(1)','?service=','?service=%20%20']){
     const blocked=setup(t,{search:query});blocked.fill();blocked.send();await settle();
     assert.equal(blocked.calls[0].body.service,null,query);
+    assert.equal(blocked.calls[0].body.source,'site_form_v1');
+    noMailto(blocked);
   }
-  const blank=setup(t,{endpoint:''});
+  const blank=setup(t);
   blank.fill();blank.enter('request-notes','   ');blank.send();await settle();
-  assert.equal(JSON.parse(new URL(blank.d.getElementById('request-email').href).searchParams.get('body')).notes,null);
+  assert.equal(blank.calls.length,1);
+  assert.equal(blank.calls[0].body.notes,null);
+  assert.equal(blank.calls[0].body.source,'site_form_v1');
+  noMailto(blank);
+  const long=setup(t);
+  long.fill();long.enter('request-notes',`${'A'.repeat(2000)}OVERFLOW`);long.send();await settle();
+  assert.equal(long.calls[0].body.notes,'A'.repeat(2000));
+  assert.equal(long.calls[0].body.notes.length,2000);
+  assert.equal(long.calls[0].body.source,'site_form_v1');
+  noMailto(long);
   const tamper=setup(t);tamper.fill();tamper.d.getElementById('request-service').value='<img src=x onerror=alert(1)>';tamper.send();await settle();
   assert.equal(tamper.calls[0].body.service,null);
+  assert.equal(tamper.calls[0].body.source,'site_form_v1');
+  noMailto(tamper);
 });
 
 test('exact JSON reaches a real isolated HTTP receiver and its 201 response confirms the form', async t=>{
