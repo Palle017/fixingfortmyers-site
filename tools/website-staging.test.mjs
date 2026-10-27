@@ -114,8 +114,9 @@ test('parts form produces only a synthetic mock receipt and no external draft', 
   x.submit('partsForm'); await settle();
   assert.match(x.d.getElementById('parts-status').textContent,/received and saved/);
   assert.equal(x.w.PT_STAGING.calls.filter(call => call.path === '/hooks/lead/webform').length,1);
-  assert.match(x.d.getElementById('parts-text').href,/#staging-notice/);
-  assert.match(x.d.getElementById('parts-email-draft').href,/#staging-notice/);
+  assert.equal(x.d.getElementById('parts-text'),null);
+  assert.equal(x.d.getElementById('parts-email-draft'),null);
+  assert.equal(x.d.getElementById('parts-preview'),null);
 });
 
 test('careers form uses synthetic response rather than real FormSubmit email', async t => {
