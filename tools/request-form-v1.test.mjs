@@ -303,9 +303,6 @@ test('optional notes and a sanitized ?service= value are included in the payload
   const plain=setup(t,{search:'?service=Timing%20Chain'});
   plain.fill();plain.send();await settle();
   assert.equal(plain.calls[0].body.service,'Timing Chain');assert.equal(plain.calls[0].body.notes,null);
-  const flood=setup(t,{search:'?service=water-damage'});
-  flood.fill();flood.send();await settle();
-  assert.equal(flood.calls[0].body.service,'water-damage');
   for(const query of ['?service=%3Cscript%3Ealert(1)%3C/script%3E','?service=javascript:alert(1)','?service=','?service=%20%20']){
     const blocked=setup(t,{search:query});blocked.fill();blocked.send();await settle();
     assert.equal(blocked.calls[0].body.service,null,query);

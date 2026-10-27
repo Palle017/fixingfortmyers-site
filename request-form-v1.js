@@ -13,7 +13,7 @@
   const offer = document.getElementById('request-oil-offer');
   if (offer) offer.hidden = new URLSearchParams(location.search).get('offer') !== 'liquimoly-labor50';
   // Known service keys stay canonical. Anything else must already be a short plain string.
-  const knownServices = new Set(['ac','battery','brakes','cooling','detailing','diagnostics','diesel','electrical','engine','injector','maintenance','no-start','programming','transmission','walnut','water-damage']);
+  const knownServices = new Set(['ac','battery','brakes','cooling','detailing','diagnostics','diesel','electrical','engine','injector','maintenance','no-start','programming','transmission','walnut']);
   const serviceValue = raw => {
     const trimmed = String(raw ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim().replace(/\s+/g, ' ').slice(0, 80);
     if (!trimmed) return '';
