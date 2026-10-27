@@ -47,3 +47,22 @@ test('walnut blasting: inquiry block offers Google review proof and a direct tex
   assert.match(rating?.textContent || '', ratingLine);
   assert.equal(block.querySelector('a[href^="/request-a-repair"]')?.getAttribute('href'), '/request-a-repair?service=walnut');
 });
+
+test('request a repair: Google rating sits under the title and above submit', () => {
+  const doc = new JSDOM(read('request-a-repair.html')).window.document;
+  const title = doc.getElementById('request-page-title');
+  const submit = doc.querySelector('#bookingForm button[type="submit"]');
+  const rating = doc.querySelector('.request-page .service-rating');
+  const link = rating?.querySelector('a');
+  assert.equal(title?.textContent.trim(), 'Request a repair');
+  assert.ok(submit, 'submit button exists');
+  assert.ok(rating, 'service-rating line exists');
+  assert.equal(link?.getAttribute('href'), googleReviews);
+  assert.ok(home.includes(googleReviews), 'link must be the homepage Google Maps place');
+  assert.equal(link?.getAttribute('target'), '_blank');
+  assert.equal(link?.getAttribute('rel'), 'noopener');
+  assert.equal(rating.textContent.trim(), '★ 4.8 from ~70 Google reviews');
+  assert.ok(home.includes('★ 4.8</strong> from ~70 Google reviews'), 'rating must match the homepage');
+  assert.ok(title.compareDocumentPosition(rating) & 4, 'rating sits under the request page title');
+  assert.ok(rating.compareDocumentPosition(submit) & 4, 'rating sits above the submit button');
+});
