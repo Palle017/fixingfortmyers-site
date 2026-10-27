@@ -142,7 +142,9 @@ browser-free timer runs every minute (`beside_heartbeat_linux.py`, `MemoryMax=64
 - sends the same `heartbeat` to `/api/beside-refresh/worker` as the Windows task, **only if** the
   last capture status (`refresh/uia-worker-status.json`) is ok/worker_ready and at most
   `beside_heartbeat_max_age_minutes` old (default 15). Otherwise it sends nothing (no fake
-  readiness) and starts a capture to re-prove sign-in;
+  readiness) and reports `recovery_deferred: scheduled_capture`. The existing 12-minute
+  capture timer rechecks the source; a failed capture does not create a browser launch
+  on every one-minute heartbeat;
 - reads the queue state; if a "Refresh Beside" job is `queued`, starts `beside-capture.service`
   right away;
 - never claims or completes jobs and never opens Beside.

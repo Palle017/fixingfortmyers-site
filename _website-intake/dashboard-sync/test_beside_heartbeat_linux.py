@@ -59,9 +59,39 @@ class Heartbeat(Env):
             self.calls.clear(); self.started.clear(); self.status(**kwargs)
             out = self.run_hb()
             self.assertFalse(out['heartbeat_sent']); self.assertEqual(self.calls, [])
-            self.assertEqual(self.started, [1])  # capture kicked to re-prove the source
+            self.assertEqual(self.started, [])
+            self.assertFalse(out['capture_started'])
+            self.assertEqual(out['recovery_deferred'], 'scheduled_capture')
         (self.root / 'refresh' / 'uia-worker-status.json').unlink()
         self.calls.clear(); self.assertFalse(self.run_hb()['heartbeat_sent']); self.assertEqual(self.calls, [])
+
+    def test_unverified_source_does_not_create_minute_recovery_schedule(self):
+        # A failed capture must not turn each browser-free timer tick into a
+        # Chromium launch. The unchanged capture timer owns source recovery.
+        for minute in range(45):
+            out = H.run(self.path, now=NOW + timedelta(minutes=minute), worker=self.worker,
+                        starter=lambda: self.started.append(1))
+            self.assertFalse(out['ok']); self.assertFalse(out['heartbeat_sent'])
+            self.assertFalse(out['capture_started'])
+            self.assertEqual(out['recovery_deferred'], 'scheduled_capture')
+        self.assertEqual(self.started, []); self.assertEqual(self.calls, [])
+
+    def test_unverified_running_capture_is_left_untouched(self):
+        held = H.capture_lock(self.settings); self.assertIsNotNone(held)
+        try:
+            out = self.run_hb()
+            self.assertTrue(out['capture_running']); self.assertFalse(out['capture_started'])
+            self.assertFalse(out['heartbeat_sent'])
+            self.assertEqual(self.started, []); self.assertEqual(self.calls, [])
+        finally:
+            held.close()
+
+    def test_verified_nonqueued_states_do_not_launch_capture(self):
+        self.status()
+        for state in ('idle', 'failed', 'attention', 'completed'):
+            self.state = state
+            self.assertTrue(self.run_hb()['ok'])
+        self.assertEqual(self.started, [])
 
     def test_max_age_configurable(self):
         self.settings['beside_heartbeat_max_age_minutes'] = 30; self.save(); self.status(age=timedelta(minutes=20))
@@ -125,6 +155,8 @@ class Units(unittest.TestCase):
         timer = (HERE / 'linux' / 'beside-heartbeat.timer').read_text()
         self.assertIn('beside_heartbeat_linux.py', svc); self.assertNotIn('xvfb', svc); self.assertIn('MemoryMax=', svc)
         self.assertIn('OnUnitActiveSec=1min', timer)
+        capture_timer = (HERE / 'linux' / 'beside-capture.timer').read_text()
+        self.assertIn('OnUnitActiveSec=12min', capture_timer)
         self.assertEqual(H.CAPTURE_UNIT, 'beside-capture.service')
 
 

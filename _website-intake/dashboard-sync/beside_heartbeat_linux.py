@@ -118,10 +118,12 @@ def run(settings_path, *, now=None, worker=None, starter=start_capture):
     report['enabled'] = True
     running = capture_running(settings)
     if not source_recently_verified(settings, now):
-        # No fake readiness. Still kick a capture so the source can be re-proved.
-        if not running:
-            starter(); report['capture_started'] = 'source_unverified'
-        return {**report, 'ok': False, 'heartbeat_sent': False, 'error': 'source_unverified', 'capture_running': running}
+        # Recovery belongs to the existing 12-minute capture timer. Starting a
+        # browser here turns one failed source check into a launch every minute.
+        # Remain honestly unready, without creating a second recovery schedule.
+        return {**report, 'ok': False, 'heartbeat_sent': False, 'error': 'source_unverified',
+                'capture_started': False, 'capture_running': running,
+                'recovery_deferred': 'scheduled_capture'}
     try:
         worker = worker or make_worker(settings)
         worker('heartbeat'); report['heartbeat_sent'] = True
