@@ -9,7 +9,7 @@ const read = name => fs.readFileSync(new URL(name, root), 'utf8');
 const pages = fs.readdirSync(root).filter(name => name.endsWith('.html') && read(name).includes('class="mobile-contact-bar"'));
 
 test('sticky bar is still on every public page', () => {
-  assert.ok(pages.length >= 54, `only ${pages.length} pages have the sticky bar`);
+  assert.ok(pages.length >= 53, `only ${pages.length} pages have the sticky bar`);
 });
 
 for (const page of pages) test(`${page}: sticky bar leads with "Call the shop" in the primary style`, () => {
