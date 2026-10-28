@@ -14,7 +14,7 @@ for (const page of heroPages) test(`${page}: call button reads "Call the shop (2
   assert.equal(call[0].textContent.trim(), 'Call the shop (239) 397-2048');
   assert.equal(call[0].parentElement.nextElementSibling.textContent.trim(), disclosure);
 });
-for (const page of barPages) test(`${page}: mobile bar call reads "Call the shop"`, () => {
+for (const page of barPages) test(`${page}: mobile bar call reads "Call Tony"`, () => {
   const a = doc(page).querySelector('.mobile-contact-bar a[href="tel:+12393972048"]');
-  assert.equal(a.textContent.trim(), 'Call the shop');
+  assert.equal(a.textContent.trim(), 'Call Tony');
 });

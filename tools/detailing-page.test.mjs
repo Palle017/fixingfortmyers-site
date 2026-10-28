@@ -37,11 +37,14 @@ test('detailing page explains each service in plain language', () => {
   assert.equal(document.querySelectorAll('.service-ad a[href^="tel:"], .service-ad a[href^="sms:"]').length, 0);
 });
 
-test('detailing is linked from the nav, menu, listing, sitemap, footer and schema', () => {
+test('detailing is linked from the shared desktop/mobile navigation, listing, sitemap, footer and schema', () => {
   const home = read('index.html');
   const document = new JSDOM(home).window.document;
-  assert.equal(document.querySelector('.nav__links a[href="/detailing-fort-myers"]').textContent.trim(), 'Detailing');
-  assert.equal(document.querySelector('#mobileMenu a[href="/detailing-fort-myers"]').textContent.trim(), 'Detailing');
+  const navigation = document.querySelector('.pt-layout-navigation');
+  assert.ok(navigation, 'one navigation serves desktop and mobile');
+  assert.equal(document.querySelectorAll('.pt-layout-navigation').length, 1);
+  assert.equal(document.querySelector('.pt-layout-menu-toggle').getAttribute('aria-controls'), navigation.id);
+  assert.equal(navigation.querySelector('.pt-layout-group-mega a[href="/detailing-fort-myers"]').textContent.trim(), 'Car detailing');
   assert.ok([...document.querySelectorAll('.service-directory a')].some(anchor => anchor.getAttribute('href') === '/detailing-fort-myers'));
   assert.ok([...document.querySelectorAll('footer a')].some(anchor => anchor.getAttribute('href') === '/detailing-fort-myers'));
   assert.match(home, /"url": "https:\/\/fixingfortmyers\.com\/detailing-fort-myers"/);
