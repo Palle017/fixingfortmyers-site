@@ -63,7 +63,14 @@ function penguinSection(html) {
 for (const page of pages) {
   test(`${page.file}: service ad card, one request link, penguin ad unchanged`, () => {
     assert.equal(penguinSection(read('ac-repair-fort-myers.html')), PENGUIN_AC);
-    assert.equal(penguinSection(read('index.html')), PENGUIN_HOME);
+    // Homepage layout can use a disclosure while preserving every campaign claim, link and image.
+    const expectedHome=new JSDOM(PENGUIN_HOME).window.document;
+    const actualHome=new JSDOM(penguinSection(read('index.html'))).window.document;
+    const content=doc=>[...doc.querySelectorAll('h2,p')].map(el=>el.textContent.replace(/\s+/g,' ').trim()).sort();
+    const destinations=doc=>[...doc.querySelectorAll('a')].map(el=>[el.getAttribute('href'),el.getAttribute('aria-label'),el.textContent.trim()]);
+    assert.deepEqual(content(actualHome),content(expectedHome));
+    assert.deepEqual(destinations(actualHome),destinations(expectedHome));
+    assert.equal(actualHome.querySelector('img').outerHTML,expectedHome.querySelector('img').outerHTML);
     assert.equal(read('index.html').includes('class="service-ad"'), false);
 
     const html = read(page.file);

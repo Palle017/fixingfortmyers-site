@@ -6,7 +6,7 @@ import {JSDOM} from 'jsdom';
 import * as cssTree from 'css-tree';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
-export const scriptNames = Object.freeze(['site.js','contact-config.js','careers.js','parts-request.js','repair-dialog.js','repair-form-calm.js','request-form-v1.js']);
+export const scriptNames = Object.freeze(['site.js','contact-config.js','careers.js','parts-request.js','repair-dialog.js','repair-form-calm.js','request-form-v1.js','layout-navigation.js']);
 export const noindex = 'noindex, nofollow, noarchive, nosnippet';
 export const contentPolicy = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'; base-uri 'none'";
 const assetTypes = new Set(['.webp','.jpg','.jpeg','.png','.gif','.svg','.ico','.mp4','.woff2']);

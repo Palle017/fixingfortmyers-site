@@ -22,7 +22,7 @@ function browser(t, page = 'index.html', host = 'https://staging.fixingfortmyers
   let network = 0;
   w.fetch = async () => { network++; throw new Error('Native network must never be reached'); };
   w.Headers = Headers;
-  w.matchMedia = () => ({matches:false});
+  w.matchMedia = () => Object.assign(new w.EventTarget(), {matches:false});
   w.HTMLElement.prototype.scrollIntoView = function () {};
   if (w.HTMLDialogElement) {
     w.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
