@@ -68,7 +68,7 @@ export function checkCleanPage(name,html){
         assert.match(labels[1],/^Call(?: [\u2014-] AI intake| \(239\) 397-2048)?$/,`${name}: consistent mobile call`);
         assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
         const requestHref=actions[0].getAttribute('href');
-        const dedicatedRequest={'diesel-repair-fort-myers.html':'diesel','ac-repair-fort-myers.html':'ac','transmission-repair-fort-myers.html':'transmission','no-start-diagnosis-fort-myers.html':'no-start'};
+        const dedicatedRequest={'diesel-repair-fort-myers.html':'diesel','ac-repair-fort-myers.html':'ac','transmission-repair-fort-myers.html':'transmission','no-start-diagnosis-fort-myers.html':'no-start','engine-repair-fort-myers.html':'engine'};
         if(dedicatedRequest[name])assert.equal(requestHref,`/request-a-repair?service=${dedicatedRequest[name]}`,`${name}: mobile request opens the repair form`);
         else assert.ok(requestHref.endsWith('#contact'),`${name}: request opens the form`);
       }
