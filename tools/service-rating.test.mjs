@@ -36,6 +36,16 @@ test('walnut blasting: hero offers Text Tony and the Google rating line', () => 
   assert.ok(hero.querySelector('.service-hero__actions').compareDocumentPosition(rating) & 4, 'rating line sits under the hero buttons');
 });
 
+test('engine repair: Request Repair links open the dedicated form for the engine service', () => {
+  const html = read('engine-repair-fort-myers.html');
+  const doc = new JSDOM(html).window.document;
+  const repairLinks = [...doc.querySelectorAll('a')].filter(a => /^Request(?: a)? [Rr]epair$/.test(a.textContent.replace(/\s+/g, ' ').trim()));
+  assert.equal(repairLinks.length, 6, 'nav, mobile menu, hero, mid-page CTA, footer, and mobile bar');
+  for (const link of repairLinks) assert.equal(link.getAttribute('href'), '/request-a-repair?service=engine');
+  assert.equal(doc.querySelectorAll('a[href*="service=engine#contact"]').length, 0);
+  assert.doesNotMatch(html, /service=engine#contact/);
+});
+
 test('no-start diagnosis: repair links keep the service, the hero note is plain, and Text the shop sits beside Call', () => {
   const doc = new JSDOM(read('no-start-diagnosis-fort-myers.html')).window.document;
   const repairLinks = [...doc.querySelectorAll('a')].filter(a => /^Request(?: a)? [Rr]epair$/.test(a.textContent.replace(/\s+/g, ' ').trim()));
