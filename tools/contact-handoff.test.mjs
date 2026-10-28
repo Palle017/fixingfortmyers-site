@@ -37,7 +37,7 @@ test('receipt page stays neutral without fresh backend-confirmed evidence and di
 test('mobile bar keeps only the call and request actions, call first',async t=>{
   const x=setup(t),d=x.w.document;await settle();const bar=d.querySelector('.mobile-contact-bar');
   assert.equal(bar.children.length,2);assert.equal(bar.children[0].getAttribute('href'),'tel:+12393972048');assert.equal(bar.children[1].getAttribute('href'),'#contact');
-  assert.deepEqual([...bar.children].map(node=>node.textContent),['Call the shop','Request a repair']);
+  assert.deepEqual([...bar.children].map(node=>node.textContent),['Call Tony','Request a repair']);
 });
 
 test('careers preserves the applicant-specific mobile introduction action',t=>{
@@ -45,7 +45,7 @@ test('careers preserves the applicant-specific mobile introduction action',t=>{
   const dom=new JSDOM(html,{url:'https://preview.invalid/careers',runScripts:'outside-only'}),w=dom.window;
   t.after(()=>w.close());w.eval(site);
   const actions=[...w.document.querySelectorAll('.mobile-contact-bar a')];
-  assert.deepEqual(actions.map(link=>[link.textContent,link.getAttribute('href')]),[['Call the shop','tel:+12393972048'],['Introduce yourself','#apply']]);
+  assert.deepEqual(actions.map(link=>[link.textContent,link.getAttribute('href')]),[['Call Tony','tel:+12393972048'],['Introduce yourself','#apply']]);
   assert.ok(w.document.querySelector('#apply #careers-form'));
 });
 
