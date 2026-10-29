@@ -12,7 +12,9 @@ import re
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest import mock
+from urllib.parse import urljoin
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import capture_beside_linux as L  # noqa: E402
@@ -264,7 +266,7 @@ class InventoryRenderWait(unittest.TestCase):
         self.assertEqual(outcome['result']['conversations_read'], 3)
         self.assertEqual([row['conversation_id'] for row in outcome['saved']['records']],
                          [A, 'prv_01HZZZZZZZZZZZZZZZZZZZZZZB', 'prv_01HZZZZZZZZZZZZZZZZZZZZZZC'])
-        self.assertEqual(page.selectors[0], 'a[href*="/chats/prv_"]')
+        self.assertEqual(page.selectors[0], L.INVENTORY_LINK_SELECTOR)
         self.assertGreaterEqual(page.polls, 5)
         self.assertTrue(page.visible)
         self.assertGreaterEqual(page.dom_reads, 1)
@@ -275,14 +277,49 @@ class InventoryRenderWait(unittest.TestCase):
         outcome = self._run(page)
         self.assertEqual(outcome['error'], 'Visible inventory not rendered')
         self.assertNotIn('exceeds bound', outcome['error'])
-        self.assertGreaterEqual(outcome['elapsed'], 10)
-        self.assertLess(outcome['elapsed'], 10.5)
+        self.assertEqual(L.INVENTORY_RENDER_TIMEOUT_SECONDS, 90)
+        self.assertGreaterEqual(outcome['elapsed'], 90)
+        self.assertLess(outcome['elapsed'], 90.5)
         self.assertGreaterEqual(page.polls, 2)
-        self.assertEqual(page.selectors[0], 'a[href*="/chats/prv_"]')
+        self.assertEqual(page.selectors[0], L.INVENTORY_LINK_SELECTOR)
         import beside_attempt
         self.assertEqual(beside_attempt.source_reason(outcome['error']), 'source_read_nonzero')
         with self.assertRaisesRegex(R.ScanError, 'CAPTURE_INCOMPLETE'):
             R.selected_changes({'records': []}, {}, 8)
+
+    def test_inventory_wait_accepts_relative_and_absolute_chat_links(self):
+        # Attribute prefixes, not the resolved a.href. The browser still resolves relative hrefs.
+        prefixes = re.findall(r'a\[href\^="([^"]*)"\]', L.INVENTORY_LINK_SELECTOR)
+        self.assertEqual(prefixes, ['/chats/prv_', 'https://app.beside.com/chats/prv_'])
+        self.assertEqual(
+            L.INVENTORY_LINK_SELECTOR,
+            'a[href^="/chats/prv_"], a[href^="https://app.beside.com/chats/prv_"]')
+
+        def selected(href, selector):
+            return selector == L.INVENTORY_LINK_SELECTOR and any(href.startswith(prefix) for prefix in prefixes)
+
+        for href in ('/chats/' + A, URL_A):
+            seen = []
+
+            class Page:
+                def query_selector_all(self, selector):
+                    seen.append(selector)
+                    if not selected(href, selector):
+                        return []
+                    return [SimpleNamespace(evaluate=lambda _script: urljoin(L.APP, href))]
+
+            L.wait_for_visible_inventory(Page(), timeout_seconds=0)
+            self.assertEqual(seen, [L.INVENTORY_LINK_SELECTOR])
+
+        foreign = 'https://other.invalid/chats/' + A
+        self.assertFalse(any(foreign.startswith(prefix) for prefix in prefixes))
+
+        class ForeignPage:
+            def query_selector_all(self, selector):
+                return [SimpleNamespace(evaluate=lambda _script: foreign)] if selected(foreign, selector) else []
+
+        with self.assertRaisesRegex(L.LinuxCaptureError, '^Visible inventory not rendered$'):
+            L.wait_for_visible_inventory(ForeignPage(), timeout_seconds=0)
 
 
 class SafetyAndWiring(unittest.TestCase):

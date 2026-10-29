@@ -59,15 +59,18 @@ class Diagnostics(unittest.TestCase):
     def test_inventory_wait_resolves_relative_and_absolute_links_and_rejects_other_origins(self):
         # Models browser href resolution separately from raw href-attribute matching.
         cid='prv_'+'A'*26
+        expected = 'a[href^="/chats/prv_"], a[href^="https://app.beside.com/chats/prv_"]'
         for href in ['/chats/'+cid, 'https://app.beside.com/chats/'+cid]:
             class Page:
                 def query_selector_all(self, selector):
                     self.selector=selector
-                    matches=('/chats/prv_' in href) if selector=='a[href*="/chats/prv_"]' else href.startswith('https://app.beside.com/chats/prv_')
+                    matches = (
+                        href.startswith('/chats/prv_') or href.startswith('https://app.beside.com/chats/prv_')
+                    ) if selector == expected else False
                     return [SimpleNamespace(evaluate=lambda _:urljoin(L.APP,href))] if matches else []
             page=Page()
             L.wait_for_visible_inventory(page,timeout_seconds=0)
-            self.assertEqual(page.selector,'a[href*="/chats/prv_"]')
+            self.assertEqual(page.selector, expected)
         page=SimpleNamespace(query_selector_all=lambda _:[SimpleNamespace(evaluate=lambda _:'https://other.invalid/chats/'+cid)])
         with self.assertRaises(L.LinuxCaptureError):
             L.wait_for_visible_inventory(page,timeout_seconds=0)

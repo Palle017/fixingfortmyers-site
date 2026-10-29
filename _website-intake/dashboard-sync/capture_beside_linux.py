@@ -47,8 +47,8 @@ CHATS_TITLE = re.compile(r'^Chats - .+ - Beside$')  # same check as capture_besi
 ALL_FILTER_NAME = 'Filter chats: All'               # same accessible name as capture_beside.ps1
 # The chats shell (title + All filter) paints before conversation links. Inventory
 # must wait for a real chat href instead of reading that empty shell.
-INVENTORY_LINK_SELECTOR = 'a[href*="/chats/prv_"]'
-INVENTORY_RENDER_TIMEOUT_SECONDS = 10
+INVENTORY_LINK_SELECTOR = 'a[href^="/chats/prv_"], a[href^="https://app.beside.com/chats/prv_"]'
+INVENTORY_RENDER_TIMEOUT_SECONDS = 90
 INVENTORY_RENDER_POLL_SECONDS = 0.25
 DEFAULT_PROFILE = '~/.config/beside-chrome'
 MAX_NODES = 2500
