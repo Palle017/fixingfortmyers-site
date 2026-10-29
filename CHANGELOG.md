@@ -2,6 +2,19 @@
 
 Merged pull requests to `main`, newest first. Dates are America/New_York.
 
+## 2026-10-29
+- Publish approved Perfect Timing layout and image refresh (#187).
+- Use the plain Tony-reviews note on the engine and workshop pages (#186).
+- Point engine repair links at the request form (#185).
+- Point no-start repair links at the request form (#184).
+- Show the Google rating on the repair request page (#183).
+- Stop unverified Beside heartbeat from relaunching Chromium every minute (#182).
+- Remove vehicle water damage restoration offering (#181).
+- Keep the chosen service and an optional note on repair requests (#180).
+- Add Text Tony and the 4.8 Google line on the walnut blasting page (#179).
+- Send repair and parts requests automatically without email drafts (#178).
+- Add injector cleaning to services and repair requests (#176); restore one-click repair request form (#177).
+
 ## 2026-10-25
 - Put the homepage repair scope, Google rating and primary repair-request action before service browsing, keeping the existing appointment picker and one intake form. Local preview now serves the existing WOFF2 fonts for accurate visual checks.
 
