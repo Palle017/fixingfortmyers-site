@@ -64,6 +64,31 @@ test('services name the provider and keep the city out of serviceType', () => {
   }
 });
 
+test('repair contact and website publisher match the public business identity and contact routes', () => {
+  const home = read('index.html');
+  const visibleAbout = read('about-perfect-timing.html').replace(/<script[\s\S]*?<\/script>/g, '');
+  assert.match(home, /id="contact"/, 'the repair-request URL resolves to an existing homepage section');
+  const seenContacts = new Set();
+  for (const f of pages) for (const n of ld(read(f))) {
+    if (n['@type'] === 'AutoRepair') {
+      const contact = n.contactPoint;
+      assert.equal(contact?.['@type'], 'ContactPoint', `${f} repair contact type`);
+      assert.equal(contact['@id'], `${SITE}/#repair-contact`, `${f} stable repair contact identity`);
+      assert.equal(contact.contactType, 'repair requests', `${f} contact purpose`);
+      assert.equal(contact.telephone, n.telephone, `${f} contact phone matches the business phone`);
+      assert.equal(contact.email, n.email, `${f} contact email matches the business email`);
+      assert.equal(contact.url, `${SITE}/#contact`, `${f} existing repair-request route`);
+      assert.ok(visibleAbout.includes(`href="tel:${contact.telephone}"`), `${f} contact phone is publicly linked`);
+      assert.ok(visibleAbout.includes(`href="mailto:${contact.email}"`), `${f} contact email is publicly linked`);
+      seenContacts.add(JSON.stringify(contact));
+    }
+    if (n['@type'] === 'WebSite') {
+      assert.equal(n.publisher?.['@id'], `${SITE}/#business`, `${f} website publisher resolves to the business`);
+    }
+  }
+  assert.equal(seenContacts.size, 1, 'all business nodes identify the same public repair contact');
+});
+
 test('repair guides carry the article fields search engines read', () => {
   for (const f of pages.filter(f => f.startsWith('repair-guide-'))) {
     const a = ld(read(f)).find(n => n['@type'] === 'Article');
