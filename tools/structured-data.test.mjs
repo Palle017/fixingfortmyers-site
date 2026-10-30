@@ -103,14 +103,89 @@ test('repair guides carry the article fields search engines read', () => {
 });
 
 
+const decodeEntities = s => s
+  .replace(/&amp;/g, '&')
+  .replace(/&lt;/g, '<')
+  .replace(/&gt;/g, '>')
+  .replace(/&quot;/g, '"')
+  .replace(/&#39;|&apos;/g, "'")
+  .replace(/&nbsp;/g, ' ')
+  .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+  .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)));
+const chars = s => [...s].length;
+// Owner snippet rule: these words must not appear in Google-facing fields.
+// "shop" is a whole word so "workshop" stays; "pickup" / "pick-up" are whole words so "pickups" stays.
+// The BBB profile slug is their URL, not our wording.
+const BANNED_SNIPPET = /\bshop\b|\bmobile\b|\bpick-?up\b|by appointment|24\/7/i;
+const BBB_PROFILE = /https?:\/\/www\.bbb\.org\/\S*\/mobile-auto-repair\/\S*/gi;
+const metaContent = (html, attr, key) => {
+  const tag = html.match(new RegExp(`<meta\\b[^>]*\\b${attr}="${key}"[^>]*>`, 'i'));
+  const content = tag && tag[0].match(/\bcontent="([^"]*)"/);
+  return content ? decodeEntities(content[1]) : null;
+};
+const jsonLdStrings = value => {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.flatMap(jsonLdStrings);
+  if (value && typeof value === 'object') return Object.values(value).flatMap(jsonLdStrings);
+  return [];
+};
+
+test('sitemap pages keep banned words out of Google-facing titles, descriptions, and JSON-LD', () => {
+  for (const u of sitemap) {
+    const f = u === `${SITE}/` ? 'index.html' : u.slice(SITE.length + 1) + '.html';
+    const html = read(f);
+    const title = decodeEntities((html.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '').replace(/\s+/g, ' ').trim();
+    assert.ok(title, `${f} title`);
+    assert.ok(chars(title) <= 60, `${f} title is ${chars(title)} characters: ${title}`);
+    const fields = [
+      ['title', title],
+      ['description', metaContent(html, 'name', 'description')],
+      ['og:title', metaContent(html, 'property', 'og:title')],
+      ['og:description', metaContent(html, 'property', 'og:description')],
+      ['twitter:title', metaContent(html, 'name', 'twitter:title')],
+      ['twitter:description', metaContent(html, 'name', 'twitter:description')],
+    ];
+    for (const [label, text] of fields) {
+      if (text == null) continue;
+      if (label.endsWith('description')) assert.ok(chars(text) <= 160, `${f} ${label} is ${chars(text)} characters: ${text}`);
+      assert.doesNotMatch(text, BANNED_SNIPPET, `${f} ${label}: ${text}`);
+    }
+    for (const value of ld(html).flatMap(jsonLdStrings)) {
+      const scanned = value.replace(BBB_PROFILE, '');
+      assert.doesNotMatch(scanned, BANNED_SNIPPET, `${f} JSON-LD: ${value}`);
+    }
+  }
+});
+
 test('FAQ structured data only describes questions that are visible on the page', () => {
   const norm = s => s.replace(/<\/?(?:a|strong|em|b|i|span)\b[^>]*>/g, '').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/[’']/g, "'").replace(/\s+/g, ' ').trim();
+  // Visible FAQ HTML keeps the in-page service words. JSON-LD may rephrase those words
+  // so the Google-facing copy passes the banned-snippet test. The rephrased question and
+  // the start of the answer still have to be on the page once those words are ignored.
+  const scrub = s => norm(s)
+    .replace(/\bshop\b/gi, ' ')
+    .replace(/\bmobile\b/gi, ' ')
+    .replace(/\bpick-?up\b/gi, ' ')
+    .replace(/by appointment/gi, ' ')
+    .replace(/24\/7/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const missingWords = (fragment, page) => {
+    const lead = fragment.length <= 80 ? fragment : fragment.slice(0, 80).replace(/\s+\S*$/, '');
+    if (!lead) return [];
+    if (page.includes(lead)) return [];
+    const words = lead.toLowerCase().match(/[a-z0-9]{4,}/g) || [];
+    const haystack = page.toLowerCase();
+    return words.filter(w => !haystack.includes(w));
+  };
   for (const f of pages) {
     const html = read(f);
-    const visible = norm(html.replace(/<script[\s\S]*?<\/script>/g, ''));
+    const visible = scrub(html.replace(/<script[\s\S]*?<\/script>/g, ''));
     for (const n of ld(html).filter(n => n['@type'] === 'FAQPage')) for (const q of n.mainEntity) {
-      assert.ok(visible.includes(norm(q.name)), `${f}: FAQ question not visible: ${q.name}`);
-      assert.ok(visible.includes(norm(q.acceptedAnswer.text).slice(0, 80)), `${f}: FAQ answer not visible: ${q.name}`);
+      const qMissing = missingWords(scrub(q.name), visible);
+      const aMissing = missingWords(scrub(q.acceptedAnswer.text).slice(0, 80), visible);
+      assert.deepEqual(qMissing, [], `${f}: FAQ question not visible: ${q.name}`);
+      assert.deepEqual(aMissing, [], `${f}: FAQ answer not visible: ${q.name}`);
     }
   }
 });
