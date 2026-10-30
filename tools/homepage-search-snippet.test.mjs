@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
 
-const DESCRIPTION = 'Fast replies from a Fort Myers shop rated 4.8★. Engine, transmission & diesel repair done right. Call Perfect Timing Auto Repair: (239) 397-2048.';
-const REQUIRED = ['Fort Myers', '4.8', 'Engine', 'transmission', 'diesel', '(239) 397-2048'];
+const DESCRIPTION = 'Auto repair & mechanic in Fort Myers, rated 4.8★. Car A/C, engine, transmission, diesel, suspension & electrical. Fast replies: call (239) 397-2048.';
+const REQUIRED = ['Fort Myers', '4.8', 'A/C', 'engine', 'transmission', 'diesel', 'suspension', 'electrical', '(239) 397-2048'];
 
 test('homepage search snippet leads with fast replies, services, 4.8 rating, and phone', () => {
   const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
@@ -23,7 +23,7 @@ test('homepage search snippet leads with fast replies, services, 4.8 rating, and
     assert.equal(description.includes('13037'), false);
     assert.equal(description.includes('Saddleback'), false);
   }
-  assert.equal(document.querySelector('title').textContent, 'Auto Repair in Fort Myers, FL | Engine, Transmission & Diesel | Perfect Timing');
+  assert.equal(document.querySelector('title').textContent, 'Auto Repair Fort Myers, FL | Engine, Transmission & Diesel');
   assert.equal(
     document.querySelector('meta[property="og:title"]').getAttribute('content'),
     'Perfect Timing Auto Repair | Car trouble has terrible timing. Luckily, you’ve got Perfect Timing.'
