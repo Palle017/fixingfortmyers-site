@@ -26,10 +26,11 @@ for (const page of pages) test(`${page}: sticky bar leads with "Call Tony" in th
   }
   // Both actions are full, equal-weight buttons: side by side, >=44px tall, no muted secondary style.
   const bundles = [...document.querySelectorAll('link[rel="stylesheet"][href*="bundle-page-"]')].map(link => read(link.getAttribute('href').split('?')[0].replace(/^\//, '')));
-  const css = bundles.join('\n');
+  const direct = [...document.querySelectorAll('link[rel="stylesheet"]:not([href*="bundle-"])')].map(link => link.getAttribute('href').split('?')[0].replace(/^\//, '')).filter(name => /^[a-z0-9-]+\.css$/.test(name)).map(read);
+  const css = [...bundles, ...direct].join('\n');
   assert.ok(!css.includes('.mobile-contact-bar a+a{background:#172c40'), page + ': request button still uses the muted style');
   assert.ok(css.includes('.mobile-contact-bar a+a{background:#fff'), page + ': request button is not a full filled button');
-  assert.ok(!/\.mobile-contact-bar\{grid-template-columns:minmax\(0,\.8fr\)/.test(css), page + ': buttons are not equal width');
+  assert.ok(!/\.mobile-contact-bar\{grid-template-columns:minmax\(0,\.8fr\)/.test(css) && !/\.mobile-contact-bar\{grid-template-columns:(?!minmax\(0,1fr\) minmax\(0,1fr\)|1fr 1fr)/.test(css), page + ': buttons are not equal width');
   assert.ok(/\.mobile-contact-bar\{display:grid;grid-template-columns:1fr 1fr/.test(css), page + ': buttons are not side by side');
   const heights = [...css.matchAll(/\.mobile-contact-bar a\{[^}]*min-height:(\d+)px/g)].map(match => Number(match[1]));
   assert.ok(heights.length && heights.every(height => height >= 44), page + ': sticky buttons shorter than 44px');
