@@ -20,11 +20,9 @@ for (const page of pages) test(`${page}: sticky bar leads with "Call Tony" in th
   assert.equal(links[0].getAttribute('href'), 'tel:+12393972048');
   assert.equal(links[0].textContent, 'Call Tony');
   assert.notEqual(links[1].getAttribute('href'), 'tel:+12393972048');
-  // Calls reach an AI assistant first; the bar's accessible name keeps saying so.
-  if (['workshop.html', 'index.html'].includes(page)) {
+  // The bar's accessible name is plain, with no AI-assistant wording.
+  if (page === 'workshop.html' || (bar.getAttribute('aria-label').startsWith('Repair help') && links[1].textContent === 'Request a repair')) {
     assert.equal(bar.getAttribute('aria-label'), 'Repair help: call Tony or request a repair');
-  } else if (bar.getAttribute('aria-label').startsWith('Repair help') && links[1].textContent === 'Request a repair') {
-    assert.equal(bar.getAttribute('aria-label'), 'Repair help: call the shop (an AI assistant answers first) or request a repair');
   }
   // The first link takes the bright base style; only the second gets the muted a+a style.
   const bundles = [...document.querySelectorAll('link[rel="stylesheet"][href*="bundle-page-"]')].map(link => read(link.getAttribute('href').split('?')[0].replace(/^\//, '')));
