@@ -18,11 +18,20 @@ const nodes = j => (j['@graph'] || [j]);
 const home = nodes(blocks(fs.readFileSync('index.html', 'utf8'))[0]).find(n => n['@type'] === 'AutoRepair');
 const { hasOfferCatalog, ...homeBiz } = home;
 const ORDER = ['@type', '@id', 'name', 'legalName', 'alternateName', 'description', 'url', 'logo', 'image',
-  'telephone', 'email', 'priceRange', 'address', 'hasMap', 'openingHoursSpecification', 'areaServed', 'sameAs'];
+  'telephone', 'email', 'contactPoint', 'priceRange', 'address', 'hasMap', 'openingHoursSpecification', 'areaServed', 'sameAs'];
 const mapUrl = homeBiz.sameAs.find(u => u.startsWith('https://www.google.com/maps/'));
 const business = Object.fromEntries(ORDER.map(k => [k, ({
   ...homeBiz,
   alternateName: 'Perfect Timing Auto Repair',
+  // Describe the existing public inquiry channels; this does not confirm a booking.
+  contactPoint: {
+    '@type': 'ContactPoint',
+    '@id': `${SITE}/#repair-contact`,
+    contactType: 'repair requests',
+    telephone: homeBiz.telephone,
+    email: homeBiz.email,
+    url: `${SITE}/#contact`,
+  },
   // Service-area business: city and state only. The street address stays private.
   address: { '@type': 'PostalAddress', addressLocality: 'Fort Myers', addressRegion: 'FL', addressCountry: 'US' },
   hasMap: mapUrl,
@@ -49,6 +58,9 @@ function fixNode(n, page, html) {
   if (n['@type'] === 'Service' && typeof n.serviceType === 'string') {
     // serviceType names the kind of service; the city belongs in areaServed.
     n.serviceType = n.serviceType.replace(/\s+(?:in|for)\s+(?:Fort Myers|Cape Coral|Lehigh Acres|North Fort Myers)(?:,\s*FL|\s+Drivers)?$/i, '');
+  }
+  if (n['@type'] === 'WebSite' && n['@id'] === `${SITE}/#website`) {
+    n.publisher ??= { '@id': BIZ };
   }
   if (n['@type'] === 'Article') {
     const img = meta(html, 'og:image');

@@ -5,6 +5,8 @@ Use the existing verified accounts and properties before creating anything new. 
 ## Already completed in the website
 
 - One stable `AutoRepair` identity: `https://fixingfortmyers.com/#business`
+- One shared repair-request `ContactPoint`: `https://fixingfortmyers.com/#repair-contact`, using the public phone, email and existing `/#contact` form section
+- Every `WebSite` node identifies that business as its publisher
 - Every repair page represented as a `Service` provided by that business
 - Verified public profiles connected in business schema
 - Updated XML sitemap and `robots.txt` sitemap reference
@@ -12,6 +14,10 @@ Use the existing verified accounts and properties before creating anything new. 
 - Dry-run-safe IndexNow submission script
 - Repair-proof page and consistent business entity page
 - AI-search tracking scorecard
+
+The contact markup uses ordinary [Schema.org contact fields](https://schema.org/ContactPoint) to describe channels customers can already see and use. It does not submit a request or confirm an appointment. Keep its phone and email derived from the homepage business node with `node tools/normalize-schema.mjs`.
+
+No `llms.txt`, special AI schema or new crawler permissions are needed for this change. [Google's AI-features guidance](https://developers.google.com/search/docs/appearance/ai-features) says existing search fundamentals apply and no extra AI text files or special structured data are required. The public `robots.txt` already allows crawling; retain the existing noindex treatment of private and receipt pages. These identity corrections do not establish higher rankings or AI recommendations. Continue measuring through the [existing AI search review](../docs/AI-SEARCH-REVIEW-20261022.md).
 
 ## 1. Google Search Console
 
