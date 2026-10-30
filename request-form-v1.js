@@ -30,9 +30,15 @@
   // Keep native constraints for no-JS users; JS adds all three inline errors at once.
   form.noValidate = true;
   if (endpoint) form.action = endpoint;
+  // Accept the way people (and phone autofill) type numbers: "(239) 555-0100", "239-555-0100",
+  // "239.555.0100", "+1 239 555 0100", "1-239-555-0100". Send the canonical 10 digits or +1 plus 10 digits.
+  const normalizePhone = value => {
+    const raw = String(value).trim(), compact = raw.replace(/[\s().-]/g, '');
+    return /^1[0-9]{10}$/.test(compact) ? '+' + compact : compact;
+  };
   const rules = {
     'request-name': value => value.trim() ? '' : 'Enter your name.',
-    'request-phone': value => /^(?:\+1)?[0-9]{10}$/.test(value.trim()) ? '' : 'Enter 10 digits, or +1 followed by 10 digits.',
+    'request-phone': value => /^(?:\+1)?[0-9]{10}$/.test(normalizePhone(value)) ? '' : 'Enter 10 digits, or +1 followed by 10 digits.',
     'request-vehicle': value => value.trim() ? '' : 'Enter your vehicle’s year, make and model.'
   };
   const validate = id => {
@@ -70,7 +76,7 @@
     const localTime = preference === 'specific' ? $('request-callback-at').value : '';
     const date = localTime ? new Date(localTime) : null;
     return {
-      name: $('request-name').value.trim(), phone: $('request-phone').value.trim(),
+      name: $('request-name').value.trim(), phone: normalizePhone($('request-phone').value),
       vehicle: $('request-vehicle').value.trim(), vin: vin.value.trim().toUpperCase() || null,
       callback_preference: preference,
       callback_at: date && Number.isFinite(date.getTime()) ? date.toISOString() : null,

@@ -110,10 +110,20 @@ test('US phone constraint accepts exactly ten digits or +1 plus ten digits', asy
     assert.equal(x.calls[0].body.phone,phone);
     assert.equal(x.d.getElementById('request-phone').validity.patternMismatch,false);
   }
-  for(const phone of ['','239555010','23955501000','12395550100','+442395550100','(239) 555-0100']){
+  for(const phone of ['','239555010','23955501000','+442395550100','239 555 01OO','(239) 555-01000']){
     const x=setup(t);x.fill();x.enter('request-phone',phone);x.send();await settle();
     assert.equal(x.calls.length,0,phone);
     assert.equal(x.d.activeElement.id,'request-phone');
+  }
+});
+
+test('mobile-typed and autofilled phone formats are accepted and sent canonical', async t=>{
+  const cases={'(239) 555-0100':'2395550100','239-555-0100':'2395550100','239.555.0100':'2395550100',' 239 555 0100 ':'2395550100','+1 (239) 555-0100':'+12395550100','1-239-555-0100':'+12395550100','12395550100':'+12395550100'};
+  for(const page of ['index.html','request-a-repair.html']) for(const [typed,sent] of Object.entries(cases)){
+    const x=setup(t,{page});x.fill();x.enter('request-phone',typed);x.send();await settle();
+    assert.equal(x.d.getElementById('request-phone-error').hidden,true,page+' '+typed);
+    assert.equal(x.calls.length,1,page+' '+typed);
+    assert.equal(x.calls[0].body.phone,sent,page+' '+typed);
   }
 });
 
