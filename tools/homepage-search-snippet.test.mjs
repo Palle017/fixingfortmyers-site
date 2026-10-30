@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
 
-const DESCRIPTION = 'Auto repair & mechanic in Fort Myers, 4.8★. A/C, engine, transmission, diesel, suspension & electrical. Request repair for fast replies or call (239) 397-2048.';
+const DESCRIPTION = 'Auto repair & mechanic in Fort Myers, rated 4.8★. Car A/C, engine, transmission, diesel, suspension & electrical. Fast replies: call (239) 397-2048.';
 const REQUIRED = ['Fort Myers', '4.8', 'A/C', 'engine', 'transmission', 'diesel', 'suspension', 'electrical', '(239) 397-2048'];
 
 test('homepage search snippet leads with fast replies, services, 4.8 rating, and phone', () => {
