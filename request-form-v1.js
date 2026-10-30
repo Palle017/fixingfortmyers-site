@@ -94,8 +94,8 @@
   form.addEventListener('change', clearStatus);
   const confirm = data => {
     if (offer) offer.hidden = true;
-    const when = {asap:'ASAP', today:'ASAP', tomorrow:'by tomorrow', next_week:'next week', specific:'ASAP'}[data.callback_preference];
-    $('request-done-heading').textContent = `Got it, ${data.name}. Tony calls back ${when}.`;
+    const later = {tomorrow:'Tony calls back by tomorrow.', next_week:'Tony calls back next week.'}[data.callback_preference];
+    $('request-done-heading').textContent = `Got it, ${data.name}. ${later || 'Fast replies: Tony will call you shortly.'}`;
     form.hidden = true;
     $('request-heading').hidden = true;
     $('request-review-note').hidden = true;

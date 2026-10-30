@@ -146,7 +146,7 @@ test('valid submission sends exactly the v1 JSON contract and shows only the con
   assert.equal(data.source,'site_form_v1');
   assert.equal(new Date(data.submitted_at).toISOString(),data.submitted_at);
   assert.equal(x.form.hidden,true);
-  assert.equal(x.d.getElementById('request-done').textContent,'Got it, Synthetic Customer. Tony calls back ASAP.');
+  assert.equal(x.d.getElementById('request-done').textContent,'Got it, Synthetic Customer. Fast replies: Tony will call you shortly.');
   assert.equal(x.d.activeElement.id,'request-done-heading');
   assert.deepEqual(x.logs,[]);
   assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null,'no customer data persisted in browser storage');
@@ -165,13 +165,13 @@ test('VIN uppercases and gives advisory validation while a ten-character VIN sti
 });
 
 test('callback choices serialize independently of service scheduling, with optional local time converted to ISO', async t=>{
-  for(const [value,copy] of [['asap','ASAP'],['today','ASAP'],['tomorrow','by tomorrow'],['next_week','next week'],['specific','ASAP']]){
+  for(const [value,copy] of [['asap','Fast replies: Tony will call you shortly.'],['today','Fast replies: Tony will call you shortly.'],['tomorrow','Tony calls back by tomorrow.'],['next_week','Tony calls back next week.'],['specific','Fast replies: Tony will call you shortly.']]){
     const x=setup(t);x.fill();x.preference(value);
     assert.equal(x.d.getElementById('request-callback-time').hidden,value!=='specific');
     x.send();await settle();
     assert.equal(x.calls[0].body.callback_preference,value);
     assert.equal(x.calls[0].body.callback_at,null,'a callback time is optional');
-    assert.equal(x.d.getElementById('request-done-heading').textContent,`Got it, Synthetic Customer. Tony calls back ${copy}.`);
+    assert.equal(x.d.getElementById('request-done-heading').textContent,`Got it, Synthetic Customer. ${copy}`);
   }
   const x=setup(t);x.fill();x.preference('specific');x.enter('request-callback-at','2026-11-12T14:30');x.send();await settle();
   assert.equal(x.calls[0].body.callback_at,new x.w.Date('2026-11-12T14:30').toISOString());

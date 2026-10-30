@@ -100,7 +100,7 @@ test('repair form submits to browser-memory mock and keeps generated handoff lin
   x.enter('request-vehicle','2018 Test Vehicle');
   x.submit('bookingForm'); await settle();
   assert.equal(x.d.getElementById('request-done').hidden,false);
-  assert.match(x.d.getElementById('request-done-heading').textContent,/Got it, Synthetic Staging Tester\. Tony calls back ASAP\./);
+  assert.match(x.d.getElementById('request-done-heading').textContent,/Got it, Synthetic Staging Tester\. Fast replies: Tony will call you shortly\./);
   assert.equal(x.w.PT_STAGING.calls.filter(call => call.path === '/hooks/lead/webform').length,1);
   assert.equal(x.w.PT_ANALYTICS_STATUS.customMetrics,'disabled');
   assert.equal(x.w.PT_ANALYTICS_STATUS.ga4,'preview_disabled');
