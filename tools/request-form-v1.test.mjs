@@ -70,7 +70,7 @@ test('both entry pages share the short callback form, optional notes, a hidden s
     assert.equal(x.d.getElementById('request-vehicle').placeholder,'Year Make Model, e.g. 2014 Honda Civic');
     assert.equal(x.d.getElementById('request-submit').disabled,false);
     assert.equal(x.d.getElementById('request-heading').textContent,'Send a request. It takes 20 seconds. Tony calls back.');
-    assert.equal(x.d.getElementById('request-review-note').textContent,'An AI assistant reviews your request, then Tony calls back to confirm.');
+    assert.equal(x.d.getElementById('request-review-note').textContent,'Send your details and Tony gets back to you fast.');
     assert.match(x.form.querySelector('.request-phone-footer').textContent,/Prefer to call\? \(239\) 397-2048/);
     assert.equal(x.form.querySelector('.request-phone-footer a').getAttribute('href'),'tel:+12393972048');
     assert.equal(x.form.hasAttribute('toolautosubmit'),false);

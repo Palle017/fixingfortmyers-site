@@ -12,7 +12,7 @@ for (const page of heroPages) test(`${page}: call button reads "Call the shop (2
   const call = [...doc(page).querySelectorAll('.btn[href="tel:+12393972048"]')];
   assert.equal(call.length, 1);
   assert.equal(call[0].textContent.trim(), 'Call the shop (239) 397-2048');
-  assert.equal(call[0].parentElement.nextElementSibling.textContent.trim(), disclosure);
+  assert.equal(call[0].parentElement.nextElementSibling.textContent.trim(), page === 'transmission-repair-fort-myers.html' ? 'Send your details and Tony gets back to you fast.' : disclosure);
 });
 for (const page of barPages) test(`${page}: mobile bar call reads "Call Tony"`, () => {
   const a = doc(page).querySelector('.mobile-contact-bar a[href="tel:+12393972048"]');
