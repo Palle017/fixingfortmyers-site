@@ -13,6 +13,9 @@ const INDEX_TITLE = 'Repair notes | Perfect Timing Auto Repair';
 const INDEX_DESC = 'Repair notes from Tony at Perfect Timing Auto Repair in Fort Myers. Call (239) 397-2048.';
 const POST_TITLE = 'Sample repair note | Perfect Timing';
 const POST_DESC = 'Sample repair note from Tony at Perfect Timing Auto Repair in Fort Myers. Call (239) 397-2048.';
+const NOTE_SLUG = 'brake-job-cost-fort-myers';
+const NOTE_TITLE = 'What affects brake job cost in Fort Myers | Perfect Timing';
+const NOTE_DESC = 'What affects a brake job in Fort Myers: pads, rotors, calipers, fluid, vehicle type, parts, and how long the work was put off. Call (239) 397-2048.';
 
 const documentOf = file => new JSDOM(read(file)).window.document;
 const ld = html => [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
@@ -22,8 +25,8 @@ const snippetFields = document => [
   ...[...document.querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]')].map(node => node.getAttribute('content')),
 ];
 
-test('blog files are the index and the post template', () => {
-  assert.deepEqual(blogFiles, ['_template.html', 'index.html']);
+test('blog files are the index, the post template, and published notes', () => {
+  assert.deepEqual(blogFiles, ['_template.html', `${NOTE_SLUG}.html`, 'index.html']);
 });
 
 test('shared nav and footer link to /blog', () => {
@@ -40,7 +43,7 @@ test('shared nav and footer link to /blog', () => {
   assert.ok(linked >= 50, `only ${linked} navs link to the blog`);
 });
 
-test('blog index snippet, canonical, empty list, and sitemap entry', () => {
+test('blog index snippet, canonical, published notes, and sitemap entry', () => {
   const html = read('blog/index.html');
   const document = documentOf('blog/index.html');
   const titles = [
@@ -58,10 +61,17 @@ test('blog index snippet, canonical, empty list, and sitemap entry', () => {
   assert.equal(document.querySelector('link[rel="canonical"]').getAttribute('href'), `${SITE}/blog`);
   assert.equal(document.querySelector('meta[property="og:url"]').getAttribute('content'), `${SITE}/blog`);
   assert.equal(document.querySelector('meta[property="og:type"]').getAttribute('content'), 'website');
-  assert.equal(document.querySelector('#blog-posts a'), null);
-  assert.match(document.getElementById('blog-empty').textContent, /No repair notes yet/);
+  assert.equal(document.getElementById('blog-empty'), null);
+  const listed = [...document.querySelectorAll('#blog-posts li')];
+  assert.equal(listed.length, 1);
+  assert.equal(listed[0].querySelector('a').getAttribute('href'), `/blog/${NOTE_SLUG}`);
+  assert.equal(listed[0].querySelector('a').textContent.trim(), NOTE_TITLE);
+  assert.equal(listed[0].querySelector('time').getAttribute('datetime'), '2026-10-30');
+  assert.equal(listed[0].querySelector('time').textContent.trim(), 'October 30, 2026');
   assert.match(read('sitemap.xml'), /<loc>https:\/\/fixingfortmyers\.com\/blog<\/loc>/);
+  assert.match(read('sitemap.xml'), new RegExp(`<loc>https://fixingfortmyers\\.com/blog/${NOTE_SLUG}</loc>`));
   assert.doesNotMatch(read('sitemap.xml'), /blog\/(?:_template|post-slug)/);
+  assert.match(read('site.js'), new RegExp(`'/blog/${NOTE_SLUG}'`));
   const blog = ld(html).flatMap(node => node['@graph'] || [node]).find(node => node['@type'] === 'Blog');
   assert.equal(blog.description, INDEX_DESC);
   assert.equal(blog.author.name, 'Tony');
@@ -101,6 +111,34 @@ test('post template carries the article snippet, related services, and closing a
   assert.equal(article.publisher.name, 'Perfect Timing Auto Repair');
   assert.equal(article.publisher.logo.url, `${SITE}/assets/pt-logo-new.webp`);
   assert.equal(article.image, `${SITE}/assets/og-card-20260906.jpg`);
+});
+
+test('published brake-cost note matches its snippet, date, and related services', () => {
+  const html = read(`blog/${NOTE_SLUG}.html`);
+  const document = documentOf(`blog/${NOTE_SLUG}.html`);
+  assert.equal(document.querySelector('meta[name="robots"]'), null);
+  assert.equal(document.querySelector('title').textContent, NOTE_TITLE);
+  assert.equal(document.querySelector('meta[name="description"]').getAttribute('content'), NOTE_DESC);
+  assert.equal(document.querySelector('meta[property="og:title"]').getAttribute('content'), NOTE_TITLE);
+  assert.equal(document.querySelector('meta[name="twitter:title"]').getAttribute('content'), NOTE_TITLE);
+  assert.equal(document.querySelector('meta[property="og:description"]').getAttribute('content'), NOTE_DESC);
+  assert.equal(document.querySelector('meta[name="twitter:description"]').getAttribute('content'), NOTE_DESC);
+  assert.equal(document.querySelector('meta[property="og:type"]').getAttribute('content'), 'article');
+  assert.equal(document.querySelector('link[rel="canonical"]').getAttribute('href'), `${SITE}/blog/${NOTE_SLUG}`);
+  assert.equal(document.querySelector('meta[property="og:url"]').getAttribute('content'), `${SITE}/blog/${NOTE_SLUG}`);
+  assert.equal(document.querySelector('h1').textContent, 'What affects brake job cost in Fort Myers');
+  assert.equal(document.querySelector('time').getAttribute('datetime'), '2026-10-30');
+  const related = [...document.querySelectorAll('.blog-related a')].map(anchor => anchor.getAttribute('href'));
+  assert.deepEqual(related, ['/brake-repair-fort-myers', '/suspension-steering-repair-fort-myers', '/auto-diagnostics-fort-myers']);
+  for (const href of related) assert.equal(fs.existsSync(new URL(`..${href}.html`, import.meta.url)), true, href);
+  const article = ld(html).flatMap(node => node['@graph'] || [node]).find(node => node['@type'] === 'Article');
+  assert.equal(article.headline, NOTE_TITLE);
+  assert.equal(article.description, NOTE_DESC);
+  assert.equal(article.datePublished, '2026-10-30');
+  assert.equal(article.dateModified, '2026-10-30');
+  assert.equal(article.mainEntityOfPage, `${SITE}/blog/${NOTE_SLUG}`);
+  assert.equal(article.author.name, 'Tony');
+  assert.equal(article.publisher.name, 'Perfect Timing Auto Repair');
 });
 
 test('blog snippets and JSON-LD stay inside the caps and out of the banned words', () => {
