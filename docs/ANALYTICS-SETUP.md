@@ -98,3 +98,9 @@ https://developers.google.com/analytics/devguides/collection/ga4/views
 
 Google's configuration reference:
 https://developers.google.com/analytics/devguides/collection/ga4/reference/config
+
+## Calls by service page (added 2026-10-30)
+`phone_click`, `text_click`, `email_click` and `request_form_click` now carry `page_service`, a fixed key from the page path (`engine`, `transmission`, `diesel`, `ac`, … or `none`). No visitor data is included.
+1. In GA4 Admin → Custom definitions, add the event-scoped dimension `page_service`.
+2. Mark `phone_click` as a key event next to `form_submit_success`. Calls are the main conversion on mobile.
+3. Owner-only: set the Google Business Profile website link to `https://fixingfortmyers.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp` so profile visits split from regular search.
