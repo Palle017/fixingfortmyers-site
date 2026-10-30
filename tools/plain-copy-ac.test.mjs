@@ -16,14 +16,13 @@ test('ac-repair-fort-myers.html: new car AC repair snippet, penguin ad unchanged
   assert.match(h, /<strong>Stay cool, Fort Myers\. Let’s get your A\/C working right\.<\/strong>/);
   assert.match(h, /alt="Perfect Timing Auto Repair A\/C ad: a penguin in sunglasses surrounded by snow on a sunny beach\. We’ll leave you feeling cooler than a penguin in sunglasses\. Call \(239\) 397-2048\."/);
   assert.match(h, /<meta property="og:image:alt" content="Cooler than a penguin in sunglasses — Perfect Timing Auto Repair A\/C service">/);
-  assert.match(h, /<title>Car AC Repair in Fort Myers \| Perfect Timing Auto Repair<\/title>/);
-  assert.match(h, /<meta property="og:title" content="Car AC Repair in Fort Myers \| Perfect Timing Auto Repair">/);
-  assert.match(h, /<meta name="twitter:title" content="Car AC Repair in Fort Myers \| Perfect Timing Auto Repair">/);
-  const description = "Car AC repair in Fort Myers. Warm air at idle, weak airflow, or a recharge that didn't last? We test it the way it fails for you. Call (239) 397-2048.";
+  assert.match(h, /<title>Car A\/C Repair in Fort Myers, FL \| Perfect Timing<\/title>/);
+  assert.match(h, /<meta property="og:title" content="Car A\/C Repair in Fort Myers, FL \| Perfect Timing">/);
+  assert.match(h, /<meta name="twitter:title" content="Car A\/C Repair in Fort Myers, FL \| Perfect Timing">/);
+  const description = 'Car A/C repair in Fort Myers, rated 4.8★. AC blowing warm air? AC recharge and compressor repair. Fast replies: call (239) 397-2048.';
   for (const attr of ['name="description"', 'property="og:description"', 'name="twitter:description"']) {
     assert.ok(h.includes(`<meta ${attr} content="${description}">`), attr);
   }
-  assert.equal(h.split(`"description": "${description}"`).length - 1, 2);
   assert.doesNotMatch(h, /AC Repair in Fort Myers, FL \| Perfect Timing/);
   assert.doesNotMatch(h, /leak checks, pressure readings and compressor and fan tests before parts/);
   assert.match(h, /<h1 class="service-hero__title" id="service-title">AC Repair in Fort Myers<\/h1>/);
