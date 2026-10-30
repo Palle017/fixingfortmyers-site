@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
 
-const DESCRIPTION = 'Fast replies from a Fort Myers shop rated 4.8★. Engine, transmission & diesel repair done right. Call Perfect Timing Auto Repair: (239) 397-2048.';
-const REQUIRED = ['Fort Myers', '4.8', 'Engine', 'transmission', 'diesel', '(239) 397-2048'];
+const DESCRIPTION = 'Auto repair & mechanic in Fort Myers, 4.8★. A/C, engine, transmission, diesel, suspension & electrical. Request repair for fast replies or call (239) 397-2048.';
+const REQUIRED = ['Fort Myers', '4.8', 'A/C', 'engine', 'transmission', 'diesel', 'suspension', 'electrical', '(239) 397-2048'];
 
 test('homepage search snippet leads with fast replies, services, 4.8 rating, and phone', () => {
   const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
