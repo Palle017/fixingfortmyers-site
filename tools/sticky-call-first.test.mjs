@@ -21,7 +21,7 @@ for (const page of pages) test(`${page}: sticky bar leads with "Call Tony" in th
   assert.equal(links[0].textContent, 'Call Tony');
   assert.notEqual(links[1].getAttribute('href'), 'tel:+12393972048');
   // Calls reach an AI assistant first; the bar's accessible name keeps saying so.
-  if (page === 'workshop.html') {
+  if (['workshop.html', 'index.html'].includes(page)) {
     assert.equal(bar.getAttribute('aria-label'), 'Repair help: call Tony or request a repair');
   } else if (bar.getAttribute('aria-label').startsWith('Repair help') && links[1].textContent === 'Request a repair') {
     assert.equal(bar.getAttribute('aria-label'), 'Repair help: call the shop (an AI assistant answers first) or request a repair');
