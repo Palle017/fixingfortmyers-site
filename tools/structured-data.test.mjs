@@ -45,15 +45,12 @@ test('the business entity is identical on every page and keeps the street addres
       // (docs/BOOKING-CONTRACT-V1.md, docs/google-business-profile-plan.md "Open 24 hours").
       assert.deepEqual(n.openingHoursSpecification, [{ '@type': 'OpeningHoursSpecification',
         dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], opens: '00:00', closes: '23:59' }], `${f} 24/7 request hours`);
-      assert.match(n.description, /workshop in Bayshore Ranch/i, `${f} identifies the workshop`);
-      assert.match(n.description, /mobile repairs from a service van/i, `${f} describes the mobile van service`);
-      assert.match(n.description, /pickup/i, `${f} mentions pickup`);
-      assert.match(n.description, /accepted 24\/7 by form, call or text/i, `${f} describes 24/7 requests`);
-      assert.match(n.description, /Tony confirms every appointment by phone/i, `${f} requests stay unconfirmed until Tony calls`);
-      assert.doesNotMatch(n.description, /only for vehicles that won't start|not a mobile/i, `${f} must not deny mobile service`);
+      // Owner snippet rules (2026-10-30): the business description can be quoted in search and AI answers,
+      // so it names services and cities, never the address/area, and none of the banned snippet words.
+      assert.doesNotMatch(n.description, /\bshop\b|mobile|pickup|by appointment|24\/7|Bayshore|Saddleback|13037|Second St/i, `${f} banned snippet wording`);
+      for (const word of ['Fort Myers', 'engine', 'transmission', 'diesel', '(239) 397-2048']) assert.ok(n.description.includes(word), `${f} description names ${word}`);
       assert.equal(n.aggregateRating, undefined, `${f} self-serving review markup is not eligible for stars`);
       assert.equal(n.geo, undefined, `${f} no geo coordinates for a hidden-address business`);
-      assert.match(n.description, /appointment/i, `${f} service requires an appointment`);
     }
   }
   assert.equal(seen.size, 1, 'business node differs between pages; keep the shared business identity and appointment model consistent');
