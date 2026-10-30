@@ -1,0 +1,156 @@
+{
+  "date": "2026-10-30",
+  "editing_tool": "OpenAI image_gen",
+  "magnific_status": "Account setup completed; enhancement refused by the daily free-plan limit; no enhancement credits charged.",
+  "usage_limit": "Retouched marketing derivatives. Original photographs are retained and linked. Fine texture and markings may be synthesized; these are not diagnostic records or evidence of a completed repair.",
+  "photos": [
+    {
+      "key": "engine",
+      "source": "assets/owner-engine-stand.jpg",
+      "source_url": "https://fixingfortmyers.com/assets/owner-engine-stand.jpg",
+      "source_sha256": "527e997ac3a1dde9e0d4941d5580b2d2a6c616f2501073b8bd341277ad5ad223",
+      "edited_master_sha256": "f930b549a546d60c7da19de3ff074ca04b663ad6a3ef199a8f021d335e53d00d",
+      "edits": "Tighter portrait framing, balanced exposure and neutral color; AI-assisted retouching synthesizes fine texture.",
+      "files": [
+        {
+          "file": "assets/engine-repair-red-engine-stand-edited.webp",
+          "width": 1086,
+          "height": 1448,
+          "bytes": 267940,
+          "sha256": "b9d52458336d1924a35e23348680b5ad1ddabcb2ddb50577704a45bb51c3d053"
+        },
+        {
+          "file": "assets/engine-repair-red-engine-stand-edited.jpg",
+          "width": 1086,
+          "height": 1448,
+          "bytes": 368184,
+          "sha256": "bd5ccb124320ef611dcd48c2b4073d8041aea7fb811ac04d09bf828f645bc1da"
+        },
+        {
+          "file": "assets/engine-repair-red-engine-stand-edited-480.webp",
+          "width": 480,
+          "height": 640,
+          "bytes": 71024,
+          "sha256": "bdc2b70b37afdc75b3361a0acaf447674460cf716429e99b3c69fded26b1a3a0"
+        }
+      ]
+    },
+    {
+      "key": "transmission",
+      "source": "assets/owner-transmission-open.jpg",
+      "source_url": "https://fixingfortmyers.com/assets/owner-transmission-open.jpg",
+      "source_sha256": "66327eec95c153b9b1fa442eff42f9641eccd1a8caea4a50c0c4844e3c3a0cfc",
+      "edited_master_sha256": "870ae60a25e42cbc2fd977c9f3df8cabe754c01e694b1e4f26cb7d35aeb7278d",
+      "edits": "Straighter portrait framing, neutral metal color and clearer shadow detail; AI-assisted retouching synthesizes fine texture.",
+      "files": [
+        {
+          "file": "assets/transmission-repair-open-case-edited.webp",
+          "width": 1086,
+          "height": 1448,
+          "bytes": 262276,
+          "sha256": "a1a3cb70e133b28dd861c88d90ddf6b26b91f1e871d63e15bbb2292d32d3ea14"
+        },
+        {
+          "file": "assets/transmission-repair-open-case-edited.jpg",
+          "width": 1086,
+          "height": 1448,
+          "bytes": 366978,
+          "sha256": "a9ae853ee19f318569e9bfdc5d568e04e439b83a3ca161ba74ca6d0c470cc65d"
+        },
+        {
+          "file": "assets/transmission-repair-open-case-edited-480.webp",
+          "width": 480,
+          "height": 640,
+          "bytes": 77298,
+          "sha256": "2a51f4600fc043b1e8a438164bc318d93c9ff3bcbbe8bbd32835a345626775bc"
+        }
+      ]
+    },
+    {
+      "key": "mustang",
+      "source": "assets/owner-mustang-engine-bay.jpg",
+      "source_url": "https://fixingfortmyers.com/assets/owner-mustang-engine-bay.jpg",
+      "source_sha256": "002371b9da135770d1a0bef45cc22363b533f2352e1d9348712f4dcb13640a52",
+      "edited_master_sha256": "d0cecd1632459e423630897e016daab833a655f8474595ec5fef526d21c071cb",
+      "edits": "Reduced glare and haze, lifted engine-bay detail and more vivid blue paint; AI-assisted retouching synthesizes fine texture.",
+      "files": [
+        {
+          "file": "assets/mustang-no-start-repair-garage-edited.webp",
+          "width": 1200,
+          "height": 900,
+          "bytes": 251288,
+          "sha256": "1f0fae562a76e1c5ef8ad98b7a711fd49625e4605db1204e1d860bd1022312ac"
+        },
+        {
+          "file": "assets/mustang-no-start-repair-garage-edited.jpg",
+          "width": 1200,
+          "height": 900,
+          "bytes": 313088,
+          "sha256": "aa293e670f15ec91debf9beb8df26aea92d823be4ddf940159d7ff9a4d7925c9"
+        },
+        {
+          "file": "assets/mustang-no-start-repair-garage-edited-768.webp",
+          "width": 768,
+          "height": 576,
+          "bytes": 114360,
+          "sha256": "c83293f6b2409e588ee90e1fdcbeaf7828b7768e3a8fdba52dc81fa25ea1bfcc"
+        }
+      ]
+    },
+    {
+      "key": "vw",
+      "source": "assets/gbp-vw-bus-engine-repair.jpg",
+      "source_url": "https://fixingfortmyers.com/assets/gbp-vw-bus-engine-repair.jpg",
+      "source_sha256": "f16346736ee2ef32030cde66c97f86838156ff4ebdfcc59098e5f581d09c2d3f",
+      "edited_master_sha256": "e5170d097156ec2677b772514171d4bfaf8ced575fc5beeca02a044d09eae50d",
+      "edits": "Neutralized green cast and lifted engine-bay shadows; AI-assisted retouching synthesizes fine texture.",
+      "files": [
+        {
+          "file": "assets/volkswagen-bus-engine-repair-edited.webp",
+          "width": 1200,
+          "height": 800,
+          "bytes": 227254,
+          "sha256": "e86feb82ec1ca38171ad7fdf10d342d72e7cd5c0f40f3202a8cc999601e23451"
+        },
+        {
+          "file": "assets/volkswagen-bus-engine-repair-edited.jpg",
+          "width": 1200,
+          "height": 800,
+          "bytes": 271781,
+          "sha256": "c629af74849ad0ca476d4c6d073b3811c5a7de893159be1dc1d510462065ab62"
+        },
+        {
+          "file": "assets/volkswagen-bus-engine-repair-edited-768.webp",
+          "width": 768,
+          "height": 512,
+          "bytes": 100558,
+          "sha256": "0e6068276310ab49a90305a28ab097ae1791df0da0f6dcb59a56f8b1689015cf"
+        }
+      ]
+    }
+  ],
+  "page_placements": {
+    "index.html": [
+      "engine",
+      "transmission",
+      "mustang"
+    ],
+    "engine-repair-fort-myers.html": [
+      "engine"
+    ],
+    "transmission-repair-fort-myers.html": [
+      "transmission"
+    ],
+    "no-start-diagnosis-fort-myers.html": [
+      "mustang"
+    ],
+    "workshop.html": [
+      "engine",
+      "transmission",
+      "vw"
+    ],
+    "hot-rod-restoration-fort-myers.html": [
+      "vw"
+    ]
+  }
+}
