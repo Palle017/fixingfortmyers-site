@@ -30,7 +30,7 @@
     '/', '/about-perfect-timing', '/ac-repair-fort-myers', '/alternator-starter-repair-fort-myers',
     '/auto-diagnostics-fort-myers', '/auto-electrical-repair-fort-myers', '/auto-repair-cape-coral',
     '/auto-repair-fort-myers', '/auto-repair-lehigh-acres', '/auto-repair-north-fort-myers',
-    '/battery-replacement-fort-myers', '/blue-smoke-burning-oil-fort-myers', '/brake-repair-fort-myers',
+    '/battery-replacement-fort-myers', '/blog', '/blue-smoke-burning-oil-fort-myers', '/brake-repair-fort-myers',
     '/car-audio-installation-fort-myers', '/careers', '/case-studies', '/check-engine-light-diagnosis-fort-myers',
     '/cooling-system-repair-fort-myers', '/data-privacy-policy', '/detailing-fort-myers', '/diesel-repair-fort-myers',
     '/engine-knocking-noise-fort-myers', '/engine-rebuild-vs-replacement-fort-myers', '/engine-repair-fort-myers',
