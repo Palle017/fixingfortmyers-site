@@ -26,7 +26,8 @@ test('ac-repair-fort-myers.html: new car AC repair snippet, penguin ad unchanged
   assert.doesNotMatch(h, /AC Repair in Fort Myers, FL \| Perfect Timing/);
   assert.doesNotMatch(h, /leak checks, pressure readings and compressor and fan tests before parts/);
   assert.match(h, /<h1 class="service-hero__title" id="service-title">AC Repair in Fort Myers<\/h1>/);
-  assert.match(h, /Repair requests 24\/7/);
+  assert.doesNotMatch(h.replace(/<p class="hours-disclaimer"[\s\S]*?<\/p>/, ""), /Repair requests 24\/7/, "only the required footer disclosure may say Repair requests 24/7");
+  assert.doesNotMatch(h.match(/"description": "[^"]*"/g).join(" "), /shop|mobile|pickup|by appointment|24\/7|13037|Saddleback/i);
   assert.equal((h.match(/class="btn/g) || []).length, 5);
   assert.doesNotMatch(h, /13037|Second St/);
 });
