@@ -110,6 +110,8 @@
     const detail = {...safePage, page_path: metricPath, lead_source: metricSource};
     if (['form','nav','footer','sticky_bar','page'].includes(params.placement)) detail.placement = params.placement;
     if ('service' in params) detail.service = trackedServices.has(params.service) ? params.service : 'not_given';
+    // Fixed page-category key (e.g. 'engine') so calls and form clicks split by service page in GA4.
+    if (typeof params.page_service === 'string' && /^[a-z-]{2,20}$/.test(params.page_service)) detail.page_service = params.page_service;
     if ('field' in params) detail.field = trackedFields.has(params.field) ? params.field : 'unknown';
     if (['network'].includes(params.reason) || /^http_[1-5][0-9]{2}$/.test(params.reason)) detail.reason = params.reason;
     if (Number.isInteger(params.attempt) && params.attempt >= 1 && params.attempt <= 3) detail.attempt = params.attempt;
@@ -128,14 +130,15 @@
     if (!link) return;
     const href = link.getAttribute('href');
     const placement = link.closest('#contact, .request-done') ? 'form' : link.closest('nav, .nav') ? 'nav' : link.closest('footer') ? 'footer' : link.closest('.mobile-contact-bar') ? 'sticky_bar' : 'page';
-    if (/^tel:/i.test(href)) { reportMetric('call_clicked'); track('phone_click', {placement}); }
-    else if (/^sms:/i.test(href)) { reportMetric('text_clicked'); track('text_click', {placement}); }
-    else if (/^mailto:/i.test(href)) { reportMetric('email_clicked'); track('email_click', {placement}); }
+    const page_service = validService(pageService) ? pageService : 'none';
+    if (/^tel:/i.test(href)) { reportMetric('call_clicked'); track('phone_click', {placement, page_service}); }
+    else if (/^sms:/i.test(href)) { reportMetric('text_clicked'); track('text_click', {placement, page_service}); }
+    else if (/^mailto:/i.test(href)) { reportMetric('email_clicked'); track('email_click', {placement, page_service}); }
     else {
       try {
         const url = new URL(href, location.href);
         if (url.origin === location.origin && /^\/parts(?:-quote)?(?:\.html)?\/?$/.test(url.pathname)) reportMetric('parts_quote_started');
-        if (url.origin === location.origin && (url.hash === '#contact' || /^\/request-a-repair(?:\.html)?\/?$/.test(url.pathname))) track('request_form_click', {placement});
+        if (url.origin === location.origin && (url.hash === '#contact' || /^\/request-a-repair(?:\.html)?\/?$/.test(url.pathname))) track('request_form_click', {placement, page_service});
       }
       catch (_) { /* Invalid links cannot produce analytics data. */ }
     }
