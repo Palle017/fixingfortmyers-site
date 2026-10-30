@@ -9,7 +9,11 @@ fs.mkdirSync('docs/evidence',{recursive:true});
 fs.writeFileSync('docs/evidence/tests.txt',`Synthetic test run ${new Date().toISOString()}\nNode ${process.version}\n`+result.stdout+result.stderr);
 console.log(result.stdout);if(result.status!==0){console.error(result.stderr);process.exit(result.status||1);}
 let pages=0,schemas=0,links=0;
-for(const file of fs.readdirSync('.').filter(name=>name.endsWith('.html')&&name!=='googlefc91785ed4d05625.html')){
+const htmlFiles=[
+  ...fs.readdirSync('.').filter(name=>name.endsWith('.html')&&name!=='googlefc91785ed4d05625.html'),
+  ...fs.readdirSync('blog').filter(name=>name.endsWith('.html')).map(name=>path.join('blog',name)),
+];
+for(const file of htmlFiles){
   const html=fs.readFileSync(file,'utf8'),dom=new JSDOM(html),d=dom.window.document;pages++;
   for(const script of d.querySelectorAll('script[type="application/ld+json"]')){JSON.parse(script.textContent);schemas++;}
   const ids=[...d.querySelectorAll('[id]')].map(x=>x.id);assert.equal(new Set(ids).size,ids.length,`${file}: duplicate IDs`);

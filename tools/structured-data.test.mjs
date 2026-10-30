@@ -7,12 +7,16 @@ const root = new URL('../', import.meta.url);
 const read = f => fs.readFileSync(new URL(f, root), 'utf8');
 const SITE = 'https://fixingfortmyers.com';
 const verificationFile = 'googlefc91785ed4d05625.html';
-const pages = fs.readdirSync(root).filter(f => f.endsWith('.html') && f !== verificationFile).sort();
+const pages = [
+  ...fs.readdirSync(root).filter(f => f.endsWith('.html') && f !== verificationFile),
+  ...fs.readdirSync(new URL('blog/', root)).filter(f => f.endsWith('.html')).map(f => `blog/${f}`),
+].sort();
 const sitemap = [...read('sitemap.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
 const ld = html => [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
   .flatMap(m => { const j = JSON.parse(m[1]); return j['@graph'] || [j]; });
 const indexable = f => f !== '404.html' && !/<meta name="robots" content="[^"]*noindex/.test(read(f));
-const urlFor = f => f === 'index.html' ? `${SITE}/` : `${SITE}/${f.replace(/\.html$/, '')}`;
+const urlFor = f => f === 'index.html' ? `${SITE}/` : f === 'blog/index.html' ? `${SITE}/blog` : `${SITE}/${f.replace(/\.html$/, '')}`;
+const fileFor = u => u === `${SITE}/` ? 'index.html' : u.slice(SITE.length + 1) === 'blog' ? 'blog/index.html' : `${u.slice(SITE.length + 1)}.html`;
 
 test('every indexable page has a self canonical and is in the sitemap; nothing noindexed is listed', () => {
   assert.equal(read(verificationFile).trim(), `google-site-verification: ${verificationFile}`, 'Google verification remains an exact token, not an SEO page');
@@ -25,7 +29,7 @@ test('every indexable page has a self canonical and is in the sitemap; nothing n
     assert.ok(sitemap.includes(urlFor(f)), `${f} missing from sitemap`);
   }
   for (const u of sitemap) {
-    const f = u === `${SITE}/` ? 'index.html' : u.slice(SITE.length + 1) + '.html';
+    const f = fileFor(u);
     assert.ok(pages.includes(f), `sitemap lists missing page ${u}`);
   }
 });
