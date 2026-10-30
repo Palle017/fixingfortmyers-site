@@ -132,7 +132,7 @@ const jsonLdStrings = value => {
 
 test('sitemap pages keep banned words out of Google-facing titles, descriptions, and JSON-LD', () => {
   for (const u of sitemap) {
-    const f = u === `${SITE}/` ? 'index.html' : u.slice(SITE.length + 1) + '.html';
+    const f = fileFor(u);
     const html = read(f);
     const title = decodeEntities((html.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '').replace(/\s+/g, ' ').trim();
     assert.ok(title, `${f} title`);
