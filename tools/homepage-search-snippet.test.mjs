@@ -23,7 +23,7 @@ test('homepage search snippet leads with fast replies, services, 4.8 rating, and
     assert.equal(description.includes('13037'), false);
     assert.equal(description.includes('Saddleback'), false);
   }
-  assert.equal(document.querySelector('title').textContent, 'Auto Repair in Fort Myers, FL | Engine, Transmission & Diesel | Perfect Timing');
+  assert.equal(document.querySelector('title').textContent, 'Auto Repair Fort Myers, FL | Engine, Transmission & Diesel');
   assert.equal(
     document.querySelector('meta[property="og:title"]').getAttribute('content'),
     'Perfect Timing Auto Repair | Car trouble has terrible timing. Luckily, you’ve got Perfect Timing.'

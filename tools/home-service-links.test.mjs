@@ -21,7 +21,7 @@ test('homepage keeps all seven service links after its primary repair request', 
   const html = read('index.html');
   assert.match(html, /<h1 id="home-title">Car trouble has terrible timing\. <br><span>Luckily, you’ve got Perfect Timing\.<\/span><\/h1>/);
   const document = new JSDOM(html).window.document;
-  assert.equal(document.title, 'Auto Repair in Fort Myers, FL | Engine, Transmission & Diesel | Perfect Timing');
+  assert.equal(document.title, 'Auto Repair Fort Myers, FL | Engine, Transmission & Diesel');
   const heading = document.getElementById('home-title');
   const row = document.querySelector('.home-start__services');
   const primary = document.querySelector('.home-start__actions .btn--primary');
