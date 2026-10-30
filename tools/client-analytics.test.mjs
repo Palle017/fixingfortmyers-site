@@ -159,3 +159,14 @@ test('every public content page keeps its exact approved path for page-level rep
   }
 });
 
+
+test('contact taps carry a fixed page_service key so GA4 can split calls by service page', async t => {
+  for (const [path, key] of [['engine-repair-fort-myers','engine'], ['transmission-repair-fort-myers','transmission'], ['diesel-repair-fort-myers','diesel'], ['','none']]) {
+    const x=setup(t,{url:'https://fixingfortmyers.com/'+path, ga4MeasurementId:'G-TEST1234'});await settle();
+    x.click('a[href^="tel:"]');await settle();
+    const calls=googleEvents(x).filter(entry=>entry[1]==='phone_click');
+    assert.equal(calls.length,1,path);
+    assert.equal(calls[0][2].page_service,key,path);
+    assert.doesNotMatch(JSON.stringify(calls[0][2]),/2395550100|Synthetic|vehicle|symptoms/);
+  }
+});
