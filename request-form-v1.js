@@ -55,7 +55,7 @@
     normalizeVin();
     $('request-vin-help').textContent = vin.value && !/^[A-HJ-NPR-Z0-9]{17}$/.test(vin.value)
       ? 'A VIN usually has 17 letters and numbers (no I, O or Q). You can still send this request.'
-      : '17 characters, if known. You can send your request without a valid VIN.';
+      : 'Optional. Your VIN helps Tony price the exact part faster.';
     // Advisory only. Never set custom validity or block submission on VIN format.
   });
   form.querySelectorAll('[name="callback_preference"]').forEach(radio => radio.addEventListener('change', () => {
