@@ -104,11 +104,16 @@ for (const page of pages) {
     assert.equal(card.querySelectorAll('.service-ad__note, .service-ad__copy strong').length, 0);
 
     const actions = [...card.querySelectorAll('.service-ad__actions a, .service-ad__actions button')];
-    assert.equal(actions.length, 1);
+    // Diesel card also offers Call and Text Tony beside the request button (approved by Raj 2026-10-30).
+    const contactActions = page.service === 'diesel'
+      ? [['btn btn--outline', 'tel:+12393972048', 'Call (239) 397-2048'], ['btn btn--outline', 'sms:+12393972048', 'Text Tony']]
+      : [];
+    assert.equal(actions.length, 1 + contactActions.length);
     assert.equal(actions[0].className, 'btn btn--primary');
     assert.equal(actions[0].getAttribute('href'), `/request-a-repair?service=${page.service}`);
-    assert.equal(card.querySelectorAll('a.btn, button').length, 1);
-    assert.equal(card.querySelectorAll('a[href^="tel:"], a[href^="sms:"]').length, 0);
+    assert.deepEqual(actions.slice(1).map(a => [a.className, a.getAttribute('href'), a.textContent.trim()]), contactActions);
+    assert.equal(card.querySelectorAll('a.btn, button').length, 1 + contactActions.length);
+    assert.equal(card.querySelectorAll('a[href^="tel:"], a[href^="sms:"]').length, contactActions.length);
     const requestLinks = [...card.querySelectorAll('a')].filter(a => (a.getAttribute('href') || '').includes('/request-a-repair'));
     assert.equal(requestLinks.length, 1);
 
