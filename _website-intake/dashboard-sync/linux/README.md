@@ -225,3 +225,21 @@ Focused synthetic checks (no live source, queue, settings or customer contact):
 python3 -B -m unittest discover -s _website-intake/dashboard-sync -p 'test_beside_runner_reliability.py' -v
 python3 -B -m unittest discover -s _website-intake/dashboard-sync -p 'test_beside_budget_envelope.py' -v
 ```
+
+## Archive backups (daily, verified)
+
+Scans no longer copy the whole archive into every run folder (`archive-before.sqlite3`); those copies filled the
+VM disk on 2026-11-02. Archive writes are single SQLite transactions, and `beside_archive_backup.py` keeps one
+verified copy per day in `~/beside-private/backups/archive-daily/`: read-only online backup, `PRAGMA quick_check`,
+gzip, SHA-256 in `backups.jsonl`/`latest.json`. Retention: 7 newest daily plus the newest of each of the 4 most
+recent ISO weeks; it only removes its own `beside-archive-<UTC>.sqlite3.gz` files. It refuses to run with less
+than 2 × archive size + 1 GiB free. The runner also refuses to claim a job, and fails a claimed job before
+archiving, with less than archive size + 1 GiB free (`beside_minimum_free_bytes` can raise the floor).
+
+```sh
+cp linux/beside-archive-backup.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now beside-archive-backup.timer
+```
+
+Restore: stop the capture timer, `gunzip -c <file> > restored.sqlite3`, check `PRAGMA quick_check` and the
+SHA-256 against `backups.jsonl`, then swap it in place of `persistent_archive` and restart the timer.

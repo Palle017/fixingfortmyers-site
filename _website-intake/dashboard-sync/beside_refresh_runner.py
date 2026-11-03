@@ -12,6 +12,7 @@ import math
 import os
 import re
 from pathlib import Path
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -31,6 +32,20 @@ ALLOWED_ORIGINS={'https://dashboard.fixingfortmyers.com','https://perfect-timing
 
 class ScanError(RuntimeError):
     pass
+
+# A run needs room for its rollback journal (worst case the whole archive), run evidence and status files.
+# Per-run full archive copies were removed: they filled VM101's disk on 2026-11-02 and the failed copy hid the
+# failure report, leaving job 44c7fde7 in LEASE_EXPIRED. Archive writes are single SQLite transactions; the
+# separate daily beside_archive_backup.py keeps recoverable verified copies.
+MINIMUM_FREE_BYTES=1024**3
+
+def disk_headroom(settings):
+    """(ok, free_bytes, required_bytes) for the filesystems holding the archive and run evidence."""
+    archive=Path(settings['persistent_archive'])
+    size=archive.stat().st_size if archive.exists() else 0
+    required=max(int(settings.get('beside_minimum_free_bytes',MINIMUM_FREE_BYTES)),MINIMUM_FREE_BYTES)+size
+    free=min(shutil.disk_usage(path).free for path in (archive.parent,Path(settings['runs_directory'])))
+    return free>=required,free,required
 class NoRedirect(request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):return None
 
@@ -548,7 +563,16 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
             operation=name;operation_started=time.monotonic()
             report.pop('worker_exception',None)
             report.pop('worker_transport_error',None)
-            attempt.event(name,phase=phase,remaining=remaining(),**extra)
+            note_event(name,phase=phase,remaining=remaining(),**extra)
+        def note_event(name,**extra):
+            # Event evidence is best effort: a full disk must not stop the queue request that follows,
+            # above all the fail report. Claim-state writes (attempt.claim) stay strict.
+            try:attempt.event(name,**extra)
+            except OSError:report['attempt_evidence_unavailable']=True
+        def require_headroom():
+            ok,free,required=disk_headroom(settings)
+            report.update(disk_free_bytes=free,disk_required_bytes=required)
+            if not ok:raise ScanError('LOCAL_STORAGE_UNAVAILABLE')
         def defer_budget(ready):
             report.update(ok=True,worker_ready=ready,readiness_deferred=True,
                 deferred_reason='INSUFFICIENT_CAPTURE_BUDGET',
@@ -567,7 +591,7 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
                 minimum_budget=minimum_claim_budget(settings) if body.get('action')=='claim' else 0,
                 finish_reserve=FINALIZATION_RESERVE_SECONDS)
             if value is not None:
-                attempt.event(operation,phase=phase,elapsed=time.monotonic()-began,remaining=remaining(),stage='response_validate')
+                note_event(operation,phase=phase,elapsed=time.monotonic()-began,remaining=remaining(),stage='response_validate')
             return value
         def worker(action,**extra):
             body={'action':action,**extra}
@@ -655,6 +679,14 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
             write(refresh/'uia-worker-status.json',report)
             return report
         if remaining()<minimum_claim_budget(settings):return defer_budget(True)
+        # Never claim a job this worker cannot finish for lack of disk space.
+        try:require_headroom()
+        except ScanError:
+            report.update(ok=False,worker_ready=True,queue_status=state['status'],error='LOCAL_STORAGE_UNAVAILABLE',
+                readiness_deferred=True,deferred_reason='DISK_SPACE_LOW')
+            try:write(refresh/'uia-worker-status.json',report)
+            except OSError:report['status_write_unavailable']=True
+            return report
         attempt.claim('pending',state);event('claim.pending')
         # This particular deferral is known to precede any POST; old manual latches remain intact.
         if remaining()<minimum_claim_budget(settings):
@@ -707,10 +739,10 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
         by_id={row['id']:row for row in baseline['leads']}
         observed=stamp();review={'format':'beside-review/v1','classifications':{},'crosswalks':[]};conversations=[];held=[];capture_hashes={};review_needed_items=[]
         event('archive.plan')
+        require_headroom()
 
         database=archive.connect(settings['persistent_archive'])
         try:
-            backup=sqlite3.connect(str(run_dir/'archive-before.sqlite3'));database.backup(backup);backup.close()
             for cap in captures:
                 cid=cap['conversation_id'];raw=(run_dir/('thread-'+cid+'.json')).read_bytes()
                 try:item=conversation(cap,hashlib.sha256(raw).hexdigest(),details=settings.get('beside_parse_details') is True,
@@ -840,7 +872,8 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
                     or failed_state.get('status') not in ('failed','attention')):
                     raise ScanError('WORKER_RESPONSE_INVALID')
                 report['failure_reporting']={'accepted':True,'errorCode':wire_code}
-                attempt.claim('write_uncertain' if phase in ('importing','verifying') else 'failed')
+                try:attempt.claim('write_uncertain' if phase in ('importing','verifying') else 'failed')
+                except OSError:report['attempt_evidence_unavailable']=True
             except Exception as failure_exc:
                 report['queue_failure_unconfirmed']=True
                 report['failure_reporting']={'accepted':False,'errorCode':queue_failure_code(code,phase),

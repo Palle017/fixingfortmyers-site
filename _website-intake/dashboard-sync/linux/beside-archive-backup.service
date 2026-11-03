@@ -1,0 +1,15 @@
+# systemd *user* unit for the `beside` user. Daily verified archive backup; replaces per-run full copies.
+[Unit]
+Description=Perfect Timing Beside archive daily verified backup
+
+[Service]
+Type=oneshot
+Environment=BESIDE_REFRESH_SETTINGS=%h/beside-private/refresh/settings.json
+WorkingDirectory=%h/fixingfortmyers-site/_website-intake/dashboard-sync
+ExecStart=/usr/bin/python3 beside_archive_backup.py --settings ${BESIDE_REFRESH_SETTINGS}
+TimeoutStartSec=30min
+MemoryMax=300M
+Nice=15
+IOSchedulingClass=idle
+NoNewPrivileges=yes
+UMask=0077
