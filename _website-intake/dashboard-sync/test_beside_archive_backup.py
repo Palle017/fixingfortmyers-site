@@ -59,6 +59,23 @@ def concurrent_backup(settings, start, results, index):
 
 
 class Backup(unittest.TestCase):
+    def test_partial_manifest_tail_is_preserved_and_new_publication_remains_owned(self):
+        with tempfile.TemporaryDirectory() as root:
+            s = Setup(root)
+            _, first = B.backup(s.settings, now=T0)
+            manifest = s.target / B.MANIFEST
+            original = manifest.read_bytes()
+            tail = b'42\n{"event":"published"'
+            with manifest.open('ab') as log:
+                log.write(tail)
+            s.add('changed-after-interrupted-manifest')
+            code, record = B.backup(s.settings, now=T0 + timedelta(minutes=1))
+            self.assertEqual((code, record['result']), (0, 'PUBLISHED'))
+            self.assertTrue(manifest.read_bytes().startswith(original + tail + b'\n'))
+            self.assertEqual(set(B.owned(s.target)), {first['file'], record['file']})
+            self.assertNotIn(record['file'], record['unowned_preserved'])
+            self.assertEqual(B.sha256(s.target / record['file']), B.owned(s.target)[record['file']]['gzip_sha256'])
+
     def test_publishes_verified_restorable_copy_with_ownership_record(self):
         with tempfile.TemporaryDirectory() as root:
             s = Setup(root)
@@ -420,6 +437,96 @@ class Restore(unittest.TestCase):
             db.close()
             self.assertNotEqual(live_sha, record['restored_sha256'])
             self.assertEqual([p.name for p in s.archive.parent.iterdir() if '.restore.' in p.name], [])
+
+    def test_refuses_changed_columns_indexes_and_triggers_without_replacing_live_archive(self):
+        changes = (
+            "ALTER TABLE conversations ADD COLUMN source_revision TEXT NOT NULL DEFAULT 'v2'",
+            'CREATE INDEX conversations_raw ON conversations(raw_json)',
+            'CREATE TRIGGER preserve_source AFTER UPDATE ON conversations BEGIN SELECT 1; END',
+        )
+        for sql in changes:
+            with self.subTest(sql=sql), tempfile.TemporaryDirectory() as root:
+                s = Setup(root)
+                name = self.published(s)
+                db = sqlite3.connect(s.archive)
+                db.execute(sql)
+                db.commit()
+                db.close()
+                before = s.archive.read_bytes()
+                code, record = B.restore(s.settings, name, accept_missing_newer=True, holders=lambda path: [])
+                self.assertEqual((code, record['error']), (4, 'SCHEMA_MISMATCH'))
+                self.assertTrue(record['schema_objects_changed'])
+                self.assertEqual(s.archive.read_bytes(), before)
+                self.assertEqual(list(s.archive.parent.glob('*.pre-restore-*')), [])
+
+    def test_refuses_user_or_application_version_downgrade_with_unchanged_schema(self):
+        for pragma in ('user_version', 'application_id'):
+            with self.subTest(pragma=pragma), tempfile.TemporaryDirectory() as root:
+                s = Setup(root)
+                name = self.published(s)
+                db = sqlite3.connect(s.archive)
+                db.execute(f'PRAGMA {pragma}=2')
+                db.close()
+                before = s.archive.read_bytes()
+                code, record = B.restore(s.settings, name, accept_missing_newer=True, holders=lambda path: [])
+                self.assertEqual((code, record['error']), (4, 'SCHEMA_MISMATCH'))
+                self.assertFalse(record['schema_objects_changed'])
+                self.assertEqual(record[f'live_{pragma}'], 2)
+                self.assertEqual(record[f'backup_{pragma}'], 0)
+                self.assertEqual(s.archive.read_bytes(), before)
+
+    def test_preserved_archive_directory_is_durable_before_live_replacement(self):
+        with tempfile.TemporaryDirectory() as root:
+            s = Setup(root)
+            name = self.published(s)
+            events = []
+            real_sync, real_replace = B.fsync_dir, os.replace
+            def sync(path):
+                real_sync(path)
+                events.append(('directory_synced', Path(path)))
+            def replace(src, dst):
+                self.assertIn(('directory_synced', s.archive.parent), events)
+                preserved = list(s.archive.parent.glob('*.pre-restore-*'))
+                self.assertEqual(len(preserved), 1)
+                self.assertNotEqual(B.sha256(preserved[0]), B.owned(s.target)[name]['sqlite_sha256'])
+                events.append(('replace', Path(dst)))
+                real_replace(src, dst)
+            with mock.patch.object(B, 'fsync_dir', side_effect=sync), mock.patch.object(B.os, 'replace', side_effect=replace):
+                code, record = B.restore(s.settings, name, accept_missing_newer=True, holders=lambda path: [])
+            self.assertEqual((code, record['ok']), (0, True))
+            self.assertLess(events.index(('directory_synced', s.archive.parent)), events.index(('replace', s.archive)))
+
+    def test_failed_preservation_directory_sync_never_replaces_live_archive(self):
+        with tempfile.TemporaryDirectory() as root:
+            s = Setup(root)
+            name = self.published(s)
+            before = s.archive.read_bytes()
+            with mock.patch.object(B, 'fsync_dir', side_effect=OSError('synthetic directory sync failure')):
+                with self.assertRaises(OSError):
+                    B.restore(s.settings, name, accept_missing_newer=True, holders=lambda path: [])
+            self.assertEqual(s.archive.read_bytes(), before)
+            self.assertEqual(len(list(s.archive.parent.glob('*.pre-restore-*'))), 1)
+
+    def test_invalid_preserved_copy_never_replaces_live_archive(self):
+        with tempfile.TemporaryDirectory() as root:
+            s = Setup(root)
+            name = self.published(s)
+            before = s.archive.read_bytes()
+            real_connect = sqlite3.connect
+            class BadPreservation:
+                def __init__(self, conn): self.conn = conn
+                def execute(self, sql, *args):
+                    if sql == 'PRAGMA quick_check':
+                        return iter([('synthetic preservation check failure',)])
+                    return self.conn.execute(sql, *args)
+                def close(self): self.conn.close()
+            def connect(path, *args, **kwargs):
+                conn = real_connect(path, *args, **kwargs)
+                return BadPreservation(conn) if '.pre-restore-' in str(path) and '?mode=ro' in str(path) else conn
+            with mock.patch.object(B.sqlite3, 'connect', side_effect=connect):
+                code, record = B.restore(s.settings, name, accept_missing_newer=True, holders=lambda path: [])
+            self.assertEqual((code, record['error']), (4, 'PRESERVATION_CHECK_FAILED'))
+            self.assertEqual(s.archive.read_bytes(), before)
 
 
 if __name__ == '__main__':

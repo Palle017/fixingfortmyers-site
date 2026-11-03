@@ -228,18 +228,52 @@ python3 -B -m unittest discover -s _website-intake/dashboard-sync -p 'test_besid
 
 ## Archive backups (daily, verified)
 
-Scans no longer copy the whole archive into every run folder (`archive-before.sqlite3`); those copies filled the
-VM disk on 2026-11-02. Archive writes are single SQLite transactions, and `beside_archive_backup.py` keeps one
-verified copy per day in `~/beside-private/backups/archive-daily/`: read-only online backup, `PRAGMA quick_check`,
-gzip, SHA-256 in `backups.jsonl`/`latest.json`. Retention: 7 newest daily plus the newest of each of the 4 most
-recent ISO weeks; it only removes its own `beside-archive-<UTC>.sqlite3.gz` files. It refuses to run with less
-than 2 × archive size + 1 GiB free. The runner also refuses to claim a job, and fails a claimed job before
-archiving, with less than archive size + 1 GiB free (`beside_minimum_free_bytes` can raise the floor).
+Scans no longer copy the whole archive into every run folder (`archive-before.sqlite3`). Unbounded copies were
+linked to the November 2 disk capacity incident. Archive ingestion and review planning commit separately;
+failure of a later stage does not undo an earlier committed observation.
 
-```sh
-cp linux/beside-archive-backup.{service,timer} ~/.config/systemd/user/
-systemctl --user daemon-reload && systemctl --user enable --now beside-archive-backup.timer
-```
+`beside_archive_backup.py` prepares a verified online SQLite copy in `~/beside-private/backups/archive-daily/`.
+It takes a backup lock, uses exclusive temporary files, checks SQLite integrity and compressed-content hashes,
+then durably publishes a non-overwriting `beside-archive-<UTC>-<content-hash>.sqlite3.gz` and its ownership record
+in `backups.jsonl`. Repeating an unchanged archive returns the existing verified copy. Interrupted manifest
+tails are preserved on their own line so a later ownership record remains readable.
 
-Restore: stop the capture timer, `gunzip -c <file> > restored.sqlite3`, check `PRAGMA quick_check` and the
-SHA-256 against `backups.jsonl`, then swap it in place of `persistent_archive` and restart the timer.
+Pruning is **disabled by default**. Enabling `beside_backup_prune_enabled: true` is a separate retention decision:
+it keeps the 7 newest owned copies plus the newest from each of the 4 latest ISO weeks. Only files with matching
+published ownership hashes are eligible, after the new copy and manifest are durable. Unowned, modified and
+legacy copies remain intact. `would_remove`, `unowned_preserved`, `ambiguous_preserved` and `stale_temporaries`
+in the result expose review work; no automatic deletion of those preserved files is implied. There is no
+`latest.json` pointer in this version.
+
+Backup creation requires at least 2 x archive size + 1 GiB free. The runner checks archive size + 1 GiB before
+source readiness work or claiming, and rechecks before archiving. The heartbeat independently checks capacity
+so a stale ready status cannot conceal a full disk. `beside_minimum_free_bytes` can raise the runner's floor.
+
+The supplied backup service/timer are inactive source artifacts. Installing or enabling them, choosing retention,
+and resolving a held ingestion job require the existing release gates and a specific authorized rollout. This
+source change does not activate a schedule or authorize VM/storage operations.
+
+### Guarded restore (separate operator approval)
+
+A restore replaces the active archive with older observations. Review and approve the selected backup and the
+loss of newer observations before using it. Owner Desk edits remain in Owner Desk; preserve its independent
+readback evidence. A schema/version rollback needs a separately reviewed migration, not this command.
+
+1. Record the current capture/backup timer and service states. Under the approved recovery procedure, stop new
+   scheduling and quiesce the active capture service, backup job and all manual archive writers. Stopping a timer
+   alone does not stop a running service. Confirm that no process holds the archive or its journal/WAL files open.
+2. As the `beside` user, use the guarded command with a manifest-owned filename from the verified backup directory:
+
+   ```sh
+   python3 beside_archive_backup.py --settings <private-settings> --restore <published-file-name> --accept-missing-newer-observations
+   ```
+
+   Keep private settings and archive contents outside this public repository.
+3. The command acquires the shared capture lock, checks visible open holders and leftover journals, verifies the
+   backup hash/integrity and exact schema plus application/user versions, and durably preserves the current archive
+   as a separate pre-restore copy before an atomic replacement. Its `/proc` checks supplement the operator's writer
+   shutdown; they cannot prevent a separate manual process that ignores the capture lock from starting afterward.
+4. Require an `ok: true` result, retain the preserved-copy path and hashes, and independently reopen/check the
+   restored archive and expected observations before restoring only the scheduling states approved for this recovery.
+   If any check refuses or fails, keep scheduling held and inspect the retained evidence. Do not bypass the checks
+   with a raw database-file swap, remove journals, or delete the pre-restore copy.

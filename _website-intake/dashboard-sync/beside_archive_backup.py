@@ -18,7 +18,8 @@ Backup (one writer at a time, flock on `.backup.lock`):
      files are preserved and reported. Retention when enabled: 7 newest plus the newest of the 4 latest ISO weeks.
 
 Restore (`--restore FILE`): refuses unless it holds the shared capture lock, no process has the archive open, the
-file is manifest-owned and hash-verified, quick_check passes and the table set matches the live archive. The live
+file is manifest-owned and hash-verified, quick_check passes and its schema and application/user versions match
+the live archive. The live
 archive is preserved first as `<archive>.pre-restore-<UTC>.sqlite3` (verified copy), then the restored file
 replaces it atomically. A backup does not contain observations archived after it was taken: restore requires
 `--accept-missing-newer-observations`. Owner edits live in Owner Desk, not in this archive, and are unaffected.
@@ -80,8 +81,15 @@ def fsync_dir(path):
 
 def append_record(target, record):
     """Append one manifest line durably (file fsync, then directory fsync so a new manifest's entry persists)."""
-    with open(target / MANIFEST, 'a', encoding='utf-8') as log:
-        log.write(json.dumps(record, sort_keys=True) + '\n')
+    # A crash can leave a partial last line. Preserve it, but separate the new record so owned() can read it.
+    # Callers serialize manifest changes with the backup lock; never truncate existing history to repair a tail.
+    with open(target / MANIFEST, 'a+b') as log:
+        log.seek(0, os.SEEK_END)
+        if log.tell():
+            log.seek(-1, os.SEEK_END)
+            if log.read(1) != b'\n':
+                log.write(b'\n')
+        log.write((json.dumps(record, sort_keys=True) + '\n').encode('utf-8'))
         log.flush()
         os.fsync(log.fileno())
     fsync_dir(target)
@@ -93,10 +101,12 @@ def owned(target):
     path = target / MANIFEST
     if not path.exists():
         return records
-    for line in path.read_text(encoding='utf-8').splitlines():
+    for line in path.read_text(encoding='utf-8', errors='replace').splitlines():
         try:
             entry = json.loads(line)
         except ValueError:
+            continue
+        if not isinstance(entry, dict):
             continue
         name = entry.get('file')
         if entry.get('event') == 'published' and isinstance(name, str) and NAME.fullmatch(name):
@@ -284,6 +294,17 @@ def tables_of(path):
         db.close()
 
 
+def schema_of(path):
+    """Exact persisted schema and version identifiers; accepting missing observations is not a migration."""
+    db = sqlite3.connect(f'file:{path}?mode=ro', uri=True)
+    try:
+        return {'objects': list(db.execute('SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name,tbl_name')),
+                'user_version': db.execute('PRAGMA user_version').fetchone()[0],
+                'application_id': db.execute('PRAGMA application_id').fetchone()[0]}
+    finally:
+        db.close()
+
+
 def restore(settings, name, *, accept_missing_newer=False, holders=open_by_other_process, now=None):
     import beside_heartbeat_linux  # shared capture.lock, also held by the capture service and --scan-now
     now = now or datetime.now(timezone.utc)
@@ -328,11 +349,15 @@ def restore(settings, name, *, accept_missing_newer=False, holders=open_by_other
             check.close()
         if verdict != ['ok']:
             return 4, {**result, 'ok': False, 'error': 'QUICK_CHECK_FAILED'}
+        live_schema, backup_schema = schema_of(archive), schema_of(candidate)
         live_tables, backup_tables = tables_of(archive), tables_of(candidate)
-        if live_tables != backup_tables:
+        if live_schema != backup_schema:
             return 4, {**result, 'ok': False, 'error': 'SCHEMA_MISMATCH',
                        'missing_in_backup': sorted(set(live_tables) - set(backup_tables)),
-                       'extra_in_backup': sorted(set(backup_tables) - set(live_tables))}
+                       'extra_in_backup': sorted(set(backup_tables) - set(live_tables)),
+                       'schema_objects_changed': live_schema['objects'] != backup_schema['objects'],
+                       'live_user_version': live_schema['user_version'], 'backup_user_version': backup_schema['user_version'],
+                       'live_application_id': live_schema['application_id'], 'backup_application_id': backup_schema['application_id']}
         preserved = archive.with_name(f'{archive.name}.pre-restore-{stamp(now)}.sqlite3')
         if preserved.exists():
             return 4, {**result, 'ok': False, 'error': 'DESTINATION_EXISTS', 'preserved': str(preserved)}
@@ -346,6 +371,15 @@ def restore(settings, name, *, accept_missing_newer=False, holders=open_by_other
         with open(preserved, 'rb+') as handle:
             os.fsync(handle.fileno())
         preserved_sha = sha256(preserved)
+        check = sqlite3.connect(f'file:{preserved}?mode=ro', uri=True)
+        try:
+            preserved_check = [row[0] for row in check.execute('PRAGMA quick_check')]
+        finally:
+            check.close()
+        if preserved_check != ['ok']:
+            return 4, {**result, 'ok': False, 'error': 'PRESERVATION_CHECK_FAILED', 'preserved': str(preserved)}
+        # The preserved recovery copy and its directory entry must survive a crash before replacing the live file.
+        fsync_dir(archive.parent)
         if holders(archive):
             return 4, {**result, 'ok': False, 'error': 'ARCHIVE_IN_USE', 'preserved': str(preserved)}
         os.replace(candidate, archive)
