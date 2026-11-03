@@ -22,6 +22,8 @@ import sys
 from urllib import request
 from urllib.parse import urlsplit
 
+from beside_capacity import disk_headroom
+
 ROOT = Path(__file__).resolve().parent
 ALLOWED_ORIGINS = {'https://dashboard.fixingfortmyers.com', 'https://perfect-timing-owner-desk.prudhvi-pallempati.chatgpt.site'}
 CAPTURE_UNIT = 'beside-capture.service'
@@ -117,6 +119,17 @@ def run(settings_path, *, now=None, worker=None, starter=start_capture):
         return {**report, 'ok': True, 'enabled': False}
     report['enabled'] = True
     running = capture_running(settings)
+    if settings.get('persistent_archive'):
+        # A full disk can stop the runner from rewriting its status, so check capacity here too rather than
+        # trusting a ready status written before the disk filled.
+        try:
+            capacity_ok, free, required = disk_headroom(settings)
+        except OSError:
+            capacity_ok, free, required = False, None, None
+        if not capacity_ok:
+            return {**report, 'ok': False, 'heartbeat_sent': False, 'error': 'ingestion_capacity_unavailable',
+                    'disk_free_bytes': free, 'disk_required_bytes': required,
+                    'capture_started': False, 'capture_running': running}
     if not source_recently_verified(settings, now):
         # Recovery belongs to the existing 12-minute capture timer. Starting a
         # browser here turns one failed source check into a launch every minute.

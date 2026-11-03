@@ -12,7 +12,6 @@ import math
 import os
 import re
 from pathlib import Path
-import shutil
 import sqlite3
 import subprocess
 import sys
@@ -24,6 +23,7 @@ import beside_intake
 import beside_extract
 import beside_attempt
 from beside_evidence import review_needed, qualifier_summary
+from beside_capacity import disk_headroom
 
 ROOT=Path(__file__).resolve().parent
 # BESIDE_REFRESH_SETTINGS lets the Linux service point at its own private settings; Windows default unchanged.
@@ -32,20 +32,8 @@ ALLOWED_ORIGINS={'https://dashboard.fixingfortmyers.com','https://perfect-timing
 
 class ScanError(RuntimeError):
     pass
-
-# A run needs room for its rollback journal (worst case the whole archive), run evidence and status files.
-# Per-run full archive copies were removed: they filled VM101's disk on 2026-11-02 and the failed copy hid the
-# failure report, leaving job 44c7fde7 in LEASE_EXPIRED. Archive writes are single SQLite transactions; the
-# separate daily beside_archive_backup.py keeps recoverable verified copies.
-MINIMUM_FREE_BYTES=1024**3
-
-def disk_headroom(settings):
-    """(ok, free_bytes, required_bytes) for the filesystems holding the archive and run evidence."""
-    archive=Path(settings['persistent_archive'])
-    size=archive.stat().st_size if archive.exists() else 0
-    required=max(int(settings.get('beside_minimum_free_bytes',MINIMUM_FREE_BYTES)),MINIMUM_FREE_BYTES)+size
-    free=min(shutil.disk_usage(path).free for path in (archive.parent,Path(settings['runs_directory'])))
-    return free>=required,free,required
+# Per-run full archive copies were removed (they filled VM101's disk on 2026-11-02); archive writes are single
+# SQLite transactions and beside_archive_backup.py keeps verified copies. Capacity rule: beside_capacity.py.
 class NoRedirect(request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):return None
 
@@ -573,6 +561,14 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
             ok,free,required=disk_headroom(settings)
             report.update(disk_free_bytes=free,disk_required_bytes=required)
             if not ok:raise ScanError('LOCAL_STORAGE_UNAVAILABLE')
+        def capacity_unavailable(**extra):
+            # Not ready: the Linux heartbeat only advertises a worker whose status is ok and worker_ready, so a
+            # disk that cannot hold a run must not open the source, send a readiness heartbeat or claim.
+            report.update(ok=False,worker_ready=False,ingestion_capacity='unavailable',error='LOCAL_STORAGE_UNAVAILABLE',
+                readiness_deferred=True,deferred_reason='DISK_SPACE_LOW',**extra)
+            try:write(refresh/'uia-worker-status.json',report)
+            except OSError:report['status_write_unavailable']=True
+            return report
         def defer_budget(ready):
             report.update(ok=True,worker_ready=ready,readiness_deferred=True,
                 deferred_reason='INSUFFICIENT_CAPTURE_BUDGET',
@@ -627,6 +623,9 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
                     or remaining()<capture_ceiling(settings)+reserve_seconds+CAPTURE_RETRY_PAUSE_SECONDS):break
                 time.sleep(CAPTURE_RETRY_PAUSE_SECONDS)
             raise ScanError('BROWSER_UNAVAILABLE')
+        # Capacity first: before any queue request, browser inventory or readiness heartbeat.
+        try:require_headroom()
+        except ScanError:return capacity_unavailable()
         if manual:
             # Fail fast, before opening a browser, when there is no owner-requested job to run.
             state=worker('baseline')['state']
@@ -679,14 +678,9 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
             write(refresh/'uia-worker-status.json',report)
             return report
         if remaining()<minimum_claim_budget(settings):return defer_budget(True)
-        # Never claim a job this worker cannot finish for lack of disk space.
+        # Space can shrink during the readiness probe; never claim a job this worker cannot finish.
         try:require_headroom()
-        except ScanError:
-            report.update(ok=False,worker_ready=True,queue_status=state['status'],error='LOCAL_STORAGE_UNAVAILABLE',
-                readiness_deferred=True,deferred_reason='DISK_SPACE_LOW')
-            try:write(refresh/'uia-worker-status.json',report)
-            except OSError:report['status_write_unavailable']=True
-            return report
+        except ScanError:return capacity_unavailable(queue_status=state['status'])
         attempt.claim('pending',state);event('claim.pending')
         # This particular deferral is known to precede any POST; old manual latches remain intact.
         if remaining()<minimum_claim_budget(settings):

@@ -63,7 +63,8 @@ class OwnerRequestRequiredTests(unittest.TestCase):
         cfg.write_text(json.dumps({'url': 'https://dashboard.fixingfortmyers.com', 'service_token': 'x' * 20, 'sync_token': 'y' * 20}))
         self.settings = refresh / 'settings.json'
         self.settings.write_text(json.dumps({'private_archive_root': str(self.tmp), 'runs_directory': str(refresh / 'runs'),
-            'source_checkout': str(self.tmp / 'src'), 'private_sync_config': str(cfg), 'beside_auto_scan_minutes': 15}))
+            'source_checkout': str(self.tmp / 'src'), 'private_sync_config': str(cfg), 'beside_auto_scan_minutes': 15,
+            'persistent_archive': str(self.tmp / 'archive.sqlite3')}))
         self.actions = []
 
     def opener(self, status):
