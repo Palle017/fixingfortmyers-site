@@ -45,7 +45,36 @@ class AtomicWrite(unittest.TestCase):
             self.assertEqual(path.stat().st_mode & 0o777, 0o600)
 
 
+class SymlinkWrite(unittest.TestCase):
+    def test_symlinked_file_is_updated_at_its_target(self):
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / 'real-settings.json'
+            R.write(target, {'version': 1})
+            link = Path(root) / 'settings.json'
+            link.symlink_to(target)
+            R.write(link, {'version': 2})
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(json.loads(target.read_text()), {'version': 2})
+
+
 class RunnerFailurePaths(unittest.TestCase):
+    def test_sigterm_after_budget_is_spent_still_sends_fail(self):
+        """Opus re-review N1: the unit's start timeout fires after the runner's own budget is exhausted."""
+        with tempfile.TemporaryDirectory() as root:
+            fixture = Fixture(root)
+            original = fixture.sub
+            def sub(args, **kw):
+                if args[0] == 'synthetic-capture' and args[1] == 'thread':
+                    fixture.clock.advance(700)
+                    os.kill(os.getpid(), signal.SIGTERM)
+                return original(args, **kw)
+            fixture.sub = sub
+            with disk(50 * GIB):
+                out = fixture.run(budget=600)
+            self.assertEqual(out['terminated_by_signal'], 'SIGTERM')
+            self.assertIn('fail', fixture.actions)
+            self.assertTrue(out['failure_reporting']['accepted'], out)
+
     def test_error_after_accepted_complete_never_sends_fail(self):
         with tempfile.TemporaryDirectory() as root:
             fixture = Fixture(root)
@@ -125,6 +154,22 @@ class BackupOverlap(unittest.TestCase):
             holder = H.capture_lock(s.settings)
             code, record = B.backup(s.settings, now=T0, capture_wait_seconds=60, sleep=lambda seconds: holder.close())
             self.assertEqual((code, record['result']), (0, 'PUBLISHED'))
+
+    def test_capture_lock_is_released_right_after_the_copy(self):
+        with tempfile.TemporaryDirectory() as root:
+            s = Setup(root)
+            seen = []
+            real = B.gunzip_sha256
+            def probe(path):
+                handle = H.capture_lock(s.settings)
+                seen.append(handle is not None)
+                if handle:
+                    handle.close()
+                return real(path)
+            with mock.patch.object(B, 'gunzip_sha256', side_effect=probe):
+                code, record = B.backup(s.settings, now=T0)
+            self.assertEqual(code, 0, record)
+            self.assertEqual(seen, [True])
 
     def test_capture_service_skips_while_backup_holds_the_lock(self):
         with tempfile.TemporaryDirectory() as root:

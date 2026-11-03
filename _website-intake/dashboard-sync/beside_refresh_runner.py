@@ -34,6 +34,7 @@ ALLOWED_ORIGINS={'https://dashboard.fixingfortmyers.com','https://perfect-timing
 class ScanError(RuntimeError):
     pass
 WARNING_FACTOR=3
+FAIL_ALLOWANCE_SECONDS=15
 # Per-run full archive copies were removed (they filled VM101's disk on 2026-11-02); archive writes are single
 # SQLite transactions and beside_archive_backup.py keeps verified copies. Capacity rule: beside_capacity.py.
 class NoRedirect(request.HTTPRedirectHandler):
@@ -47,7 +48,7 @@ def write(path,value):
     # Atomic: a full disk or crash leaves the previous complete file (settings.json, uia-checkpoint.json), never a
     # truncated one. The replacement keeps the existing file's mode (and owner where permitted); POSIX ACLs are not
     # copied. Unique evidence files are never reused.
-    path=Path(path)
+    path=Path(os.path.realpath(path))  # a symlinked settings file is updated at its real target
     data=(json.dumps(value,ensure_ascii=False,sort_keys=True,indent=2,allow_nan=False)+'\n').encode()
     temp=path.with_name('.'+path.name+'.tmp-%d'%os.getpid())
     try:
@@ -568,7 +569,13 @@ def _run(*,settings_path,budget_seconds,manual,requested_surface):
     completion_accepted=False
     report={'ok':False,'checked_at':stamp(),'fresh_scan_performed':False,'customer_messages_sent':False,
         'requested_surface':requested_surface,'message_surface_verified':False,'messages_observed':0}
-    def remaining():return budget_seconds-(time.monotonic()-started)
+    failing_since=[]
+    def remaining():
+        left=budget_seconds-(time.monotonic()-started)
+        # Once failing, the fail report gets its own short allowance even if the run budget is spent (e.g. SIGTERM
+        # from the unit's start timeout); otherwise the lease expires silently (job 44c7fde7 pattern).
+        if failing_since:left=max(left,FAIL_ALLOWANCE_SECONDS-(time.monotonic()-failing_since[0]))
+        return left
     if not isinstance(budget_seconds,(int,float)) or not math.isfinite(budget_seconds) or budget_seconds<15:
         return {**report,'error':'scan_time_budget_unavailable'}
     try:
@@ -909,6 +916,7 @@ def _run(*,settings_path,budget_seconds,manual,requested_surface):
             report['post_completion_error']=True
         elif lease and lease.get('claimed') is True:
             try:
+                failing_since.append(time.monotonic())
                 wire_code=queue_failure_code(code,phase)
                 failed=worker('fail',errorCode=wire_code)
                 failed_state=failed.get('state')

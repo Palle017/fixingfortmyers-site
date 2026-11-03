@@ -186,6 +186,9 @@ def backup(settings, *, now=None, prune=None, capture_wait_seconds=600, sleep=ti
         finally:
             dst.close()
             src.close()
+        # Only the copy needs the scan excluded; verification, compression and retention run without it.
+        capture.close()
+        capture = None
         check = sqlite3.connect(f'file:{raw}?mode=ro', uri=True)
         try:
             verdict = [row[0] for row in check.execute('PRAGMA quick_check')]
@@ -242,7 +245,8 @@ def backup(settings, *, now=None, prune=None, capture_wait_seconds=600, sleep=ti
     finally:
         for path in temporaries:
             path.unlink(missing_ok=True)
-        capture.close()
+        if capture is not None:
+            capture.close()
         held.close()
 
 
