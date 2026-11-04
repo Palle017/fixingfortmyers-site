@@ -10,6 +10,7 @@ import importlib
 import json
 import math
 import os
+import errno
 import re
 from pathlib import Path
 import sqlite3
@@ -32,6 +33,8 @@ ALLOWED_ORIGINS={'https://dashboard.fixingfortmyers.com','https://perfect-timing
 
 class ScanError(RuntimeError):
     pass
+WARNING_FACTOR=3
+FAIL_ALLOWANCE_SECONDS=15
 # Per-run full archive copies were removed (they filled VM101's disk on 2026-11-02); archive writes are single
 # SQLite transactions and beside_archive_backup.py keeps verified copies. Capacity rule: beside_capacity.py.
 class NoRedirect(request.HTTPRedirectHandler):
@@ -42,10 +45,29 @@ def stamp():
 def load(path):
     return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 def write(path,value):
-    # Existing private files retain their ACLs. Unique evidence files are never reused.
+    # Atomic: a full disk or crash leaves the previous complete file (settings.json, uia-checkpoint.json), never a
+    # truncated one. The replacement keeps the existing file's mode (and owner where permitted); POSIX ACLs are not
+    # copied. Unique evidence files are never reused.
+    path=Path(os.path.realpath(path))  # a symlinked settings file is updated at its real target
     data=(json.dumps(value,ensure_ascii=False,sort_keys=True,indent=2,allow_nan=False)+'\n').encode()
-    with Path(path).open('wb') as stream:
-        stream.write(data);stream.flush();os.fsync(stream.fileno())
+    temp=path.with_name('.'+path.name+'.tmp-%d'%os.getpid())
+    try:
+        with temp.open('wb') as stream:
+            stream.write(data);stream.flush();os.fsync(stream.fileno())
+        if path.exists():
+            info=path.stat();os.chmod(temp,info.st_mode&0o7777)
+            try:os.chown(temp,info.st_uid,info.st_gid)
+            except (AttributeError,OSError):pass
+        os.replace(temp,path)
+    except BaseException:
+        try:temp.unlink()
+        except OSError:pass
+        raise
+    try:
+        directory=os.open(path.parent,os.O_RDONLY)
+        try:os.fsync(directory)
+        finally:os.close(directory)
+    except (AttributeError,OSError,PermissionError):pass
 RELATIVE_LABEL=re.compile(r'^(.*?)\s+(Just now|Now|\d+\s*[smhdw])(?:\s+(.*))?$',re.I)
 
 def relative_label(label):
@@ -522,11 +544,38 @@ def read_threads(selected,read_one,remaining,progress,*,skip_failed=False,max_fa
             sleep(delay)
     return captures,failures
 
+class Terminated(Exception):
+    pass
+
+def _terminate(signum,frame):
+    # systemd's TimeoutStartSec/stop sends SIGTERM before SIGKILL: turn it into a reported failure, not a silent
+    # lease expiry (job 44c7fde7 pattern).
+    raise Terminated('SIGTERM')
+
 def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surface='rendered_thread'):
+    import signal,threading
+    previous=signal.signal(signal.SIGTERM,_terminate) if threading.current_thread() is threading.main_thread() else None
+    try:
+        return _run(settings_path=settings_path,budget_seconds=budget_seconds,manual=manual,requested_surface=requested_surface)
+    finally:
+        if previous is not None:signal.signal(signal.SIGTERM,previous)
+
+def storage_exhausted(exc):
+    return (isinstance(exc,OSError) and exc.errno==errno.ENOSPC) or \
+        (isinstance(exc,sqlite3.OperationalError) and 'disk is full' in str(exc).lower())
+
+def _run(*,settings_path,budget_seconds,manual,requested_surface):
     started=time.monotonic();lease=None;run_dir=None;phase='reading';attempt=None;operation='start';operation_started=started
+    completion_accepted=False
     report={'ok':False,'checked_at':stamp(),'fresh_scan_performed':False,'customer_messages_sent':False,
         'requested_surface':requested_surface,'message_surface_verified':False,'messages_observed':0}
-    def remaining():return budget_seconds-(time.monotonic()-started)
+    failing_since=[]
+    def remaining():
+        left=budget_seconds-(time.monotonic()-started)
+        # Once failing, the fail report gets its own short allowance even if the run budget is spent (e.g. SIGTERM
+        # from the unit's start timeout); otherwise the lease expires silently (job 44c7fde7 pattern).
+        if failing_since:left=max(left,FAIL_ALLOWANCE_SECONDS-(time.monotonic()-failing_since[0]))
+        return left
     if not isinstance(budget_seconds,(int,float)) or not math.isfinite(budget_seconds) or budget_seconds<15:
         return {**report,'error':'scan_time_budget_unavailable'}
     try:
@@ -560,6 +609,8 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
         def require_headroom():
             ok,free,required=disk_headroom(settings)
             report.update(disk_free_bytes=free,disk_required_bytes=required)
+            # Early warning while still able to work: the guard stops ingestion at `required`.
+            if ok and free<WARNING_FACTOR*required:report['disk_warning']=True
             if not ok:raise ScanError('LOCAL_STORAGE_UNAVAILABLE')
         def capacity_unavailable(**extra):
             # Not ready: the Linux heartbeat only advertises a worker whose status is ok and worker_ready, so a
@@ -820,6 +871,8 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
         write(run_dir/'run-proof.json',proof);write(run_dir/'counts.json',counts);write(run_dir/'settings-before.json',settings)
         completed=worker('complete',receipt=receipt)
         if completed['state']['status']!='complete':raise ScanError('VERIFICATION_REQUIRED')
+        # The server now holds a verified completion; later local errors must never be reported as a job failure.
+        completion_accepted=True
         write(run_dir/'completion-receipt.json',completed)
         event('checkpoint')
         current=load(settings_path)
@@ -843,7 +896,9 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
             dashboard_records=len(after['leads']),scope=scope,full_account_export=False)
         attempt.claim('complete');event('complete')
     except Exception as exc:
-        code=beside_attempt.safe_error(str(exc) if isinstance(exc,ScanError) else 'WORKER_FAILED')
+        code=beside_attempt.safe_error(str(exc) if isinstance(exc,ScanError)
+            else 'LOCAL_STORAGE_UNAVAILABLE' if storage_exhausted(exc) else 'WORKER_FAILED')
+        if isinstance(exc,Terminated):report['terminated_by_signal']='SIGTERM'
         name=type(exc).__name__
         if not isinstance(exc,ScanError):report['exception']=name if name in beside_attempt.EXCEPTION_TYPES else 'Exception'
         report.update(error=code,phase=phase,requires_review=phase in ('importing','verifying'),
@@ -857,8 +912,11 @@ def run(*,settings_path=SETTINGS,budget_seconds=240,manual=False,requested_surfa
                 if lease is None and attempt.data.get('claim_state')=='pending':attempt.claim('uncertain')
                 attempt.failure(primary_operation,code,exc,phase=phase,report=report)
         except OSError:report['attempt_evidence_unavailable']=True
-        if lease and lease.get('claimed') is True:
+        if completion_accepted:
+            report['post_completion_error']=True
+        elif lease and lease.get('claimed') is True:
             try:
+                failing_since.append(time.monotonic())
                 wire_code=queue_failure_code(code,phase)
                 failed=worker('fail',errorCode=wire_code)
                 failed_state=failed.get('state')

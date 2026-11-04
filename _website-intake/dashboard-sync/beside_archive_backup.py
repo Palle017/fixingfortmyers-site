@@ -25,7 +25,7 @@ replaces it atomically. A backup does not contain observations archived after it
 `--accept-missing-newer-observations`. Owner edits live in Owner Desk, not in this archive, and are unaffected.
 
 Exit codes: 0 PUBLISHED/ALREADY_PUBLISHED/RESTORED, 3 DISK_SPACE_LOW, 4 verification/destination/restore refusal,
-5 BACKUP_ALREADY_RUNNING.
+5 BACKUP_ALREADY_RUNNING or CAPTURE_RUNNING (a capture held capture.lock for the whole wait).
 """
 from __future__ import annotations
 import argparse
@@ -41,6 +41,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+import time
 
 SETTINGS = os.environ.get('BESIDE_REFRESH_SETTINGS') or str(Path.home() / 'beside-private/refresh/settings.json')
 NAME = re.compile(r'beside-archive-(\d{8}T\d{6}Z)-([0-9a-f]{12})\.sqlite3\.gz')
@@ -150,7 +151,7 @@ def lock(target):
     return handle
 
 
-def backup(settings, *, now=None, prune=None):
+def backup(settings, *, now=None, prune=None, capture_wait_seconds=600, sleep=time.sleep):
     now = now or datetime.now(timezone.utc)
     prune = settings.get('beside_backup_prune_enabled') is True if prune is None else prune
     source = Path(settings['persistent_archive']).expanduser()
@@ -160,6 +161,13 @@ def backup(settings, *, now=None, prune=None):
     held = lock(target)
     if held is None:
         return 5, {**result, 'ok': False, 'error': 'BACKUP_ALREADY_RUNNING'}
+    # The copy holds a SQLite read lock for its whole duration; a scan's archive write meanwhile would fail with
+    # "database is locked". Take the shared capture lock (held by the capture service for a whole run) so the two
+    # never overlap. Waits for a running capture to finish; gives up rather than delaying the next scan.
+    capture = wait_for_capture_lock(settings, capture_wait_seconds, sleep)
+    if capture is None:
+        held.close()
+        return 5, {**result, 'ok': False, 'error': 'CAPTURE_RUNNING'}
     temporaries = []
     try:
         size = source.stat().st_size
@@ -178,6 +186,9 @@ def backup(settings, *, now=None, prune=None):
         finally:
             dst.close()
             src.close()
+        # Only the copy needs the scan excluded; verification, compression and retention run without it.
+        capture.close()
+        capture = None
         check = sqlite3.connect(f'file:{raw}?mode=ro', uri=True)
         try:
             verdict = [row[0] for row in check.execute('PRAGMA quick_check')]
@@ -234,7 +245,20 @@ def backup(settings, *, now=None, prune=None):
     finally:
         for path in temporaries:
             path.unlink(missing_ok=True)
+        if capture is not None:
+            capture.close()
         held.close()
+
+
+def wait_for_capture_lock(settings, wait_seconds, sleep):
+    import beside_heartbeat_linux  # shared capture.lock
+    waited = 0
+    while True:
+        handle = beside_heartbeat_linux.capture_lock(settings)
+        if handle is not None or waited >= wait_seconds:
+            return handle
+        sleep(15)
+        waited += 15
 
 
 def retention(target, newest, prune):
@@ -407,7 +431,8 @@ def main(argv=None):
     else:
         code, record = backup(settings)
     print(json.dumps(record, sort_keys=True))
-    return code
+    # A result that is not ok must never exit 0 (e.g. a restore whose readback hash did not match).
+    return code if code or record.get('ok') is True else 4
 
 
 if __name__ == '__main__':

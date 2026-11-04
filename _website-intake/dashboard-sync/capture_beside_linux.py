@@ -438,7 +438,13 @@ def _service_locked(settings_path, settings):
     started = time.monotonic()
     os.environ['BESIDE_REFRESH_SETTINGS'] = str(Path(settings_path).resolve())
     import beside_refresh_runner
-    status = {'checked_at': stamp(), 'keepalive': keepalive(settings)}
+    from beside_capacity import disk_headroom
+    try:
+        capacity_ok = disk_headroom(settings)[0]
+    except (KeyError, OSError):
+        capacity_ok = False
+    # No browser before capacity: the runner refuses low disk itself; keepalive must not open Chromium first.
+    status = {'checked_at': stamp(), 'keepalive': keepalive(settings) if capacity_ok else {'skipped': 'disk_space_low'}}
     # Leave 30 seconds under the 660-second unit for alerts and shutdown. Slow
     # keepalive consumes this envelope; it must not borrow the runner's deadline.
     requested_budget = int(settings.get('beside_linux_budget_seconds', 540))
