@@ -23,7 +23,7 @@ export function checkCleanPage(name,html){
       assert.equal(hero.querySelectorAll('.service-proof-list li').length,processPoints,`${name}: concise service process points`);
       assert.ok(text(hero.querySelector('.service-hero__desc')),`${name}: keep a useful service description`);
       const actions=[...hero.querySelectorAll('.service-hero__actions a')];
-      const textBesideCall=name==='walnut-blasting-fort-myers.html'?'Text Tony':name==='no-start-diagnosis-fort-myers.html'?'Text the shop':'';
+      const textBesideCall=name==='walnut-blasting-fort-myers.html'||name==='ac-repair-fort-myers.html'?'Text Tony':name==='no-start-diagnosis-fort-myers.html'?'Text the shop':'';
       assert.equal(actions.length,textBesideCall?3:2,`${name}: ${textBesideCall?'request, call, and text':'two service actions'}`);
       const requestLabel=name==='oil-change-fort-myers.html'?'Request an oil change':'Request Repair';
       assert.equal(text(actions[0]),requestLabel,`${name}: service request is the first action`);

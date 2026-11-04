@@ -26,6 +26,13 @@ test('homepage keeps all seven service links after its primary repair request', 
   const row = document.querySelector('.home-start__services');
   const primary = document.querySelector('.home-start__actions .btn--primary');
   assert.equal(primary?.getAttribute('href'), '#contact');
+  const heroActions = [...document.querySelectorAll('.home-start__actions a')];
+  const heroCall = heroActions.find(anchor => anchor.getAttribute('href') === 'tel:+12393972048');
+  const heroText = heroActions[heroActions.indexOf(heroCall) + 1];
+  assert.equal(heroCall?.className, 'home-start__schedule-link');
+  assert.equal(heroText?.textContent.trim(), 'Text Tony');
+  assert.equal(heroText?.getAttribute('href'), 'sms:+12393972048');
+  assert.equal(heroText?.className, heroCall.className);
   assert.ok(heading.compareDocumentPosition(primary) & 4, 'heading precedes the repair request');
   assert.ok(primary.compareDocumentPosition(row) & 4, 'repair request precedes secondary service navigation');
   assert.equal(row?.classList.contains('home-start__services'), true);

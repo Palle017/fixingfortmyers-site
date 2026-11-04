@@ -197,6 +197,13 @@
     } else { brandVideo.pause(); brandVideo.controls = true; }
   }
   byId('partsForm')?.addEventListener('input', () => reportMetric('parts_quote_started'), {once:true});
+  const walnutPrefill = 'I would like an assessment for intake-valve carbon cleaning / walnut blasting. Promo code: WALNUT10.';
+  if (requestedService === 'walnut') {
+    for (const id of ['request-notes', 'request-details']) {
+      const details = byId(id);
+      if (details && !details.value) details.value = walnutPrefill;
+    }
+  }
   const form = byId('bookingForm');
   if (!form || form.dataset.intakeVersion === '1') return;
   window.PT_REPAIR_CONTEXT.applyService(serviceKey);
@@ -345,7 +352,7 @@
   const suggestedDescriptions = {
     maintenance: 'Please contact me about a scheduled LIQUI MOLY oil and filter service. Confirm the manufacturer-required oil specification and filter for my car.',
     detailing: 'I would like a quote for professional interior/exterior car detailing or paint correction.',
-    walnut: 'I would like an assessment for intake-valve carbon cleaning / walnut blasting.'
+    walnut: walnutPrefill
   };
   if (params.get('schedule') === '1' && problemField && !problemField.value && Object.hasOwn(suggestedDescriptions, serviceKey)) {
     problemField.value = suggestedDescriptions[serviceKey];
