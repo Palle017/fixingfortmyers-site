@@ -546,7 +546,8 @@
               <input id="request-vehicle" name="vehicle" type="text" maxlength="160" placeholder="Year Make Model, e.g. 2014 Honda Civic" required="" aria-describedby="request-vehicle-error">
               <p class="request-error" id="request-vehicle-error" aria-live="polite" hidden=""></p></div>
             <div><label for="request-notes">What's going on? (symptoms, codes, promo code like WALNUT10)</label>
-              <textarea id="request-notes" name="notes" rows="3" maxlength="2000" autocomplete="off"></textarea></div>
+              <textarea id="request-notes" name="notes" rows="3" maxlength="2000" autocomplete="off" aria-describedby="request-notes-help"></textarea>
+              <p class="request-hint" id="request-notes-help">Optional. Already asked AI? Separate what the car does from the AI's unverified suggestion. Include what you've tried; leave out private chat links and account details.</p></div>
             <input id="request-service" name="service" type="hidden" value="">
           </div>
           <details id="request-options">
