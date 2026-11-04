@@ -37,8 +37,8 @@ test('shared nav and footer link to /blog', () => {
     if (!html.includes('class="pt-layout-navigation"')) continue;
     linked += 1;
     const document = documentOf(file);
-    assert.equal(document.querySelector('.pt-layout-navigation a[href="/blog"]')?.textContent.trim(), 'Blog', `${file} nav`);
-    assert.equal(document.querySelector('footer a[href="/blog"]')?.textContent.trim(), 'Blog', `${file} footer`);
+    assert.equal(document.querySelector('.pt-layout-navigation a[href="/blog/"]')?.textContent.trim(), 'Blog', `${file} nav`);
+    assert.equal(document.querySelector('footer a[href="/blog/"]')?.textContent.trim(), 'Blog', `${file} footer`);
   }
   assert.ok(linked >= 50, `only ${linked} navs link to the blog`);
 });

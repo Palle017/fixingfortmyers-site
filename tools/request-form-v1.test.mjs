@@ -295,6 +295,16 @@ test('conversion events wait for an acknowledged receipt and contain fixed categ
   assert.equal(Array.from(y.w.dataLayer).filter(entry=>entry.event==='form_submit_success').length,0);
 });
 
+test('?service=walnut starts the details box with the walnut assessment and WALNUT10', t=>{
+  const expected = 'I would like an assessment for intake-valve carbon cleaning / walnut blasting. Promo code: WALNUT10.';
+  for (const page of ['index.html', 'request-a-repair.html']) {
+    const walnut = setup(t, {page, search:'?service=walnut'});
+    assert.equal(walnut.d.getElementById('request-notes').value, expected, page);
+    const other = setup(t, {page, search:'?service=ac'});
+    assert.equal(other.d.getElementById('request-notes').value, '', page);
+  }
+});
+
 test('optional notes and a sanitized ?service= value are included in the posted JSON payload', async t=>{
   const noMailto = x => {
     assert.equal(x.d.getElementById('request-email'),null);

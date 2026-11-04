@@ -28,6 +28,7 @@ test('ac-repair-fort-myers.html: new car AC repair snippet, penguin ad unchanged
   assert.match(h, /<h1 class="service-hero__title" id="service-title">AC Repair in Fort Myers<\/h1>/);
   assert.doesNotMatch(h.replace(/<p class="hours-disclaimer"[\s\S]*?<\/p>/, ""), /Repair requests 24\/7/, "only the required footer disclosure may say Repair requests 24/7");
   assert.doesNotMatch(h.match(/"description": "[^"]*"/g).join(" "), /shop|mobile|pickup|by appointment|24\/7|13037|Saddleback/i);
-  assert.equal((h.match(/class="btn/g) || []).length, 5);
+  assert.equal((h.match(/class="btn/g) || []).length, 6);
+  assert.match(h, /<div class="service-hero__actions"><a href="\/request-a-repair\?service=ac" class="btn btn--primary">Request Repair<\/a><a href="tel:\+12393972048" class="btn btn--outline">Call the shop \(239\) 397-2048<\/a><a href="sms:\+12393972048" class="btn btn--outline">Text Tony<\/a><\/div>/);
   assert.doesNotMatch(h, /13037|Second St/);
 });
