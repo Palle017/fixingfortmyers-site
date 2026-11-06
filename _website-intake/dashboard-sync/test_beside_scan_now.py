@@ -13,11 +13,18 @@ class ScanNowTests(unittest.TestCase):
     def test_attention_evidence(self):
         run = self.tmp / 'queued-uia-1'; run.mkdir()
         (run / 'lease.json').write_text(json.dumps({'state': {'jobId': 'job-1'}}))
-        self.assertEqual(R.attention_evidence(self.tmp, 'job-1'), {'found': True, 'import_attempted': False})
+        self.assertEqual(R.attention_evidence(self.tmp, 'job-1'), {'found': True, 'import_attempted': None})
         (run / 'apply-journal.json').write_text('{}')
         self.assertTrue(R.attention_evidence(self.tmp, 'job-1')['import_attempted'])
         self.assertEqual(R.attention_evidence(self.tmp, 'job-2'), {'found': False})
         self.assertEqual(R.attention_evidence(self.tmp, None), {'found': False})
+
+    def test_any_matching_run_with_journal_means_import_attempted(self):
+        for name in ('first', 'second'):
+            run=self.tmp/name;run.mkdir()
+            (run/'lease.json').write_text(json.dumps({'state':{'jobId':'job-1'}}))
+        (self.tmp/'second'/'apply-journal.json').write_text('{}')
+        self.assertEqual(R.attention_evidence(self.tmp,'job-1'),{'found':True,'import_attempted':True})
 
     def test_scan_now_runs_manual_under_lock(self):
         lock = mock.MagicMock()

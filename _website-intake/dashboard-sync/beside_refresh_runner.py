@@ -482,14 +482,17 @@ def report_queue_failure(worker,report,code,phase):
             else:report.pop(key,None)
 
 def attention_evidence(runs,job_id):
-    """Local proof about an attention job: did this worker claim it, and did it try an import?"""
+    """Local observations only. A missing journal cannot establish absence of an import."""
     if not job_id:return {'found':False}
+    found=False
     for lease_path in Path(runs).glob('*/lease.json'):
         try:lease=load(lease_path)
         except (OSError,ValueError):continue
         if (lease.get('state') or {}).get('jobId')==job_id:
-            return {'found':True,'import_attempted':(lease_path.parent/'apply-journal.json').exists()}
-    return {'found':False}
+            found=True
+            if (lease_path.parent/'apply-journal.json').exists():
+                return {'found':True,'import_attempted':True}
+    return {'found':True,'import_attempted':None} if found else {'found':False}
 
 def require_captured_changes(selected,captures,*,failures=(),held=()):
     # Retained raw evidence is useful, but a failed read/parse is not a completed refresh.

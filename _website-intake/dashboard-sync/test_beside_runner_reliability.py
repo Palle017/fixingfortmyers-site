@@ -567,6 +567,45 @@ class ReconciliationTests(unittest.TestCase):
             old, new = self.fixture(root, 'write_uncertain')
             self.assertEqual(new.held_claims(queued(), manual=True), [old.path.stem])
 
+    def test_later_job_cannot_release_acquired_or_uncertain_import(self):
+        for kind in ('acquired', 'write_uncertain'):
+            for manual in (False, True):
+                with self.subTest(kind=kind,manual=manual), tempfile.TemporaryDirectory() as root:
+                    old,new=self.fixture(root,kind)
+                    before=old.path.read_bytes()
+                    later=queued(LATER_JOB,'2026-10-22T00:01:00Z')
+                    for _ in range(2):
+                        self.assertEqual(new.held_claims(later,manual=manual),[old.path.stem])
+                        self.assertEqual(old.path.read_bytes(),before)
+
+    def test_uncertain_import_releases_only_for_same_job_readback_or_review(self):
+        values=[completed(),{**queued(),'status':'failed','errorCode':'ATTENTION_RESOLVED',
+                             'resolutionCode':'readback_checked_no_retry'}]
+        for value in values:
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as root:
+                old,new=self.fixture(root,'write_uncertain')
+                self.assertEqual(new.held_claims(value),[])
+                evidence=old.path.read_bytes()
+                self.assertEqual(new.held_claims(value),[])
+                self.assertEqual(old.path.read_bytes(),evidence)
+
+    def test_held_import_blocks_capture_claim_and_import_on_later_job(self):
+        with tempfile.TemporaryDirectory() as root:
+            fixture=Fixture(root)
+            old=A.Attempt(fixture.refresh,fixture.clock)
+            old.claim('write_uncertain',queued())
+            fixture.state=queued(LATER_JOB,'2026-10-22T00:01:00Z')
+            fixture.baseline={'leads':[{'id':'beside:chat:'+CID,'stage':'scheduled',
+                'notes':'owner edit','folder':'inbox','folder_version':'owner-version'}]}
+            before=copy.deepcopy(fixture.baseline)
+            for manual in (False,True):
+                result=fixture.run(manual=manual)
+                self.assertEqual(result['deferred_reason'],'CLAIM_REVIEW_REQUIRED')
+                self.assertNotIn('claim',fixture.actions)
+                self.assertEqual(fixture.imports,0)
+                self.assertEqual(fixture.baseline,before)
+                self.assertFalse(list(fixture.runs.iterdir()))
+
 
 class DiagnosticTests(unittest.TestCase):
     def test_server_codes_and_source_reasons_are_fixed_not_regex_only(self):
