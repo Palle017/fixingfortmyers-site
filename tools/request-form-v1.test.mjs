@@ -127,7 +127,7 @@ test('mobile-typed and autofilled phone formats are accepted and sent canonical'
   }
 });
 
-test('valid submission sends exactly the v1 JSON contract and shows only the confirmation text', async t=>{
+test('valid submission sends exactly the v1 JSON contract and shows a saved receipt with a call action', async t=>{
   const x=setup(t),events=[];
   x.w.PT_TRACK=event=>events.push(event);
   x.fill();x.send();await settle();
@@ -146,7 +146,9 @@ test('valid submission sends exactly the v1 JSON contract and shows only the con
   assert.equal(data.source,'site_form_v1');
   assert.equal(new Date(data.submitted_at).toISOString(),data.submitted_at);
   assert.equal(x.form.hidden,true);
-  assert.equal(x.d.getElementById('request-done').textContent,'Got it, Synthetic Customer. Tony calls back ASAP.');
+  assert.equal(x.d.getElementById('request-done-heading').textContent,'Request received.');
+  assert.match(x.d.getElementById('request-done').textContent,/Your callback request is saved/);
+  assert.equal(x.d.querySelector('#request-done a').getAttribute('href'),'tel:+12393972048');
   assert.equal(x.d.activeElement.id,'request-done-heading');
   assert.deepEqual(x.logs,[]);
   assert.equal(x.w.sessionStorage.getItem('pt-last-request'),null,'no customer data persisted in browser storage');
@@ -165,13 +167,14 @@ test('VIN uppercases and gives advisory validation while a ten-character VIN sti
 });
 
 test('callback choices serialize independently of service scheduling, with optional local time converted to ISO', async t=>{
-  for(const [value,copy] of [['asap','ASAP'],['today','ASAP'],['tomorrow','by tomorrow'],['next_week','next week'],['specific','ASAP']]){
+  for(const [value,copy] of [['asap','as soon as possible'],['today','today'],['tomorrow','tomorrow'],['next_week','next week'],['specific','a specific time']]){
     const x=setup(t);x.fill();x.preference(value);
     assert.equal(x.d.getElementById('request-callback-time').hidden,value!=='specific');
     x.send();await settle();
     assert.equal(x.calls[0].body.callback_preference,value);
     assert.equal(x.calls[0].body.callback_at,null,'a callback time is optional');
-    assert.equal(x.d.getElementById('request-done-heading').textContent,`Got it, Synthetic Customer. Tony calls back ${copy}.`);
+    assert.equal(x.d.getElementById('request-done-heading').textContent,'Request received.');
+    assert.ok(x.d.getElementById('request-done').textContent.includes(`Preferred callback: ${copy}. Timing depends on availability.`));
   }
   const x=setup(t);x.fill();x.preference('specific');x.enter('request-callback-at','2026-11-12T14:30');x.send();await settle();
   assert.equal(x.calls[0].body.callback_at,new x.w.Date('2026-11-12T14:30').toISOString());
@@ -271,10 +274,11 @@ test('public configuration uses the dedicated HTTPS request route only on the tw
   assert.match(read('deliverables/form-backend-spec.md'),/site_form_v1/);
 });
 
-test('confirmation renders customer text safely without interpreting it as HTML', async t=>{
+test('confirmation does not echo customer text or interpret it as HTML', async t=>{
   const x=setup(t);x.fill();x.enter('request-name','<img src=x onerror=alert(1)>');x.send();await settle();
   assert.equal(x.d.getElementById('request-done').querySelector('img,script'),null);
-  assert.match(x.d.getElementById('request-done').textContent,/<img src=x onerror=alert\(1\)>/);
+  assert.doesNotMatch(x.d.getElementById('request-done').textContent,/<img src=x onerror=alert\(1\)>/);
+  assert.equal(x.calls[0].body.name,'<img src=x onerror=alert(1)>','customer input is preserved in the request');
 });
 
 test('legacy calm, Google and imperative WebMCP helpers do not add fields, scripts or automatic requests to v1', async t=>{

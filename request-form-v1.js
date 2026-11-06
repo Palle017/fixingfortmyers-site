@@ -85,23 +85,51 @@
       source: 'site_form_v1'
     };
   };
-  const track = event => window.PT_TRACK?.(event, {placement:'form'});
+  const track = event => {
+    try { window.PT_TRACK?.(event, {placement:'form'}); }
+    catch (_) { /* Optional analytics must never block a request or its receipt. */ }
+  };
   form.addEventListener('input', () => track('form_start'), {once:true});
   const clearStatus = () => {
     if (!inFlight) status.textContent = '';
   };
   form.addEventListener('input', clearStatus);
   form.addEventListener('change', clearStatus);
-  const confirm = data => {
+  const confirm = (data, receipt) => {
     if (offer) offer.hidden = true;
-    const when = {asap:'ASAP', today:'ASAP', tomorrow:'by tomorrow', next_week:'next week', specific:'ASAP'}[data.callback_preference];
-    $('request-done-heading').textContent = `Got it, ${data.name}. Tony calls back ${when}.`;
+    const done = $('request-done'), heading = $('request-done-heading');
+    heading.textContent = 'Request received.';
+    const summary = document.createElement('p');
+    summary.textContent = 'Your callback request is saved. This is not a confirmed appointment.';
+    const preference = document.createElement('p');
+    const when = {asap:'as soon as possible', today:'today', tomorrow:'tomorrow', next_week:'next week', specific:'a specific time'}[data.callback_preference];
+    const chosenTime = data.callback_at ? new Date(data.callback_at).toLocaleString() : '';
+    preference.textContent = `Preferred callback: ${chosenTime || when}. Timing depends on availability.`;
+    const actions = document.createElement('div');
+    actions.className = 'request-actions';
+    const call = document.createElement('a');
+    call.className = 'btn btn--primary';
+    call.href = 'tel:+12393972048';
+    call.textContent = 'Call Tony · (239) 397-2048';
+    actions.append(call);
+    const reminder = document.createElement('p');
+    reminder.textContent = 'Need a quicker response? Call the shop. Please speak with Tony before heading over.';
+    done.replaceChildren(heading, summary, preference, actions, reminder);
+    // A bounded reference helps the shop locate the saved request, without
+    // putting customer details into a URL, analytics or browser storage.
+    if (/^[A-Za-z0-9_-]{1,128}$/.test(receipt.id.trim())) {
+      const reference = document.createElement('p');
+      reference.className = 'request-hint';
+      reference.textContent = `Request reference: ${receipt.id.trim()}`;
+      done.append(reference);
+    }
     form.hidden = true;
     $('request-heading').hidden = true;
     $('request-review-note').hidden = true;
-    $('request-done').hidden = false;
+    done.hidden = false;
+    status.textContent = '';
     $('repair-request-dialog')?.setAttribute('aria-labelledby', 'request-done-heading');
-    $('request-done-heading').focus();
+    heading.focus();
     track('form_submit_success');
   };
   form.addEventListener('submit', async event => {
@@ -122,10 +150,14 @@
       return;
     }
     inFlight = true;
-    submit.disabled = true;
+    // Freeze the submitted snapshot while waiting. Otherwise edits made during
+    // a slow response could disappear when the earlier request is acknowledged.
+    const controls = [...form.querySelectorAll('input, textarea, select, button')]
+      .map(control => ({control, disabled:control.disabled}));
+    controls.forEach(({control}) => { control.disabled = true; });
     submit.textContent = 'Sending…';
     form.setAttribute('aria-busy', 'true');
-    status.textContent = '';
+    status.textContent = 'Sending your request. Keep this page open.';
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
@@ -137,9 +169,10 @@
       if (!response.ok) throw new Error('http_failure');
       const receipt = await response.json();
       if (receipt?.ok !== true || receipt.received !== true || typeof receipt.id !== 'string' || !receipt.id.trim()) throw new Error('unacknowledged');
-      confirm(current.data);
+      confirm(current.data, receipt);
     } catch (_) {
-      status.textContent = 'We could not confirm your request. Your details are still here. Please try again.';
+      status.textContent = (navigator.onLine === false ? 'You appear to be offline. ' : controller.signal.aborted ? 'This is taking longer than expected. ' : '') +
+        'We could not confirm your request. Your details are still here. Retry this request, or call (239) 397-2048.';
       submit.textContent = 'Retry request';
       // A backend error body or thrown exception may contain PII: log a fixed message only.
       console.error('Repair request submission failed.');
@@ -147,7 +180,7 @@
     } finally {
       clearTimeout(timeout);
       inFlight = false;
-      submit.disabled = false;
+      controls.forEach(({control, disabled}) => { control.disabled = disabled; });
       form.removeAttribute('aria-busy');
       if (form.hidden) submit.textContent = 'Send request';
     }
