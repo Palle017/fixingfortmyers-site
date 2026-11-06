@@ -108,6 +108,35 @@ class ActiveScanTests(unittest.TestCase):
         self.assertTrue(check.metadata_publish_allowed(True,{'status':'complete'}))
         self.assertFalse(check.metadata_publish_allowed(False,{'status':'complete'}))
 
+class BesideScanStatusTests(unittest.TestCase):
+    def test_attention_queue_overrides_online_heartbeat(self):
+        status,detail=check.beside_scan_status(
+            {'status':'attention','error':'LEASE_EXPIRED'},True,'2026-11-02T18:33:30Z')
+        self.assertEqual(status,'error')
+        self.assertIn('needs attention (LEASE_EXPIRED)',detail)
+        self.assertIn('Calls and texts after that scan are UNVERIFIED',detail)
+        self.assertIn('heartbeat does not prove a fresh Beside capture',detail)
+
+    def test_complete_queue_with_verified_scan_is_historical(self):
+        status,detail=check.beside_scan_status(
+            {'status':'complete'},True,'2026-11-02T18:33:30Z')
+        self.assertEqual(status,'historical')
+        self.assertIn('Last verified scan: 2026-11-02T18:33:30Z',detail)
+        self.assertIn('not a live feed',detail)
+
+    def test_missing_scan_is_error_even_if_worker_is_online(self):
+        status,detail=check.beside_scan_status({'status':'complete'},True,None)
+        self.assertEqual(status,'error')
+        self.assertIn('No verified Beside capture is recorded',detail)
+        self.assertIn('UNVERIFIED',detail)
+
+    def test_offline_worker_marks_saved_snapshot_unverified(self):
+        status,detail=check.beside_scan_status(
+            {'status':'complete'},False,'2026-11-02T18:33:30Z')
+        self.assertEqual(status,'error')
+        self.assertIn('Beside capture is unavailable',detail)
+        self.assertIn('UNVERIFIED',detail)
+
 
 class CompletedProofOwnerTests(unittest.TestCase):
     PROOF={'plan_sha256':'a'*64,'after_sha256':'b'*64,'captured_at':'2026-10-21T09:02:40.000Z'}
