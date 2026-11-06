@@ -1,5 +1,12 @@
 # Targeted company update
 
+## Current Bay One direction — November 6, 2026
+
+The owner has now directed that the public Bay One chatbot be restored. This supersedes the October 18 pause described below; the earlier record says the shutdown was owner-directed but does not state a specific reason. The static-site change restores the last active public widget on the existing public pages and adds a visible privacy notice. It uses the hosted endpoint from the last active public configuration. The separate repair-request receiver, phone intake, Beside, and VM101 staging service remain untouched.
+
+Before publication, one synthetic non-customer general question received a non-empty answer from the live chat model. The health response reported questions and rough estimates enabled, intake false, and media unavailable. No estimate, lead, file upload, appointment, customer contact, backend write, or database change was made. The hosted source and retention controls remain unavailable for review; the existing privacy disclosure describes the previous provider and seven-day token/history window, and is restored with the widget. Public estimate accuracy and current server-side retention behavior remain unverified.
+
+
 **Follow-on release:** homepage simplification and five symptom guides are tracked in [LEAD-GROWTH-RELEASE.md](LEAD-GROWTH-RELEASE.md). Counts below describe the original 24/7 release; shared evidence files now record the latest verification run. Backend and Bay One activation boundaries remain unchanged.
 
 Status: **static production release published and verified** at 19:21 UTC September 24, 2026, commit `5f4f9e5015f02b3d3932ba0270d75678c0831f48`. [Production readback](evidence/production.json) confirms the Pages build, current public files and exclusion of private backend/docs paths. Baseline commit: `b23633d02d84e2113d8a54fb6b03287ba5688dcf` (`Present Perfect Timing as mobile auto repair with Tony imagery`). Worktree: `C:\Users\LP15\fixingfortmyers-site\.worktrees\company-update`.
