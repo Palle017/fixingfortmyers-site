@@ -68,7 +68,7 @@
     let url;
     try { url = new URL(link.href); } catch (_) { return; }
     if (url.origin !== location.origin || url.hash !== '#contact' || !samePage(url.pathname)) return;
-    window.PT_REPAIR_CONTEXT?.applyService(url.searchParams.get('service'));
+    window.PT_REPAIR_CONTEXT?.applyService(url.searchParams.get('service'), {offer:url.searchParams.get('offer')});
     if (open(link)) event.preventDefault();
   });
   form.addEventListener('pt:repair-review', () => open());
