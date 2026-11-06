@@ -144,26 +144,26 @@
         <div class="request-page__actions"><a class="btn btn--primary request-page__open" href="#contact">Open repair form</a><a class="btn btn--outline" href="tel:+12393972048">Call (239) 397-2048</a></div>
 <div class="request-panel" id="contact" role="region" aria-labelledby="request-heading">
 
-        <h2 id="request-heading">Send a request. It takes 20 seconds. Tony calls back.</h2>
+        <h2 id="request-heading">Request a callback</h2>
         <form id="bookingForm" class="repair-request intake-v1" data-intake-version="1" method="post" action="/request-a-repair#contact">
           <div class="request-fields">
             <div><label for="request-name">Name <span>(required)</span></label>
-              <input id="request-name" name="name" type="text" autocomplete="name" maxlength="100" required aria-describedby="request-name-error">
+              <input id="request-name" name="name" type="text" enterkeyhint="next" autocomplete="name" maxlength="100" required aria-describedby="request-name-error">
               <p class="request-error" id="request-name-error" aria-live="polite" hidden></p></div>
             <div><label for="request-phone">Callback number <span>(required)</span></label>
-              <input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" pattern="(?:\+1)?[0-9]{10}" placeholder="2395550123 or +12395550123" required aria-describedby="request-phone-error">
+              <input id="request-phone" name="phone" type="tel" enterkeyhint="next" autocomplete="tel" inputmode="tel" maxlength="30" pattern="(?:\+1)?[0-9]{10}" placeholder="2395550123 or +12395550123" required aria-describedby="request-phone-error">
               <p class="request-error" id="request-phone-error" aria-live="polite" hidden></p></div>
             <div><label for="request-vehicle">Vehicle <span>(required)</span></label>
-              <input id="request-vehicle" name="vehicle" type="text" maxlength="160" placeholder="Year Make Model, e.g. 2014 Honda Civic" required aria-describedby="request-vehicle-error">
+              <input id="request-vehicle" name="vehicle" type="text" enterkeyhint="done" maxlength="160" placeholder="Year Make Model, e.g. 2014 Honda Civic" required aria-describedby="request-vehicle-error">
               <p class="request-error" id="request-vehicle-error" aria-live="polite" hidden></p></div>
-            <div><label for="request-notes">What's going on? (symptoms, codes, promo code like WALNUT10)</label>
-              <textarea id="request-notes" name="notes" rows="3" maxlength="2000" autocomplete="off" aria-describedby="request-notes-help"></textarea>
-              <p class="request-hint" id="request-notes-help">Optional. Already asked AI? Separate what the car does from the AI's unverified suggestion. Include what you've tried; leave out private chat links and account details.</p></div>
             <input id="request-service" name="service" type="hidden" value="">
           </div>
           <details id="request-options">
-            <summary>Add details (optional)</summary>
+            <summary>Add symptoms, VIN or callback time (optional)</summary>
             <div class="request-fields">
+            <div><label for="request-notes">What's going on? (symptoms, codes, promo code like WALNUT10)</label>
+              <textarea id="request-notes" name="notes" rows="3" maxlength="2000" autocomplete="off" aria-describedby="request-notes-help"></textarea>
+              <p class="request-hint" id="request-notes-help">Optional. Already asked AI? Separate what the car does from the AI's unverified suggestion. Include what you've tried; leave out private chat links and account details.</p></div>
               <div><label for="request-vin">VIN <span>(optional)</span></label>
                 <input id="request-vin" name="vin" type="text" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="request-vin-help">
                 <p class="request-hint" id="request-vin-help" aria-live="polite">Optional. Your VIN helps Tony price the exact part faster.</p></div>
@@ -182,7 +182,7 @@
           <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
           <p class="request-phone-footer">Prefer to call? <a href="tel:+12393972048">(239) 397-2048</a></p>
         </form>
-        <p class="request-hint" id="request-review-note">Fill out the form and Tony gets back to you faster.</p>
+        <p class="request-hint" id="request-review-note">Requests are accepted 24/7. Response timing depends on availability.</p>
         <p class="request-oil-offer" id="request-oil-offer" hidden>
           <strong>LIQUI MOLY prepay offer: 50% off oil-change labor.</strong>
           The discount applies when your shop-approved correct-spec LIQUI MOLY oil is purchased and paid for in advance.
