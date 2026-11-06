@@ -178,7 +178,35 @@
       if (sourcePages.has(saved)) sourcePage = saved;
     }
   } catch (_) { /* A blocked session store does not block contacting Tony. */ }
-  window.PT_REPAIR_CONTEXT = {service:serviceKey,applyService(key){const field=byId('request-service');if(field&&validService(key)&&field.selectedIndex===0)field.value=services[key];}};
+  const walnutPrefill = 'I would like an assessment for intake-valve carbon cleaning / walnut blasting. Promo code: WALNUT10.';
+  let generatedNotes = null;
+  const prefillWalnut = () => {
+    const notes = byId('request-notes');
+    if (notes && !notes.value) {
+      notes.value = walnutPrefill;
+      generatedNotes = walnutPrefill;
+      // Prefilled text stays visible and editable when optional details are collapsed.
+      const options = byId('request-options');
+      if (options) options.open = true;
+    }
+  };
+  window.PT_REPAIR_CONTEXT = {service:serviceKey, applyService(key, {offer:offerKey} = {}) {
+    const field = byId('request-service'), form = byId('bookingForm');
+    if (!field || !validService(key)) return;
+    if (form?.dataset.intakeVersion === '1') {
+      if (form.hidden || form.getAttribute('aria-busy') === 'true') return;
+      field.value = key;
+      this.service = key;
+      const offer = byId('request-oil-offer');
+      if (offer) offer.hidden = !(key === 'maintenance' && offerKey === 'liquimoly-labor50');
+      const notes = byId('request-notes');
+      if (key === 'walnut') prefillWalnut();
+      else if (notes && generatedNotes && notes.value === generatedNotes) {
+        notes.value = '';
+        generatedNotes = null;
+      }
+    } else if (field.selectedIndex === 0) field.value = services[key];
+  }};
   const toggle = byId('mobileToggle');
   const menu = byId('mobileMenu');
   if (toggle && menu) {
@@ -197,12 +225,10 @@
     } else { brandVideo.pause(); brandVideo.controls = true; }
   }
   byId('partsForm')?.addEventListener('input', () => reportMetric('parts_quote_started'), {once:true});
-  const walnutPrefill = 'I would like an assessment for intake-valve carbon cleaning / walnut blasting. Promo code: WALNUT10.';
   if (requestedService === 'walnut') {
-    for (const id of ['request-notes', 'request-details']) {
-      const details = byId(id);
-      if (details && !details.value) details.value = walnutPrefill;
-    }
+    prefillWalnut();
+    const details = byId('request-details');
+    if (details && !details.value) details.value = walnutPrefill;
   }
   const form = byId('bookingForm');
   if (!form || form.dataset.intakeVersion === '1') return;
