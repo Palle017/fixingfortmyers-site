@@ -132,6 +132,30 @@ def metadata_publish_allowed(publish, state):
     # An active scan owns its source descriptor until proof and checkpoints land.
     return publish and state.get('status') not in ('queued','running')
 
+def beside_scan_status(state, worker_online, scan_at):
+    """Return truthful source status/detail; a worker heartbeat is not a fresh scan."""
+    state=state if isinstance(state,dict) else {}
+    queue_status=state.get('status')
+    reason=state.get('error')
+    if not isinstance(reason,str) or not all(c.isalnum() or c in '_-' for c in reason) or len(reason)>80:
+        reason=''
+    if queue_status not in ('complete','idle') or not worker_online or not scan_at:
+        if queue_status=='attention':
+            label='Beside capture needs attention'
+        elif queue_status=='failed' or not worker_online:
+            label='Beside capture is unavailable'
+        elif not scan_at:
+            label='No verified Beside capture is recorded'
+        else:
+            label='Beside capture state is unverified'
+        suffix=f' ({reason})' if reason else ''
+        detail=(f'{label}{suffix}. Last verified scan: {scan_at or "not available"}. '
+            'Calls and texts after that scan are UNVERIFIED. A worker heartbeat does not prove a fresh Beside capture.')
+        return 'error',detail
+    return 'historical',(
+        f'Last verified scan: {scan_at}. This is a saved snapshot, not a live feed of every call/text. '
+        'The worker is online; this check did not scrape new messages.')
+
 def run(*,publish=True,budget_seconds=45):
     started=time.monotonic();checked=utc_millis()
     result={'checked_at':checked,'ok':False,'delivery_ok':False}
@@ -182,12 +206,11 @@ def run(*,publish=True,budget_seconds=45):
             all_sources_live=False,customer_messages_sent=False,inquiry_records_written=0,dashboard_status_updated=False)
         result['metadata_deferred_for_scan'] = bool(publish and not metadata_publish_allowed(publish,live['state']))
         if metadata_publish_allowed(publish,live['state']):
+            scan_status,scan_detail=beside_scan_status(live['state'],worker_online,scan_at)
             verdict='Saved-record reconciliation passed.' if result['delivery_ok'] else 'ACTION NEEDED: missing records or changed source fields. See private reconciliation receipt.'
             detail=(f"{verdict} {result['beside']['saved_cards']} newer Beside cards and {result['beside']['historical_cards']} historical cards are saved. "
-                f"Last verified scan: {scan_at}. This is a saved snapshot, not a live feed of every call/text. "
-                +('Scan worker reports online; this check did not scrape new messages.' if worker_online else 'Scan worker is offline; calls/texts after the last scan are UNVERIFIED.')
-                +f" Website IDs checked: {result['website']['matched']}/{result['website']['source_requests']} including owner tests.")
-            source={'id':'beside','name':'Beside saved scans','status':'historical' if result['delivery_ok'] else 'error',
+                f"{scan_detail} Website IDs checked: {result['website']['matched']}/{result['website']['source_requests']} including owner tests.")
+            source={'id':'beside','name':'Beside saved scans','status':scan_status if result['delivery_ok'] else 'error',
                 'observed_at':checked,'latest_record_at':max((x['received_at'] for x in live['baseline']['leads'] if x['source']=='beside'),default=None),
                 'record_count':result['beside']['saved_cards'],'detail':detail}
             if len(detail)>600:raise CheckError('source_detail_too_long')
