@@ -190,8 +190,11 @@ class Attempt:
             elif (same and state.get('status') == 'failed' and _date(state.get('requestedAt')) == requested
                   and state.get('errorCode') == 'ATTENTION_RESOLVED' and state.get('resolutionCode') in RESOLUTIONS):
                 resolution = 'server_reviewed'
-            elif (job and _identifier(state.get('jobId')) and state.get('jobId') != job and state.get('status') == 'queued'
+            elif (kind in ('pending', 'uncertain')
+                  and job and _identifier(state.get('jobId')) and state.get('jobId') != job and state.get('status') == 'queued'
                   and requested and _date(state.get('requestedAt')) and _date(state['requestedAt']) > requested):
+                # A later request reconciles only an ambiguous claim. An acquired worker may
+                # have imported; replacing the queue row is not readback of that earlier job.
                 resolution = 'superseded_by_server_job'
             elif same and state.get('status') == 'queued' and manual and kind in ('pending', 'uncertain'):
                 # Existing --scan-now is explicit operator intent. Normal timers remain held.
