@@ -42,6 +42,8 @@ function transformPage(html, name) {
     const src = script.getAttribute('src');
     if (!src) { script.remove(); continue; } // Includes JSON-LD, executable inline code and redirects.
     if (/^(?:https?:)?\/\//i.test(src)) { script.remove(); continue; }
+    // Never include the live Bay One transport in the isolated static staging artifact.
+    if (['bay-one-config.js','bay-one-widget.js'].includes(local(src))) { script.remove(); continue; }
     // Saved conversations have a separate memory-only preview. The static staging
     // artifact keeps their inactive fallback, without a real conversation transport.
     if (name === 'customer-conversation.html' && ['customer-conversation-config.js','customer-conversation.js'].includes(local(src))) {

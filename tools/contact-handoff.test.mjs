@@ -49,16 +49,22 @@ test('careers preserves the applicant-specific mobile introduction action',t=>{
   assert.ok(w.document.querySelector('#apply #careers-form'));
 });
 
-test('the Bay One chat is removed: no page loads it or mentions it, and normal contact remains available',async t=>{
+test('Bay One config and public widget assets are available without changing the repair form or loading chat in site.js',async t=>{
   const x=setup(t,{publicContact:true,url:'https://fixingfortmyers.com/',handler:async()=>{throw new TypeError('offline');}}),d=x.w.document;
-  await settle();x.requests.length=0;
-  assert.equal(d.getElementById('bay-one-widget'),null);assert.equal(d.getElementById('request-bay-one'),null);assert.equal(d.querySelector('[class^="b1-"],[class*=" b1-"]'),null);
+  await settle();
+  assert.equal(d.getElementById('bay-one-widget'),null,'site.js alone does not start the optional chat');
+  assert.equal(x.requests.length,0,'no chat or lead request is made by page load');
   assert.equal(d.querySelector('.mobile-contact-bar').children.length,2);
-  assert.equal(x.requests.length,0);assert.equal(d.getElementById('request-submit').disabled,false);assert.ok(d.querySelector('a[href="tel:+12393972048"]'));
-  for(const file of ['bay-one-widget.js','bay-one-config.js','bay-one-widget.css'])assert.equal(fs.existsSync(new URL(file,root)),false,file+' should not be published');
-  for(const file of fs.readdirSync(root).filter(name=>name.endsWith('.html'))){
-    const html=fs.readFileSync(new URL(file,root),'utf8');
-    assert.doesNotMatch(html,/bay-one-(?:widget|config)/,file+': loads the removed Bay One chat');
-    assert.doesNotMatch(html,/Bay One/i,file+': mentions the removed Bay One chat');
-  }
+  assert.equal(d.getElementById('request-submit').disabled,false);
+  assert.ok(d.querySelector('a[href="tel:+12393972048"]'));
+  const config=fs.readFileSync(new URL('bay-one-config.js',root),'utf8');
+  assert.match(config,/enabled:\s*true/);
+  assert.match(config,/endpoint:\s*'https:\/\/bay-one-website-assistant\.ubnvs1\.chatgpt\.site'/);
+  assert.doesNotMatch(config,/(?:token|password|secret)\s*:/i);
+  const tags=[...page.matchAll(/<script\b[^>]*src=['"]([^'"]+)['"][^>]*>/gi)].map(x=>x[1]);
+  const configIndex=tags.findIndex(src=>src.includes('bay-one-config.js'));
+  const widgetIndex=tags.findIndex(src=>src.includes('bay-one-widget.js'));
+  assert.ok(configIndex>=0&&widgetIndex>configIndex,'explicit config loads before the optional widget');
+  for(const file of ['bay-one-widget.js','bay-one-widget.css','assets/bay-one-character-states-20260908.jpg','assets/bay-one-wordmark-20260908.jpg','assets/bay-one-b1-logo-20260908.jpg'])
+    assert.equal(fs.existsSync(new URL(file,root)),true,file+' should be published');
 });
