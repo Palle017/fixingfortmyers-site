@@ -147,7 +147,7 @@ test('every public content page keeps its exact approved path for page-level rep
   // Keep the privacy exception explicit; every existing public content path is still checked.
   const privateHtml=fs.readFileSync(new URL('customer-conversation.html',root),'utf8');
   const privateDom=new JSDOM(privateHtml),privatePage=privateDom.window.document;
-  assert.deepEqual([...privatePage.querySelectorAll('script[src]')].map(node=>node.getAttribute('src')),['customer-conversation-config.js','customer-conversation.js']);
+  assert.deepEqual([...privatePage.querySelectorAll('script[src]')].map(node=>node.getAttribute('src').split(/[?#]/)[0]),['customer-conversation-config.js','customer-conversation.js']);
   assert.doesNotMatch(privateHtml,/site\.js|gtag|google-analytics|googletagmanager|analytics/i);
   for(const node of privatePage.querySelectorAll('[src],[href]'))assert.doesNotMatch(node.getAttribute('src')||node.getAttribute('href'),/^(?:https?:)?\/\//,'private page has no third-party assets or links');
   assert.equal(privatePage.querySelector('meta[name="referrer"]').content,'no-referrer');

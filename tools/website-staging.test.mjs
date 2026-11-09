@@ -59,6 +59,7 @@ test('every staged page has guard first, noindex, visible labeling, isolated res
     assert.equal(d.head.firstElementChild.httpEquiv,'Content-Security-Policy');
     assert.equal(d.head.firstElementChild.content,contentPolicy);
     assert.equal(d.querySelector('script').getAttribute('src'),'/__staging/guard.js');
+    assert.equal(d.querySelectorAll('script[src*="bay-one-config.js"],script[src*="bay-one-widget.js"]').length,0,name+': Bay One production transport is excluded from staging');
     assert.match(d.getElementById('staging-notice').textContent,/nothing is sent or booked/);
     assert.equal(d.querySelectorAll('script:not([src]),iframe,object,embed,base,link[rel="canonical"],meta[http-equiv="refresh"],meta[http-equiv="origin-trial"]').length,0,name);
     for (const node of d.querySelectorAll('*')) for (const attr of node.attributes) {
@@ -80,6 +81,8 @@ test('every staged page has guard first, noindex, visible labeling, isolated res
     dom.window.close();
   }
   for (const name of ['CNAME','sitemap.xml','googlefc91785ed4d05625.html','a0f8f7f6cad8445382fa07471976bd35.txt','_website-intake','tools','docs','deploy','node_modules','.git','.env']) assert.ok(!fs.existsSync(path.join(output,name)),name + ' excluded');
+  assert.equal(fs.existsSync(path.join(output,'bay-one-config.js')),false,'live chat config is excluded from staging');
+  assert.equal(fs.existsSync(path.join(output,'bay-one-widget.js')),false,'live chat transport is excluded from staging');
   assert.match(read('_headers'),/\/\*\n  X-Robots-Tag: noindex/);
   assert.match(read('_headers'),/connect-src 'none'/);
   assert.match(read('_headers'),/form-action 'none'/);
@@ -100,7 +103,7 @@ test('repair form submits to browser-memory mock and keeps generated handoff lin
   x.enter('request-vehicle','2018 Test Vehicle');
   x.submit('bookingForm'); await settle();
   assert.equal(x.d.getElementById('request-done').hidden,false);
-  assert.match(x.d.getElementById('request-done-heading').textContent,/Got it, Synthetic Staging Tester\. Tony calls back ASAP\./);
+  assert.equal(x.d.getElementById('request-done-heading').textContent,'Request received.');
   assert.equal(x.w.PT_STAGING.calls.filter(call => call.path === '/hooks/lead/webform').length,1);
   assert.equal(x.w.PT_ANALYTICS_STATUS.customMetrics,'disabled');
   assert.equal(x.w.PT_ANALYTICS_STATUS.ga4,'preview_disabled');

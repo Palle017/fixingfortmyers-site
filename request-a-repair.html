@@ -17,9 +17,9 @@
   <link rel="preload" href="/assets/fonts/barlow-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/bebas-neue-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <style id="self-hosted-fonts">@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/barlow-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/barlow-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/barlow-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Barlow';font-style:normal;font-weight:800;font-display:swap;src:url(/assets/fonts/barlow-800-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/bebas-neue-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Russo One';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/russo-one-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
-  <link rel="stylesheet" href="/bundle-core.min.css?v=c3dcf1f49fc0" data-css-sources="base.css style.css">
-<link rel="stylesheet" href="/bundle-page-2560e8eda477.min.css?v=9095d737fbf7" data-css-sources="site-updates.css home-clean.css repair-dialog.css">
-<link rel="stylesheet" href="/booking-preferences.css?v=20261016-pencil-24x7">
+  <link rel="stylesheet" href="/bundle-core.min.css?v=20261106-bayone-public" data-css-sources="base.css style.css">
+<link rel="stylesheet" href="/bundle-page-2560e8eda477.min.css?v=20261106-bayone-public" data-css-sources="site-updates.css home-clean.css repair-dialog.css">
+<link rel="stylesheet" href="/booking-preferences.css?v=20261106-bayone-public">
 
 
 
@@ -27,9 +27,9 @@
 
 
 
-  <link rel="stylesheet" href="/repair-form-calm.css?v=20261025-call-handoff">
-  <link rel="stylesheet" href="/request-form-v1.css?v=20261026-service-notes" media="all">
-<link rel="stylesheet" href="/layout-navigation.css?v=20261030-equal-bar">
+  <link rel="stylesheet" href="/repair-form-calm.css?v=20261106-bayone-public">
+  <link rel="stylesheet" href="/request-form-v1.css?v=20261106-bayone-public" media="all">
+<link rel="stylesheet" href="/layout-navigation.css?v=20261106-bayone-public">
 </head>
 <body class="home-clean" data-repair-popup>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -144,26 +144,26 @@
         <div class="request-page__actions"><a class="btn btn--primary request-page__open" href="#contact">Open repair form</a><a class="btn btn--outline" href="tel:+12393972048">Call (239) 397-2048</a></div>
 <div class="request-panel" id="contact" role="region" aria-labelledby="request-heading">
 
-        <h2 id="request-heading">Send a request. It takes 20 seconds. Tony calls back.</h2>
+        <h2 id="request-heading">Request a callback</h2>
         <form id="bookingForm" class="repair-request intake-v1" data-intake-version="1" method="post" action="/request-a-repair#contact">
           <div class="request-fields">
             <div><label for="request-name">Name <span>(required)</span></label>
-              <input id="request-name" name="name" type="text" autocomplete="name" maxlength="100" required aria-describedby="request-name-error">
+              <input id="request-name" name="name" type="text" enterkeyhint="next" autocomplete="name" maxlength="100" required aria-describedby="request-name-error">
               <p class="request-error" id="request-name-error" aria-live="polite" hidden></p></div>
             <div><label for="request-phone">Callback number <span>(required)</span></label>
-              <input id="request-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" pattern="(?:\+1)?[0-9]{10}" placeholder="2395550123 or +12395550123" required aria-describedby="request-phone-error">
+              <input id="request-phone" name="phone" type="tel" enterkeyhint="next" autocomplete="tel" inputmode="tel" maxlength="30" pattern="(?:\+1)?[0-9]{10}" placeholder="2395550123 or +12395550123" required aria-describedby="request-phone-error">
               <p class="request-error" id="request-phone-error" aria-live="polite" hidden></p></div>
             <div><label for="request-vehicle">Vehicle <span>(required)</span></label>
-              <input id="request-vehicle" name="vehicle" type="text" maxlength="160" placeholder="Year Make Model, e.g. 2014 Honda Civic" required aria-describedby="request-vehicle-error">
+              <input id="request-vehicle" name="vehicle" type="text" enterkeyhint="done" maxlength="160" placeholder="Year Make Model, e.g. 2014 Honda Civic" required aria-describedby="request-vehicle-error">
               <p class="request-error" id="request-vehicle-error" aria-live="polite" hidden></p></div>
-            <div><label for="request-notes">What's going on? (symptoms, codes, promo code like WALNUT10)</label>
-              <textarea id="request-notes" name="notes" rows="3" maxlength="2000" autocomplete="off" aria-describedby="request-notes-help"></textarea>
-              <p class="request-hint" id="request-notes-help">Optional. Already asked AI? Separate what the car does from the AI's unverified suggestion. Include what you've tried; leave out private chat links and account details.</p></div>
             <input id="request-service" name="service" type="hidden" value="">
           </div>
           <details id="request-options">
-            <summary>Add details (optional)</summary>
+            <summary>Add symptoms, VIN or callback time (optional)</summary>
             <div class="request-fields">
+            <div><label for="request-notes">What's going on? (symptoms, codes, promo code like WALNUT10)</label>
+              <textarea id="request-notes" name="notes" rows="3" maxlength="2000" autocomplete="off" aria-describedby="request-notes-help"></textarea>
+              <p class="request-hint" id="request-notes-help">Optional. Already asked AI? Separate what the car does from the AI's unverified suggestion. Include what you've tried; leave out private chat links and account details.</p></div>
               <div><label for="request-vin">VIN <span>(optional)</span></label>
                 <input id="request-vin" name="vin" type="text" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="request-vin-help">
                 <p class="request-hint" id="request-vin-help" aria-live="polite">Optional. Your VIN helps Tony price the exact part faster.</p></div>
@@ -182,7 +182,7 @@
           <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
           <p class="request-phone-footer">Prefer to call? <a href="tel:+12393972048">(239) 397-2048</a></p>
         </form>
-        <p class="request-hint" id="request-review-note">Fill out the form and Tony gets back to you faster.</p>
+        <p class="request-hint" id="request-review-note">Requests are accepted 24/7. Response timing depends on availability.</p>
         <p class="request-oil-offer" id="request-oil-offer" hidden>
           <strong>LIQUI MOLY prepay offer: 50% off oil-change labor.</strong>
           The discount applies when your shop-approved correct-spec LIQUI MOLY oil is purchased and paid for in advance.
@@ -262,8 +262,8 @@
     </div>
   <p class="hours-disclaimer" id="hours-disclaimer"><strong>Repair requests 24/7</strong><br>Repair requests and appointment requests are taken 24/7, including nights, weekends and holidays, by form, call or text. Shop repairs at Tony's workshop, mobile repairs from his equipped service van, and pickup are all by appointment; requested times are penciled in until Tony confirms by phone. Calls are answered by an automated intake that takes your details for Tony, who calls you back. Texts go to the shop. Tony reviews your vehicle, symptoms and location before confirming the work, repair location and timing. The temporary workshop and the service van cannot accommodate every job. An immediate reply or visit is not guaranteed. We receive a lot of spam. Name, callback number, repair details and a good callback time help us prepare and prioritize callbacks. Vehicle details help, but send what you know; partial information is welcome.</p>
 </footer>
-  <script src="/repair-dialog.js?v=20261011-popup" defer></script>
-  <script src="/contact-config.js?v=20261026-automatic-capture" defer></script><script src="/request-form-v1.js?v=20261030-phone-formats" defer></script><script src="/site.js?v=20261025-intake-v1" defer></script>
-<script src="/layout-navigation.js" defer></script>
+  <script src="/repair-dialog.js?v=20261106-service-context" defer></script>
+  <script src="/contact-config.js?v=20261106-bayone-public" defer></script><script src="/request-form-v1.js?v=20261106-request-recovery" defer></script><script src="/site.js?v=20261106-service-context" defer></script>
+<script src="/layout-navigation.js?v=20261106-bayone-public" defer></script>
 </body>
 </html>
