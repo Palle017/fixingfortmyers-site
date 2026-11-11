@@ -47,3 +47,7 @@
  .guides-page .guide-actions .btn{width:auto;min-height:48px}
  .mobile-contact-bar a{font-size:14px}
 }
+.service-hero__actions .home-start__schedule-link{display:inline-flex;align-items:center;min-height:48px;color:#a6dfff;font-size:15px;font-weight:600;text-underline-offset:4px}
+@media(max-width:540px){
+ .service-hero__actions .home-start__schedule-link{justify-content:center;min-height:48px;font-size:15px}
+}

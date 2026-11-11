@@ -23,7 +23,7 @@ export function checkCleanPage(name,html){
       assert.equal(hero.querySelectorAll('.service-proof-list li').length,processPoints,`${name}: concise service process points`);
       assert.ok(text(hero.querySelector('.service-hero__desc')),`${name}: keep a useful service description`);
       const actions=[...hero.querySelectorAll('.service-hero__actions a')];
-      const textBesideCall=name==='walnut-blasting-fort-myers.html'||name==='ac-repair-fort-myers.html'?'Text Tony':name==='no-start-diagnosis-fort-myers.html'?'Text the shop':'';
+      const textBesideCall=name==='walnut-blasting-fort-myers.html'||name==='ac-repair-fort-myers.html'||name==='check-engine-light-diagnosis-fort-myers.html'?'Text Tony':name==='no-start-diagnosis-fort-myers.html'?'Text the shop':'';
       assert.equal(actions.length,textBesideCall?3:2,`${name}: ${textBesideCall?'request, call, and text':'two service actions'}`);
       const requestLabel=name==='oil-change-fort-myers.html'?'Request an oil change':'Request Repair';
       assert.equal(text(actions[0]),requestLabel,`${name}: service request is the first action`);
@@ -32,7 +32,7 @@ export function checkCleanPage(name,html){
       if(textBesideCall){
         assert.equal(text(actions[2]),textBesideCall,`${name}: text action beside call`);
         assert.equal(actions[2].getAttribute('href'),'sms:+12393972048',`${name}: published text number`);
-        assert.match(actions[2].className,/btn--outline/,`${name}: text action uses the outline button`);
+        assert.match(actions[2].className,name==='check-engine-light-diagnosis-fort-myers.html'?/home-start__schedule-link/:/btn--outline/,`${name}: text action uses the homepage text link or the outline button`);
       }
     }
     if(hero&&photoGalleryPage){
@@ -68,7 +68,7 @@ export function checkCleanPage(name,html){
         assert.match(labels[1],/^Call(?: [\u2014-] AI intake| \(239\) 397-2048)?$/,`${name}: consistent mobile call`);
         assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
         const requestHref=actions[0].getAttribute('href');
-        const dedicatedRequest={'diesel-repair-fort-myers.html':'diesel','ac-repair-fort-myers.html':'ac','transmission-repair-fort-myers.html':'transmission','no-start-diagnosis-fort-myers.html':'no-start','engine-repair-fort-myers.html':'engine'};
+        const dedicatedRequest={'diesel-repair-fort-myers.html':'diesel','ac-repair-fort-myers.html':'ac','transmission-repair-fort-myers.html':'transmission','no-start-diagnosis-fort-myers.html':'no-start','engine-repair-fort-myers.html':'engine','check-engine-light-diagnosis-fort-myers.html':'diagnostics'};
         if(dedicatedRequest[name])assert.equal(requestHref,`/request-a-repair?service=${dedicatedRequest[name]}`,`${name}: mobile request opens the repair form`);
         else assert.ok(requestHref.endsWith('#contact'),`${name}: request opens the form`);
       }
