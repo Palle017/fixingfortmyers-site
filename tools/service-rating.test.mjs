@@ -36,6 +36,37 @@ test('walnut blasting: hero offers Text Tony and the Google rating line', () => 
   assert.ok(hero.querySelector('.service-hero__actions').compareDocumentPosition(rating) & 4, 'rating line sits under the hero buttons');
 });
 
+test('check engine light: repair links open the diagnostics form and Text Tony follows Call', () => {
+  const html = read('check-engine-light-diagnosis-fort-myers.html');
+  const doc = new JSDOM(html).window.document;
+  assert.equal(doc.title, 'Check Engine Light Diagnosis in Fort Myers | Perfect Timing');
+  assert.equal(doc.querySelector('meta[name="description"]')?.getAttribute('content'), 'Check engine light diagnosis in Fort Myers: codes, live data and targeted tests to find the failed part, not just the code. Call or text (239) 397-2048.');
+  assert.equal(doc.querySelector('meta[property="og:title"]')?.getAttribute('content'), 'Check Engine Light Diagnosis in Fort Myers | Perfect Timing');
+  assert.equal(doc.querySelector('meta[property="og:description"]')?.getAttribute('content'), 'Check engine light diagnosis in Fort Myers: codes, live data and targeted tests to find the failed part, not just the code. Call or text (239) 397-2048.');
+  assert.equal(doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content'), 'Check Engine Light Diagnosis in Fort Myers | Perfect Timing');
+  assert.equal(doc.querySelector('meta[name="twitter:description"]')?.getAttribute('content'), 'Check engine light diagnosis in Fort Myers: codes, live data and targeted tests to find the failed part, not just the code. Call or text (239) 397-2048.');
+  assert.doesNotMatch(html, /streetAddress|13037|Second St|Saddleback/);
+  assert.doesNotMatch(html, /penguin-ac/);
+  const repairLinks = [...doc.querySelectorAll('a')].filter(a => /^Request(?: a)? [Rr]epair$/.test(a.textContent.replace(/\s+/g, ' ').trim()));
+  assert.equal(repairLinks.length, 6, 'nav, mobile menu, hero, mid-page CTA, footer, and mobile bar');
+  for (const link of repairLinks) assert.equal(link.getAttribute('href'), '/request-a-repair?service=diagnostics');
+  assert.doesNotMatch(html, /href="\/\?service=diagnostics#contact"/);
+  const actions = [...doc.querySelector('.service-hero__actions').querySelectorAll('a')];
+  const call = actions.find(a => a.getAttribute('href') === 'tel:+12393972048');
+  const text = actions[actions.indexOf(call) + 1];
+  assert.equal(call?.textContent.trim(), 'Call the shop (239) 397-2048');
+  assert.equal(call?.className, 'btn btn--outline');
+  assert.equal(text?.textContent.trim(), 'Text Tony');
+  assert.equal(text?.getAttribute('href'), 'sms:+12393972048');
+  const homeText = [...new JSDOM(read('index.html')).window.document.querySelectorAll('.home-start__actions a')].find(a => a.textContent.trim() === 'Text Tony');
+  assert.equal(text?.className, homeText?.className, 'Text Tony uses the homepage hero class');
+  assert.equal(homeText?.className, 'home-start__schedule-link');
+  const bundleHref = doc.querySelector('link[data-css-sources*="clean-layout.css"]')?.getAttribute('href').split('?')[0].replace(/^\//, '');
+  const textLinkRule = /\.service-hero__actions \.home-start__schedule-link\{[^}]*color:#a6dfff[^}]*font-weight:600/;
+  assert.match(read('clean-layout.css'), textLinkRule);
+  assert.match(read(bundleHref), textLinkRule);
+});
+
 test('engine repair: Request Repair links open the dedicated form for the engine service', () => {
   const html = read('engine-repair-fort-myers.html');
   const doc = new JSDOM(html).window.document;
