@@ -64,7 +64,8 @@ test('every request-a-repair link on public pages points at the real form page',
   let links = 0;
   for (const f of files) for (const m of read(f).matchAll(/href="([^"]*request-a-repair[^"]*)"/g)) {
     links++;
-    assert.match(m[1], /^(https:\/\/fixingfortmyers\.com)?\/?request-a-repair(\.html)?(\?service=[a-z-]+)?(#[a-z-]+)?$/, `${f}: ${m[1]}`);
+    // Known service preselect, plus the LIQUI MOLY labor-offer query the request form reads.
+    assert.match(m[1], /^(https:\/\/fixingfortmyers\.com)?\/?request-a-repair(\.html)?(\?service=[a-z-]+(?:&(?:amp;)?offer=liquimoly-labor50)?)?(#[a-z-]+)?$/, `${f}: ${m[1]}`);
   }
   assert.ok(links > 50, `expected many request links, found ${links}`);
 });
