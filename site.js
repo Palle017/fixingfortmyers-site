@@ -28,12 +28,13 @@
   // Keep this list aligned with actual public HTML pages when adding a page.
   const analyticsPages = new Set([
     '/', '/about-perfect-timing', '/ac-repair-fort-myers', '/alternator-starter-repair-fort-myers',
-    '/auto-diagnostics-fort-myers', '/auto-electrical-repair-fort-myers', '/auto-repair-cape-coral',
+    '/auto-diagnostics-fort-myers', '/auto-electrical-repair-fort-myers', '/auto-repair-alva-buckingham',
+    '/auto-repair-cape-coral', '/auto-repair-estero-san-carlos-park',
     '/auto-repair-fort-myers', '/auto-repair-lehigh-acres', '/auto-repair-north-fort-myers',
     '/battery-replacement-fort-myers', '/blog', '/blog/brake-job-cost-fort-myers', '/blue-smoke-burning-oil-fort-myers', '/brake-repair-fort-myers',
     '/car-audio-installation-fort-myers', '/careers', '/case-studies', '/check-engine-light-diagnosis-fort-myers',
     '/cooling-system-repair-fort-myers', '/data-privacy-policy', '/detailing-fort-myers', '/diesel-repair-fort-myers',
-    '/engine-knocking-noise-fort-myers', '/engine-rebuild-vs-replacement-fort-myers', '/engine-repair-fort-myers',
+    '/engine-knocking-noise-fort-myers', '/engine-rebuild-vs-replacement-fort-myers', '/engine-repair-cape-coral', '/engine-repair-fort-myers',
     '/exhaust-emissions-repair-fort-myers', '/fort-myers-mechanic', '/fuel-system-repair-fort-myers',
     '/head-gasket-overheating-damage-fort-myers', '/hot-rod-restoration-fort-myers', '/module-programming-fort-myers',
     '/no-start-diagnosis-fort-myers', '/oil-change-fort-myers', '/paint-correction-detailing-fort-myers',
@@ -42,7 +43,7 @@
     '/repair-guide-ac-warm-at-idle', '/repair-guide-battery-keeps-dying', '/repair-guide-car-overheating',
     '/repair-guide-car-wont-start', '/repair-guide-ecu-tcm-programming', '/repair-guide-flashing-check-engine-light',
     '/repair-guides', '/request-a-repair', '/request-received', '/sms-terms',
-    '/suspension-steering-repair-fort-myers', '/transmission-repair-fort-myers',
+    '/suspension-steering-repair-fort-myers', '/transmission-repair-cape-coral', '/transmission-repair-fort-myers',
     '/transmission-slipping-fort-myers', '/walnut-blasting-fort-myers', '/workshop'
   ]);
   const normalizedPath = location.pathname.replace(/\/$/, '').replace(/\.html$/, '') || '/';
@@ -160,8 +161,8 @@
   const draftChannel = draftChannels.has(leadChannel) ? leadChannel : '';
   // Service attribution is a fixed category, never arbitrary query text.
   const services = Object.freeze({diagnostics:'Diagnosis / not sure yet',injector:'Injector cleaning',ac:'A/C repair',brakes:'Brakes',electrical:'Electrical / no-start','no-start':'Electrical / no-start',battery:'Electrical / no-start',cooling:'Engine',engine:'Engine',transmission:'Transmission',programming:'Module programming',diesel:'Diesel',maintenance:'Oil change / maintenance',walnut:'Walnut blasting / carbon cleaning',detailing:'Detailing / paint correction'});
-  const servicePages = {'auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'transmission','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
-  Object.assign(servicePages,{'repair-guide-ecu-tcm-programming':'programming','cooling-system-repair-fort-myers':'cooling','repair-guide-car-overheating':'cooling','repair-guide-flashing-check-engine-light':'diagnostics','walnut-blasting-fort-myers':'walnut','paint-correction-detailing-fort-myers':'detailing','detailing-fort-myers':'detailing','engine-rebuild-vs-replacement-fort-myers':'engine','engine-knocking-noise-fort-myers':'engine','transmission-repair-fort-myers':'transmission','transmission-slipping-fort-myers':'transmission','alternator-starter-repair-fort-myers':'electrical','blue-smoke-burning-oil-fort-myers':'engine','head-gasket-overheating-damage-fort-myers':'cooling','fuel-system-repair-fort-myers':'diagnostics','pre-purchase-inspection-fort-myers':'diagnostics'});
+  const servicePages = {'auto-repair-alva-buckingham':'diagnostics','auto-repair-estero-san-carlos-park':'diagnostics','auto-diagnostics-fort-myers':'diagnostics','check-engine-light-diagnosis-fort-myers':'diagnostics','ac-repair-fort-myers':'ac','brake-repair-fort-myers':'brakes','auto-electrical-repair-fort-myers':'electrical','no-start-diagnosis-fort-myers':'no-start','battery-replacement-fort-myers':'battery','engine-repair-cape-coral':'engine','engine-repair-fort-myers':'engine','transmission-repair-fort-myers':'transmission','module-programming-fort-myers':'programming','diesel-repair-fort-myers':'diesel','oil-change-fort-myers':'maintenance','repair-guide-car-wont-start':'no-start','repair-guide-ac-warm-at-idle':'ac','repair-guide-battery-keeps-dying':'battery'};
+  Object.assign(servicePages,{'repair-guide-ecu-tcm-programming':'programming','cooling-system-repair-fort-myers':'cooling','repair-guide-car-overheating':'cooling','repair-guide-flashing-check-engine-light':'diagnostics','walnut-blasting-fort-myers':'walnut','paint-correction-detailing-fort-myers':'detailing','detailing-fort-myers':'detailing','engine-rebuild-vs-replacement-fort-myers':'engine','engine-knocking-noise-fort-myers':'engine','transmission-repair-cape-coral':'transmission','transmission-repair-fort-myers':'transmission','transmission-slipping-fort-myers':'transmission','alternator-starter-repair-fort-myers':'electrical','blue-smoke-burning-oil-fort-myers':'engine','head-gasket-overheating-damage-fort-myers':'cooling','fuel-system-repair-fort-myers':'diagnostics','pre-purchase-inspection-fort-myers':'diagnostics'});
   const validService = key => typeof key === 'string' && Object.hasOwn(services,key);
   const requestedService = new URLSearchParams(location.search).get('service');
   const pageService = servicePages[location.pathname.replace(/^\//,'').replace(/\.html$/,'')];
