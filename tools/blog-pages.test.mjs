@@ -164,7 +164,7 @@ test('every blog page closes with Call, Text, and Request a repair', () => {
     const actions = [...document.querySelectorAll('.blog-cta .guide-actions a')];
     assert.deepEqual(actions.map(anchor => [anchor.textContent.trim(), anchor.getAttribute('href'), anchor.className]), [
       ['Call', 'tel:+12393972048', 'btn btn--primary'],
-      ['Text', 'sms:+12393972048', 'btn btn--outline'],
+      ['Text', 'sms:+12393972048?&body=Hi%20Tony%2C%20I%27d%20like%20help%20with%20my%20vehicle%3A%20', 'btn btn--outline'],
       ['Request a repair', '/request-a-repair', 'btn btn--outline'],
     ], file);
     assert.match(read(`blog/${file}`), /<script src="\/site\.js/);

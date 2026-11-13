@@ -25,7 +25,7 @@ test('walnut blasting: hero offers Text Tony and the Google rating line', () => 
   const hero = doc.querySelector('.service-hero');
   const actions = [...hero.querySelectorAll('.service-hero__actions a')];
   const call = actions.find(a => a.getAttribute('href') === 'tel:+12393972048');
-  const text = actions.find(a => a.getAttribute('href') === 'sms:+12393972048');
+  const text = actions.find(a => a.getAttribute('href')?.startsWith('sms:+12393972048'));
   assert.equal(call?.textContent.trim(), 'Call (239) 397-2048');
   assert.equal(text?.textContent.trim(), 'Text Tony');
   assert.match(text?.className || '', /btn--outline/);
@@ -57,7 +57,7 @@ test('check engine light: repair links open the diagnostics form and Text Tony f
   assert.equal(call?.textContent.trim(), 'Call the shop (239) 397-2048');
   assert.equal(call?.className, 'btn btn--outline');
   assert.equal(text?.textContent.trim(), 'Text Tony');
-  assert.equal(text?.getAttribute('href'), 'sms:+12393972048');
+  assert.equal(text?.getAttribute('href'), 'sms:+12393972048?&body=Hi%20Tony%2C%20I%27d%20like%20help%20with%20my%20vehicle%3A%20');
   const homeText = [...new JSDOM(read('index.html')).window.document.querySelectorAll('.home-start__actions a')].find(a => a.textContent.trim() === 'Text Tony');
   assert.equal(text?.className, homeText?.className, 'Text Tony uses the homepage hero class');
   assert.equal(homeText?.className, 'home-start__schedule-link');
@@ -88,7 +88,7 @@ test('no-start diagnosis: repair links keep the service, the hero note is plain,
   assert.doesNotMatch(hero.textContent, /AI assistant/);
   const actions = [...hero.querySelectorAll('.service-hero__actions a')];
   const call = actions.find(a => a.getAttribute('href') === 'tel:+12393972048');
-  const text = actions.find(a => a.getAttribute('href') === 'sms:+12393972048');
+  const text = actions.find(a => a.getAttribute('href')?.startsWith('sms:+12393972048'));
   assert.equal(call?.textContent.trim(), 'Call the shop (239) 397-2048');
   assert.equal(text?.textContent.trim(), 'Text the shop');
   assert.equal(text?.className, 'btn btn--outline');
@@ -99,7 +99,7 @@ test('walnut blasting: inquiry block offers Google review proof and a direct tex
   const doc = new JSDOM(read('walnut-blasting-fort-myers.html')).window.document;
   const block = [...doc.querySelectorAll('.service-panel')].find(el => el.querySelector('h2')?.textContent?.includes('Tell us about your engine'));
   assert.ok(block, 'walnut inquiry block exists');
-  assert.equal(block.querySelector('a[href^="sms:"]')?.getAttribute('href'), 'sms:+12393972048');
+  assert.equal(block.querySelector('a[href^="sms:"]')?.getAttribute('href'), 'sms:+12393972048?&body=Hi%20Tony%2C%20I%27d%20like%20help%20with%20my%20vehicle%3A%20');
   assert.match(block.querySelector('a[href^="sms:"]')?.textContent, /Text Tony/);
   const rating = block.querySelector('.service-rating a[href^="https://www.google.com/maps/place/"]');
   assert.equal(rating?.getAttribute('href'), googleReviews);

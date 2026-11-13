@@ -31,7 +31,7 @@ export function checkCleanPage(name,html){
       assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: published call number`);
       if(textBesideCall){
         assert.equal(text(actions[2]),textBesideCall,`${name}: text action beside call`);
-        assert.equal(actions[2].getAttribute('href'),'sms:+12393972048',`${name}: published text number`);
+        assert.equal(actions[2].getAttribute('href'),'sms:+12393972048?&body=Hi%20Tony%2C%20I%27d%20like%20help%20with%20my%20vehicle%3A%20',`${name}: published text number`);
         assert.match(actions[2].className,name==='check-engine-light-diagnosis-fort-myers.html'?/home-start__schedule-link/:/btn--outline/,`${name}: text action uses the homepage text link or the outline button`);
       }
     }
@@ -46,7 +46,7 @@ export function checkCleanPage(name,html){
       const actions=[...hero.querySelectorAll('.service-hero__actions a')];
       assert.ok(actions.length>=2,`${name}: Call/Text CTAs present`);
       assert.ok(actions.some(a=>a.getAttribute('href')==='tel:+12393972048'),`${name}: published call number`);
-      if(name==='workshop.html')assert.ok(actions.some(a=>a.getAttribute('href')==='sms:+12393972048'),`${name}: published text number`);
+      if(name==='workshop.html')assert.ok(actions.some(a=>a.getAttribute('href')==='sms:+12393972048?&body=Hi%20Tony%2C%20I%27d%20like%20help%20with%20my%20vehicle%3A%20'),`${name}: published text number`);
       else assert.ok(actions.some(a=>a.getAttribute('href').endsWith('#contact')),`${name}: photo-based service request`);
     }
     const bar=d.querySelector('.mobile-contact-bar');
@@ -58,11 +58,11 @@ export function checkCleanPage(name,html){
         assert.deepEqual(labels,['Request a repair','Call'],`${name}: intake is the first mobile action`);
         assert.equal(actions[0].getAttribute('href'),'#contact',`${name}: mobile intake opens the form`);
         assert.equal(actions[1].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
-        assert.ok(d.querySelector('.home-start__intro a[href="sms:+12393972048"]'),`${name}: direct text-app option remains in the introduction`);
+        assert.ok(d.querySelector('.home-start__intro a[href="sms:+12393972048?&body=Hi%20Tony%2C%20I%27d%20like%20help%20with%20my%20vehicle%3A%20"]'),`${name}: direct text-app option remains in the introduction`);
       } else if(name==='workshop.html'){
         assert.deepEqual(labels,['Call','Text'],`${name}: Call/Text sticky for engine-transmission positioning`);
         assert.equal(actions[0].getAttribute('href'),'tel:+12393972048',`${name}: mobile call number`);
-        assert.equal(actions[1].getAttribute('href'),'sms:+12393972048',`${name}: mobile text number`);
+        assert.equal(actions[1].getAttribute('href'),'sms:+12393972048?&body=Hi%20Tony%2C%20I%27d%20like%20help%20with%20my%20vehicle%3A%20',`${name}: mobile text number`);
       } else {
         assert.equal(labels[0],'Request a repair',`${name}: consistent mobile request`);
         assert.match(labels[1],/^Call(?: [\u2014-] AI intake| \(239\) 397-2048)?$/,`${name}: consistent mobile call`);
