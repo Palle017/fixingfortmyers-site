@@ -106,7 +106,7 @@ for (const page of pages) {
     const actions = [...card.querySelectorAll('.service-ad__actions a, .service-ad__actions button')];
     // Diesel card also offers Call and Text Tony beside the request button (approved by Raj 2026-10-30).
     const contactActions = page.service === 'diesel'
-      ? [['btn btn--outline', 'tel:+12393972048', 'Call (239) 397-2048'], ['btn btn--outline', 'sms:+12393972048', 'Text Tony']]
+      ? [['btn btn--outline', 'tel:+12393972048', 'Call (239) 397-2048'], ['btn btn--outline', 'sms:+12393972048?&body=Hi%20Tony%2C%20I%27d%20like%20help%20with%20my%20vehicle%3A%20', 'Text Tony']]
       : [];
     assert.equal(actions.length, 1 + contactActions.length);
     assert.equal(actions[0].className, 'btn btn--primary');

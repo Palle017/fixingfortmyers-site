@@ -38,7 +38,7 @@
   };
   const rules = {
     'request-name': value => value.trim() ? '' : 'Enter your name.',
-    'request-phone': value => /^(?:\+1)?[0-9]{10}$/.test(normalizePhone(value)) ? '' : 'Enter 10 digits, or +1 followed by 10 digits.',
+    'request-phone': value => /^(?:\+1)?[0-9]{10}$/.test(normalizePhone(value)) ? '' : 'Enter 10 digits, e.g. (239) 555-0123, or +1 followed by 10 digits.',
     'request-vehicle': value => value.trim() ? '' : 'Enter your vehicle’s year, make and model.'
   };
   const validate = id => {
