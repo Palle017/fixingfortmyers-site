@@ -13,7 +13,7 @@ test('workshop.html: request links open the dedicated repair form on diagnostics
 test('cooling-system-repair-fort-myers.html: request links pre-select the cooling service', () => {
   const h = read('cooling-system-repair-fort-myers.html');
   assert.doesNotMatch(h, /href="\/#contact"/);
-  assert.ok((h.match(/href="\/\?service=cooling#contact"/g) || []).length >= 6);
+  assert.ok((h.match(/href="\/request-a-repair\?service=cooling"/g) || []).length >= 6);
 });
 
 test('walnut-blasting-fort-myers.html: all 7 repair CTAs open a preselected dedicated form', () => {
