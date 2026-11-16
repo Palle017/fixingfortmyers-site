@@ -44,11 +44,10 @@ test('the business entity is identical on every page and keeps the street addres
       seen.add(strip(n));
       assert.equal(n.telephone, '+12393972048', `${f} phone`);
       assert.ok(n.address?.addressLocality && n.areaServed?.length && n.url && n.name, `${f} incomplete business node`);
-      // Owner correction 2026-10-19 (supersedes #34/#88): Perfect Timing is a shop that also does mobile repair
-      // from an equipped van, plus pickup. Repair and penciled-in appointment requests are accepted 24/7
-      // (docs/BOOKING-CONTRACT-V1.md, docs/google-business-profile-plan.md "Open 24 hours").
-      assert.deepEqual(n.openingHoursSpecification, [{ '@type': 'OpeningHoursSpecification',
-        dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], opens: '00:00', closes: '23:59' }], `${f} 24/7 request hours`);
+      // Owner rule (Tony): no 24/7 in Google-facing text, and JSON-LD hours of 00:00-23:59 every day say 24/7.
+      // Requests are still taken 24/7 on the visible page; the schema simply carries no opening hours.
+      assert.equal(n.openingHoursSpecification, undefined, `${f} JSON-LD must not encode 24/7 opening hours`);
+      assert.equal(n.openingHours, undefined, `${f} JSON-LD must not encode 24/7 opening hours`);
       // Owner snippet rules (2026-10-30): the business description can be quoted in search and AI answers,
       // so it names services and cities, never the address/area, and none of the banned snippet words.
       assert.doesNotMatch(n.description, /\bshop\b|mobile|pickup|by appointment|24\/7|Bayshore|Saddleback|13037|Second St/i, `${f} banned snippet wording`);
@@ -153,6 +152,23 @@ test('sitemap pages keep banned words out of Google-facing titles, descriptions,
     for (const value of ld(html).flatMap(jsonLdStrings)) {
       const scanned = value.replace(BBB_PROFILE, '');
       assert.doesNotMatch(scanned, BANNED_SNIPPET, `${f} JSON-LD: ${value}`);
+    }
+  }
+});
+
+test('no page (indexable or not) carries banned words or 24/7 hours in Google-facing tags or JSON-LD', () => {
+  const ALWAYS_OPEN = /00:00\s*-\s*(23:59|24:00)|"opens":\s*"00:00"|"closes":\s*"(23:59|24:00)"/;
+  for (const f of pages) {
+    const html = read(f);
+    const title = decodeEntities((html.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '');
+    const fields = [['title', title], ['description', metaContent(html, 'name', 'description')],
+      ...['og:title', 'og:description', 'og:site_name', 'og:image:alt'].map(k => [k, metaContent(html, 'property', k)]),
+      ...['twitter:title', 'twitter:description', 'twitter:image:alt'].map(k => [k, metaContent(html, 'name', k)])];
+    for (const [label, text] of fields) if (text != null) assert.doesNotMatch(text, BANNED_SNIPPET, `${f} ${label}: ${text}`);
+    for (const m of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+      assert.doesNotMatch(m[1], /"openingHours(Specification)?"/, `${f}: JSON-LD opening hours`);
+      assert.doesNotMatch(m[1], ALWAYS_OPEN, `${f}: JSON-LD encodes 24/7 hours`);
+      for (const value of jsonLdStrings(JSON.parse(m[1]))) assert.doesNotMatch(value.replace(BBB_PROFILE, ''), BANNED_SNIPPET, `${f} JSON-LD: ${value}`);
     }
   }
 });
