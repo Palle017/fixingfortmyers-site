@@ -18,7 +18,7 @@ const nodes = j => (j['@graph'] || [j]);
 const home = nodes(blocks(fs.readFileSync('index.html', 'utf8'))[0]).find(n => n['@type'] === 'AutoRepair');
 const { hasOfferCatalog, ...homeBiz } = home;
 const ORDER = ['@type', '@id', 'name', 'legalName', 'alternateName', 'description', 'url', 'logo', 'image',
-  'telephone', 'email', 'contactPoint', 'priceRange', 'address', 'hasMap', 'openingHoursSpecification', 'areaServed', 'sameAs'];
+  'telephone', 'email', 'contactPoint', 'priceRange', 'address', 'hasMap', 'areaServed', 'sameAs'];
 const mapUrl = homeBiz.sameAs.find(u => u.startsWith('https://www.google.com/maps/'));
 const business = Object.fromEntries(ORDER.map(k => [k, ({
   ...homeBiz,
