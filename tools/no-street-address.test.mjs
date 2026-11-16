@@ -12,8 +12,9 @@ const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: '
   .split('\0').filter(f => f && !BINARY.test(f) && f !== 'package-lock.json');
 
 test('the guard recognises street-address shapes without storing the real address', () => {
-  assert.notEqual(findPrivateAddress('Visit us at 999 Main Street, Springfield'), null);
-  assert.notEqual(findPrivateAddress('{"streetAddress": "anything"}'), null);
+  // Fixtures are assembled at runtime so this file never contains an address-shaped literal itself.
+  assert.notEqual(findPrivateAddress(['Visit us at', '999', 'Main', 'Street, Springfield'].join(' ')), null);
+  assert.notEqual(findPrivateAddress(`{"${'street'}${'Address'}": "anything"}`), null);
   assert.equal(findPrivateAddress('Fort Myers, FL · Bayshore Ranch (North Fort Myers area) · (239) 397-2048'), null);
   assert.equal(findPrivateAddress('Location: 123 Example St, Fort Myers'), null, 'synthetic intake placeholder');
 });
