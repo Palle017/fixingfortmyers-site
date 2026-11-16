@@ -16,3 +16,4 @@ exclude:
   - GEMINI.md
   - CHANGELOG.md
   - .staging-dist
+  - worker

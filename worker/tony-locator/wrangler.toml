@@ -1,0 +1,9 @@
+name = "fixingfortmyers-tony-locator"
+main = "src/index.js"
+compatibility_date = "2026-11-16"
+workers_dev = true
+
+# KV namespace created for this Worker only. Do not reuse namespaces from other projects.
+[[kv_namespaces]]
+binding = "LOCATION"
+id = "f4f37a2f526b448eada1511a9ba852b8"
