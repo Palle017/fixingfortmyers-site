@@ -6,7 +6,7 @@ body.layout-preview{--layout-blue:#72ceff;--layout-line:#263b4d}
 .layout-hero{position:relative;isolation:isolate;min-height:550px;display:flex;align-items:center;background:#0b1119;overflow:hidden}
 .layout-hero>.home-start__intro{position:relative;z-index:2;max-width:1240px;width:100%;margin:auto;padding:42px 48px 38px}
 .layout-hero .home-start__intro>*{max-width:540px}
-.layout-hero .home-start__intro h1{font-size:clamp(48px,4.5vw,64px);line-height:1.01;margin:12px 0 18px;max-width:590px;text-wrap:initial}
+.layout-hero .home-start__intro h1{font-size:clamp(40px,3.9vw,56px);line-height:1.01;margin:12px 0 18px;max-width:590px;text-wrap:initial}
 .layout-hero .home-start__lead{max-width:500px;font-size:18px;line-height:1.6}
 .layout-hero .home-start__rating{margin-top:20px}
 .layout-hero .home-start__actions{margin:22px 0 12px}
@@ -171,3 +171,7 @@ body.layout-preview{--layout-blue:#72ceff;--layout-line:#263b4d}
  .layout-hero>.home-start__photo--timing:after{background:linear-gradient(180deg,#0b1119f5 0%,#0b1119ed 40%,#0b1119a6 75%,#0b111973 100%)}
 }
 @media(prefers-reduced-motion:reduce){.layout-symptom-options>a,.layout-more-services>summary>span,.layout-campaign-details>summary>span{transition:none}}
+
+/* Keyword H1 with the Perfect Timing slogan as a visible tagline underneath. */
+.layout-hero .home-start__tagline{margin:-6px 0 14px;color:var(--layout-blue,#72ceff);font-size:20px;font-weight:700;line-height:1.35}
+@media (max-width:760px){.layout-hero .home-start__intro h1{font-size:38px}.layout-hero .home-start__tagline{font-size:18px}}
