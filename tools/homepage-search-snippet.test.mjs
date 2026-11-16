@@ -26,6 +26,10 @@ test('homepage search snippet leads with fast replies, services, 4.8 rating, and
   assert.equal(document.querySelector('title').textContent, 'Auto Repair Fort Myers, FL | Engine, Transmission & Diesel');
   assert.equal(
     document.querySelector('meta[property="og:title"]').getAttribute('content'),
-    'Perfect Timing Auto Repair | Car trouble has terrible timing. Luckily, you’ve got Perfect Timing.'
+    'Auto Repair Fort Myers, FL | Engine, Transmission & Diesel'
+  );
+  assert.equal(
+    document.querySelector('meta[name="twitter:title"]').getAttribute('content'),
+    'Auto Repair Fort Myers, FL | Engine, Transmission & Diesel'
   );
 });

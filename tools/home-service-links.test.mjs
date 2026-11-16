@@ -19,7 +19,7 @@ const links = [
 
 test('homepage keeps all seven service links after its primary repair request', () => {
   const html = read('index.html');
-  assert.match(html, /<h1 id="home-title">Car trouble has terrible timing\. <br><span>Luckily, you’ve got Perfect Timing\.<\/span><\/h1>/);
+  assert.match(html, /<h1 id="home-title">Engine, Transmission &amp; Diesel Repair in Fort Myers<\/h1>\s*<p class="home-start__tagline">Car trouble has terrible timing\. Luckily, you’ve got Perfect Timing\.<\/p>/);
   const document = new JSDOM(html).window.document;
   assert.equal(document.title, 'Auto Repair Fort Myers, FL | Engine, Transmission & Diesel');
   const heading = document.getElementById('home-title');

@@ -48,7 +48,7 @@ test('detailing is linked from the shared desktop/mobile navigation, listing, si
   assert.ok([...document.querySelectorAll('.service-directory a')].some(anchor => anchor.getAttribute('href') === '/detailing-fort-myers'));
   assert.ok([...document.querySelectorAll('footer a')].some(anchor => anchor.getAttribute('href') === '/detailing-fort-myers'));
   assert.match(home, /"url": "https:\/\/fixingfortmyers\.com\/detailing-fort-myers"/);
-  assert.match(home, /<h1 id="home-title">Car trouble has terrible timing\. <br><span>Luckily, you’ve got Perfect Timing\.<\/span><\/h1>/);
+  assert.match(home, /<h1 id="home-title">Engine, Transmission &amp; Diesel Repair in Fort Myers<\/h1>\s*<p class="home-start__tagline">Car trouble has terrible timing\. Luckily, you’ve got Perfect Timing\.<\/p>/);
   assert.match(read('sitemap.xml'), /<loc>https:\/\/fixingfortmyers\.com\/detailing-fort-myers<\/loc>/);
   assert.match(read('parts.html'), /href="\/detailing-fort-myers">Detailing</);
   assert.match(read('request-a-repair.html'), /href="\/detailing-fort-myers">Detailing</);
