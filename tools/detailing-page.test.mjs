@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const read = name => fs.readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');
 const banned = /seamless|elevate|unparalleled|top-notch|cutting-edge|state-of-the-art|peace of mind/i;
@@ -33,7 +34,7 @@ test('detailing page explains each service in plain language', () => {
   assert.ok(questions.length >= 3 && questions.length <= 5, 'short FAQ');
   assert.doesNotMatch(html, banned);
   assert.doesNotMatch(html, /\$\d|\bwarranty\b|\bcertified\b|\bcertification\b|\d+\s*years/i);
-  assert.doesNotMatch(html, /13037|Second St/);
+  assertNoPrivateAddress(assert, html);
   assert.equal(document.querySelectorAll('.service-ad a[href^="tel:"], .service-ad a[href^="sms:"]').length, 0);
 });
 

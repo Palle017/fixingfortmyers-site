@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const DESCRIPTION = 'Auto repair & mechanic in Fort Myers, rated 4.8★. Car A/C, engine, transmission, diesel, suspension & electrical. Fast replies: call (239) 397-2048.';
 const REQUIRED = ['Fort Myers', '4.8', 'A/C', 'engine', 'transmission', 'diesel', 'suspension', 'electrical', '(239) 397-2048'];
@@ -20,8 +21,7 @@ test('homepage search snippet leads with fast replies, services, 4.8 rating, and
     assert.equal(description, DESCRIPTION);
     for (const phrase of REQUIRED) assert.ok(description.includes(phrase), `missing ${phrase}`);
     assert.ok(description.length <= 160, `description is ${description.length} characters`);
-    assert.equal(description.includes('13037'), false);
-    assert.equal(description.includes('Saddleback'), false);
+    assertNoPrivateAddress(assert, description);
   }
   assert.equal(document.querySelector('title').textContent, 'Auto Repair Fort Myers, FL | Engine, Transmission & Diesel');
   assert.equal(

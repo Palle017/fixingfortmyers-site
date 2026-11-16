@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
+import { assertNoPrivateAddress } from './private-address.mjs';
 const read = p => fs.readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const home = read('index.html');
 for (const page of ['workshop.html','engine-repair-fort-myers.html']) test(`${page}: hero shows the homepage's real Google rating`, () => {
@@ -45,7 +46,7 @@ test('check engine light: repair links open the diagnostics form and Text Tony f
   assert.equal(doc.querySelector('meta[property="og:description"]')?.getAttribute('content'), 'Check engine light diagnosis in Fort Myers: codes, live data and targeted tests to find the failed part, not just the code. Call or text (239) 397-2048.');
   assert.equal(doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content'), 'Check Engine Light Diagnosis in Fort Myers | Perfect Timing');
   assert.equal(doc.querySelector('meta[name="twitter:description"]')?.getAttribute('content'), 'Check engine light diagnosis in Fort Myers: codes, live data and targeted tests to find the failed part, not just the code. Call or text (239) 397-2048.');
-  assert.doesNotMatch(html, /streetAddress|13037|Second St|Saddleback/);
+  assertNoPrivateAddress(assert, html);
   assert.doesNotMatch(html, /penguin-ac/);
   const repairLinks = [...doc.querySelectorAll('a')].filter(a => /^Request(?: a)? [Rr]epair$/.test(a.textContent.replace(/\s+/g, ' ').trim()));
   assert.equal(repairLinks.length, 6, 'nav, mobile menu, hero, mid-page CTA, footer, and mobile bar');

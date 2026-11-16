@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = f => fs.readFileSync(new URL(f, root), 'utf8');
@@ -50,7 +51,8 @@ test('the business entity is identical on every page and keeps the street addres
       assert.equal(n.openingHours, undefined, `${f} JSON-LD must not encode 24/7 opening hours`);
       // Owner snippet rules (2026-10-30): the business description can be quoted in search and AI answers,
       // so it names services and cities, never the address/area, and none of the banned snippet words.
-      assert.doesNotMatch(n.description, /\bshop\b|mobile|pickup|by appointment|24\/7|Bayshore|Saddleback|13037|Second St/i, `${f} banned snippet wording`);
+      assert.doesNotMatch(n.description, /\bshop\b|mobile|pickup|by appointment|24\/7|Bayshore/i, `${f} banned snippet wording`);
+      assertNoPrivateAddress(assert, n.description, `${f} business description`);
       for (const word of ['Fort Myers', 'engine', 'transmission', 'diesel', '(239) 397-2048']) assert.ok(n.description.includes(word), `${f} description names ${word}`);
       assert.equal(n.aggregateRating, undefined, `${f} self-serving review markup is not eligible for stars`);
       assert.equal(n.geo, undefined, `${f} no geo coordinates for a hidden-address business`);
@@ -224,7 +226,8 @@ test('every page states the corrected service model: shop, mobile van and pickup
   for (const f of pages) {
     const html = read(f);
     const visible = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-    assert.doesNotMatch(html, /13037|Second St(?:reet)?\b|"geo"|"latitude":\s*-?\d/i, `${f}: never publish the street address or coordinates`);
+    assert.doesNotMatch(html, /"geo"|"latitude":\s*-?\d/i, `${f}: never publish coordinates`);
+    assertNoPrivateAddress(assert, html, f);
     assert.doesNotMatch(visible, /Mon–Sat, 8 AM–8 PM|pickup is (?:available|offered) only|not a mobile (?:shop|mechanic)/i, `${f}: stale #88 wording`);
     if (!/<footer/.test(html)) continue;
     assert.match(visible, /24\/7/, `${f}: visible 24/7 request wording`);
