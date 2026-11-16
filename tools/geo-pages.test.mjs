@@ -15,6 +15,10 @@ const pages = [
   {file: 'auto-repair-estero-san-carlos-park.html', slug: 'auto-repair-estero-san-carlos-park', service: 'diagnostics'},
   {file: 'engine-repair-cape-coral.html', slug: 'engine-repair-cape-coral', service: 'engine'},
   {file: 'transmission-repair-cape-coral.html', slug: 'transmission-repair-cape-coral', service: 'transmission'},
+  {file: 'auto-repair-bonita-springs.html', slug: 'auto-repair-bonita-springs', service: 'diagnostics'},
+  {file: 'auto-repair-fort-myers-beach-iona.html', slug: 'auto-repair-fort-myers-beach-iona', service: 'diagnostics'},
+  {file: 'auto-repair-pine-island.html', slug: 'auto-repair-pine-island', service: 'diagnostics'},
+  {file: 'diesel-repair-lehigh-acres.html', slug: 'diesel-repair-lehigh-acres', service: 'diesel'},
 ];
 const decode = s => s
   .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
