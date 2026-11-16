@@ -3,11 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM, VirtualConsole} from 'jsdom';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = file => fs.readFileSync(new URL(file, root), 'utf8');
 const SITE = 'https://fixingfortmyers.com';
-const BANNED = [/shop/i, /mobile/i, /pickup/i, /by appointment/i, /24\/7/, /13037/, /Second St/i, /Saddleback/i];
+const BANNED = [/shop/i, /mobile/i, /pickup/i, /by appointment/i, /24\/7/];
 const blogFiles = fs.readdirSync(new URL('blog/', root)).filter(name => name.endsWith('.html')).sort();
 const INDEX_TITLE = 'Repair notes | Perfect Timing Auto Repair';
 const INDEX_DESC = 'Repair notes from Tony at Perfect Timing Auto Repair in Fort Myers. Call (239) 397-2048.';
@@ -154,7 +155,8 @@ test('blog snippets and JSON-LD stay inside the caps and out of the banned words
       assert.ok([...description].length <= 160, `${file} description is ${[...description].length}`);
     }
     for (const text of [...fields, json]) for (const word of BANNED) assert.doesNotMatch(text, word, `${file} ${word}`);
-    assert.doesNotMatch(json, /13037|Saddleback|Second St/i, file);
+    assertNoPrivateAddress(assert, json, file);
+    for (const text of fields) assertNoPrivateAddress(assert, text, file);
   }
 });
 

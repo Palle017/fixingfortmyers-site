@@ -44,4 +44,4 @@ Old personal/sign-in phone **(239) 271-4854** still appears on some listings and
 - Nextdoor (verify phone + description)
 - BBB category/phone if still showing 271-4854 / "Mobile Auto Repair"
 
-Owner confirmed (2026-10-05): public location is Bayshore Ranch, by appointment. Do not publish 13037 Second St. Listings that still show Second St should be updated to Bayshore Ranch, Fort Myers, (239) 397-2048.
+Owner confirmed (2026-10-05): public location is Bayshore Ranch, by appointment. Never publish the old street address. Listings that still show a street address should be updated to Bayshore Ranch, Fort Myers, (239) 397-2048.

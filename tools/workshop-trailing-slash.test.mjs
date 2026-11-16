@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const read = name => fs.readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');
 const CANONICAL = 'https://fixingfortmyers.com/workshop';
@@ -16,7 +17,8 @@ test('/workshop/ redirects to the slashless workshop page', () => {
   assert.equal(document.querySelector('meta[name="robots"]')?.getAttribute('content'), 'noindex');
   assert.equal(document.querySelector('a')?.getAttribute('href'), '/workshop');
   assert.equal(document.querySelectorAll('script[type="application/ld+json"], meta[name="description"], meta[property^="og:"], meta[name^="twitter:"]').length, 0);
-  assert.doesNotMatch(html, /13037|Second St|streetAddress|penguin-ac/i);
+  assert.doesNotMatch(html, /penguin-ac/i);
+  assertNoPrivateAddress(assert, html);
   assert.equal(fs.existsSync(new URL('../workshop.html', import.meta.url)), true);
 });
 

@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = file => fs.readFileSync(new URL(file, root), 'utf8');
@@ -17,7 +18,7 @@ function stub(file) {
   assert.equal(document.querySelector('meta[http-equiv="refresh"]')?.getAttribute('content'), '0; url=/privacy-policy');
   assert.equal(document.querySelector('link[rel="canonical"]')?.getAttribute('href'), CANONICAL);
   assert.equal(document.querySelector('a')?.getAttribute('href'), '/privacy-policy');
-  assert.doesNotMatch(html, /13037|Second St(?:reet)?\b|Saddleback/);
+  assertNoPrivateAddress(assert, html);
 }
 
 test('the slashless data-privacy-policy stub stays noindex and points at /privacy-policy', () => {

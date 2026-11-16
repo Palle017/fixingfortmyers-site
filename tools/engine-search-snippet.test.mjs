@@ -3,11 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const FILE = 'engine-repair-fort-myers.html';
 const TITLE = "Engine Repair in Fort Myers, FL | Perfect Timing";
 const DESCRIPTION = "Engine repair in Fort Myers, rated 4.8★. Misfires, overheating and engine rebuild options explained. Fast replies: call (239) 397-2048.";
-const BANNED = [/shop/i, /mobile/i, /pickup/i, /by appointment/i, /24\/7/, /13037/, /Second St/i, /Saddleback/i];
+const BANNED = [/shop/i, /mobile/i, /pickup/i, /by appointment/i, /24\/7/];
 
 test('engine page search snippet is consistent, capped, and free of banned wording', () => {
   const document = new JSDOM(fs.readFileSync(new URL('../' + FILE, import.meta.url), 'utf8')).window.document;
@@ -32,5 +33,5 @@ test('engine page search snippet is consistent, capped, and free of banned wordi
     assert.ok(description.includes('rated 4.8★'));
     assert.ok(description.endsWith('Fast replies: call (239) 397-2048.'));
   }
-  for (const text of [...titles, ...descriptions]) for (const word of BANNED) assert.doesNotMatch(text, word);
+  for (const text of [...titles, ...descriptions]) { for (const word of BANNED) assert.doesNotMatch(text, word); assertNoPrivateAddress(assert, text); }
 });

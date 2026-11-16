@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = name => fs.readFileSync(new URL(name, root), 'utf8');
@@ -37,7 +38,7 @@ test('homepage keeps all seven service links after its primary repair request', 
   assert.ok(primary.compareDocumentPosition(row) & 4, 'repair request precedes secondary service navigation');
   assert.equal(row?.classList.contains('home-start__services'), true);
   assert.equal(row.querySelectorAll('a[href^="tel:"], a[href^="sms:"], button').length, 0);
-  assert.doesNotMatch(row.textContent, /13037|Second St/);
+  assertNoPrivateAddress(assert, row.textContent);
   const anchors = [...row.querySelectorAll(':scope > a')];
   assert.deepEqual(anchors.map(anchor => [anchor.textContent.trim(), anchor.getAttribute('aria-label'), anchor.getAttribute('href')]), links);
   for (const [, , href] of links) {

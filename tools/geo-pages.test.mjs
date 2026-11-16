@@ -3,13 +3,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = file => fs.readFileSync(new URL(file, root), 'utf8');
 const SITE = 'https://fixingfortmyers.com';
 const BANNED = /\bshop\b|\bmobile\b|\bpick-?up\b|by appointment|24\/7/i;
 const BBB_PROFILE = /https?:\/\/www\.bbb\.org\/\S*\/mobile-auto-repair\/\S*/gi;
-const ADDRESS = /13037|Second St(?:reet)?\b|Saddleback/;
 const pages = [
   {file: 'auto-repair-alva-buckingham.html', slug: 'auto-repair-alva-buckingham', service: 'diagnostics'},
   {file: 'auto-repair-estero-san-carlos-park.html', slug: 'auto-repair-estero-san-carlos-park', service: 'diagnostics'},
@@ -53,7 +53,7 @@ test('new geo pages offer Request, Call and Text, with no street address', () =>
   for (const page of pages) {
     const html = read(page.file);
     const d = new JSDOM(html).window.document;
-    assert.doesNotMatch(html, ADDRESS, page.file);
+    assertNoPrivateAddress(assert, html, page.file);
     const request = `/request-a-repair?service=${page.service}`;
     const hero = d.querySelector('.service-hero__actions');
     assert.ok(hero, page.file);

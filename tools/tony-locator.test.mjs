@@ -4,10 +4,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
 import {handleRequest, parseUpdate, validatePoint, timingSafeEqual, extractWriteKey} from '../worker/tony-locator/src/index.js';
+import { assertNoPrivateAddress } from './private-address.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = file => fs.readFileSync(new URL(file, root), 'utf8');
-const ADDRESS = /13037|Second St(?:reet)?\b|Saddleback/;
 const BANNED = /\bshop\b|\bmobile\b|\bpick-?up\b|by appointment|24\/7/i;
 const PAGE = 'where-is-tony.html';
 const SMS_OR_NAV = /pt-layout-navigation|footer__links|footer__areas/;
@@ -53,7 +53,7 @@ test('locator defaults to a disabled, no-pin state and keeps Google-facing text 
     assert.ok(text, 'missing snippet field');
     assert.doesNotMatch(text, BANNED);
   }
-  assert.doesNotMatch(html, ADDRESS);
+  assertNoPrivateAddress(assert, html);
   assert.match(document.getElementById('locator-empty').textContent, /Tony's location isn't shared right now/);
   assert.ok(document.querySelector('#locator-empty a[href="tel:+12393972048"]'));
   assert.ok(document.querySelector('#locator-empty a[href="/request-a-repair"]'));
