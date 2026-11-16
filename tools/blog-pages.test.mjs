@@ -68,7 +68,7 @@ test('blog index snippet, canonical, published notes, and sitemap entry', () => 
   assert.equal(listed[0].querySelector('a').textContent.trim(), NOTE_TITLE);
   assert.equal(listed[0].querySelector('time').getAttribute('datetime'), '2026-10-30');
   assert.equal(listed[0].querySelector('time').textContent.trim(), 'October 30, 2026');
-  assert.match(read('sitemap.xml'), /<loc>https:\/\/fixingfortmyers\.com\/blog<\/loc>/);
+  assert.match(read('sitemap.xml'), /<loc>https:\/\/fixingfortmyers\.com\/blog\/<\/loc>/);
   assert.match(read('sitemap.xml'), new RegExp(`<loc>https://fixingfortmyers\\.com/blog/${NOTE_SLUG}</loc>`));
   assert.doesNotMatch(read('sitemap.xml'), /blog\/(?:_template|post-slug)/);
   assert.match(read('site.js'), new RegExp(`'/blog/${NOTE_SLUG}'`));

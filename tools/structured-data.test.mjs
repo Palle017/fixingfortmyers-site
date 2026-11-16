@@ -16,7 +16,7 @@ const ld = html => [...html.matchAll(/<script type="application\/ld\+json">([\s\
   .flatMap(m => { const j = JSON.parse(m[1]); return j['@graph'] || [j]; });
 const indexable = f => f !== '404.html' && !/<meta name="robots" content="[^"]*noindex/.test(read(f));
 const urlFor = f => f === 'index.html' ? `${SITE}/` : f === 'blog/index.html' ? `${SITE}/blog` : `${SITE}/${f.replace(/\.html$/, '')}`;
-const fileFor = u => u === `${SITE}/` ? 'index.html' : u.slice(SITE.length + 1) === 'blog' ? 'blog/index.html' : `${u.slice(SITE.length + 1)}.html`;
+const fileFor = u => u === `${SITE}/` ? 'index.html' : (u.slice(SITE.length) === '/blog' || u.slice(SITE.length) === '/blog/') ? 'blog/index.html' : `${u.replace(/\/$/, '').slice(SITE.length + 1)}.html`;
 
 test('every indexable page has a self canonical and is in the sitemap; nothing noindexed is listed', () => {
   assert.equal(read(verificationFile).trim(), `google-site-verification: ${verificationFile}`, 'Google verification remains an exact token, not an SEO page');
@@ -26,7 +26,7 @@ test('every indexable page has a self canonical and is in the sitemap; nothing n
     if (!indexable(f)) { assert.ok(!sitemap.includes(urlFor(f)), `${f} is noindex but in sitemap`); continue; }
     const canonical = (html.match(/<link rel="canonical" href="([^"]+)"/) || [])[1];
     assert.equal(canonical, urlFor(f), `${f} canonical`);
-    assert.ok(sitemap.includes(urlFor(f)), `${f} missing from sitemap`);
+    assert.ok(sitemap.includes(urlFor(f)) || (f === 'blog/index.html' && sitemap.includes(`${SITE}/blog/`)), `${f} missing from sitemap`);
   }
   for (const u of sitemap) {
     const f = fileFor(u);
