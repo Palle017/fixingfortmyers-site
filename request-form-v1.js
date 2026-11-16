@@ -89,7 +89,14 @@
     try { window.PT_TRACK?.(event, {placement:'form'}); }
     catch (_) { /* Optional analytics must never block a request or its receipt. */ }
   };
-  form.addEventListener('input', () => track('form_start'), {once:true});
+  let formStartSent = false;
+  const startForm = () => {
+    if (formStartSent) return;
+    formStartSent = true;
+    track('form_start');
+  };
+  for (const eventName of ['input', 'change', 'focusin']) form.addEventListener(eventName, startForm);
+
   const clearStatus = () => {
     if (!inFlight) status.textContent = '';
   };
