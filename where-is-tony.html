@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Where's my mechanic? | Perfect Timing</title>
+  <meta name="description" content="See whether Tony is sharing his location, then call or request a repair. Call (239) 397-2048.">
+  <meta name="robots" content="noindex,nofollow">
+  <meta property="og:title" content="Where's my mechanic? | Perfect Timing">
+  <meta property="og:description" content="See whether Tony is sharing his location, then call or request a repair. Call (239) 397-2048.">
+  <meta property="og:url" content="https://fixingfortmyers.com/where-is-tony">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Where's my mechanic? | Perfect Timing">
+  <meta name="twitter:description" content="See whether Tony is sharing his location, then call or request a repair. Call (239) 397-2048.">
+  <link rel="canonical" href="https://fixingfortmyers.com/where-is-tony">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="preload" href="/assets/fonts/barlow-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/bebas-neue-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <style id="self-hosted-fonts">@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/barlow-400-latin.woff2) format('woff2')}@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/bebas-neue-400-latin.woff2) format('woff2')}</style>
+  <link rel="stylesheet" href="/base.css">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .locator {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: #0a0a0b;
+      color: #e8e8ec;
+    }
+    .locator-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid #2a2a30;
+    }
+    .locator-brand {
+      color: inherit;
+      text-decoration: none;
+      font-family: 'Bebas Neue', Impact, sans-serif;
+      letter-spacing: 0.04em;
+      font-size: 1.35rem;
+    }
+    .locator-home {
+      color: #A9AEB5;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    .locator-stage {
+      flex: 1;
+      position: relative;
+      min-height: 60vh;
+      background: #111114;
+    }
+    .locator-map {
+      position: absolute;
+      inset: 0;
+    }
+    .locator-map.is-hidden { display: none; }
+    .locator-empty {
+      position: relative;
+      z-index: 2;
+      max-width: 28rem;
+      margin: 0 auto;
+      padding: 3rem 1.25rem 2rem;
+      text-align: center;
+    }
+    .locator-empty.is-hidden { display: none; }
+    .locator-empty h1,
+    .locator-hud h1 {
+      font-family: 'Bebas Neue', Impact, sans-serif;
+      letter-spacing: 0.04em;
+      font-size: clamp(2rem, 8vw, 3rem);
+      line-height: 0.95;
+      margin-bottom: 0.75rem;
+    }
+    .locator-empty p { color: #A9AEB5; margin-bottom: 1.5rem; }
+    .locator-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+    .locator-actions a,
+    .locator-actions button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0.7rem 1.1rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .locator-actions .is-primary {
+      background: #3ABEFF;
+      color: #0a0a0b;
+    }
+    .locator-actions .is-secondary {
+      background: transparent;
+      color: #e8e8ec;
+      border-color: #2a2a30;
+    }
+    .locator-hud {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+      padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+      background: linear-gradient(transparent, rgba(10, 10, 11, 0.92) 35%);
+      pointer-events: none;
+    }
+    .locator-hud.is-hidden { display: none; }
+    .locator-hud-card {
+      pointer-events: auto;
+      background: rgba(17, 17, 20, 0.92);
+      border: 1px solid #2a2a30;
+      border-radius: 16px;
+      padding: 1rem;
+      max-width: 40rem;
+      margin: 0 auto;
+    }
+    .locator-seen {
+      color: #A9AEB5;
+      margin-bottom: 0.9rem;
+    }
+    .locator-pulse {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3ABEFF;
+      box-shadow: 0 0 0 0 rgba(58, 190, 255, 0.7);
+      animation: locator-pulse 1.8s ease-out infinite;
+    }
+    .locator-marker {
+      position: relative;
+      width: 18px;
+      height: 18px;
+    }
+    .locator-radar {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 220px;
+      height: 220px;
+      margin: -110px 0 0 -110px;
+      border-radius: 50%;
+      pointer-events: none;
+      background: conic-gradient(from 0deg, rgba(58, 190, 255, 0) 0 70%, rgba(58, 190, 255, 0.35) 100%);
+      animation: locator-sweep 3s linear infinite;
+      mask-image: radial-gradient(circle, #000 0 60%, transparent 70%);
+    }
+    @keyframes locator-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(58, 190, 255, 0.7); }
+      70% { box-shadow: 0 0 0 16px rgba(58, 190, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(58, 190, 255, 0); }
+    }
+    @keyframes locator-sweep { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .locator-pulse, .locator-radar { animation: none; }
+    }
+    .leaflet-container { background: #0a0a0b; font: inherit; }
+  </style>
+</head>
+<body class="locator">
+  <header class="locator-top">
+    <a class="locator-brand" href="/">Perfect Timing</a>
+    <a class="locator-home" href="/">Back home</a>
+  </header>
+  <main class="locator-stage" id="locator-stage">
+    <div class="locator-empty" id="locator-empty">
+      <h1>Where's my mechanic?</h1>
+      <p>Tony's location isn't shared right now. Call or send a repair request and he'll get back to you.</p>
+      <div class="locator-actions">
+        <a class="is-primary" href="tel:+12393972048">Call Tony</a>
+        <a class="is-secondary" href="/request-a-repair">Request Repair</a>
+      </div>
+    </div>
+    <div class="locator-map is-hidden" id="locator-map" role="region" aria-label="Tony's live location"></div>
+    <div class="locator-hud is-hidden" id="locator-hud">
+      <div class="locator-hud-card">
+        <h1>Where's my mechanic?</h1>
+        <p class="locator-seen" id="locator-seen">Last seen just now</p>
+        <div class="locator-actions">
+          <button type="button" class="is-secondary" id="locator-center">Center on him</button>
+          <a class="is-secondary" id="locator-directions" href="#" rel="noopener">Get directions</a>
+          <a class="is-primary" href="tel:+12393972048">Call Tony</a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script>
+    const LOCATION_URL = 'https://fixingfortmyers-tony-locator.prudhvi-tools.workers.dev/where';
+    const FALLBACK_URL = '/data/tony-location.json';
+    const STALE_MS = 24 * 60 * 60 * 1000;
+    const REFRESH_MS = 30000;
+    const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    const LEAFLET_CSS_SRI = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+    const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    const LEAFLET_JS_SRI = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+
+    const emptyEl = document.getElementById('locator-empty');
+    const mapEl = document.getElementById('locator-map');
+    const hudEl = document.getElementById('locator-hud');
+    const seenEl = document.getElementById('locator-seen');
+    const directionsEl = document.getElementById('locator-directions');
+    const centerBtn = document.getElementById('locator-center');
+
+    let map, marker, radar, leafletReady = null, lastPoint = null;
+
+    function showEmpty() {
+      emptyEl.classList.remove('is-hidden');
+      mapEl.classList.add('is-hidden');
+      hudEl.classList.add('is-hidden');
+    }
+
+    function showMap() {
+      emptyEl.classList.add('is-hidden');
+      mapEl.classList.remove('is-hidden');
+      hudEl.classList.remove('is-hidden');
+      if (map) setTimeout(() => map.invalidateSize(), 50);
+    }
+
+    function isFresh(data) {
+      if (!data || data.enabled === false) return false;
+      const lat = Number(data.lat), lng = Number(data.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return false;
+      const updated = Number(data.updated);
+      if (!Number.isFinite(updated)) return false;
+      const ts = updated < 1e12 ? updated * 1000 : updated;
+      return Date.now() - ts <= STALE_MS;
+    }
+
+    function formatSeen(updated) {
+      const ts = Number(updated) < 1e12 ? Number(updated) * 1000 : Number(updated);
+      const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
+      if (mins < 1) return 'Last seen just now';
+      if (mins === 1) return 'Last seen 1 min ago';
+      if (mins < 60) return 'Last seen ' + mins + ' min ago';
+      const hours = Math.round(mins / 60);
+      if (hours === 1) return 'Last seen 1 hr ago';
+      return 'Last seen ' + hours + ' hr ago';
+    }
+
+    function loadLeaflet() {
+      if (window.L) return Promise.resolve(window.L);
+      if (leafletReady) return leafletReady;
+      leafletReady = new Promise((resolve, reject) => {
+        const css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = LEAFLET_CSS;
+        css.integrity = LEAFLET_CSS_SRI;
+        css.crossOrigin = 'anonymous';
+        document.head.appendChild(css);
+        const script = document.createElement('script');
+        script.src = LEAFLET_JS;
+        script.integrity = LEAFLET_JS_SRI;
+        script.crossOrigin = 'anonymous';
+        script.onload = () => resolve(window.L);
+        script.onerror = () => reject(new Error('map library failed to load'));
+        document.head.appendChild(script);
+      });
+      return leafletReady;
+    }
+
+    function icon(L) {
+      return L.divIcon({
+        className: '',
+        html: '<div class="locator-marker"><div class="locator-radar" aria-hidden="true"></div><div class="locator-pulse"></div></div>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+      });
+    }
+
+    async function renderPoint(data) {
+      const L = await loadLeaflet();
+      const latlng = [Number(data.lat), Number(data.lng)];
+      if (!map) {
+        map = L.map(mapEl, { zoomControl: true, attributionControl: true }).setView(latlng, 15);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 20,
+        }).addTo(map);
+        marker = L.marker(latlng, { icon: icon(L), title: 'Tony' }).addTo(map);
+      } else {
+        marker.setLatLng(latlng);
+        if (!lastPoint || lastPoint.lat !== latlng[0] || lastPoint.lng !== latlng[1]) {
+          map.setView(latlng);
+        }
+      }
+      lastPoint = { lat: latlng[0], lng: latlng[1] };
+      seenEl.textContent = formatSeen(data.updated);
+      directionsEl.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(latlng[0] + ',' + latlng[1]);
+      showMap();
+    }
+
+    async function readLocation() {
+      const urls = LOCATION_URL ? [LOCATION_URL, FALLBACK_URL] : [FALLBACK_URL];
+      for (const url of urls) {
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) continue;
+          return await res.json();
+        } catch (err) {
+          // Try the next source.
+        }
+      }
+      return { enabled: false };
+    }
+
+    async function refresh() {
+      const data = await readLocation();
+      if (!isFresh(data)) {
+        showEmpty();
+        return;
+      }
+      try {
+        await renderPoint(data);
+      } catch (err) {
+        showEmpty();
+      }
+    }
+
+    centerBtn.addEventListener('click', () => {
+      if (map && lastPoint) map.setView([lastPoint.lat, lastPoint.lng], Math.max(map.getZoom(), 15));
+    });
+
+    showEmpty();
+    refresh();
+    setInterval(refresh, REFRESH_MS);
+  </script>
+</body>
+</html>
