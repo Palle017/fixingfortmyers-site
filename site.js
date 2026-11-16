@@ -44,7 +44,7 @@
     '/repair-guide-car-wont-start', '/repair-guide-ecu-tcm-programming', '/repair-guide-flashing-check-engine-light',
     '/repair-guides', '/request-a-repair', '/request-received', '/sms-terms',
     '/suspension-steering-repair-fort-myers', '/transmission-repair-cape-coral', '/transmission-repair-fort-myers',
-    '/transmission-slipping-fort-myers', '/walnut-blasting-fort-myers', '/workshop'
+    '/transmission-slipping-fort-myers', '/walnut-blasting-fort-myers', '/where-is-tony', '/workshop'
   ]);
   const normalizedPath = location.pathname.replace(/\/$/, '').replace(/\.html$/, '') || '/';
   const publicPath = normalizedPath === '/index' ? '/' : normalizedPath;
@@ -1202,4 +1202,24 @@
     watch.observe(form);
   } else if (document.readyState === 'complete') load();
   else window.addEventListener('load', load, {once:true});
+})();
+
+(function tonyLocatorTrigger(){
+  const path = (location.pathname || '/').replace(/\/$/, '') || '/';
+  if (path !== '/' && path !== '/index') return;
+  let taps = [];
+  document.addEventListener('click', event => {
+    const brand = event.target.closest && event.target.closest('a.pt-layout-brand');
+    if (!brand) return;
+    event.preventDefault();
+    const now = Date.now();
+    taps = taps.filter(stamp => now - stamp < 3000);
+    taps.push(now);
+    if (taps.length >= 5) {
+      taps = [];
+      const next = '/where-is-tony';
+      if (typeof window.PT_OPEN_TONY_LOCATOR === 'function') window.PT_OPEN_TONY_LOCATOR(next);
+      else location.assign(next);
+    }
+  }, true);
 })();
