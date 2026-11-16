@@ -1,5 +1,14 @@
 # Site agent instructions — Perfect Timing Auto Repair
 
+## Hard rules
+- No shop, mobile, pickup, by appointment or 24/7 wording in Google-facing text only: `<title>`, meta description, og/twitter tags and JSON-LD (including hours data). Visible page text is fine. "Pickups" meaning pickup trucks and BBB's own URL category are allowed.
+- Never publish a street address anywhere in the repo or site, docs and tests included. Use `tools/private-address.mjs` for checks.
+- Don't edit or remove the penguin-ac ad.
+- No automatic junk or spam filtering of leads. Google review requests go out only when Tony presses the button.
+- Never commit keys, passwords or tokens.
+- Every change goes through a PR with CI build and verify passing. Lead Mechanic reviews and merges; authors never merge their own.
+- Freeze until Dec 7, 2026: no edits to the homepage H1, title, meta or intro (re-rank watch after PR #252), so ranking changes can be attributed.
+
 ## Owner stop instruction — October 20, 2026
 Tony authorized removal of all remaining Bay One traces from the public website and instructed this assistant not to touch FixingFortMyers.com afterward. Completing and verifying that removal is the final authorized site change. Do not initiate further website edits or deployments without a new explicit instruction from Tony. This supersedes earlier open-ended authorizations for this assistant to continue website work.
 
