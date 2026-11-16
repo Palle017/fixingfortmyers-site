@@ -123,6 +123,9 @@
       if (gtagReady) window.gtag('event', eventName, detail);
       else window.dataLayer.push({event: eventName, ...detail});
     } catch (_) { /* Analytics must never block contacting the shop. */ }
+    // The v1 request form never reaches the legacy site.js form handler, which
+    // used to be the only place Owner Desk received form_started.
+    if (eventName === 'form_start') reportMetric('form_started');
   };
   window.PT_TRACK = track;
   track('page_view');
