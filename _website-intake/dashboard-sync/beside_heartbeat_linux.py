@@ -27,6 +27,9 @@ from beside_capacity import disk_headroom
 ROOT = Path(__file__).resolve().parent
 ALLOWED_ORIGINS = {'https://dashboard.fixingfortmyers.com', 'https://perfect-timing-owner-desk.prudhvi-pallempati.chatgpt.site'}
 CAPTURE_UNIT = 'beside-capture.service'
+# The capture timer is 12 minutes. Re-fetch the full inquiry baseline at most that often.
+BASELINE_INTERVAL = timedelta(minutes=12)
+BASELINE_STAMP_NAME = 'uia-heartbeat-baseline.json'
 
 
 class NoRedirect(request.HTTPRedirectHandler):
@@ -107,6 +110,50 @@ def make_worker(settings, opener=None):
     return worker
 
 
+def baseline_stamp_path(settings):
+    return Path(settings['private_archive_root']).expanduser() / 'refresh' / BASELINE_STAMP_NAME
+
+
+def queue_status(payload):
+    """Queue status from a worker JSON body, or None if it is missing or unusable."""
+    if not isinstance(payload, dict):
+        return None
+    state = payload.get('state')
+    if not isinstance(state, dict):
+        return None
+    status = state.get('status')
+    return status if isinstance(status, str) and status else None
+
+
+def baseline_is_fresh(settings, now):
+    try:
+        stamp = load(baseline_stamp_path(settings))
+        fetched = datetime.fromisoformat(str(stamp['fetched_at']).replace('Z', '+00:00'))
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return False
+    if fetched.tzinfo is None:
+        return False
+    age = now - fetched
+    return timedelta(0) <= age < BASELINE_INTERVAL
+
+
+def record_baseline_fetch(settings, now):
+    path = baseline_stamp_path(settings)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {'fetched_at': now.isoformat(timespec='milliseconds').replace('+00:00', 'Z')}
+    data = (json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(',', ':')) + '\n').encode()
+    tmp = path.with_name(path.name + '.tmp')
+    with open(tmp, 'wb') as stream:
+        stream.write(data)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(tmp, path)
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+
+
 def start_capture():
     subprocess.run(['systemctl', '--user', 'start', '--no-block', CAPTURE_UNIT], check=True, timeout=10, capture_output=True)
 
@@ -139,10 +186,28 @@ def run(settings_path, *, now=None, worker=None, starter=start_capture):
                 'recovery_deferred': 'scheduled_capture'}
     try:
         worker = worker or make_worker(settings)
-        worker('heartbeat'); report['heartbeat_sent'] = True
-        state = (worker('baseline').get('state') or {}).get('status')
+        heartbeat = worker('heartbeat'); report['heartbeat_sent'] = True
+        # Queue status comes from the cheap heartbeat reply. The baseline call
+        # returns every Owner Desk inquiry (up to 1000 rows) and is reserved for
+        # a missing status or at most once per 12 minutes.
+        state = queue_status(heartbeat)
+        need_baseline = state is None or not baseline_is_fresh(settings, now)
+        report['baseline_fetched'] = False
+        if need_baseline:
+            baseline = worker('baseline')
+            report['baseline_fetched'] = True
+            try:
+                record_baseline_fetch(settings, now)
+            except OSError:
+                pass
+            # Prefer a status from baseline when the heartbeat had none; otherwise
+            # keep the heartbeat status so a queued job is not lost.
+            baseline_state = queue_status(baseline)
+            if state is None:
+                state = baseline_state
     except Exception as exc:
         return {**report, 'ok': False, 'heartbeat_sent': report.get('heartbeat_sent', False),
+                'baseline_fetched': report.get('baseline_fetched', False),
                 'error': str(exc) if isinstance(exc, ValueError) else type(exc).__name__}
     report['queue_status'] = state
     if state == 'queued':

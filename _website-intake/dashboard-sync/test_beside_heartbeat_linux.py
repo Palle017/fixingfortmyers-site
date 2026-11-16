@@ -120,6 +120,61 @@ class Heartbeat(Env):
         out = H.run(self.path, now=NOW, worker=broken, starter=lambda: None)
         self.assertFalse(out['ok']); self.assertEqual(out['error'], 'OSError')
 
+    def test_baseline_is_fetched_at_most_once_per_twelve_minutes(self):
+        self.settings['beside_heartbeat_max_age_minutes'] = 60; self.save()
+        self.status()
+        first = self.run_hb()
+        self.assertTrue(first['baseline_fetched'])
+        self.assertEqual(self.calls, ['heartbeat', 'baseline'])
+        stamp = self.root / 'refresh' / 'uia-heartbeat-baseline.json'
+        self.assertTrue(stamp.is_file())
+
+        self.calls.clear()
+        later = H.run(self.path, now=NOW + timedelta(minutes=11, seconds=59),
+                      worker=self.worker, starter=lambda: self.started.append(1))
+        self.assertTrue(later['ok']); self.assertTrue(later['heartbeat_sent'])
+        self.assertFalse(later['baseline_fetched'])
+        self.assertEqual(self.calls, ['heartbeat'])
+        self.assertEqual(later['queue_status'], 'idle')
+
+        self.calls.clear()
+        due = H.run(self.path, now=NOW + timedelta(minutes=12),
+                    worker=self.worker, starter=lambda: self.started.append(1))
+        self.assertTrue(due['baseline_fetched'])
+        self.assertEqual(self.calls, ['heartbeat', 'baseline'])
+
+    def test_queued_job_starts_capture_without_waiting_for_baseline(self):
+        self.status()
+        self.run_hb()  # prime the 12-minute stamp
+        self.calls.clear(); self.started.clear(); self.state = 'queued'
+        out = H.run(self.path, now=NOW + timedelta(minutes=1),
+                    worker=self.worker, starter=lambda: self.started.append(1))
+        self.assertEqual(out['capture_started'], 'queued_refresh')
+        self.assertEqual(self.started, [1])
+        self.assertFalse(out['baseline_fetched'])
+        self.assertEqual(self.calls, ['heartbeat'])
+        self.assertEqual(out['queue_status'], 'queued')
+
+    def test_missing_heartbeat_status_falls_back_to_baseline(self):
+        self.status()
+        def worker(action, **extra):
+            self.calls.append(action)
+            if action == 'heartbeat':
+                return {'ok': True}
+            return {'ok': True, 'state': {'status': 'queued'}}
+        out = H.run(self.path, now=NOW, worker=worker, starter=lambda: self.started.append(1))
+        self.assertTrue(out['baseline_fetched'])
+        self.assertEqual(self.calls, ['heartbeat', 'baseline'])
+        self.assertEqual(out['capture_started'], 'queued_refresh')
+        self.assertEqual(self.started, [1])
+
+    def test_corrupt_baseline_stamp_is_treated_as_stale(self):
+        self.status()
+        (self.root / 'refresh' / 'uia-heartbeat-baseline.json').write_text('not-json')
+        out = self.run_hb()
+        self.assertTrue(out['baseline_fetched'])
+        self.assertEqual(self.calls, ['heartbeat', 'baseline'])
+
 
 class WorkerCall(Env):
     def write_config(self, url='https://dashboard.fixingfortmyers.com/api/sync'):

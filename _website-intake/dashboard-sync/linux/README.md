@@ -145,8 +145,10 @@ browser-free timer runs every minute (`beside_heartbeat_linux.py`, `MemoryMax=64
   readiness) and reports `recovery_deferred: scheduled_capture`. The existing 12-minute
   capture timer rechecks the source; a failed capture does not create a browser launch
   on every one-minute heartbeat;
-- reads the queue state; if a "Refresh Beside" job is `queued`, starts `beside-capture.service`
-  right away;
+- reads the queue state from the `heartbeat` reply (not a full inquiry baseline); if a
+  "Refresh Beside" job is `queued`, starts `beside-capture.service` right away. The full
+  baseline is fetched only when that status is missing, or at most once per 12 minutes
+  (timestamp in `refresh/uia-heartbeat-baseline.json`);
 - never claims or completes jobs and never opens Beside.
 
 Captures share a lock (`refresh/capture.lock`, `flock`): a capture started by the heartbeat and the
